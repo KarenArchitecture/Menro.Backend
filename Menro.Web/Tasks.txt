@@ -1,0 +1,2 @@
+﻿صفحه register وقتی password و confirm password باهمدیگه تطابق ندارن به کاربر ارور داده نمیشه و برنامه متوقف میشه
+عملکرد remember me در login/register

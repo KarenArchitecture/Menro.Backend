@@ -1,0 +1,471 @@
+:root {
+    --bg: #0c0f14;
+    --fg: #fff;
+    --muted: #aaa;
+    --primary: #d17842;
+    font-size: 62.5%;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+body {
+    font-family: "Vazirmatn", sans-serif;
+    margin: 0;
+    background-color: #0c0f14;
+    color: white;
+    direction: rtl;
+    overflow-x: hidden;
+    max-width: 100vw;
+    padding: 0.5rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin: 0;
+}
+
+.checkout-container {
+    margin: 0 auto;
+    padding: 2.8rem 1.4rem;
+    margin-bottom: 7rem;
+}
+
+.checkout-header {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 2.2rem;
+}
+
+.checkout-header i {
+    /* font-size: 1.2rem; */
+    cursor: pointer;
+}
+
+.checkout-icon {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 1rem;
+}
+
+.back-btn {
+    /* width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #1a1d24;
+    border: 2px solid white; */
+    cursor: pointer;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.back-btn i {
+    color: white;
+    font-size: 1rem;
+}
+
+.checkout-cards {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.cart-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.cart-card {
+    background-color: #1a1d24;
+    width: 100%;
+    padding: 0.8rem 1.6rem;
+    border-radius: 2.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.cart-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.cart-info {
+    display: flex;
+    flex-direction: column;
+    margin-right: 0.8rem;
+}
+
+.product-title.rating {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 3rem;
+}
+
+/* Title on the right */
+.product-title.rating h3 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+/* Rating block */
+.product-title.rating i {
+    color: #f89c0e;
+    margin-left: 0.3rem;
+    font-size: 0.7rem;
+}
+
+.product-title.rating strong {
+    font-weight: 600;
+    font-size: 1.6rem;
+}
+
+.product-title.rating span {
+    font-size: 1rem;
+    color: #aaa;
+}
+
+.rating-score {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 0.4rem;
+    font-size: 1.6rem !important;
+    align-items: center;
+}
+
+/* Description underneath */
+.product-subtext {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #ccc;
+    line-height: 1.4;
+}
+
+.product-img {
+    width: 10.7rem;
+    height: 10.7rem;
+    border-radius: 1rem;
+    object-fit: cover;
+}
+
+.option-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.option-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 0.7rem;
+}
+
+.option-box {
+    background-color: #0c0f14;
+    min-width: 10rem;
+    border-radius: 1rem;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    box-sizing: border-box;
+    padding: 0.6rem 1.2rem;
+}
+
+.qty-option {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+    padding-right: 0.4rem;
+}
+
+.price-option {
+    display: flex;
+    align-items: center;
+    padding: 0 0.8rem;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.weight {
+    font-size: 12px;
+    font-weight: 400;
+    color: #888;
+    margin-right: 0.4rem;
+}
+
+.price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+
+.qty-controller {
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.qty-btn {
+    background-color: #d17842;
+    border: none;
+    color: white;
+    width: 2.844rem;
+    height: 2.844rem;
+    border-radius: 7px;
+    font-size: 1.6rem;
+    cursor: pointer;
+}
+
+.qty-value {
+    background-color: #0c0f14;
+    border: 1px solid #d17842;
+    color: #fff;
+    font-size: 1.6rem;
+    width: 5rem;
+    height: 3rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    padding-top: 0.1rem;
+}
+
+.price {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.price span {
+    color: #d17842;
+    font-weight: bold;
+}
+
+/* PAYMENT MODAL */
+/* Small Navigation Bar */
+.nav-toggle-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 8px 0;
+}
+
+.nav-toggle-bar {
+    width: 40px;
+    height: 4px;
+    background: #ccc;
+    border-radius: 2px;
+}
+
+/* Payment Modal */
+.payment-modal {
+    font-size: 1.6rem;
+    font-weight: 600;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #0c0f14;
+    padding: 0 1.4rem;
+    border-radius: 1.4rem;
+    box-shadow: 0px -4px 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    transform: translateY(100%);
+    transition: transform 0.4s ease;
+    z-index: 20;
+}
+
+.payment-modal.active {
+    transform: translateY(0);
+}
+
+.checkout-modal-pay {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2.1rem 0;
+}
+
+.checkout-modal-pay-btn {
+    width: 18rem;
+    height: 5.2rem;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.checkout-modal-price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.5rem;
+}
+
+.checkout-modal-price span {
+    font-size: 1.2rem;
+    font-weight: 500;
+    padding-bottom: 0.3rem;
+}
+
+.checkout-modal-price strong {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.payment-card {
+    height: 5.2rem;
+    display: flex;
+    align-items: center;
+    background: #1f242a;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.payment-card:hover {
+    background: #2a2e36;
+}
+
+.checkout-modal-bank-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0c0f14;
+    border-radius: 14px;
+}
+
+.bank-logo {
+    width: 4.8rem;
+    height: 4.8rem;
+    display: block;
+    margin: auto;
+}
+
+.checkout-modal-bank-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-right: 1.1rem;
+}
+
+.checkout-modal-bank-name {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.checkout-modal-bank-description {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+/* Overlay Effect */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease;
+    z-index: 10;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Checkout Footer */
+.checkout-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2.1rem;
+    background: #0c0f14;
+    border-top: 1px solid #1f1f1f;
+    z-index: 5;
+    transition: transform 0.4s ease;
+}
+
+.checkout-footer.footer-pushed {
+    transform: translateY(-200px);
+}
+
+/* Button */
+.pay-btn {
+    height: 5rem;
+    width: 18rem;
+    background-color: #d17842;
+    color: white;
+    font-size: 1.6rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.7rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.pay-btn:hover {
+    background-color: #b16532;
+}
+
+.footer-total-label {
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+}
+
+.footer-total-amount {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.currency {
+    color: #f89c0e;
+}

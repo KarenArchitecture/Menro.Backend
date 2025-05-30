@@ -1,0 +1,110 @@
+/* user info */
+.profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2.4rem;
+}
+
+.avatar-box {
+    position: relative;
+    margin-bottom: 0.8rem;
+}
+
+.avatar {
+    width: 11.4rem;
+    height: 11.4rem;
+    border-radius: 50%;
+}
+
+.edit-icon {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+.username {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.join-date {
+    margin: 0;
+    font-size: 1rem;
+    color: #aaa;
+}
+
+/* profile options */
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.option-btn {
+    height: 5.4rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    background: #1a1d24;
+    border: none;
+    border-radius: 1.1rem;
+    padding: 1.2rem 1.6rem;
+    color: #fff;
+    cursor: pointer;
+}
+
+.option-btn span {
+    font-size: 1.7rem;
+    font-weight: 600;
+}
+
+.theme-mode {
+    color: #f98b32;
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.heart {
+    background: linear-gradient(to right, #13171E, #35233F);
+}
+
+.theme {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.theme-label {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.support {
+    background: linear-gradient(to right, #13171E, #122139);
+}
+
+.faq {
+    background: linear-gradient(to right, #13171E, #142F20);
+}
+
+/* desktop navigation */
+
+
+/* ********************************************* */
+/* Responsive */
+/* ********************************************* */
+
+@media (min-width: 425px) {
+}
+
+@media (min-width: 768px) {
+}
+
+@media(min-width: 1024px) {
+}
+
+@media(min-width: 1440px) {
+}
