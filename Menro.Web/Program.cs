@@ -58,6 +58,11 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 SeedDatabase();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

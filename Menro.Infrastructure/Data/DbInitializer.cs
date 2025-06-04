@@ -50,10 +50,9 @@ namespace Menro.Infrastructure.Data
                     },
                 password: "@Admin123456"
                 ).GetAwaiter().GetResult();
-                    User? user = _db.Users.FirstOrDefault(u => u.Email == "WhiteLagoonAdmin@gmail.com");
+                    User? user = _db.Users.FirstOrDefault(u => u.Email == "MenroAdmin@gmail.com");
                     _userManager.AddToRoleAsync(user, SD.Role_Admin).GetAwaiter().GetResult();
                 }
-
             }
 
             catch (Exception e)
