@@ -4,6 +4,7 @@ using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    partial class MenroDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250603123258_Added_RestaurantWithOwner")]
+    partial class Added_RestaurantWithOwner
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -80,6 +83,68 @@ namespace Menro.Infrastructure.Migrations
                     b.HasIndex("RestaurantId");
 
                     b.ToTable("FoodCategories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "نوشیدنی سرد",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "نوشیدنی گرم",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "پیتزا",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "پاستا",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "سالاد",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "دسر",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "سوپ",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "برگر",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "غذای دریایی",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "پیش‌غذا",
+                            RestaurantId = 1
+                        });
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Restaurant", b =>

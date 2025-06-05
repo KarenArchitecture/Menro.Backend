@@ -9,6 +9,13 @@ namespace Menro.Domain.Interfaces
     public interface IUnitOfWork
     {
         IUserRepository User { get; }
+        IFoodRepository Food { get;}
+        IFoodCategoryRepository FoodCategory { get;}
+        IRestaurantRepository Restaurant { get;}
+        IRestaurantCategoryRepository RestaurantCategory { get;}
+        ISubscriptionRepository Subscription { get;}
+        ISubscriptionPlanRepository SubscriptionPlan { get;}
+
         Task SaveAsync();
     }
 }

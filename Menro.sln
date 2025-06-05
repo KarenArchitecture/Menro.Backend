@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Menro.Web", "Menro.Web\Menro.Web.csproj", "{DA39038E-4A36-4AD9-A23F-50985041B464}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Menro.Web", "Menro.Web\Menro.Web.csproj", "{DA39038E-4A36-4AD9-A23F-50985041B464}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Menro.Application", "Menro.Application\Menro.Application.csproj", "{F0793A2A-A294-4E4B-A72A-665054B6D15E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Menro.Application", "Menro.Application\Menro.Application.csproj", "{F0793A2A-A294-4E4B-A72A-665054B6D15E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Menro.Domain", "Menro.Domain\Menro.Domain.csproj", "{806539AC-F860-4B75-BE1E-ABEC4F22418C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Menro.Domain", "Menro.Domain\Menro.Domain.csproj", "{806539AC-F860-4B75-BE1E-ABEC4F22418C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Menro.Infrastructure", "Menro.Infrastructure\Menro.Infrastructure.csproj", "{55106CEC-3320-40DC-89A2-054892F41C47}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Menro.Infrastructure", "Menro.Infrastructure\Menro.Infrastructure.csproj", "{55106CEC-3320-40DC-89A2-054892F41C47}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

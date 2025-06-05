@@ -4,6 +4,7 @@ using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    partial class MenroDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250602112138_AddRestaurant_Foods_Subscription")]
+    partial class AddRestaurant_Foods_Subscription
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,21 @@ namespace Menro.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("FoodFoodCategory", b =>
+                {
+                    b.Property<int>("CategoriesId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FoodsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("CategoriesId", "FoodsId");
+
+                    b.HasIndex("FoodsId");
+
+                    b.ToTable("FoodFoodCategory");
+                });
 
             modelBuilder.Entity("Menro.Domain.Entities.Food", b =>
                 {
@@ -33,9 +51,6 @@ namespace Menro.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("FoodCategoryId")
-                        .HasColumnType("int");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
@@ -52,8 +67,6 @@ namespace Menro.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("FoodCategoryId");
 
                     b.HasIndex("RestaurantId");
 
@@ -72,12 +85,7 @@ namespace Menro.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RestaurantId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("RestaurantId");
 
                     b.ToTable("FoodCategories");
                 });
@@ -99,6 +107,7 @@ namespace Menro.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BannerImageUrl")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -109,30 +118,27 @@ namespace Menro.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("OwnerFullName")
+                    b.Property<string>("OwnerFirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("OwnerUserId")
+                    b.Property<string>("OwnerLastName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RestaurantCategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("ShebaNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("OwnerUserId")
-                        .IsUnique();
-
-                    b.HasIndex("RestaurantCategoryId");
 
                     b.ToTable("Restaurants");
                 });
@@ -152,48 +158,6 @@ namespace Menro.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("RestaurantCategories");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "رستوران سنتی"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "رستوران مدرن"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "چینی/آسیایی"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "ایتالیایی"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "کافه رستوران"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Name = "فست‌فود"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Name = "باغ رستوران"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Name = "دریایی"
-                        });
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Subscription", b =>
@@ -458,53 +422,45 @@ namespace Menro.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("RestaurantRestaurantCategory", b =>
+                {
+                    b.Property<int>("RestaurantCategoriesId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RestaurantsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RestaurantCategoriesId", "RestaurantsId");
+
+                    b.HasIndex("RestaurantsId");
+
+                    b.ToTable("RestaurantRestaurantCategory");
+                });
+
+            modelBuilder.Entity("FoodFoodCategory", b =>
+                {
+                    b.HasOne("Menro.Domain.Entities.FoodCategory", null)
+                        .WithMany()
+                        .HasForeignKey("CategoriesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Menro.Domain.Entities.Food", null)
+                        .WithMany()
+                        .HasForeignKey("FoodsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Menro.Domain.Entities.Food", b =>
                 {
-                    b.HasOne("Menro.Domain.Entities.FoodCategory", "Category")
-                        .WithMany("Foods")
-                        .HasForeignKey("FoodCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
                         .WithMany("Foods")
                         .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Category");
-
                     b.Navigation("Restaurant");
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.FoodCategory", b =>
-                {
-                    b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
-                        .WithMany("FoodCategories")
-                        .HasForeignKey("RestaurantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Restaurant");
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.Restaurant", b =>
-                {
-                    b.HasOne("Menro.Domain.Entities.User", "OwnerUser")
-                        .WithOne("Restaurant")
-                        .HasForeignKey("Menro.Domain.Entities.Restaurant", "OwnerUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Menro.Domain.Entities.RestaurantCategory", "RestaurantCategory")
-                        .WithMany("Restaurants")
-                        .HasForeignKey("RestaurantCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("OwnerUser");
-
-                    b.Navigation("RestaurantCategory");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Subscription", b =>
@@ -577,33 +533,32 @@ namespace Menro.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Menro.Domain.Entities.FoodCategory", b =>
+            modelBuilder.Entity("RestaurantRestaurantCategory", b =>
                 {
-                    b.Navigation("Foods");
+                    b.HasOne("Menro.Domain.Entities.RestaurantCategory", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantCategoriesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Menro.Domain.Entities.Restaurant", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Restaurant", b =>
                 {
-                    b.Navigation("FoodCategories");
-
                     b.Navigation("Foods");
 
-                    b.Navigation("Subscription");
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.RestaurantCategory", b =>
-                {
-                    b.Navigation("Restaurants");
+                    b.Navigation("Subscription")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.SubscriptionPlan", b =>
                 {
                     b.Navigation("Subscriptions");
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.User", b =>
-                {
-                    b.Navigation("Restaurant");
                 });
 #pragma warning restore 612, 618
         }

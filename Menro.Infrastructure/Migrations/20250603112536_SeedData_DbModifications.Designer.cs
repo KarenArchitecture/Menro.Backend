@@ -4,6 +4,7 @@ using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    partial class MenroDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250603112536_SeedData_DbModifications")]
+    partial class SeedData_DbModifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -80,6 +83,68 @@ namespace Menro.Infrastructure.Migrations
                     b.HasIndex("RestaurantId");
 
                     b.ToTable("FoodCategories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "نوشیدنی سرد",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "نوشیدنی گرم",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "پیتزا",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "پاستا",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "سالاد",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "دسر",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "سوپ",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "برگر",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "غذای دریایی",
+                            RestaurantId = 1
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "پیش‌غذا",
+                            RestaurantId = 1
+                        });
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Restaurant", b =>
@@ -113,10 +178,6 @@ namespace Menro.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("OwnerUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -129,12 +190,23 @@ namespace Menro.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerUserId")
-                        .IsUnique();
-
                     b.HasIndex("RestaurantCategoryId");
 
                     b.ToTable("Restaurants");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Address = "خیابان ولیعصر، پلاک ۱۲۳",
+                            BankAccountNumber = "1234567890",
+                            Name = "کافه منرو",
+                            NationalCode = "0012345678",
+                            OwnerFullName = "امین منرو",
+                            PhoneNumber = "09123456789",
+                            RestaurantCategoryId = 5,
+                            ShebaNumber = "IR820540102680020817909002"
+                        });
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.RestaurantCategory", b =>
@@ -490,19 +562,11 @@ namespace Menro.Infrastructure.Migrations
 
             modelBuilder.Entity("Menro.Domain.Entities.Restaurant", b =>
                 {
-                    b.HasOne("Menro.Domain.Entities.User", "OwnerUser")
-                        .WithOne("Restaurant")
-                        .HasForeignKey("Menro.Domain.Entities.Restaurant", "OwnerUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Menro.Domain.Entities.RestaurantCategory", "RestaurantCategory")
                         .WithMany("Restaurants")
                         .HasForeignKey("RestaurantCategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("OwnerUser");
 
                     b.Navigation("RestaurantCategory");
                 });
@@ -599,11 +663,6 @@ namespace Menro.Infrastructure.Migrations
             modelBuilder.Entity("Menro.Domain.Entities.SubscriptionPlan", b =>
                 {
                     b.Navigation("Subscriptions");
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.User", b =>
-                {
-                    b.Navigation("Restaurant");
                 });
 #pragma warning restore 612, 618
         }

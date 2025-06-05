@@ -13,6 +13,12 @@ namespace Menro.Infrastructure.Repositories
         private readonly MenroDbContext _context;
 
         public IUserRepository User { get; private set; }
+        public IFoodRepository Food { get; private set; }
+        public IFoodCategoryRepository FoodCategory { get; private set; }
+        public IRestaurantRepository Restaurant { get; private set; }
+        public IRestaurantCategoryRepository RestaurantCategory { get; private set; }
+        public ISubscriptionRepository Subscription { get; private set; }
+        public ISubscriptionPlanRepository SubscriptionPlan { get; private set; }
 
         public UnitOfWork(MenroDbContext context)
         {

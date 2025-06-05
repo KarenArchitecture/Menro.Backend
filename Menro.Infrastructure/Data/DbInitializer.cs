@@ -39,6 +39,7 @@ namespace Menro.Infrastructure.Data
                     _roleManager.CreateAsync(new IdentityRole(SD.Role_Owner)).Wait();
                     _roleManager.CreateAsync(new IdentityRole(SD.Role_Customer)).Wait();
 
+                    // Admin User
                     _userManager.CreateAsync(new User()
                     {
                         UserName = "MenroAdmin_1",
@@ -48,10 +49,59 @@ namespace Menro.Infrastructure.Data
                         NormalizedUserName = "MenroAdmin@gmail.com".ToUpper(),
                         PhoneNumber = "+989486813486",
                     },
-                password: "@Admin123456"
-                ).GetAwaiter().GetResult();
-                    User? user = _db.Users.FirstOrDefault(u => u.Email == "WhiteLagoonAdmin@gmail.com");
-                    _userManager.AddToRoleAsync(user, SD.Role_Admin).GetAwaiter().GetResult();
+                    password: "@Admin123456"
+                    ).GetAwaiter().GetResult();
+                    User? adminUser = _db.Users.FirstOrDefault(u => u.Email == "MenroAdmin@gmail.com");
+                    _userManager.AddToRoleAsync(adminUser, SD.Role_Admin).GetAwaiter().GetResult();
+
+                    // Owner User
+                    _userManager.CreateAsync(new User()
+                    {
+                        UserName = "CafeOwner1",
+                        Email = "owner1@menro.com",
+                        FullName = "صاحب رستوران نمونه",
+                        NormalizedEmail = "OWNER1@MENRO.COM",
+                        NormalizedUserName = "OWNER1@MENRO.COM",
+                        PhoneNumber = "+989123456789",
+                    },
+                    password: "Owner123!").GetAwaiter().GetResult();
+
+                    var ownerUser = _db.Users.FirstOrDefault(u => u.Email == "owner1@menro.com");
+                    _userManager.AddToRoleAsync(ownerUser, SD.Role_Owner).GetAwaiter().GetResult();
+
+                    // افزودن رستوران وابسته به Owner User
+                    var restaurant = new Restaurant()
+                    {
+                        // Id را ننویسید تا EF خودش مقدار مناسب بگذارد
+                        Name = "کافه منرو",
+                        Address = "خیابان ولیعصر، پلاک ۱۲۳",
+                        OwnerFullName = "امین منرو",
+                        NationalCode = "0012345678",
+                        PhoneNumber = "09123456789",
+                        BankAccountNumber = "1234567890",
+                        ShebaNumber = "IR820540102680020817909002",
+                        RestaurantCategoryId = 5, // از داده‌های HasData خوانده می‌شود
+                        OwnerUserId = ownerUser.Id
+                    };
+                    _db.Restaurants.Add(restaurant);
+                    _db.SaveChanges(); // ذخیره برای گرفتن Id
+
+                    // اضافه کردن دسته بندی‌های غذایی وابسته به رستوران ایجاد شده
+                    var foodCategories = new List<FoodCategory>()
+                        {
+                            new FoodCategory { Name = "نوشیدنی سرد", RestaurantId = restaurant.Id },
+                            new FoodCategory { Name = "نوشیدنی گرم", RestaurantId = restaurant.Id },
+                            new FoodCategory { Name = "پیتزا", RestaurantId = restaurant.Id },
+                            new FoodCategory { Name = "پاستا", RestaurantId = restaurant.Id },
+                            new FoodCategory { Name = "سالاد", RestaurantId = restaurant.Id },
+                            new FoodCategory { Name = "دسر", RestaurantId = restaurant.Id },
+                            new FoodCategory { Name = "سوپ", RestaurantId = restaurant.Id },
+                            new FoodCategory { Name = "برگر", RestaurantId = restaurant.Id },
+                            new FoodCategory { Name = "غذای دریایی", RestaurantId = restaurant.Id },
+                            new FoodCategory { Name = "پیش‌غذا", RestaurantId = restaurant.Id },
+                        };
+                    _db.FoodCategories.AddRange(foodCategories);
+                    _db.SaveChanges();
                 }
 
             }
