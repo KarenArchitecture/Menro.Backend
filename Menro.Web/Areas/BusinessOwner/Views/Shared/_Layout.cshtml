@@ -1,42 +1,31 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="utf-8" />
-    <title>@ViewData["Title"] - Admin Panel</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - داشبورد</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- AdminLTE CSS -->
-    <link rel="stylesheet" href="~/adminlte/plugins/fontawesome-free/css/all.min.css">
-    <link rel="stylesheet" href="~/adminlte/dist/css/adminlte.min.css">
+    <!-- font -->
+    <link href="~/css/fonts.css" rel="stylesheet" />
+
 </head>
-<body class="hold-transition sidebar-mini layout-fixed">
-    <div class="wrapper">
+<body class="bg-gray-100 text-gray-900">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        @await Html.PartialAsync("_Sidebar")
 
-        <!-- Navbar -->
-        @Html.Partial("_Navbar")
+        <!-- Main content -->
+        <div class="flex-1 flex flex-col">
+            <!-- Top Navbar -->
+            @await Html.PartialAsync("_Navbar")
 
-        <!-- Main Sidebar Container -->
-        @Html.Partial("_Sidebar")
-
-        <!-- Content Wrapper -->
-        <div class="content-wrapper">
-            <section class="content">
-                <div class="container-fluid pt-3">
-                    @RenderBody()
-                </div>
-            </section>
+            <!-- Page content -->
+            <main class="p-6">
+                @RenderBody()
+            </main>
         </div>
-
-        <!-- Footer -->
-        @Html.Partial("_Footer")
-
     </div>
-
-    <!-- AdminLTE Scripts -->
-    <script src="~/adminlte/plugins/jquery/jquery.min.js"></script>
-    <script src="~/adminlte/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="~/adminlte/dist/js/adminlte.min.js"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

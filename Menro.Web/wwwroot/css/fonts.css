@@ -1,0 +1,10 @@
+﻿@font-face {
+    font-family: 'Estedad';
+    src: url('/fonts/Estedad/Estedad-Black.woff2') format('woff2'), url('/fonts/Estedad/Estedad-Bold.woff2') format('woff'), url('/fonts/Estedad/Estedad-ExtraBold.woff2') format('woff2'), url('/fonts/Estedad/Estedad-ExtraLight.woff2') format('woff2'), url('/fonts/Estedad/Estedad-FD-Black.woff2') format('woff2'), url('/fonts/Estedad/Estedad-FD-Bold.woff2') format('woff2'), url('/fonts/Estedad/Estedad-FD-ExtraBold.woff2') format('woff2'), url('/fonts/Estedad/Estedad-FD-ExtraLight.woff2') format('woff2'), url('/fonts/Estedad/Estedad-FD-Light.woff2') format('woff2'), url('/fonts/Estedad/Estedad-FD-Medium.woff2') format('woff2'), url('/fonts/Estedad/Estedad-FD-Regular.woff2') format('woff2'), url('/fonts/Estedad/Estedad-FD-SemiBold.woff2') format('woff2'), url('/fonts/Estedad/Estedad-FD-Thin.woff2') format('woff2'), url('/fonts/Estedad/Estedad-Light.woff2') format('woff2'), url('/fonts/Estedad/Estedad-Medium.woff2') format('woff2'), url('/fonts/Estedad/Estedad-Regular.woff2') format('woff2'), url('/fonts/Estedad/Estedad-SemiBold.woff2') format('woff2'), url('/fonts/Estedad/Estedad-Thin.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'Estedad', sans-serif !important;
+}
