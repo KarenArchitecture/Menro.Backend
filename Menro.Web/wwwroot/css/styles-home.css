@@ -29,9 +29,9 @@
     transition: transform 0.5s ease-in-out;
 }
 
-.carousel-slider img {
-    width: 100%;
-}
+    .carousel-slider img {
+        width: 100%;
+    }
 
 .indicators-container {
     margin: auto;
@@ -51,15 +51,15 @@
     overflow: hidden;
 }
 
-.indicator.active {
-    width: 2.6rem;
-    height: 0.8rem;
-    border-radius: 20px;
-    background: linear-gradient(to left, #d17842 0%, white 100%);
-    background-size: 300% 100%;
-    background-position: right;
-    transition: 1s ease-in-out;
-}
+    .indicator.active {
+        width: 2.6rem;
+        height: 0.8rem;
+        border-radius: 20px;
+        background: linear-gradient(to left, #d17842 0%, white 100%);
+        background-size: 300% 100%;
+        background-position: right;
+        transition: 1s ease-in-out;
+    }
 
 /* restaurants */
 .res-title-box {
@@ -90,16 +90,16 @@
     color: #fff;
 }
 
-.res-more-link span {
-    display: flex;
-    align-items: center;
-    font-size: 1rem;
-    font-weight: 500;
-}
+    .res-more-link span {
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        font-weight: 500;
+    }
 
-.res-more-link svg {
-    margin-top: 0.25rem;
-}
+    .res-more-link svg {
+        margin-top: 0.25rem;
+    }
 
 /* ===== Cards Container ===== */
 .cards-container {
@@ -113,9 +113,9 @@
     scrollbar-width: none;
 }
 
-.cards-container::-webkit-scrollbar {
-    display: none;
-}
+    .cards-container::-webkit-scrollbar {
+        display: none;
+    }
 
 .card {
     position: relative;
@@ -137,7 +137,8 @@
 .card-img {
     height: auto;
     border-radius: 10%;
-    object-fit: cover;max-width: 100%;
+    object-fit: cover;
+    max-width: 100%;
     max-height: 100%;
     height: auto;
 }
@@ -193,7 +194,7 @@
     justify-content: end;
 }
 
-.card:first-child .time-badge span{
+.card:first-child .time-badge span {
     background-color: #D17842;
 }
 
@@ -264,9 +265,9 @@
     padding: 0 1.4rem;
 }
 
-.wide-carousel-cards::-webkit-scrollbar {
-    display: none;
-}
+    .wide-carousel-cards::-webkit-scrollbar {
+        display: none;
+    }
 
 .wide-card {
     position: relative;
@@ -321,9 +322,9 @@
     scrollbar-width: none;
 }
 
-.drinks-cards-container::-webkit-scrollbar {
-    display: none;
-}
+    .drinks-cards-container::-webkit-scrollbar {
+        display: none;
+    }
 
 .drink-card {
     width: 40vw;
@@ -383,10 +384,10 @@
     gap: 1rem;
 }
 
-.drink-price-row p {
-    font-size: 1.1rem;
-    font-weight: 600;
-}
+    .drink-price-row p {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
 
 .drink-price {
     color: #d17842;
@@ -484,23 +485,25 @@
         font-weight: 800;
         text-decoration: none;
     }
+
     .mobile-nav {
         display: none;
     }
 
-    .mobile-nav .nav-item {
-        color: #ccc;
-        font-size: 1rem;
-        font-weight: 500;
-        gap: 0.5rem;
-    }
-    .mobile-nav .nav-icon {
-        display: none;
-    }
+        .mobile-nav .nav-item {
+            color: #ccc;
+            font-size: 1rem;
+            font-weight: 500;
+            gap: 0.5rem;
+        }
 
-    .mobile-nav .nav-item.active {
-        color: #f89c0e;
-    }
+        .mobile-nav .nav-icon {
+            display: none;
+        }
+
+        .mobile-nav .nav-item.active {
+            color: #f89c0e;
+        }
 
     .nav-toggle-wrapper {
         display: none !important;
@@ -520,6 +523,7 @@
         text-align: center;
         width: 100vw;
     }
+
     .banner-dots {
         display: inline-flex;
         justify-content: center;
@@ -570,6 +574,7 @@
         border-radius: 1rem;
         overflow: hidden;
     }
+
     .single-banner-img {
         display: block;
         width: 100%;

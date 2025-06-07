@@ -1,6 +1,7 @@
 /* general */
 * {
     box-sizing: border-box;
+    font-family: "Estedad", sans-serif;
     font-size: 62.5%;
     margin: 0;
     padding: 0;
@@ -58,20 +59,20 @@ ul {
     gap: 0.75rem;
 }
 
-.nav-item .text {
-    display: none;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #D17842;
-}
+    .nav-item .text {
+        display: none;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #D17842;
+    }
 
-.nav-item.active .icon {
-    fill: #D17842;
-}
+    .nav-item.active .icon {
+        fill: #D17842;
+    }
 
-.nav-item.active .text {
-    display: inline-block;
-}
+    .nav-item.active .text {
+        display: inline-block;
+    }
 
 .mobile-menu-cart {
     position: relative;
@@ -92,10 +93,9 @@ ul {
     bottom: -0.5rem;
 }
 
-.badge span {
-    margin-right: 0.15rem;
-    margin-bottom: 0.25rem;
-}
+    .badge span {
+        margin-right: 0.15rem;
+    }
 
 /* desktop navigation */
 
@@ -147,10 +147,10 @@ ul {
     font-weight: 500;
 }
 
-.desktop-nav-item span {
-    font-size: 2rem;
-    color: #999fa8;
-}
+    .desktop-nav-item span {
+        font-size: 2rem;
+        color: #999fa8;
+    }
 
 .desktop-nav .brand {
     color: #d17842;
@@ -175,18 +175,18 @@ ul {
     padding: 1.5rem;
 }
 
-.search-bar input {
-    width: 100%;
-    height: 100%;
-    background-color: #141921;
-    border: none;
-}
+    .search-bar input {
+        width: 100%;
+        height: 100%;
+        background-color: #141921;
+        border: none;
+    }
 
-.search-bar input::placeholder {
-    color: #52555A;
-    font-size: 1rem;
-    font-weight: 500;
-}
+        .search-bar input::placeholder {
+            color: #52555A;
+            font-size: 1rem;
+            font-weight: 500;
+        }
 
 .icon-button {
     background-color: #141921;
@@ -213,24 +213,24 @@ ul {
     border-radius: 63px;
 }
 
-.user-profile .avatar {
-    position: absolute;
-    border: 1px solid #000;
-    right: 7rem;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-left: 8px;
-}
+    .user-profile .avatar {
+        position: absolute;
+        border: 1px solid #000;
+        right: 7rem;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-left: 8px;
+    }
 
-.user-profile .username {
-    font-size: 15px;
-    font-weight: 800;
-    color: #333333;
-    white-space: nowrap;
-    padding-right: 1.6rem;
-}
+    .user-profile .username {
+        font-size: 15px;
+        font-weight: 800;
+        color: #333333;
+        white-space: nowrap;
+        padding-right: 1.6rem;
+    }
 
 .shopping-cart {
     position: relative;
