@@ -11,7 +11,7 @@ namespace Menro.Web.ViewModels
         [DataType(DataType.Password)]
         public string Password { get; set; }
 
-        public bool RememberMe { get; set; }
+        public bool RememberMe { get; set; } = false;
         public string? RedirectUrl { get; set; }
     }
 }

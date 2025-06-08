@@ -1,2 +1,6 @@
 ﻿صفحه register وقتی password و confirm password باهمدیگه تطابق ندارن به کاربر ارور داده نمیشه و برنامه متوقف میشه
 عملکرد remember me در login/register
+
+
+در فایل appsettings.json
+"در محیط واقعی حتماً Secret رو از طریق User Secrets یا Environment Variable ست کن، نه مستقیم در فایل appsettings."

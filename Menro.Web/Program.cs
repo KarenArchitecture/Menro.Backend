@@ -1,5 +1,8 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Menro.Application.Services.Implementations;
 using Menro.Application.Services.Interfaces;
@@ -7,6 +10,8 @@ using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Repositories;
+using Menro.Application.Settings;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,9 +22,11 @@ option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<MenroDbContext>()
     .AddDefaultTokenProviders();
+// Services Scopes
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-// Services Scopes
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFoodService, FoodService>();
 builder.Services.AddScoped<IFoodCategoryService, FoodCategoryService>();
@@ -35,6 +42,27 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
+// Configure JWT authentication
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]!))
+    };
 });
 
 // override default settings for password requirements
@@ -64,6 +92,11 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 SeedDatabase();
+
+// 🔹 مسیر APIها (با [ApiController] و [Route])
+app.MapControllers();
+
+// 🔹 مسیر صفحات MVC (Views)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
