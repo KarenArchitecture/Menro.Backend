@@ -42,30 +42,28 @@ namespace Menro.Infrastructure.Data
                     // Admin User
                     _userManager.CreateAsync(new User()
                     {
-                        UserName = "MenroAdmin_1",
+                        UserName = "MenroAdmin@gmail.com",
                         Email = "MenroAdmin@gmail.com",
                         FullName = "Admin",
                         NormalizedEmail = "MenroAdmin@gmail.com",
                         NormalizedUserName = "MenroAdmin@gmail.com".ToUpper(),
                         PhoneNumber = "+989486813486",
                     },
-                    password: "@Admin123456"
-                    ).GetAwaiter().GetResult();
+                    password: "admin123456").GetAwaiter().GetResult();
                     User? adminUser = _db.Users.FirstOrDefault(u => u.Email == "MenroAdmin@gmail.com");
                     _userManager.AddToRoleAsync(adminUser, SD.Role_Admin).GetAwaiter().GetResult();
 
                     // Owner User
                     _userManager.CreateAsync(new User()
                     {
-                        UserName = "CafeOwner1",
+                        UserName = "owner1@menro.com",
                         Email = "owner1@menro.com",
                         FullName = "صاحب رستوران نمونه",
                         NormalizedEmail = "OWNER1@MENRO.COM",
                         NormalizedUserName = "OWNER1@MENRO.COM",
                         PhoneNumber = "+989123456789",
                     },
-                    password: "Owner123!").GetAwaiter().GetResult();
-
+                    password: "owner123456").GetAwaiter().GetResult();
                     var ownerUser = _db.Users.FirstOrDefault(u => u.Email == "owner1@menro.com");
                     _userManager.AddToRoleAsync(ownerUser, SD.Role_Owner).GetAwaiter().GetResult();
 

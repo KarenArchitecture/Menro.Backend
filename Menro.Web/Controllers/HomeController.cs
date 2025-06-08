@@ -1,4 +1,4 @@
-using Menro.Web.Models;
+﻿using Menro.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -15,6 +15,7 @@ namespace Menro.Web.Controllers
 
         public IActionResult Index()
         {
+            TempData["success"] = "به خانه خوش آمدید";
             return View();
         }
 

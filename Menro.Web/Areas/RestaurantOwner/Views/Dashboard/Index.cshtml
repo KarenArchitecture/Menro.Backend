@@ -1,0 +1,87 @@
+﻿@model RestaurantDashboardVM
+
+<div class="w-100 card border-0 p-4">
+    <div class="card-header bg-success bg-gradient ml-0 py-3">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h2 class="text-white py-2">ویرایش مشخصات رستوران</h2>
+            </div>
+        </div>
+    </div>
+    <div class="card-body border p-4">
+        <form method="post" enctype="multipart/form-data" class="row">
+            <div class="p-3">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="form-floating py-2 col-12">
+                    <input asp-for="Name" class="form-control border shadow" />
+                    <label asp-for="Name" class="ms-2"></label>
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="form-floating py-2 col-12">
+                    <input asp-for="Address" class="form-control border shadow" />
+                    <label asp-for="Address" class="ms-2"></label>
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+
+                <div class="form-floating py-2 col-12">
+                    <input asp-for="OwnerFullName" class="form-control border shadow" />
+                    <label asp-for="OwnerFullName" class="ms-2"></label>
+                    <span asp-validation-for="OwnerFullName" class="text-danger"></span>
+                </div>
+
+                <div class="form-floating py-2 col-12">
+                    <input asp-for="NationalCode" class="form-control border shadow" />
+                    <label asp-for="NationalCode" class="ms-2"></label>
+                    <span asp-validation-for="NationalCode" class="text-danger"></span>
+                </div>
+
+                <div class="form-floating py-2 col-12">
+                    <input asp-for="PhoneNumber" class="form-control border shadow" />
+                    <label asp-for="PhoneNumber" class="ms-2"></label>
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+
+                <div class="form-floating py-2 col-12">
+                    <input asp-for="BankAccountNumber" class="form-control border shadow" />
+                    <label asp-for="BankAccountNumber" class="ms-2"></label>
+                    <span asp-validation-for="BankAccountNumber" class="text-danger"></span>
+                </div>
+
+                <div class="form-floating py-2 col-12">
+                    <input asp-for="ShebaNumber" class="form-control border shadow" />
+                    <label asp-for="ShebaNumber" class="ms-2"></label>
+                    <span asp-validation-for="ShebaNumber" class="text-danger"></span>
+                </div>
+
+                <div class="py-2 col-12">
+                    <label class="form-label">تصویر بنر</label>
+                    <input type="file" name="BannerImage" class="form-control" />
+                    @* error *@
+                    @if (!string.IsNullOrEmpty(Model.BannerImageUrl))
+                    {
+                        <img src="@Model.BannerImageUrl" class="mt-2 rounded shadow" style="max-height:150px;" />
+                    }
+                </div>
+
+                <div class="row pt-3">
+                    <div class="col-6 col-md-3">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-circle"></i> ذخیره
+                        </button>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a asp-area="RestaurantOwner" asp-controller="Dashboard" asp-action="Index" class="btn btn-secondary w-100">
+                            <i class="bi bi-x-circle"></i> بازگشت
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

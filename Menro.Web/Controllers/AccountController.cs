@@ -40,20 +40,24 @@ namespace Menro.Web.Controllers
                 if (result.Succeeded)
                 {
                     var user = await _userManager.FindByEmailAsync(vm.Email);
-                    if (string.IsNullOrEmpty(vm.RedirectUrl))
+                    if (user != null)
                     {
+                        TempData["success"] = "ورود با موفقیت انجام شد";
                         return RedirectToAction("Index", "Home");
                     }
                     else
                     {
-                        return LocalRedirect(vm.RedirectUrl);
+                        TempData["error"] = "ایمیل در دیتابیس پیدا نشد";
+                        return View(vm);
                     }
                 }
                 else
                 {
-                    ModelState.AddModelError("", "invalid login attempt");
+                    TempData["error"] = "ورود با موفقیت انجام نشد";
+                    //ModelState.AddModelError("", "invalid login attempt");
                 }
             }
+            TempData["error"] = "مدل نامعتبر";
             return View(vm);
         }
         public IActionResult Register(string returnUrl = null)
