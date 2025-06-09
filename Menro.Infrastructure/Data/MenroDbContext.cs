@@ -17,6 +17,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<RestaurantCategory> RestaurantCategories { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
+        public DbSet<Otp> Otps { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

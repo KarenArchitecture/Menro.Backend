@@ -68,11 +68,23 @@ namespace Menro.Infrastructure.Repositories
             try
             {
                 await Set.AddAsync(entity);
-                return true;
+                return await Task.FromResult(true);
             }
             catch
             {
-                return false;
+                return await Task.FromResult(false);
+            }
+        }
+        public async Task<bool> UpdateAsync(T entity)
+        {
+            try
+            {
+                Set.Update(entity);
+                return await Task.FromResult(true);
+            }
+            catch
+            {
+                return await Task.FromResult(false);
             }
         }
 

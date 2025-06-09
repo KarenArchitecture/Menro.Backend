@@ -11,40 +11,37 @@ using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Repositories;
 using Menro.Application.Settings;
+using Menro.Infrastructure.Sms;
 
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddDbContext<MenroDbContext>(option =>
-option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+#region Database & Identity
+
+builder.Services.AddDbContext<MenroDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<MenroDbContext>()
     .AddDefaultTokenProviders();
-// Services Scopes
-builder.Services.AddScoped<IDbInitializer, DbInitializer>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IFoodService, FoodService>();
-builder.Services.AddScoped<IFoodCategoryService, FoodCategoryService>();
-builder.Services.AddScoped<IRestaurantService, RestaurantService>();
-builder.Services.AddScoped<IRestaurantCategoryService, RestaurantCategoryService>();
-builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
-builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
 
-// Configure Cookie authentication
-builder.Services.AddControllersWithViews();
-builder.Services.ConfigureApplicationCookie(options =>
+// تنظیمات Identity (مثل پسورد)
+builder.Services.Configure<IdentityOptions>(options =>
 {
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
+    options.Password.RequiredLength = 4;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
 });
 
-// Configure JWT authentication
+#endregion
+
+#region Authentication Setup
+
+// JWT Authentication (برای API)
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 builder.Services.AddAuthentication(options =>
 {
@@ -65,50 +62,80 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// override default settings for password requirements
-builder.Services.Configure<IdentityOptions>(option =>
+// Cookie Authentication (برای MVC)
+builder.Services.ConfigureApplicationCookie(options =>
 {
-    option.Password.RequiredLength = 4;
-    option.Password.RequireNonAlphanumeric = false;
-    option.Password.RequireUppercase = false;
-    option.Password.RequireLowercase = false;
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
 });
+
+#endregion
+
+#region Infrastructure Services
+
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+#endregion
+
+#region Application Services (Domain)
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFoodService, FoodService>();
+builder.Services.AddScoped<IFoodCategoryService, FoodCategoryService>();
+builder.Services.AddScoped<IRestaurantService, RestaurantService>();
+builder.Services.AddScoped<IRestaurantCategoryService, RestaurantCategoryService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
+
+#endregion
+
+#region External Services
+
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IOtpService, OtpService>();
+builder.Services.AddScoped<ISmsSender, FakeSmsSender>();
+
+#endregion
+
+// MVC & Controllers
+builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+#region HTTP Pipeline
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
 SeedDatabase();
 
-// 🔹 مسیر APIها (با [ApiController] و [Route])
+// 🔹 Map API Controllers (with [ApiController])
 app.MapControllers();
 
-// 🔹 مسیر صفحات MVC (Views)
+// 🔹 Map MVC Controllers (Views)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
 
+#endregion
 
 void SeedDatabase()
 {
-    using (var scope = app.Services.CreateScope())
-    {
-        var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-        dbInitializer.Initialize();
-    }
+    using var scope = app.Services.CreateScope();
+    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+    dbInitializer.Initialize();
 }

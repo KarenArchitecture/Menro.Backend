@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Menro.Application.DTO
+namespace Menro.Application.DTO.Auth
 {
-    public class LoginDto
+    public class SendOtpDto
     {
-        public string Email { get; set; }
-        public string Password { get; set; }
         public string PhoneNumber { get; set; }
     }
 }

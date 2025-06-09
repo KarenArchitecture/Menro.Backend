@@ -19,6 +19,7 @@ namespace Menro.Infrastructure.Repositories
         public IRestaurantCategoryRepository RestaurantCategory { get; private set; }
         public ISubscriptionRepository Subscription { get; private set; }
         public ISubscriptionPlanRepository SubscriptionPlan { get; private set; }
+        public IOtpRepository Otp { get; private set; }
 
         public UnitOfWork(MenroDbContext context)
         {

@@ -1,30 +1,31 @@
-﻿using Menro.Application.DTO;
-using System.Text;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Menro.Domain.Interfaces;
+﻿using Microsoft.AspNetCore.Mvc;
 using Menro.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Menro.Application.Services.Interfaces;
+using Menro.Application.DTO.Auth;
 using Menro.Application.Services.Implementations;
 
-namespace Menro.Web.Controllers
+namespace Menro.Web.Controllers.Api
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly JwtService _jwtService;
+        private readonly IJwtService _jwtService;
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly IOtpService _otpService;
 
         public AuthController(
-            JwtService jwtService,
+            IJwtService jwtService,
             UserManager<User> userManager,
-            SignInManager<User> signInManager)
+            SignInManager<User> signInManager,
+            IOtpService otpService)
         {
             _jwtService = jwtService;
             _userManager = userManager;
             _signInManager = signInManager;
+            _otpService = otpService;
         }
 
         [HttpPost("login")]
@@ -64,6 +65,7 @@ namespace Menro.Web.Controllers
             });
         }
 
+        // تست نهایی نشده
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -117,5 +119,24 @@ namespace Menro.Web.Controllers
             });
         }
 
+        [HttpPost("send-otp")]
+        public async Task<IActionResult> SenOtp([FromBody] SendOtpDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
+                return BadRequest("شماره تلفن نامعتبر است.");
+
+            await _otpService.SendOtpAsync(dto.PhoneNumber);
+            return Ok(new { message = "کد تأیید ارسال شد." });
+
+        }
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+        {
+            if (await _otpService.VerifyOtpAsync(dto.PhoneNumber, dto.Code))
+            {
+                return Ok();
+            }
+            return BadRequest("معتبر نیست!");
+        }
     }
 }
