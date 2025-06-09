@@ -19,7 +19,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddDbContext<MenroDbContext>(option =>
 option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddIdentity<User, IdentityRole>()
+builder.Services.AddIdentity<User, IdentityRole>(options => {
+    options.User.RequireUniqueEmail = false; // Set this to false
+})
     .AddEntityFrameworkStores<MenroDbContext>()
     .AddDefaultTokenProviders();
 // Services Scopes

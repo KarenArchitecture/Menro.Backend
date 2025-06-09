@@ -27,9 +27,7 @@ namespace Menro.Application.Services.Implementations
                 Name = dto.Name,
                 BannerImageUrl = dto.BannerImageUrl,
                 Address = dto.Address,
-                OwnerFullName = dto.OwnerFullName,
                 NationalCode = dto.NationalCode,
-                PhoneNumber = dto.PhoneNumber,
                 BankAccountNumber = dto.BankAccountNumber,
                 ShebaNumber = dto.ShebaNumber,
                 RestaurantCategoryId = dto.RestaurantCategoryId

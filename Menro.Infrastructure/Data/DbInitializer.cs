@@ -42,28 +42,30 @@ namespace Menro.Infrastructure.Data
                     // Admin User
                     _userManager.CreateAsync(new User()
                     {
-                        UserName = "MenroAdmin@gmail.com",
+                        UserName = "MenroAdmin_1",
                         Email = "MenroAdmin@gmail.com",
                         FullName = "Admin",
                         NormalizedEmail = "MenroAdmin@gmail.com",
                         NormalizedUserName = "MenroAdmin@gmail.com".ToUpper(),
                         PhoneNumber = "+989486813486",
                     },
-                    password: "admin123456").GetAwaiter().GetResult();
+                    password: "@Admin123456"
+                    ).GetAwaiter().GetResult();
                     User? adminUser = _db.Users.FirstOrDefault(u => u.Email == "MenroAdmin@gmail.com");
                     _userManager.AddToRoleAsync(adminUser, SD.Role_Admin).GetAwaiter().GetResult();
 
                     // Owner User
                     _userManager.CreateAsync(new User()
                     {
-                        UserName = "owner1@menro.com",
+                        UserName = "CafeOwner1",
                         Email = "owner1@menro.com",
                         FullName = "صاحب رستوران نمونه",
                         NormalizedEmail = "OWNER1@MENRO.COM",
                         NormalizedUserName = "OWNER1@MENRO.COM",
                         PhoneNumber = "+989123456789",
                     },
-                    password: "owner123456").GetAwaiter().GetResult();
+                    password: "Owner123!").GetAwaiter().GetResult();
+
                     var ownerUser = _db.Users.FirstOrDefault(u => u.Email == "owner1@menro.com");
                     _userManager.AddToRoleAsync(ownerUser, SD.Role_Owner).GetAwaiter().GetResult();
 
@@ -73,9 +75,7 @@ namespace Menro.Infrastructure.Data
                         // Id را ننویسید تا EF خودش مقدار مناسب بگذارد
                         Name = "کافه منرو",
                         Address = "خیابان ولیعصر، پلاک ۱۲۳",
-                        OwnerFullName = "امین منرو",
                         NationalCode = "0012345678",
-                        PhoneNumber = "09123456789",
                         BankAccountNumber = "1234567890",
                         ShebaNumber = "IR820540102680020817909002",
                         RestaurantCategoryId = 5, // از داده‌های HasData خوانده می‌شود

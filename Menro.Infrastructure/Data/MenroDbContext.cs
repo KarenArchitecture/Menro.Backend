@@ -45,9 +45,10 @@ namespace Menro.Infrastructure.Data
 
             // One-to-One: Restaurant -> User
             modelBuilder.Entity<User>()
-                .HasOne(u => u.Restaurant)
-                .WithOne(r => r.OwnerUser)
-                .HasForeignKey<Restaurant>(r => r.OwnerUserId);
+                .HasMany(u => u.Restaurants)
+                      .WithOne(r => r.OwnerUser)
+                      .HasForeignKey(r => r.OwnerUserId)
+                      .OnDelete(DeleteBehavior.Restrict);
 
             // One-to-Many: Subscription -> SubscriptionPlan
             modelBuilder.Entity<Subscription>()
