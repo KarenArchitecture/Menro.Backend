@@ -8,6 +8,6 @@ namespace Menro.Domain.Interfaces
 {
     public interface IDbInitializer
     {
-        void Initialize();
+        Task InitializeAsync();
     }
 }
