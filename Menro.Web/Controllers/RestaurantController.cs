@@ -5,11 +5,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers
 {
-    public class RastaurantController : Controller
+    public class RestaurantController : Controller
     {
         private readonly IRestaurantService _restaurantService;
         private readonly IRestaurantCategoryService _restaurantCategoryService;
-        public RastaurantController (IRestaurantService restaurantService, IRestaurantCategoryService restaurantCategoryService)
+        public RestaurantController (IRestaurantService restaurantService, IRestaurantCategoryService restaurantCategoryService)
         {
             _restaurantService = restaurantService;
             _restaurantCategoryService = restaurantCategoryService;
