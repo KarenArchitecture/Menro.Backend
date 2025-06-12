@@ -1,0 +1,73 @@
+﻿@{
+    ViewData["Title"] = "داشبورد";
+    Layout = "~/Areas/BusinessOwner/Views/Shared/_Layout.cshtml";
+}
+
+<div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Account Info -->
+    <div class="bg-white p-4 rounded shadow">
+        <h2 class="text-lg font-bold mb-2">اطلاعات حساب</h2>
+        <p><strong>نام فروشگاه:</strong> کافه آروما</p>
+        <p><strong>مالک:</strong> علی کریمی</p>
+        <p><strong>موجودی:</strong> ۲.۳۴۰.۰۰۰ تومان</p>
+    </div>
+
+    <!-- Recent Purchases -->
+    <div class="bg-white p-4 rounded shadow col-span-2">
+        <h2 class="text-lg font-bold mb-2">تراکنش‌های اخیر</h2>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-gray-100 text-right">
+                    <th class="p-2">تاریخ</th>
+                    <th class="p-2">آیتم</th>
+                    <th class="p-2">قیمت</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="p-2">۱۴۰۴-۰۳-۰۳</td>
+                    <td class="p-2">اسپرسو</td>
+                    <td class="p-2">۴۵.۰۰۰ تومان</td>
+                </tr>
+                <tr>
+                    <td class="p-2">۱۴۰۴-۰۳-۰۳</td>
+                    <td class="p-2">لاته</td>
+                    <td class="p-2">۵۲.۰۰۰ تومان</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Profit Chart -->
+    <div class="bg-white p-4 rounded shadow col-span-3">
+        <h2 class="text-lg font-bold mb-4">نمودار سود</h2>
+        <canvas id="profitChart" height="100"></canvas>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('profitChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['۱ خرداد', '۲ خرداد', '۳ خرداد', '۴ خرداد', '۵ خرداد'],
+                datasets: [{
+                    label: 'Profit (Toman)',
+                    data: [150000, 200000, 170000, 210000, 230000],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+    </script>
+}

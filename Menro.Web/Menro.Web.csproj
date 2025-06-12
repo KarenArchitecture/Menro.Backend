@@ -21,11 +21,17 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Menro.Application\Menro.Application.csproj" />
     <ProjectReference Include="..\Menro.Infrastructure\Menro.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Areas\BusinessOwner\Data\" />
+    <Folder Include="Areas\BusinessOwner\Models\" />
   </ItemGroup>
 
 </Project>

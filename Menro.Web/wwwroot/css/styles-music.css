@@ -91,22 +91,22 @@
     cursor: pointer;
 }
 
-.btn.status.playing {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.3rem;
-    background: #0c0f14;
-    color: #fff;
-    white-space: nowrap;
-    padding: 0.3rem 0.8rem;
-}
+    .btn.status.playing {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+        background: #0c0f14;
+        color: #fff;
+        white-space: nowrap;
+        padding: 0.3rem 0.8rem;
+    }
 
-.btn.status.playing span,
-.btn.request span,
-.btn.queue span {
-    font-size: 1rem;
-}
+        .btn.status.playing span,
+        .btn.request span,
+        .btn.queue span {
+            font-size: 1rem;
+        }
 
 .btn-status-txt {
     display: flex;
@@ -140,12 +140,12 @@
     overflow: hidden;
 }
 
-.progress-wrap .progress {
-    display: block;
-    height: 100%;
-    background: #d17842;
-    transition: width 0.3s;
-}
+    .progress-wrap .progress {
+        display: block;
+        height: 100%;
+        background: #d17842;
+        transition: width 0.3s;
+    }
 
 .track.in-queue .progress-wrap .progress {
     background: #555;
@@ -201,20 +201,19 @@
     display: flex;
 }
 
-.search-bar input {
-    border: none;
-    border-radius: 1.5rem;
-    background-color: #0c0f14;
+    .search-bar input {
+        border: none;
+        border-radius: 1.5rem;
+        background-color: #0c0f14;
+        flex-grow: 1;
+        background-color: #0c0f14;
+    }
 
-    flex-grow: 1;
-    background-color: #0c0f14;
-}
-
-.search-bar input::placeholder {
-    color: #52555a;
-    font-size: 1rem;
-    font-weight: 500;
-}
+        .search-bar input::placeholder {
+            color: #52555a;
+            font-size: 1rem;
+            font-weight: 500;
+        }
 
 /* Modal Search Bar */
 /* hidden by default */
@@ -251,6 +250,7 @@
     display: flex;
     flex-direction: column;
 }
+
 .modal-content {
     overflow-y: auto;
     flex-grow: 1;
@@ -302,12 +302,12 @@
     margin: 0 1.4rem 1rem;
 }
 
-.modal-section-title h3 {
-    color: #000;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin: 0;
-}
+    .modal-section-title h3 {
+        color: #000;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+    }
 
 .modal-search-icon {
     font-size: 12rem;

@@ -55,10 +55,10 @@
     cursor: pointer;
 }
 
-.option-btn span {
-    font-size: 1.7rem;
-    font-weight: 600;
-}
+    .option-btn span {
+        font-size: 1.7rem;
+        font-weight: 600;
+    }
 
 .theme-mode {
     color: #f98b32;

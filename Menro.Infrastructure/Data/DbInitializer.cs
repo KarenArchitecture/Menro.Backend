@@ -101,7 +101,6 @@ namespace Menro.Infrastructure.Data
                     _db.FoodCategories.AddRange(foodCategories);
                     _db.SaveChanges();
                 }
-
             }
 
             catch (Exception e)
