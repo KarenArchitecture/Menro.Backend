@@ -60,5 +60,7 @@ namespace Menro.Domain.Entities
         public ICollection<Food> Foods { get; set; } = new List<Food>();
 
         public ICollection<FoodCategory> FoodCategories { get; set; } = new List<FoodCategory>();
+        public TimeSpan OpenTime { get; set; }
+        public TimeSpan CloseTime { get; set; }
     }
 }

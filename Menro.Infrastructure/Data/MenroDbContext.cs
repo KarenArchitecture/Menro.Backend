@@ -1,11 +1,11 @@
-﻿using Menro.Domain.Entities;
-using Menro.Infrastructure.Migrations;
+﻿using Menro.Application.Services.Interfaces;
+using Menro.Domain.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Menro.Infrastructure.Data
 {
-    public class MenroDbContext : IdentityDbContext<User>
+    public class MenroDbContext : IdentityDbContext<User>, IMenroDbContext
     {
         public MenroDbContext(DbContextOptions<MenroDbContext> options) : base(options) { }
 
@@ -17,55 +17,75 @@ namespace Menro.Infrastructure.Data
         public DbSet<RestaurantCategory> RestaurantCategories { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
+        public DbSet<RestaurantDiscount> RestaurantDiscounts { get; set; }
+        public DbSet<RestaurantRating> RestaurantRatings { get; set; }
+
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            /* ---------------------------- Fluent API ---------------------------- */
-            // Many-to-Many: Food <-> FoodCategory
-            modelBuilder.Entity<Food>()
-                    .HasOne(f => f.Category)
-                    .WithMany(c => c.Foods)
-                    .HasForeignKey(f => f.FoodCategoryId)
-                    .OnDelete(DeleteBehavior.Restrict);
 
-            // One-to-Many: FoodCategory -> Restaurant
+            /* ---------------------------- Fluent API ---------------------------- */
+
+            // Food <-> FoodCategory (Many-to-One)
+            modelBuilder.Entity<Food>()
+                .HasOne(f => f.Category)
+                .WithMany(c => c.Foods)
+                .HasForeignKey(f => f.FoodCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // FoodCategory -> Restaurant (Many-to-One)
             modelBuilder.Entity<FoodCategory>()
                 .HasOne(fc => fc.Restaurant)
                 .WithMany(r => r.FoodCategories)
                 .HasForeignKey(fc => fc.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Many-to-Many: Restaurant <-> RestaurantCategory
+            // Restaurant <-> RestaurantCategory (Many-to-One)
             modelBuilder.Entity<Restaurant>()
                 .HasOne(r => r.RestaurantCategory)
                 .WithMany(c => c.Restaurants)
                 .HasForeignKey(r => r.RestaurantCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // One-to-One: Restaurant -> User
+            // Restaurant -> User (One-to-Many)
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Restaurants)
-                      .WithOne(r => r.OwnerUser)
-                      .HasForeignKey(r => r.OwnerUserId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                .WithOne(r => r.OwnerUser)
+                .HasForeignKey(r => r.OwnerUserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // One-to-Many: Subscription -> SubscriptionPlan
+            // Subscription -> SubscriptionPlan (Many-to-One)
             modelBuilder.Entity<Subscription>()
                 .HasOne(s => s.SubscriptionPlan)
                 .WithMany(sp => sp.Subscriptions)
                 .HasForeignKey(s => s.SubscriptionPlanId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // One-to-One: Restaurant -> Subscription
+            // Restaurant -> Subscription (One-to-One)
             modelBuilder.Entity<Restaurant>()
                 .HasOne(r => r.Subscription)
                 .WithOne(s => s.Restaurant)
                 .HasForeignKey<Subscription>(s => s.RestaurantId)
-                .OnDelete(DeleteBehavior.Cascade); // یا Restrict برحسب نیاز
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // RestaurantRating: (User, Restaurant) pair is unique
+            modelBuilder.Entity<RestaurantRating>()
+                .HasIndex(r => new { r.UserId, r.RestaurantId })
+                .IsUnique();
+
+            // RestaurantDiscount -> optional Food
+            modelBuilder.Entity<RestaurantDiscount>()
+                .HasOne(d => d.Food)
+                .WithMany()
+                .HasForeignKey(d => d.FoodId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             /* ---------------------------- Seed Data ---------------------------- */
-            // Seed داده‌های دسته‌بندی رستوران‌ها
             modelBuilder.Entity<RestaurantCategory>().HasData(
                 new RestaurantCategory { Id = 1, Name = "رستوران سنتی" },
                 new RestaurantCategory { Id = 2, Name = "رستوران مدرن" },
@@ -76,7 +96,6 @@ namespace Menro.Infrastructure.Data
                 new RestaurantCategory { Id = 7, Name = "باغ رستوران" },
                 new RestaurantCategory { Id = 8, Name = "دریایی" }
             );
-
         }
     }
 }

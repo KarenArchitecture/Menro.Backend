@@ -1,11 +1,11 @@
-﻿using Menro.Application.DTO;
-using System.Text;
+﻿using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Menro.Domain.Interfaces;
 using Menro.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Menro.Application.Services.Implementations;
+using Menro.Application.Authentication.DTOs;
 
 namespace Menro.Web.Controllers
 {

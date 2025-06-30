@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Menro.Application.DTO
+namespace Menro.Application.Authentication.DTOs
 {
-    public class LoginDto
+    public class RegisterDto
     {
+        public string FullName { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
         public string PhoneNumber { get; set; }
