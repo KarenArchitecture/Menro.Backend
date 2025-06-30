@@ -10,5 +10,7 @@ namespace Menro.Application.Services.Interfaces
     public interface IRestaurantService
     {
         Task<bool> AddRestaurantAsync(RestaurantDto dto);
+
+        Task<IEnumerable<FeaturedRestaurantDto>> GetFeaturedRestaurantsAsync();
     }
 }

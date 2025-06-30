@@ -32,8 +32,30 @@ namespace Menro.Application.Services.Implementations
                 ShebaNumber = dto.ShebaNumber,
                 RestaurantCategoryId = dto.RestaurantCategoryId
             };
-            
-            return await _uow.Restaurant.AddAsync(restaurant);
+
+            var success = await _uow.Restaurant.AddAsync(restaurant);
+
+            if (!success)
+                return false;
+
+            await _uow.SaveChangesAsync(); // ✅ Commit to database here
+
+            return true;
+        }
+
+        public async Task<IEnumerable<FeaturedRestaurantDto>> GetFeaturedRestaurantsAsync()
+        {
+            var featuredRestaurants = await _uow.Restaurant.GetAllAsync(r => r.IsFeatured == true);
+
+            // Map the results to our new, lean DTO
+            var dtos = featuredRestaurants.Select(r => new FeaturedRestaurantDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                CarouselImageUrl = r.CarouselImageUrl
+            });
+
+            return dtos;
         }
     }
 }

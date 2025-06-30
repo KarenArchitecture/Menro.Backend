@@ -1,33 +1,54 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
-using Menro.Application.Services.Implementations;
-using Menro.Application.Services.Interfaces;
-using Menro.Domain.Entities;
-using Menro.Domain.Interfaces;
-using Menro.Infrastructure.Data;
+﻿using Menro.Application.Services.Interfaces;
+using Menro.Application.DTO;
 using Menro.Infrastructure.Repositories;
+using Menro.Application.Services.Implementations;
+using Menro.Domain.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
 using Menro.Application.Settings;
-
-
+using Menro.Infrastructure.Data;
+using Menro.Web.Middleware;
+using Menro.Domain.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddDbContext<MenroDbContext>(option =>
-option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddIdentity<User, IdentityRole>(options => {
-    options.User.RequireUniqueEmail = false; // Set this to false
-})
+// -------------------- Add DbContext --------------------
+builder.Services.AddDbContext<MenroDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// -------------------- Add ASP.NET Core Identity --------------------
+builder.Services.AddIdentity<User, IdentityRole>() // 👈 Use your actual User entity!
     .AddEntityFrameworkStores<MenroDbContext>()
     .AddDefaultTokenProviders();
-// Services Scopes
-builder.Services.AddScoped<IDbInitializer, DbInitializer>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// -------------------- Configure JWT --------------------
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]);
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
+});
+
+// -------------------- Application Services --------------------
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFoodService, FoodService>();
@@ -37,85 +58,75 @@ builder.Services.AddScoped<IRestaurantCategoryService, RestaurantCategoryService
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
 
-// Configure Cookie authentication
-builder.Services.AddControllersWithViews();
-builder.Services.ConfigureApplicationCookie(options =>
+// -------------------- Unit of Work --------------------
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// -------------------- Repository Layer --------------------
+builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
+builder.Services.AddScoped<IFoodRepository, FoodRepository>();
+builder.Services.AddScoped<IFoodCategoryRepository, FoodCategoryRepository>();
+builder.Services.AddScoped<IRestaurantCategoryRepository, RestaurantCategoryRepository>();
+builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+builder.Services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// -------------------- Swagger --------------------
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
 {
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Menro API", Version = "v1" });
 });
 
-// Configure JWT authentication
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-builder.Services.AddAuthentication(options =>
+// -------------------- Controllers --------------------
+builder.Services.AddControllers();
+
+// -------------------- CORS --------------------
+builder.Services.AddCors(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+    options.AddPolicy("AllowReactDevClient", builder =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]!))
-    };
+        builder.WithOrigins("http://localhost:5173") // <-- React dev server
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials();
+    });
 });
 
-// override default settings for password requirements
-builder.Services.Configure<IdentityOptions>(option =>
+// -------------------- API Versioning --------------------
+builder.Services.AddApiVersioning(options =>
 {
-    option.Password.RequiredLength = 4;
-    option.Password.RequireNonAlphanumeric = false;
-    option.Password.RequireUppercase = false;
-    option.Password.RequireLowercase = false;
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+    options.ReportApiVersions = true;
 });
 
+// -------------------- Build App --------------------
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
+// -------------------- Middleware --------------------
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseRouting();
+app.UseCors("AllowReactDevClient");
+
+app.UseErrorHandlingMiddleware();
 
 app.UseAuthentication();
 app.UseAuthorization();
-SeedDatabase();
 
-// 🔹 مسیر APIها (با [ApiController] و [Route])
 app.MapControllers();
 
-// 🔹 مسیر صفحات MVC (Views)
-
-app.MapControllerRoute(
-    name: "areas",
-    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+// -------------------- Run DbInitializer --------------------
+using (var scope = app.Services.CreateScope())
+{
+    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+    await dbInitializer.InitializeAsync(); // if it's async, or .Initialize() if sync
+}
 
 app.Run();
-
-
-void SeedDatabase()
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-        dbInitializer.InitializeAsync();
-    }
-}
