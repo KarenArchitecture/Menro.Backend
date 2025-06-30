@@ -1,4 +1,5 @@
-﻿using Menro.Domain.Interfaces;
+﻿using Menro.Domain.Entities;
+using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using System;
 using System.Collections.Generic;
@@ -20,15 +21,16 @@ namespace Menro.Infrastructure.Repositories
         public ISubscriptionRepository Subscription { get; private set; }
         public ISubscriptionPlanRepository SubscriptionPlan { get; private set; }
 
-        public UnitOfWork(MenroDbContext context)
+        public UnitOfWork(MenroDbContext context, IRestaurantRepository restaurant)
         {
             _context = context;
             User = new UserRepository(context);
+            Restaurant = restaurant;
         }
 
-        public async Task SaveAsync()
+        public async Task<int> SaveChangesAsync()
         {
-            await _context.SaveChangesAsync();
+            return await _context.SaveChangesAsync();
         }
 
         // اضافه کردن IDisposable برای آزادسازی context

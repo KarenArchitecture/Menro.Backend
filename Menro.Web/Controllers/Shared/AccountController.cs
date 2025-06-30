@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Menro.Web.ViewModels;
 
-namespace Menro.Web.Controllers
+namespace Menro.Web.Controllers.Shared
 {
     public class AccountController : Controller
     {

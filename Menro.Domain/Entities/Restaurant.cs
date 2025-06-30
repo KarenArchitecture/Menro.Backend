@@ -21,8 +21,14 @@ namespace Menro.Domain.Entities
         [Display(Name = "آدرس عکس")]
         public string? BannerImageUrl { get; set; }
 
+        [Display(Name = "آدرس عکس بنر تبلیغاتی ")]
+        public string? CarouselImageUrl { get; set; }
+
         [Required(ErrorMessage = "افزودن آدرس رستوران الزامی است")]
         public string Address { get; set; } = string.Empty;
+
+        public TimeSpan OpenTime { get; set; }
+        public TimeSpan CloseTime { get; set; }
 
         [Display(Name = "توضیحات")]
         [MaxLength(500)]
@@ -50,6 +56,8 @@ namespace Menro.Domain.Entities
 
         // اشتراک
         public Subscription? Subscription { get; set; }
+
+        public bool IsFeatured { get; set; } = false;
 
         // دسته بندی رستوران (Navigation property + FK)
         public int RestaurantCategoryId { get; set; }

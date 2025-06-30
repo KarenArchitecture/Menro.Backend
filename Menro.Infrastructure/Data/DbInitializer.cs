@@ -196,10 +196,15 @@ namespace Menro.Infrastructure.Data
                         {
                             Name = "کافه منرو",
                             Address = "خیابان ولیعصر، پلاک ۱۲۳",
+                            OpenTime = new TimeSpan(9, 0, 0),   // 9:00 AM
+                            CloseTime = new TimeSpan(22, 0, 0), // 10:00 PM
+                            Description = "بهترین منوساز ایرانی",
                             NationalCode = "0011111111",
                             BankAccountNumber = "1111111111",
                             RestaurantCategoryId = 5,
-                            OwnerUserId = ownerUser1.Id
+                            OwnerUserId = ownerUser1.Id,
+                            CarouselImageUrl = "/img/res-slider.png",
+                            IsFeatured = true
                         };
                         _db.Restaurants.Add(restaurant1);
                         await _db.SaveChangesAsync(); // Save to get restaurant1.Id
@@ -230,11 +235,15 @@ namespace Menro.Infrastructure.Data
                         {
                             Name = "کباب سرای اصیل",
                             Address = "میدان تجریش، بازار",
+                            OpenTime = new TimeSpan(9, 0, 0),   // 9:00 AM
+                            CloseTime = new TimeSpan(22, 0, 0), // 10:00 PM
                             Description = "بهترین کباب برگ و کوبیده در منطقه.",
                             NationalCode = "0022222222",
                             BankAccountNumber = "2222222222",
                             RestaurantCategoryId = 1,
-                            OwnerUserId = ownerUser1.Id // Same OwnerId
+                            OwnerUserId = ownerUser1.Id, // Same OwnerId
+                            CarouselImageUrl = "/img/res-slider.png",
+                            IsFeatured = true
                         };
                         _db.Restaurants.Add(restaurant2);
                         await _db.SaveChangesAsync();
@@ -281,11 +290,15 @@ namespace Menro.Infrastructure.Data
                         {
                             Name = "پیتزا پینو",
                             Address = "سعادت آباد، بلوار دریا",
+                            OpenTime = new TimeSpan(9, 0, 0),   // 9:00 AM
+                            CloseTime = new TimeSpan(22, 0, 0), // 10:00 PM
                             Description = "پیتزای ایتالیایی اصیل با خمیر تازه.",
                             NationalCode = "0033333333",
                             BankAccountNumber = "3333333333",
                             RestaurantCategoryId = 6,
-                            OwnerUserId = ownerUser2.Id
+                            OwnerUserId = ownerUser2.Id,
+                            CarouselImageUrl = "/img/res-slider.png",
+                            IsFeatured = true
                         };
                         _db.Restaurants.Add(restaurant3);
                         await _db.SaveChangesAsync();

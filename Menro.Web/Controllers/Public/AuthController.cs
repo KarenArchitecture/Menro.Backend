@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Menro.Application.Services.Implementations;
 using Menro.Application.Authentication.DTOs;
 
-namespace Menro.Web.Controllers
+namespace Menro.Web.Controllers.Public
 {
     [ApiController]
     [Route("api/[controller]")]
