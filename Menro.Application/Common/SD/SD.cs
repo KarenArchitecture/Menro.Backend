@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Menro.Application.SD
+namespace Menro.Application.Common.SD
 {
     static public class SD
     {

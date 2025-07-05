@@ -13,7 +13,7 @@ namespace Menro.Domain.Entities
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; }
 
-        public int UserId { get; set; }
+        public string UserId { get; set; }
         public User User { get; set; }
 
         public int Score { get; set; } // 1 to 5

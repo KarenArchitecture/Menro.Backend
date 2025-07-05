@@ -34,9 +34,9 @@
   <ItemGroup>
     <Folder Include="Areas\BusinessOwner\Data\" />
     <Folder Include="Areas\BusinessOwner\Models\" />
-    <Folder Include="Controllers\Management\" />
+    <Folder Include="Controllers\Owner\" />
     <Folder Include="Controllers\Admin\" />
-    <Folder Include="Controllers\Users\" />
+    <Folder Include="Controllers\User\" />
   </ItemGroup>
 
 </Project>

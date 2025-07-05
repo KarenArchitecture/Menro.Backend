@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Menro.Infrastructure.Data
 {
-    public class MenroDbContext : IdentityDbContext<User>, IMenroDbContext
+    public class MenroDbContext : IdentityDbContext<User>
     {
         public MenroDbContext(DbContextOptions<MenroDbContext> options) : base(options) { }
 

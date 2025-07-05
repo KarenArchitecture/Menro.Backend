@@ -34,6 +34,12 @@ namespace Menro.Domain.Entities
         [MaxLength(500)]
         public string Description { get; set; } = string.Empty;
 
+        [Display(Name = "فعال")]
+        public bool IsActive { get; set; } = true;  // New: to mark if restaurant is active or logically deleted
+
+        [Display(Name = "تأیید شده")]
+        public bool IsApproved { get; set; } = false;  // New: to indicate admin approval status
+
         // مشخصات صاحب رستوران
         [Display(Name = "کد ملی")]
         [MaxLength(10)]
@@ -68,7 +74,10 @@ namespace Menro.Domain.Entities
         public ICollection<Food> Foods { get; set; } = new List<Food>();
 
         public ICollection<FoodCategory> FoodCategories { get; set; } = new List<FoodCategory>();
-        public TimeSpan OpenTime { get; set; }
-        public TimeSpan CloseTime { get; set; }
+
+        public ICollection<RestaurantRating> Ratings { get; set; } = new List<RestaurantRating>();
+
+        public ICollection<RestaurantDiscount> Discounts { get; set; } = new List<RestaurantDiscount>();
+
     }
 }

@@ -3,8 +3,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
 using System.Text;
-using Menro.Application.Settings;
 using Menro.Application.Services.Interfaces;
+using Menro.Application.Common.Settings;
 
 namespace Menro.Application.Services.Implementations
 {

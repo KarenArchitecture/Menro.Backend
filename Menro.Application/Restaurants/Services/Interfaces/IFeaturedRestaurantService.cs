@@ -1,16 +1,14 @@
-﻿using Menro.Application.DTO;
+﻿using Menro.Application.Restaurants.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Menro.Application.Services.Interfaces
+namespace Menro.Application.Restaurants.Services.Interfaces
 {
-    public interface IRestaurantService
+    public interface IFeaturedRestaurantService
     {
-        Task<bool> AddRestaurantAsync(RestaurantDto dto);
-
         Task<IEnumerable<FeaturedRestaurantDto>> GetFeaturedRestaurantsAsync();
     }
 }

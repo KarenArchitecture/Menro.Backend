@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Menro.Application.SD;
-using Menro.Application.Services.Interfaces;
+using Menro.Application.Common.SD;
 using Menro.Application.DTO;
 using Menro.Web.Areas.RestaurantOwner.ViewModels;
+using Menro.Application.Restaurants.Services.Interfaces;
 
 namespace Menro.Web.Areas.RestaurantOwner.Controllers
 {

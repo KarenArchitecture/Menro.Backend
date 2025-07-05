@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Menro.Application.Settings
+namespace Menro.Application.Common.Settings
 {
     public class JwtSettings
     {

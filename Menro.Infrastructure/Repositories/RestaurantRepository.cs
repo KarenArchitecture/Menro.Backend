@@ -1,10 +1,9 @@
 ﻿using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
-using System;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Menro.Infrastructure.Repositories
@@ -18,5 +17,23 @@ namespace Menro.Infrastructure.Repositories
             _context = context;
         }
 
+        //Featured Restaurants Carousel
+        public async Task<IEnumerable<Restaurant>> GetFeaturedRestaurantsAsync()
+        {
+            return await _context.Restaurants
+                .Where(r => r.IsFeatured)
+                .ToListAsync();
+        }
+
+        //Random Restaurants Cards
+        public async Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync()
+        {
+            return await _context.Restaurants
+                .Include(r => r.RestaurantCategory)
+                .Include(r => r.Ratings)
+                .Include(r => r.Discounts)
+                .Where(r => r.IsActive && r.IsApproved)
+                .ToListAsync();
+        }
     }
 }

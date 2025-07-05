@@ -9,15 +9,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-using Menro.Application.Settings;
 using Menro.Infrastructure.Data;
 using Menro.Web.Middleware;
 using Menro.Domain.Entities;
+using Menro.Application.Restaurants.Services.Interfaces;
+using Menro.Application.Restaurants.Services.Implementations;
+using Menro.Application.Common;
+using Menro.Application.Common.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddDbContext<IMenroDbContext, MenroDbContext>(options =>
+builder.Services.AddDbContext<MenroDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddIdentity<User, IdentityRole>(options => {
     options.User.RequireUniqueEmail = false; // Set this to false
@@ -54,6 +57,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFoodService, FoodService>();
 builder.Services.AddScoped<IFoodCategoryService, FoodCategoryService>();
 builder.Services.AddScoped<IRestaurantService, RestaurantService>();
+builder.Services.AddScoped<IFeaturedRestaurantService, FeaturedRestaurantService>();
+builder.Services.AddScoped<IRestaurantCardService, RandomRestaurantService>();
 builder.Services.AddScoped<IRestaurantCategoryService, RestaurantCategoryService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
