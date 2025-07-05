@@ -141,6 +141,29 @@ namespace Menro.Infrastructure.Data
                 }
 
                 _db.RestaurantRatings.AddRange(ratings);
+
+
+
+                // 7️⃣ Ad Banner (one active ad for now)
+                if (!await _db.RestaurantAdBanners.AnyAsync())
+                {
+                    var randomRestaurant = await _db.Restaurants.FirstOrDefaultAsync();
+                    if (randomRestaurant != null)
+                    {
+                        var adBanner = new RestaurantAdBanner
+                        {
+                            RestaurantId = randomRestaurant.Id,
+                            ImageUrl = "/img/optcropban.jpg", // sample image path
+                            StartDate = DateTime.UtcNow.AddDays(-2),
+                            EndDate = DateTime.UtcNow.AddDays(5)
+                        };
+
+                        _db.RestaurantAdBanners.Add(adBanner);
+                    }
+                }
+
+
+
                 await _db.SaveChangesAsync();
 
                 // --- END: Ratings seeding ---

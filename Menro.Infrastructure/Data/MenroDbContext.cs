@@ -19,6 +19,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<RestaurantDiscount> RestaurantDiscounts { get; set; }
         public DbSet<RestaurantRating> RestaurantRatings { get; set; }
+        public DbSet<RestaurantAdBanner> RestaurantAdBanners { get; set; }
 
         public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

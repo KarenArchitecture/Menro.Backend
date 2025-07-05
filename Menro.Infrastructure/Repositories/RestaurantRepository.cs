@@ -35,5 +35,13 @@ namespace Menro.Infrastructure.Repositories
                 .Where(r => r.IsActive && r.IsApproved)
                 .ToListAsync();
         }
+
+        //Featured Restaurant Banner
+        public async Task<RestaurantAdBanner?> GetActiveAdBannerAsync()
+        {
+            return await _context.RestaurantAdBanners
+                .Include(b => b.Restaurant)
+                .FirstOrDefaultAsync(b => b.StartDate <= DateTime.UtcNow && b.EndDate >= DateTime.UtcNow);
+        }
     }
 }

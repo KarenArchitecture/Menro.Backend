@@ -79,5 +79,7 @@ namespace Menro.Domain.Entities
 
         public ICollection<RestaurantDiscount> Discounts { get; set; } = new List<RestaurantDiscount>();
 
+        public RestaurantAdBanner AdBanner { get; set; }
+
     }
 }
