@@ -17,5 +17,8 @@ namespace Menro.Domain.Interfaces
 
         //Featured Restaurant Banner
         Task<RestaurantAdBanner> GetActiveAdBannerAsync();
+
+        //Latest Orders
+        Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId);
     }
 }
