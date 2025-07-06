@@ -14,5 +14,11 @@ namespace Menro.Domain.Interfaces
 
         //Random Restaurants Cards
         Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync();
+
+        //Featured Restaurant Banner
+        Task<RestaurantAdBanner> GetActiveAdBannerAsync();
+
+        //Latest Orders
+        Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId);
     }
 }

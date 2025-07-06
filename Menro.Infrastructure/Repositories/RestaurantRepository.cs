@@ -35,5 +35,28 @@ namespace Menro.Infrastructure.Repositories
                 .Where(r => r.IsActive && r.IsApproved)
                 .ToListAsync();
         }
+
+        //Featured Restaurant Banner
+        public async Task<RestaurantAdBanner?> GetActiveAdBannerAsync()
+        {
+            return await _context.RestaurantAdBanners
+                .Include(b => b.Restaurant)
+                .FirstOrDefaultAsync(b => b.StartDate <= DateTime.UtcNow && b.EndDate >= DateTime.UtcNow);
+        }
+
+        //Latest Orders
+        public async Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId)
+        {
+            return await _context.Orders
+                .Where(o => o.UserId == userId)
+                .OrderByDescending(o => o.CreatedAt)
+                .Select(o => o.Food.Restaurant)
+                .Distinct()
+                .Include(r => r.RestaurantCategory)
+                .Include(r => r.Ratings)
+                .Include(r => r.Discounts)
+                .ToListAsync();
+        }
+
     }
 }
