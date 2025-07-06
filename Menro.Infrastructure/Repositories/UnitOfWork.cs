@@ -25,6 +25,14 @@ namespace Menro.Infrastructure.Repositories
         {
             _context = context;
             User = new UserRepository(context);
+            Food = new FoodRepository(context);
+            FoodCategory = new FoodCategoryRepository(context);
+            Restaurant = new RestaurantRepository(context);
+            RestaurantCategory = new RestaurantCategoryRepository(context);
+            Subscription = new SubscriptionRepository(context);
+            SubscriptionPlan = new SubscriptionPlanRepository(context);
+            Otp = new OtpRepository(context);
+
         }
 
         public async Task SaveAsync()

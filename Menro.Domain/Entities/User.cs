@@ -11,7 +11,7 @@ namespace Menro.Domain.Entities
     {
         public string FullName { get; set; } = string.Empty;
         public string? ProfileImageUrl { get; set; } = string.Empty;
-
+        // تاریخ عضویت
         public Restaurant? Restaurant { get; set; } = null;
     }
 }

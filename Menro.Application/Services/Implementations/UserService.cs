@@ -40,15 +40,25 @@ namespace Menro.Application.Services.Implementations
             return user;
 
         }
-        public async Task<bool> RegisterUserAsync(string fullName, string email, string password)
+        public async Task<bool> RegisterUserAsync(string fullName, string email, string phoneNumber, string password)
         {
-            if (await _userManager.FindByEmailAsync(email) is not null)
-                return false;
+            if (email is not null)
+            {
+                if (await _userManager.FindByEmailAsync(email) is not null)
+                    return false;
+            }
+            if (phoneNumber is not null)
+            {
+                if (await _uow.User.GetByPhoneNumberAsync(phoneNumber) is not null)
+                    return false;
+
+            }
 
             var user = new User
             {
                 FullName = fullName,
                 Email = email,
+                PhoneNumber = phoneNumber,
                 UserName = email
             };
 

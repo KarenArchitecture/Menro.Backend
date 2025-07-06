@@ -47,7 +47,7 @@ namespace Menro.Infrastructure.Data
                         FullName = "Admin",
                         NormalizedEmail = "MenroAdmin@gmail.com",
                         NormalizedUserName = "MenroAdmin@gmail.com".ToUpper(),
-                        PhoneNumber = "+989486813486",
+                        PhoneNumber = "09486813486",
                     },
                     password: "admin123456").GetAwaiter().GetResult();
                     User? adminUser = _db.Users.FirstOrDefault(u => u.Email == "MenroAdmin@gmail.com");
@@ -61,7 +61,7 @@ namespace Menro.Infrastructure.Data
                         FullName = "صاحب رستوران نمونه",
                         NormalizedEmail = "OWNER1@MENRO.COM",
                         NormalizedUserName = "OWNER1@MENRO.COM",
-                        PhoneNumber = "+989123456789",
+                        PhoneNumber = "09123456789",
                     },
                     password: "owner123456").GetAwaiter().GetResult();
                     var ownerUser = _db.Users.FirstOrDefault(u => u.Email == "owner1@menro.com");

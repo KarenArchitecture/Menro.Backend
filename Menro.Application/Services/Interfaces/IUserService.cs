@@ -11,7 +11,7 @@ namespace Menro.Application.Services.Interfaces
     {
         public Task<User> GetByIdAsync(string id);
         public Task<User> GetByEmailAsync(string email);
-        public Task<bool> RegisterUserAsync(string fullName, string email, string password);
+        public Task<bool> RegisterUserAsync(string fullName, string email, string phoneNumber, string password);
         public Task<User?> LoginUserAsync(string email, string password);
 
     }

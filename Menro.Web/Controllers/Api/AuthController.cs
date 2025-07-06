@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Menro.Application.Services.Interfaces;
 using Menro.Application.DTO.Auth;
 using Menro.Application.Services.Implementations;
+using Microsoft.EntityFrameworkCore;
+using Menro.Application.SD;
 
 namespace Menro.Web.Controllers.Api
 {
@@ -11,53 +13,61 @@ namespace Menro.Web.Controllers.Api
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
-        private readonly IJwtService _jwtService;
+        private readonly IAuthService _authService;
+        private readonly IUserService _userService;
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
-        private readonly IOtpService _otpService;
 
         public AuthController(
-            IJwtService jwtService,
+            IAuthService authService,
             UserManager<User> userManager,
-            SignInManager<User> signInManager,
-            IOtpService otpService)
+            SignInManager<User> signInManager
+            )
         {
-            _jwtService = jwtService;
             _userManager = userManager;
             _signInManager = signInManager;
-            _otpService = otpService;
+            _authService = authService;
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto model)
+
+        
+
+        [HttpPost("send-otp")]
+        public async Task<IActionResult> SendOtp([FromBody] SendOtpDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest("Invalid login request");
+            if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
+                return BadRequest("شماره تلفن نامعتبر است.");
 
-            var user = await _userManager.FindByEmailAsync(model.Email);
+            await _authService.SendOtpAsync(dto.PhoneNumber);
+            return Ok(new { message = "کد تأیید ارسال شد." });
+
+        }
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+        {
+            if (!await _authService.VerifyOtpAsync(dto.PhoneNumber, dto.Code))
+                return BadRequest(new { message = "کد تایید نامعتبر است." });
+
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == dto.PhoneNumber);
             if (user == null)
-                return Unauthorized("Invalid credentials");
-
-            var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
-            if (!result.Succeeded)
-                return Unauthorized("Invalid credentials");
+                return Ok(new { needsRegister = true });
 
             var roles = await _userManager.GetRolesAsync(user);
-            var token = _jwtService.GenerateToken(
+            var token = _authService.GenerateToken(
                 Guid.Parse(user.Id),
-                user.UserName ?? "", // یا FullName اگه توی مدل User داری
-                user.Email!,
+                user.UserName ?? "",
+                user.Email ?? "",
                 roles.ToList()
             );
 
             return Ok(new
             {
+                needsRegister = false,
                 token,
-                expiresIn = 60 * 60, // اگر خواستی دقیق‌تر باشه می‌تونی از settings بگیری
                 user = new
                 {
                     user.Id,
-                    user.UserName,
+                    user.FullName,
                     user.Email,
                     user.PhoneNumber,
                     Roles = roles
@@ -65,44 +75,25 @@ namespace Menro.Web.Controllers.Api
             });
         }
 
-        // تست نهایی نشده
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+        [HttpPost("login-password")]
+        public async Task<IActionResult> LoginWithPassword([FromBody] LoginPasswordDto dto)
         {
-            var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-            if (existingUser != null)
-                return BadRequest(new { message = "این ایمیل قبلاً ثبت شده است." });
+            if (string.IsNullOrWhiteSpace(dto.PhoneNumber) || string.IsNullOrWhiteSpace(dto.Password))
+                return BadRequest(new { message = "شماره تلفن و رمز عبور الزامی است." });
 
-            var user = new User
-            {
-                FullName = dto.FullName,
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
-                UserName = dto.Email,
-                //EmailConfirmed = true
-            };
+            var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == dto.PhoneNumber);
+            if (user == null)
+                return BadRequest(new { message = "کاربری با این شماره وجود ندارد." });
 
-            var result = await _userManager.CreateAsync(user, dto.Password);
-
-            if (!result.Succeeded)
-            {
-                var errors = result.Errors.Select(e => e.Description).ToList();
-                return BadRequest(new { message = "ثبت‌نام ناموفق بود.", errors });
-            }
-
-            // پیش‌فرض نقش مشتری
-            await _userManager.AddToRoleAsync(user, "Customer");
+            var isPasswordValid = await _userManager.CheckPasswordAsync(user, dto.Password);
+            if (!isPasswordValid)
+                return BadRequest(new { message = "رمز عبور نادرست است." });
 
             var roles = await _userManager.GetRolesAsync(user);
-            if (!Guid.TryParse(user.Id, out var userId))
-            {
-                return BadRequest("Invalid user ID format.");
-            }
-
-            var token = _jwtService.GenerateToken(
-                userId,
+            var token = _authService.GenerateToken(
+                Guid.Parse(user.Id),
                 user.FullName ?? "",
-                user.Email!,
+                user.Email ?? "",
                 roles.ToList()
             );
 
@@ -114,29 +105,12 @@ namespace Menro.Web.Controllers.Api
                     user.Id,
                     user.FullName,
                     user.Email,
+                    user.PhoneNumber,
                     Roles = roles
                 }
             });
         }
 
-        [HttpPost("send-otp")]
-        public async Task<IActionResult> SenOtp([FromBody] SendOtpDto dto)
-        {
-            if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
-                return BadRequest("شماره تلفن نامعتبر است.");
 
-            await _otpService.SendOtpAsync(dto.PhoneNumber);
-            return Ok(new { message = "کد تأیید ارسال شد." });
-
-        }
-        [HttpPost("verify-otp")]
-        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
-        {
-            if (await _otpService.VerifyOtpAsync(dto.PhoneNumber, dto.Code))
-            {
-                return Ok();
-            }
-            return BadRequest("معتبر نیست!");
-        }
     }
 }

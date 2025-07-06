@@ -6,11 +6,9 @@ using System.Threading.Tasks;
 
 namespace Menro.Application.DTO.Auth
 {
-    public class RegisterDto
+    public class LoginPasswordDto
     {
-        public string FullName { get; set; }
-        public string Password { get; set; } // Optional
         public string PhoneNumber { get; set; }
-        public string Email { get; set; } // Optional
+        public string Password { get; set; }
     }
 }

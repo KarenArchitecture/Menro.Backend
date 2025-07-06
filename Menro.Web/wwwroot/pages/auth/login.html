@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fa-IR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ورود</title>
+    <link href="/css/styles-login.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="login-container">
+        <div class="form-content">
+            <h1>ورود یا ثبت‌نام</h1>
+            <div class="login-tabs">
+                <button id="otp-tab" class="tab active">ورود با کد یکبار مصرف</button>
+                <button id="password-tab" class="tab">ورود با رمز عبور</button>
+            </div>
+
+            <!-- فرم OTP -->
+            <form id="loginFormOtp" class="login-form active-form">
+                <div class="input-group" id="phone-group">
+                    <label for="phone">شماره تلفن</label>
+                    <input type="tel"
+                           id="phone"
+                           name="phone"
+                           placeholder="09123456789"
+                           required />
+                </div>
+
+                <div class="input-group" id="code-group" style="display: none">
+                    <label for="code">کد تایید ۴ رقمی</label>
+                    <input type="text"
+                           id="code"
+                           name="code"
+                           placeholder="----"
+                           maxlength="4" />
+                </div>
+
+                <button type="submit" id="submitButton">ادامه</button>
+            </form>
+
+            <!-- فرم رمز عبور -->
+            <form id="loginFormPassword" class="login-form" style="display: none">
+                <div class="input-group">
+                    <label for="emailOrPhone">ایمیل یا شماره تلفن</label>
+                    <input type="text" id="emailOrPhone" name="emailOrPhone" required />
+                </div>
+                <div class="input-group">
+                    <label for="password">رمز عبور</label>
+                    <input type="password" id="password" name="password" required />
+                </div>
+                <button type="submit">ورود</button>
+            </form>
+
+            <p id="message-area" class="message"></p>
+        </div>
+    </div>    <script src="/js/login.js"></script>
+</body>
+</html>

@@ -93,8 +93,7 @@ builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
 
 #region External Services
 
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IOtpService, OtpService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISmsSender, FakeSmsSender>();
 
 #endregion
