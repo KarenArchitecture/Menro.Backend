@@ -1,5 +1,5 @@
 ﻿using Menro.Application.Services.Interfaces;
-using Menro.Application.Settings;
+using Menro.Application.Common.Settings;
 using Menro.Domain.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -7,7 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Security.Cryptography;
 using Menro.Domain.Entities;
-using Microsoft.AspNetCore.Identity;
+
 
 namespace Menro.Application.Services.Implementations
 {
@@ -40,7 +40,7 @@ namespace Menro.Application.Services.Implementations
         public async Task SendOtpAsync(string phoneNumber)
         {
             var code = RandomNumberGenerator.GetInt32(1000, 9999).ToString();
-            await _smsSender.SendAsync(phoneNumber, $"کد تایید شما: {code}");
+            //await _smsSender.SendAsync(phoneNumber, $"کد تایید شما: {code}");
             var otp = new Otp
             {
                 PhoneNumber = phoneNumber,
@@ -51,6 +51,8 @@ namespace Menro.Application.Services.Implementations
 
             await _uow.Otp.AddAsync(otp);
             await _uow.SaveAsync();
+            
+            
         }
 
         // verify otp

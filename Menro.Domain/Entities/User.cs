@@ -18,6 +18,6 @@ namespace Menro.Domain.Entities
         [Display(Name = "آدرس عکس")]
         public string? ProfileImageUrl { get; set; } = string.Empty;
         // تاریخ عضویت
-        public Restaurant? Restaurant { get; set; } = null;
+        public ICollection<Restaurant>? Restaurants { get; set; } = new List<Restaurant>();
     }
 }

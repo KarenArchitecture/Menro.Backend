@@ -1,8 +1,8 @@
 ﻿using Menro.Application.Services.Interfaces;
-using static Menro.Application.SD.SD;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using static Menro.Application.Common.SD.SD;
 
 
 namespace Menro.Application.Services.Implementations

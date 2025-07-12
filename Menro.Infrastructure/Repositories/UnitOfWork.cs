@@ -35,7 +35,7 @@ namespace Menro.Infrastructure.Repositories
             Otp = new OtpRepository(context);
         }
 
-        public async Task<int> SaveChangesAsync()
+        public async Task<int> SaveAsync()
         {
             return await _context.SaveChangesAsync();
         }

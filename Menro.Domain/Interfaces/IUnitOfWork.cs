@@ -17,6 +17,6 @@ namespace Menro.Domain.Interfaces
         ISubscriptionPlanRepository SubscriptionPlan { get;}
         IOtpRepository Otp { get;}
 
-        Task<int> SaveChangesAsync();
+        Task<int> SaveAsync();
     }
 }

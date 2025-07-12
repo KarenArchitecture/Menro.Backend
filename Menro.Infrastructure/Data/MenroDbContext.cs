@@ -20,8 +20,9 @@ namespace Menro.Infrastructure.Data
         public DbSet<RestaurantDiscount> RestaurantDiscounts { get; set; }
         public DbSet<RestaurantRating> RestaurantRatings { get; set; }
         public DbSet<RestaurantAdBanner> RestaurantAdBanners { get; set; }
+        public DbSet<Otp> Otps { get; set; }
 
-        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
         {
             return await base.SaveChangesAsync(cancellationToken);
         }

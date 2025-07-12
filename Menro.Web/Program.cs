@@ -8,10 +8,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Menro.Application.Common.Settings;
 using Menro.Application.DTO;
-using Menro.Application.Restaurants.Services.Implementations;
-using Menro.Application.Restaurants.Services.Interfaces;
-using Menro.Application.Services.Implementations;
 using Menro.Application.Services.Interfaces;
+using Menro.Application.Services.Implementations;
+using Menro.Application.Restaurants.Services.Interfaces;
+using Menro.Application.Restaurants.Services.Implementations;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
@@ -19,10 +19,9 @@ using Menro.Infrastructure.Repositories;
 using Menro.Infrastructure.Sms;
 using Menro.Web.Middleware;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-#region Database & Identity
+#region DbContext & Identity
 
 builder.Services.AddDbContext<MenroDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -35,21 +34,16 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequireLowercase = false;
     options.User.RequireUniqueEmail = false;
 })
-    .AddEntityFrameworkStores<MenroDbContext>()
-    .AddDefaultTokenProviders();
+.AddEntityFrameworkStores<MenroDbContext>()
+.AddDefaultTokenProviders();
 
 #endregion
 
-#region JwtSettings Configuration
+#region Authentication & JWT
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
-
 builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtSettings>>().Value);
-
-#endregion
-
-#region Authentication
 
 builder.Services.AddAuthentication(options =>
 {
@@ -71,7 +65,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Cookie Authentication for MVC login/logout pages
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -91,22 +84,19 @@ builder.Services.AddScoped<IRestaurantCategoryService, RestaurantCategoryService
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
 
-// Restaurant Services
+#endregion
+
+#region Restaurant Services
+
 builder.Services.AddScoped<IRestaurantService, RestaurantService>();
 builder.Services.AddScoped<IFeaturedRestaurantService, FeaturedRestaurantService>();
 builder.Services.AddScoped<IRestaurantCardService, RandomRestaurantService>();
 builder.Services.AddScoped<IRestaurantAdBannerService, RestaurantAdBannerService>();
-builder.Services.AddScoped<ILatestOrdersCardService, LatestOrdersCardService>();
+builder.Services.AddScoped<IUserRecentOrderCardService, UserRecentOrderCardService>();
 
 #endregion
 
-#region External Services
-
-builder.Services.AddScoped<ISmsSender, FakeSmsSender>();
-
-#endregion
-
-#region Repository Layer
+#region Repositories
 
 builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
 builder.Services.AddScoped<IFoodRepository, FoodRepository>();
@@ -118,46 +108,24 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 #endregion
 
-#region Unit of Work
+#region Infrastructure Services
 
+builder.Services.AddScoped<ISmsSender, FakeSmsSender>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 
 #endregion
 
-#region Swagger
+#region API & MVC
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Menro API", Version = "v1" });
 });
-
-#endregion
-
-#region Controllers & MVC
-
-builder.Services.AddControllersWithViews();
-builder.Services.AddControllers();
-
-#endregion
-
-#region CORS
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowReactDevClient", policy =>
-    {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
-
-#endregion
-
-#region API Versioning
 
 builder.Services.AddApiVersioning(options =>
 {
@@ -166,11 +134,22 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowReactDevClient", policy =>
+//    {
+//        policy.WithOrigins("http://localhost:5173")
+//              .AllowAnyHeader()
+//              .AllowAnyMethod()
+//              .AllowCredentials();
+//    });
+//});
+
 #endregion
 
 var app = builder.Build();
 
-#region HTTP Pipeline
+#region Middleware
 
 if (app.Environment.IsDevelopment())
 {
@@ -186,7 +165,7 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseCors("AllowReactDevClient");
+//app.UseCors("AllowReactDevClient");
 
 app.UseErrorHandlingMiddleware();
 
@@ -195,18 +174,26 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+#endregion
+
+#region Routing
+
 app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+#endregion
+
+#region DB Initialization
+
 using (var scope = app.Services.CreateScope())
 {
     var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-    await dbInitializer.InitializeAsync(); // یا InitializeAsync() اگر async باشه
+    await dbInitializer.InitializeAsync();
 }
 
-app.Run();
-
 #endregion
+
+app.Run();

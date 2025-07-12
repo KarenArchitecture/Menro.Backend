@@ -45,18 +45,18 @@ namespace Menro.Infrastructure.Repositories
         }
 
         //Latest Orders
-        public async Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId)
-        {
-            return await _context.Orders
-                .Where(o => o.UserId == userId)
-                .OrderByDescending(o => o.CreatedAt)
-                .Select(o => o.Food.Restaurant)
-                .Distinct()
-                .Include(r => r.RestaurantCategory)
-                .Include(r => r.Ratings)
-                .Include(r => r.Discounts)
-                .ToListAsync();
-        }
+        //public async Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId)
+        //{
+        //    return await _context.Orders
+        //        .Where(o => o.UserId == userId)
+        //        .OrderByDescending(o => o.CreatedAt)
+        //        .Select(o => o.Food.Restaurant)
+        //        .Distinct()
+        //        .Include(r => r.RestaurantCategory)
+        //        .Include(r => r.Ratings)
+        //        .Include(r => r.Discounts)
+        //        .ToListAsync();
+        //}
 
     }
 }

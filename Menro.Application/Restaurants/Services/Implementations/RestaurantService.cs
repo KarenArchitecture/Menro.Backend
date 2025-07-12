@@ -39,7 +39,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
             if (!success)
                 return false;
 
-            await _uow.SaveChangesAsync(); // ✅ Commit to database here
+            await _uow.SaveAsync(); // ✅ Commit to database here
 
             return true;
         }
