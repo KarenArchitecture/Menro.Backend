@@ -1,110 +1,122 @@
-/* user info */
-.profile-section {
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #121212;
+    color: #eaeaea;
     display: flex;
-    flex-direction: column;
+    justify-content: center;
     align-items: center;
-    margin-bottom: 2.4rem;
-}
-
-.avatar-box {
-    position: relative;
-    margin-bottom: 0.8rem;
-}
-
-.avatar {
-    width: 11.4rem;
-    height: 11.4rem;
-    border-radius: 50%;
-}
-
-.edit-icon {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-}
-
-.username {
+    height: 100vh;
     margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
+    direction: rtl;
 }
 
-.join-date {
-    margin: 0;
-    font-size: 1rem;
-    color: #aaa;
+.login-container {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid #2f2f2f;
 }
 
-/* profile options */
-.options {
+.form-content h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.login-tabs {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 25px;
 }
 
-.option-btn {
-    height: 5.4rem;
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-    background: #1a1d24;
+.tab {
+    flex: 1;
+    background-color: #2a2a2a;
+    color: #ccc;
+    padding: 12px;
     border: none;
-    border-radius: 1.1rem;
-    padding: 1.2rem 1.6rem;
-    color: #fff;
     cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    border-radius: 6px;
+    margin: 0 5px;
 }
 
-    .option-btn span {
-        font-size: 1.7rem;
-        font-weight: 600;
+    .tab.active {
+        background-color: #f59e0b;
+        color: #fff;
     }
 
-.theme-mode {
-    color: #f98b32;
-    font-size: 1.5rem;
-    font-weight: 500;
+.input-group {
+    margin-bottom: 25px;
 }
 
-.heart {
-    background: linear-gradient(to right, #13171E, #35233F);
+    .input-group label {
+        display: block;
+        font-size: 14px;
+        color: #bbb;
+        margin-bottom: 8px;
+        text-align: right;
+    }
+
+    .input-group input {
+        width: 100%;
+        padding: 14px;
+        background-color: #252525;
+        border: 1px solid #333;
+        border-radius: 8px;
+        color: #eaeaea;
+        font-size: 16px;
+        box-sizing: border-box;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        }
+
+button {
+    width: 100%;
+    padding: 15px;
+    background-color: #f59e0b;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
-.theme {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    button:hover {
+        background-color: #d97706;
+    }
+
+    button:active {
+        transform: scale(0.98);
+    }
+
+.message {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 14px;
+    min-height: 20px;
+    transition: color 0.3s ease;
 }
 
-.theme-label {
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-}
+    .message.success {
+        color: #10b981;
+    }
 
-.support {
-    background: linear-gradient(to right, #13171E, #122139);
-}
+    .message.error {
+        color: #ef4444;
+    }
 
-.faq {
-    background: linear-gradient(to right, #13171E, #142F20);
-}
-
-/* desktop navigation */
-
-
-/* ********************************************* */
-/* Responsive */
-/* ********************************************* */
-
-@media (min-width: 425px) {
-}
-
-@media (min-width: 768px) {
-}
-
-@media(min-width: 1024px) {
-}
-
-@media(min-width: 1440px) {
-}
+    .message.info {
+        color: #888;
+    }

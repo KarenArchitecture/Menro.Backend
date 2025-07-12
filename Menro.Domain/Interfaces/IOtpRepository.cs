@@ -1,0 +1,14 @@
+﻿using Menro.Domain.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Menro.Domain.Interfaces
+{
+    public interface IOtpRepository : IRepository<Otp>
+    {
+        Task<Otp?> GetLatestUnexpiredAsync(string phoneNumber);
+    }
+}

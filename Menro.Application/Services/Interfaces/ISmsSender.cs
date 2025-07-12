@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Menro.Application.Services.Interfaces
 {
-    public interface IJwtService
+    public interface ISmsSender
     {
-        public string GenerateToken(Guid userId, string fullName, string email, List<string> roles);
+        Task SendAsync(string phoneNumber, string message);
     }
 }

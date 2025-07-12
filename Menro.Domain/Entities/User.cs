@@ -17,7 +17,7 @@ namespace Menro.Domain.Entities
 
         [Display(Name = "آدرس عکس")]
         public string? ProfileImageUrl { get; set; } = string.Empty;
-
-        public ICollection<Restaurant>? Restaurants { get; set; } = new List<Restaurant>();
+        // تاریخ عضویت
+        public Restaurant? Restaurant { get; set; } = null;
     }
 }

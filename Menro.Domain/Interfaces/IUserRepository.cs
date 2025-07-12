@@ -10,6 +10,7 @@ namespace Menro.Domain.Interfaces
     public interface IUserRepository : IRepository<User>
     {
         Task<User?> GetByEmailAsync(string email);
+        Task<User?> GetByPhoneNumberAsync(string phoneNumber);
         Task<User?> GetByNameAsync(string name);
         Task<bool> ExistsByEmailAsync(string email);
     }

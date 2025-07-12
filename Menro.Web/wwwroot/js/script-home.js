@@ -87,3 +87,22 @@ carousel.addEventListener("mouseleave", handleTouchEnd);
 carousel.addEventListener("touchstart", handleTouchStart);
 carousel.addEventListener("touchmove", handleTouchMove);
 carousel.addEventListener("touchend", handleTouchEnd);
+
+
+
+// logout
+const logoutBtn = document.getElementById('logoutBtn');
+
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () {
+        // پاک کردن توکن
+        localStorage.removeItem('token');
+
+        // اگر چیز دیگه‌ای ذخیره کردی اینجا پاک کن
+        // localStorage.removeItem('user');
+        // sessionStorage.clear(); ← فقط اگه استفاده کرده بودی
+
+        // هدایت به صفحه لاگین
+        window.location.href = '/login.html';
+    });
+}

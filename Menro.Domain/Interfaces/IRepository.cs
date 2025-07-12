@@ -14,6 +14,7 @@ namespace Menro.Domain.Interfaces
         Task<T?> GetByIdAsync(string id);
         Task<bool> AnyAsync(Expression<Func<T, bool>> filter);
         Task<bool> AddAsync(T entity);
+        Task<bool> UpdateAsync(T entity);
         Task<bool> DeleteAsync(T entity);
     }
 }

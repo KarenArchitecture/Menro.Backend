@@ -22,7 +22,10 @@ namespace Menro.Infrastructure.Repositories
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
-
+        public async Task<User?> GetByPhoneNumberAsync(string phoneNumber)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
+        }
         public async Task<User?> GetByNameAsync(string name)
         {
             return await _context.Users.FirstOrDefaultAsync(u => u.FullName == name);

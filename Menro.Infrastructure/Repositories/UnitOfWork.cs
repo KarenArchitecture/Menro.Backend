@@ -20,12 +20,19 @@ namespace Menro.Infrastructure.Repositories
         public IRestaurantCategoryRepository RestaurantCategory { get; private set; }
         public ISubscriptionRepository Subscription { get; private set; }
         public ISubscriptionPlanRepository SubscriptionPlan { get; private set; }
+        public IOtpRepository Otp { get; private set; }
 
         public UnitOfWork(MenroDbContext context, IRestaurantRepository restaurant)
         {
             _context = context;
             User = new UserRepository(context);
-            Restaurant = restaurant;
+            Food = new FoodRepository(context);
+            FoodCategory = new FoodCategoryRepository(context);
+            Restaurant = new RestaurantRepository(context);
+            RestaurantCategory = new RestaurantCategoryRepository(context);
+            Subscription = new SubscriptionRepository(context);
+            SubscriptionPlan = new SubscriptionPlanRepository(context);
+            Otp = new OtpRepository(context);
         }
 
         public async Task<int> SaveChangesAsync()

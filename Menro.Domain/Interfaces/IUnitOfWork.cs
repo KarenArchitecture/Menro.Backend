@@ -15,6 +15,7 @@ namespace Menro.Domain.Interfaces
         IRestaurantCategoryRepository RestaurantCategory { get;}
         ISubscriptionRepository Subscription { get;}
         ISubscriptionPlanRepository SubscriptionPlan { get;}
+        IOtpRepository Otp { get;}
 
         Task<int> SaveChangesAsync();
     }
