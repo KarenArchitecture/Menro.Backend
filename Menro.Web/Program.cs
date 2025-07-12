@@ -13,8 +13,6 @@ using Menro.Infrastructure.Repositories;
 using Menro.Application.Settings;
 using Menro.Infrastructure.Sms;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 #region Database & Identity
@@ -26,7 +24,6 @@ builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<MenroDbContext>()
     .AddDefaultTokenProviders();
 
-// تنظیمات Identity (مثل پسورد)
 builder.Services.Configure<IdentityOptions>(options =>
 {
     options.Password.RequiredLength = 4;
@@ -37,12 +34,21 @@ builder.Services.Configure<IdentityOptions>(options =>
 
 #endregion
 
-#region Authentication Setup
+#region JwtSettings Configuration and Registration
 
-// JWT Authentication (برای API)
+// Bind configuration section to JwtSettings class
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+// Register JwtSettings as a singleton to inject directly
+builder.Services.AddSingleton(sp =>
+    sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtSettings>>().Value);
+
+#endregion
+
+#region Authentication Setup
+
+var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -56,13 +62,13 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Secret"]!))
+        ValidIssuer = jwtSettingsSection["Issuer"],
+        ValidAudience = jwtSettingsSection["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettingsSection["Secret"]!))
     };
 });
 
-// Cookie Authentication (برای MVC)
+// Cookie Authentication for MVC login/logout pages
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -98,7 +104,7 @@ builder.Services.AddScoped<ISmsSender, FakeSmsSender>();
 
 #endregion
 
-// MVC & Controllers
+// MVC & API Controllers
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
@@ -120,10 +126,8 @@ app.UseAuthorization();
 
 SeedDatabase();
 
-// 🔹 Map API Controllers (with [ApiController])
 app.MapControllers();
 
-// 🔹 Map MVC Controllers (Views)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

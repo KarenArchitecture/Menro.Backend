@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Menro.Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ namespace Menro.Application.Services.Interfaces
         Task SendOtpAsync(string phoneNumber);
         Task<bool> VerifyOtpAsync(string phoneNumber, string code);
         string GenerateToken(Guid userId, string fullName, string email, List<string> roles);
-
+        public Task<(string Token, User User, List<string> Roles)> LoginWithPasswordAsync(string phoneNumber, string password);
 
     }
 }

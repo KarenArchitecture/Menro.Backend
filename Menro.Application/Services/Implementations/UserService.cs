@@ -1,29 +1,31 @@
 ﻿using Menro.Application.Services.Interfaces;
+using static Menro.Application.SD.SD;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Menro.Application.Services.Implementations
 {
+    /*
+    * شرح وظایف:
+    ثبت نام
+    لاگین
+    پیدا کردن کاربر
+    ادیت کردن اطلاعات کاربری
+    */
     public class UserService : IUserService
     {
         private readonly IUnitOfWork _uow;
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly SignInManager<User> _signInManager;
 
 
-        public UserService(IUnitOfWork uow, UserManager<User> userManager, RoleManager<IdentityRole> roleManager, SignInManager<User> signInManager)
+        public UserService(IUnitOfWork uow, UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
         {
             _uow = uow;
             _userManager = userManager;
             _roleManager = roleManager;
-            _signInManager = signInManager;
         }
         public async Task<User> GetByIdAsync(string userId)
         {
@@ -40,35 +42,58 @@ namespace Menro.Application.Services.Implementations
             return user;
 
         }
-        public async Task<bool> RegisterUserAsync(string fullName, string email, string phoneNumber, string password)
+        public async Task<User?> GetByPhoneNumberAsync(string phoneNumber)
         {
-            if (email is not null)
-            {
-                if (await _userManager.FindByEmailAsync(email) is not null)
-                    return false;
-            }
-            if (phoneNumber is not null)
-            {
-                if (await _uow.User.GetByPhoneNumberAsync(phoneNumber) is not null)
-                    return false;
+            var user = await _uow.User.GetByPhoneNumberAsync(phoneNumber);
+            return user;
+        }
 
-            }
+        public async Task<(bool IsSuccess, IdentityResult? Result, User? User)> RegisterUserAsync(string fullName, string email, string phoneNumber, string? password)
+        {
+            var existingUserByPhone = await _uow.User.GetByPhoneNumberAsync(phoneNumber);
+            if (existingUserByPhone != null)
+                return (false, null, null);
+
+            if (!string.IsNullOrWhiteSpace(email) && await _userManager.FindByEmailAsync(email) is not null)
+                return (false, null, null);
+
+            var safeEmail = string.IsNullOrWhiteSpace(email)
+                ? $"{phoneNumber}@menro.fake"
+                : email;
 
             var user = new User
             {
                 FullName = fullName,
-                Email = email,
+                Email = safeEmail,
                 PhoneNumber = phoneNumber,
-                UserName = email
+                UserName = safeEmail
             };
 
-            var result = await _userManager.CreateAsync(user, password);
-            return result.Succeeded;
+            IdentityResult result;
+            if (string.IsNullOrWhiteSpace(password))
+                result = await _userManager.CreateAsync(user);
+            else
+                result = await _userManager.CreateAsync(user, password);
+
+            if (!result.Succeeded)
+                return (false, result, null);
+
+            await _userManager.AddToRoleAsync(user, Role_Customer);
+
+            return (true, result, user);
         }
 
-        public async Task<User?> LoginUserAsync(string email, string password)
+        public async Task<List<string>> GetRolesAsync(User user)
         {
-            throw new NotImplementedException();
+            var roles = await _userManager.GetRolesAsync(user);
+            return roles.ToList();
         }
+        public async Task<bool> CheckPasswordAsync(User user, string password)
+        {
+            bool isCorrect = await _userManager.CheckPasswordAsync(user, password);
+            return isCorrect;
+        }
+
+
     }
 }

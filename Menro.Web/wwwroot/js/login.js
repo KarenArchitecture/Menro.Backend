@@ -71,10 +71,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (response.ok) {
                     if (result.needsRegister) {
-                        localStorage.setItem("pendingPhoneNumber", phoneNumber);
+                        // phone number saves in local storage
+                        const expirationTime = Date.now() + 60 * 1000; // الان + 60 ثانیه
+                        const data = {
+                            value: phoneNumber,
+                            expiresAt: expirationTime
+                        };
+                        localStorage.setItem("userPhone", JSON.stringify(data));
+
+                        // redirect to register page with passing phone number
                         window.location.href = "/pages/auth/register.html";
                     } else {
                         localStorage.setItem("token", result.token);
+                        // برای راحتی UI و state management
+                        localStorage.setItem("user", JSON.stringify(result.user));
                         window.location.href = "/Home/Index";
                     }
                 } else {
@@ -114,3 +124,68 @@ document.addEventListener("DOMContentLoaded", () => {
         formOtp.style.display = "none";
     });
 });
+
+
+// login with password
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("loginFormPassword");
+    if (!form) return;
+
+    const phoneInput = document.getElementById("phoneWithPassword");
+    const passwordInput = document.getElementById("password");
+    const messageArea = document.getElementById("message-area-password") || createMessageArea();
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        displayMessage("", "error");
+
+        const phoneNumber = phoneInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!phoneNumber) {
+            displayMessage("شماره تلفن الزامی است", "error");
+            return;
+        }
+        if (!password) {
+            displayMessage("رمز عبور نمی‌تواند خالی باشد", "error");
+            return;
+        }
+
+        try {
+            const response = await fetch("/api/auth/login-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phoneNumber, password }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem("token", result.token);
+                localStorage.setItem("user", JSON.stringify(result.user));
+                window.location.href = "/Home/Index";
+            } else {
+                displayMessage(result.message || "ورود ناموفق بود", "error");
+            }
+        } catch (error) {
+            displayMessage("خطا در ارتباط با سرور.", "error");
+            console.error(error);
+        }
+    });
+
+    function displayMessage(text, type = "error") {
+        messageArea.textContent = text;
+        messageArea.className = `message ${type}`;
+    }
+
+    function createMessageArea() {
+        const p = document.createElement("p");
+        p.id = "message-area-password";
+        p.className = "message";
+        form.appendChild(p);
+        return p;
+    }
+});
+
+
+// logout

@@ -1,15 +1,23 @@
 // گرفتن و پاک کردن شماره تلفن از local storage
 document.addEventListener("DOMContentLoaded", () => {
     const phoneInput = document.getElementById("customer-phoneNumber");
-    const phoneNumber = localStorage.getItem("pendingPhoneNumber");
+    const userPhoneRaw = localStorage.getItem("userPhone");
 
-    if (phoneInput && phoneNumber) {
-        phoneInput.value = phoneNumber;
-        phoneInput.readOnly = true;
-    } else {
-        // هدایت مجدد به صفحه لاگین اگه مستقیم بدون شماره تلفن وارد صفحه ثبت نام شده بود
+    if (!userPhoneRaw) {
         window.location.href = "/pages/auth/login.html";
+        return;
     }
+
+    const userPhone = JSON.parse(userPhoneRaw);
+
+    if (!userPhone.value || Date.now() > userPhone.expiresAt) {
+        localStorage.removeItem("userPhone");
+        window.location.href = "/pages/auth/login.html";
+        return;
+    }
+
+    phoneInput.value = userPhone.value;
+    phoneInput.readOnly = true;
 });
 
 const customerForm = document.getElementById("customer-form");
@@ -49,7 +57,7 @@ if (customerForm) {
                 // ذخیره توکن و حذف شماره تلفن
                 localStorage.setItem("token", result.token);
                 localStorage.removeItem('pendingPhoneNumber');
-                window.location.href = '/index.html';
+                window.location.href = "/Home/Index";
             } else {
                 messageArea.textContent = result.message || "ثبت‌نام ناموفق بود";
             }

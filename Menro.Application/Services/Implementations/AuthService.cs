@@ -11,10 +11,15 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Menro.Application.Services.Implementations
 {
+    /*
+    * شرح وظایف:
+    ارسال و تایید OTP
+    صدور توکن JWT
+    تشخیص نیاز به ثبت نام یا ادامه ورود به سایت
+    */
     public class AuthService : IAuthService
     {
         private readonly IUserService _userService;
-        private readonly UserManager<User> _userManager;
         private readonly IUnitOfWork _uow;
         private readonly JwtSettings _jwtSettings;
         private readonly ISmsSender _smsSender;
@@ -23,14 +28,12 @@ namespace Menro.Application.Services.Implementations
             JwtSettings jwtSettings, 
             IUnitOfWork uow, 
             ISmsSender smsSender, 
-            IUserService userService, 
-            UserManager<User> userManager)
+            IUserService userService)
         {
             _jwtSettings = jwtSettings;
             _uow = uow;
             _smsSender = smsSender;
             _userService = userService;
-            _userManager = userManager;
         }        
         /* --- OTP services --- */
         // send otp
@@ -48,7 +51,6 @@ namespace Menro.Application.Services.Implementations
 
             await _uow.Otp.AddAsync(otp);
             await _uow.SaveAsync();
-
         }
 
         // verify otp
@@ -91,6 +93,27 @@ namespace Menro.Application.Services.Implementations
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+        public async Task<(string Token, User User, List<string> Roles)> LoginWithPasswordAsync(string phoneNumber, string password)
+        {
+            var user = await _userService.GetByPhoneNumberAsync(phoneNumber);
+            if (user == null)
+                throw new UnauthorizedAccessException("کاربری با این شماره وجود ندارد.");
+
+            var isPasswordValid = await _userService.CheckPasswordAsync(user, password);
+            if (!isPasswordValid)
+                throw new UnauthorizedAccessException("رمز عبور نادرست است.");
+
+            var roles = await _userService.GetRolesAsync(user);
+
+            var token = GenerateToken(
+                Guid.Parse(user.Id),
+                user.FullName ?? "",
+                user.Email ?? "",
+                roles.ToList()
+            );
+
+            return (token, user, roles);
         }
 
 
