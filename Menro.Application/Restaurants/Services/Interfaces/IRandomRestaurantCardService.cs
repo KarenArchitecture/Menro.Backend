@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Menro.Application.Restaurants.Services.Interfaces
 {
-    public interface IRestaurantCardService
+    public interface IRandomRestaurantCardService
     {
         Task<List<RestaurantCardDto>> GetRandomRestaurantCardsAsync(int count = 8);
     }

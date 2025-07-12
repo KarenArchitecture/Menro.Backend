@@ -7,7 +7,10 @@ using System.Threading.Tasks;
 
 namespace Menro.Domain.Interfaces
 {
-    public interface IFoodRepository : IRepository<Food>
+    public interface IFoodRepository
     {
+        Task<List<FoodCategory>> GetAllCategoriesAsync();
+        Task<List<Food>> GetPopularFoodsByCategoryAsync(int categoryId, int count);
+        Task<List<int>> GetAllCategoryIdsAsync();
     }
 }

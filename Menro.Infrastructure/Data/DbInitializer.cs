@@ -97,11 +97,71 @@ namespace Menro.Infrastructure.Data
                     _db.FoodCategories.AddRange(cats);
                 }
 
-                // Save to get all restaurants and users for ratings
                 await _db.SaveChangesAsync();
 
-                // --- START: Ratings seeding with duplicate check ---
+                // 6️⃣ Seed Food items for each FoodCategory
+                var allFoodCategories = await _db.FoodCategories.Include(fc => fc.Restaurant).ToListAsync();
+                var allUsersForRating = await _db.Users.ToListAsync();
 
+                var random = new Random();
+
+                var foods = new List<Food>();
+                foreach (var category in allFoodCategories)
+                {
+                    // Create 5 sample foods per category
+                    for (int i = 1; i <= 5; i++)
+                    {
+                        foods.Add(new Food
+                        {
+                            Name = $"غذای نمونه {i} دسته {category.Name}",
+                            Ingredients = "مواد اولیه نمونه",
+                            Price = random.Next(15000, 80000),
+                            FoodCategoryId = category.Id,
+                            RestaurantId = category.RestaurantId,
+                            ImageUrl = "/img/drink.png",
+                            CreatedAt = DateTime.UtcNow.AddDays(-random.Next(0, 30))
+                        });
+                    }
+                }
+
+                _db.Foods.AddRange(foods);
+                await _db.SaveChangesAsync();
+
+                // 7️⃣ Seed FoodRatings
+                var foodRatings = new List<FoodRating>();
+                var existingFoodRatings = await _db.FoodRatings
+                    .Select(fr => new { fr.UserId, fr.FoodId })
+                    .ToListAsync();
+
+                foreach (var food in foods)
+                {
+                    var votingUsers = allUsersForRating
+                        .OrderBy(x => random.Next())
+                        .Take(random.Next(3, 6))
+                        .ToList();
+
+                    foreach (var user in votingUsers)
+                    {
+                        bool alreadyExists = existingFoodRatings.Any(fr => fr.UserId == user.Id && fr.FoodId == food.Id)
+                            || foodRatings.Any(fr => fr.UserId == user.Id && fr.FoodId == food.Id);
+
+                        if (alreadyExists)
+                            continue;
+
+                        foodRatings.Add(new FoodRating
+                        {
+                            FoodId = food.Id,
+                            UserId = user.Id,
+                            Score = random.Next(3, 6),
+                            CreatedAt = DateTime.UtcNow.AddDays(-random.Next(0, 10))
+                        });
+                    }
+                }
+
+                _db.FoodRatings.AddRange(foodRatings);
+                await _db.SaveChangesAsync();
+
+                // --- Existing Ratings seeding for Restaurants ---
                 var allRestaurants = await _db.Restaurants.ToListAsync();
                 var allUsers = await _db.Users.ToListAsync();
 
@@ -110,8 +170,6 @@ namespace Menro.Infrastructure.Data
                     .ToListAsync();
 
                 var ratings = new List<RestaurantRating>();
-
-                var random = new Random();
 
                 foreach (var restaurant in allRestaurants)
                 {
@@ -123,7 +181,6 @@ namespace Menro.Infrastructure.Data
 
                     foreach (var user in votingUsers)
                     {
-                        // Skip if user already rated this restaurant (in DB or new batch)
                         bool alreadyExists = existingRatings.Any(er => er.UserId == user.Id && er.RestaurantId == restaurant.Id)
                             || ratings.Any(r => r.UserId == user.Id && r.RestaurantId == restaurant.Id);
 
@@ -142,9 +199,7 @@ namespace Menro.Infrastructure.Data
 
                 _db.RestaurantRatings.AddRange(ratings);
 
-
-
-                // 7️⃣ Ad Banner (one active ad for now)
+                // 8️⃣ Ad Banner (one active ad for now)
                 if (!await _db.RestaurantAdBanners.AnyAsync())
                 {
                     var randomRestaurant = await _db.Restaurants.FirstOrDefaultAsync();
@@ -162,13 +217,9 @@ namespace Menro.Infrastructure.Data
                     }
                 }
 
-
-
                 await _db.SaveChangesAsync();
 
-                // --- END: Ratings seeding ---
-
-                // 6️⃣ Customer account
+                // 9️⃣ Customer account
                 if (!await _db.Users.AnyAsync(u => u.PhoneNumber == "+989121112233"))
                 {
                     var customer = new User
@@ -188,5 +239,6 @@ namespace Menro.Infrastructure.Data
                 throw;
             }
         }
+
     }
 }

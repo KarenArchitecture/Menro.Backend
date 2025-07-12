@@ -50,7 +50,7 @@ namespace Menro.Infrastructure.Repositories
             return await _context.Orders
                 .Where(o => o.UserId == userId)
                 .OrderByDescending(o => o.CreatedAt)
-                .Select(o => o.Food.Restaurant)
+                .Select(o => o.Restaurant)
                 .Distinct()
                 .Include(r => r.RestaurantCategory)
                 .Include(r => r.Ratings)

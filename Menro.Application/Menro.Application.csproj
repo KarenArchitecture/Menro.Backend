@@ -21,4 +21,8 @@
     <Folder Include="Restaurants\Validators\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Restaurants\Services\Interfaces\IRandomRestaurantCardService.cs" />
+  </ItemGroup>
+
 </Project>

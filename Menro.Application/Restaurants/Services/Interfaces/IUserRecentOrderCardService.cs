@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 
 namespace Menro.Application.Restaurants.Services.Interfaces
 {
-    public interface ILatestOrdersCardService
+    public interface IUserRecentOrderCardService
     {
-        Task<List<RestaurantCardDto>> GetLatestOrderedRestaurantCardsAsync(string userId);
+        Task<List<RestaurantCardDto>> GetRecentOrderedRestaurantCardsAsync(string userId, int count = 8);
     }
 }
