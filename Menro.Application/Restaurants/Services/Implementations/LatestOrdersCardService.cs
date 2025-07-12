@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 
 namespace Menro.Application.Restaurants.Services.Implementations
 {
-    class LatestOrdersCardService : ILatestOrdersCardService
+    public class LatestOrdersCardService : ILatestOrdersCardService
     {
+        private readonly IRestaurantAdBannerRepository _restaurantAdBannerRepository;
+        public LatestOrdersCardService() { }
         public async Task<List<RestaurantCardDto>> GetLatestOrderedRestaurantCardsAsync(string userId)
         {
             var restaurants = await _restaurantRepository.GetRestaurantsOrderedByUserAsync(userId);

@@ -2,10 +2,10 @@
 using Menro.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Menro.Application.Services.Interfaces;
-using Menro.Application.DTO.Auth;
 using Menro.Application.Services.Implementations;
 using Microsoft.EntityFrameworkCore;
-using Menro.Application.SD;
+using static Menro.Application.Common.SD.SD;
+using Menro.Application.Authentication.DTOs;
 
 namespace Menro.Web.Controllers.Api
 {

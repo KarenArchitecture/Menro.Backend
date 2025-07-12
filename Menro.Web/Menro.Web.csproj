@@ -7,6 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\Admin\**" />
+    <Compile Remove="Controllers\Owner\**" />
+    <Compile Remove="Controllers\User\**" />
+    <Content Remove="Controllers\Admin\**" />
+    <Content Remove="Controllers\Owner\**" />
+    <Content Remove="Controllers\User\**" />
+    <EmbeddedResource Remove="Controllers\Admin\**" />
+    <EmbeddedResource Remove="Controllers\Owner\**" />
+    <EmbeddedResource Remove="Controllers\User\**" />
+    <None Remove="Controllers\Admin\**" />
+    <None Remove="Controllers\Owner\**" />
+    <None Remove="Controllers\User\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.11" />
@@ -29,14 +44,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Menro.Application\Menro.Application.csproj" />
     <ProjectReference Include="..\Menro.Infrastructure\Menro.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Areas\BusinessOwner\Data\" />
-    <Folder Include="Areas\BusinessOwner\Models\" />
-    <Folder Include="Controllers\Owner\" />
-    <Folder Include="Controllers\Admin\" />
-    <Folder Include="Controllers\User\" />
   </ItemGroup>
 
 </Project>

@@ -1,24 +1,24 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using System.Text;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
+using Menro.Application.Common.Settings;
+using Menro.Application.DTO;
+using Menro.Application.Restaurants.Services.Implementations;
+using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Application.Services.Implementations;
 using Menro.Application.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Repositories;
-using Menro.Application.Settings;
 using Menro.Infrastructure.Sms;
 using Menro.Web.Middleware;
-using Menro.Application.DTO;
-using Menro.Application.Restaurants.Services.Interfaces;
-using Menro.Application.Restaurants.Services.Implementations;
-using Menro.Application.Common;
-using Menro.Application.Common.Settings;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,13 +83,16 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 #region Application Services
 
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFoodService, FoodService>();
 builder.Services.AddScoped<IFoodCategoryService, FoodCategoryService>();
-builder.Services.AddScoped<IRestaurantService, RestaurantService>();
 builder.Services.AddScoped<IRestaurantCategoryService, RestaurantCategoryService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
+
+// Restaurant Services
+builder.Services.AddScoped<IRestaurantService, RestaurantService>();
 builder.Services.AddScoped<IFeaturedRestaurantService, FeaturedRestaurantService>();
 builder.Services.AddScoped<IRestaurantCardService, RandomRestaurantService>();
 builder.Services.AddScoped<IRestaurantAdBannerService, RestaurantAdBannerService>();
@@ -99,9 +102,7 @@ builder.Services.AddScoped<ILatestOrdersCardService, LatestOrdersCardService>();
 
 #region External Services
 
-builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISmsSender, FakeSmsSender>();
-builder.Services.AddScoped<IJwtService, JwtService>();
 
 #endregion
 
@@ -203,7 +204,7 @@ app.MapControllerRoute(
 using (var scope = app.Services.CreateScope())
 {
     var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-    dbInitializer.Initialize(); // یا InitializeAsync() اگر async باشه
+    await dbInitializer.InitializeAsync(); // یا InitializeAsync() اگر async باشه
 }
 
 app.Run();

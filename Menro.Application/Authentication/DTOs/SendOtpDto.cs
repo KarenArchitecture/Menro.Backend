@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Menro.Application.DTO.Auth
+namespace Menro.Application.Authentication.DTOs
 {
     public class SendOtpDto
     {

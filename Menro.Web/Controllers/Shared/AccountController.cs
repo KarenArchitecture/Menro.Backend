@@ -4,7 +4,6 @@ using Menro.Web.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Menro.Web.ViewModels;
 using Menro.Application.Common.SD;
 
 namespace Menro.Web.Controllers.Shared
