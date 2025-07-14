@@ -18,6 +18,11 @@ namespace Menro.Domain.Entities
         [Required(ErrorMessage = "نام رستوران الزامی است")]
         public string Name { get; set; } = string.Empty;
 
+        [Display(Name = "اسلاگ")]
+        [MaxLength(100)]
+        [Required(ErrorMessage = "اسلاگ الزامی است")]
+        public string Slug { get; set; } = string.Empty;
+
         [Display(Name = "آدرس عکس")]
         public string? BannerImageUrl { get; set; }
 

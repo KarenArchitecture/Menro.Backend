@@ -1,16 +1,10 @@
 ﻿using Menro.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Menro.Domain.Interfaces
+public interface IFoodRepository
 {
-    public interface IFoodRepository
-    {
-        Task<List<FoodCategory>> GetAllCategoriesAsync();
-        Task<List<Food>> GetPopularFoodsByCategoryAsync(int categoryId, int count);
-        Task<List<int>> GetAllCategoryIdsAsync();
-    }
+    Task<List<FoodCategory>> GetAllCategoriesAsync();
+    Task<List<Food>> GetPopularFoodsByCategoryAsync(int categoryId, int count);
+    Task<List<int>> GetAllCategoryIdsAsync();
+    Task<List<FoodCategory>> GetAllCategoriesExcludingAsync(List<string> excludeTitles);
+    Task<List<Food>> GetPopularFoodsByCategoryIdAsync(int categoryId, int take); // ✅ Changed Guid -> int
 }

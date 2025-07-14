@@ -22,6 +22,12 @@ namespace Menro.Infrastructure.Data
             _userManager = userManager;
         }
 
+        // ✅ Simple English slug generator
+        private string GenerateSlug(string persianName, int index)
+        {
+            return $"restaurant-number-{index}";
+        }
+
         public async Task InitializeAsync()
         {
             try
@@ -84,8 +90,10 @@ namespace Menro.Infrastructure.Data
                         BannerImageUrl = $"/img/res-cards.png",
                         IsFeatured = (i % 3 == 0),
                         IsActive = true,
-                        IsApproved = true
+                        IsApproved = true,
+                        Slug = GenerateSlug($"رستوران شماره {i}", i) // ✅ Added slug here
                     };
+
                     _db.Restaurants.Add(rest);
                     await _db.SaveChangesAsync(); // get ID
 
@@ -108,7 +116,6 @@ namespace Menro.Infrastructure.Data
                 var foods = new List<Food>();
                 foreach (var category in allFoodCategories)
                 {
-                    // Create 5 sample foods per category
                     for (int i = 1; i <= 5; i++)
                     {
                         foods.Add(new Food
@@ -161,7 +168,7 @@ namespace Menro.Infrastructure.Data
                 _db.FoodRatings.AddRange(foodRatings);
                 await _db.SaveChangesAsync();
 
-                // --- Existing Ratings seeding for Restaurants ---
+                // RestaurantRatings
                 var allRestaurants = await _db.Restaurants.ToListAsync();
                 var allUsers = await _db.Users.ToListAsync();
 
@@ -208,7 +215,7 @@ namespace Menro.Infrastructure.Data
                         var adBanner = new RestaurantAdBanner
                         {
                             RestaurantId = randomRestaurant.Id,
-                            ImageUrl = "/img/optcropban.jpg", // sample image path
+                            ImageUrl = "/img/optcropban.jpg",
                             StartDate = DateTime.UtcNow.AddDays(-2),
                             EndDate = DateTime.UtcNow.AddDays(5)
                         };
@@ -239,6 +246,5 @@ namespace Menro.Infrastructure.Data
                 throw;
             }
         }
-
     }
 }
