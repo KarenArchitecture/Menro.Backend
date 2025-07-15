@@ -13,6 +13,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Food> Foods { get; set; }
         public DbSet<FoodCategory> FoodCategories { get; set; }
+        public DbSet<FoodRating> FoodRatings { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<RestaurantCategory> RestaurantCategories { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
@@ -21,6 +22,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<RestaurantRating> RestaurantRatings { get; set; }
         public DbSet<RestaurantAdBanner> RestaurantAdBanners { get; set; }
         public DbSet<Otp> Otps { get; set; }
+        public DbSet<Order> Orders { get; set; }
 
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
         {
@@ -35,7 +37,7 @@ namespace Menro.Infrastructure.Data
 
             // Food <-> FoodCategory (Many-to-One)
             modelBuilder.Entity<Food>()
-                .HasOne(f => f.Category)
+                .HasOne(f => f.FoodCategory)
                 .WithMany(c => c.Foods)
                 .HasForeignKey(f => f.FoodCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);

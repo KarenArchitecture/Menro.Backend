@@ -11,11 +11,11 @@ using System.Threading.Tasks;
 
 namespace Menro.Application.Restaurants.Services.Implementations
 {
-    public class RandomRestaurantService : IRestaurantCardService
+    public class RandomRestaurantCardService : IRandomRestaurantCardService
     {
         private readonly IRestaurantRepository _restaurantRepository;
 
-        public RandomRestaurantService(IRestaurantRepository restaurantRepository)
+        public RandomRestaurantCardService(IRestaurantRepository restaurantRepository)
         {
             _restaurantRepository = restaurantRepository;
         }
@@ -48,12 +48,12 @@ namespace Menro.Application.Restaurants.Services.Implementations
                     OpenTime = r.OpenTime.ToString(@"hh\:mm"),
                     CloseTime = r.CloseTime.ToString(@"hh\:mm")
                 };
-            }).ToList();
+            }).OrderBy(_ => Guid.NewGuid()) // randomize order
+              .Take(count)
+              .ToList();
 
-            var random = new Random();
-            var randomizedList = dtoList.OrderBy(_ => random.Next()).Take(count).ToList();
-
-            return randomizedList;
+            return dtoList;
         }
+
     }
 }

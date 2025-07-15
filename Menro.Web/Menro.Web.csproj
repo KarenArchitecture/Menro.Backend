@@ -46,4 +46,11 @@
     <ProjectReference Include="..\Menro.Infrastructure\Menro.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Areas\BusinessOwner\Data\" />
+    <Folder Include="Areas\BusinessOwner\Models\" />
+    <Folder Include="Controllers\AdminPanel\" />
+    <Folder Include="Controllers\OwnerPanel\" />
+  </ItemGroup>
+
 </Project>
