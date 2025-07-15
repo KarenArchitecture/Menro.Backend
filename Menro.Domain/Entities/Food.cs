@@ -17,9 +17,9 @@ namespace Menro.Domain.Entities
         [Required(ErrorMessage = "نام آیتم الزامی است")]
         public string Name { get; set; }
 
-        [Display(Name = "توضیحات")]
+        [Display(Name = "ترکیبات")]
         [MaxLength(500)]
-        public string? Description { get; set; }
+        public string? Ingredients { get; set; }
 
         [Display(Name = "قیمت")]
         [MaxLength(10)]
@@ -29,14 +29,18 @@ namespace Menro.Domain.Entities
         [Display(Name = "آدرس عکس")]
         public string ImageUrl { get; set; }
 
-        // ارتباط با رستوران
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // FK to Restaurant
         public int RestaurantId { get; set; }
 
         public Restaurant Restaurant { get; set; } = null!;
 
-        // ارتباط با دسته بندی غذاها
+        // FK to FoodCategory
         public int FoodCategoryId { get; set; }
 
-        public FoodCategory Category { get; set; } = null!;
+        public FoodCategory FoodCategory { get; set; } = null!;
+
+        public ICollection<FoodRating> Ratings { get; set; } = new List<FoodRating>();
     }
 }

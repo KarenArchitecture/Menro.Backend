@@ -18,6 +18,10 @@ using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Repositories;
 using Menro.Infrastructure.Sms;
 using Menro.Web.Middleware;
+using Menro.Application.Common;
+using Menro.Application.Common.Settings;
+using Menro.Application.Foods.Services.Implementations;
+using Menro.Application.Foods.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,6 +84,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFoodService, FoodService>();
 builder.Services.AddScoped<IFoodCategoryService, FoodCategoryService>();
+builder.Services.AddScoped<IFoodCardService, FoodCardService>();
+builder.Services.AddScoped<IRestaurantService, RestaurantService>();
+builder.Services.AddScoped<IFeaturedRestaurantService, FeaturedRestaurantService>();
 builder.Services.AddScoped<IRestaurantCategoryService, RestaurantCategoryService>();
 builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
@@ -92,11 +99,10 @@ builder.Services.AddScoped<IRestaurantService, RestaurantService>();
 builder.Services.AddScoped<IFeaturedRestaurantService, FeaturedRestaurantService>();
 builder.Services.AddScoped<IRestaurantCardService, RandomRestaurantService>();
 builder.Services.AddScoped<IRestaurantAdBannerService, RestaurantAdBannerService>();
+builder.Services.AddScoped<IRandomRestaurantCardService, RandomRestaurantCardService>();
 builder.Services.AddScoped<IUserRecentOrderCardService, UserRecentOrderCardService>();
-
-#endregion
-
-#region Repositories
+// -------------------- Unit of Work --------------------
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
 builder.Services.AddScoped<IFoodRepository, FoodRepository>();

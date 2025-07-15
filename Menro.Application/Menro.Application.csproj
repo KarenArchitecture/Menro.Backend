@@ -23,4 +23,12 @@
     <ProjectReference Include="..\Menro.Domain\Menro.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Restaurants\Validators\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Restaurants\Services\Interfaces\IRandomRestaurantCardService.cs" />
+  </ItemGroup>
+
 </Project>
