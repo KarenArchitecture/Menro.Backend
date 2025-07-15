@@ -120,3 +120,11 @@ button {
     .message.info {
         color: #888;
     }
+
+.login-password-btn {
+    margin-top: 20px;
+    color: #d97706;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+}

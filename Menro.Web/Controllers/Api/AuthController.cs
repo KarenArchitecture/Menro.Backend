@@ -146,5 +146,17 @@ namespace Menro.Web.Controllers.Api
                 }
             });
         }
+        
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            // اگر از کوکی استفاده کنیم:
+            // await _signInManager.SignOutAsync();
+
+            // اگه بخوایم در آینده logout tokens یا blacklist رو ثبت کنیم اینجا انجام میدیم
+
+            return Ok(new { message = "Logged out successfully" });
+        }
+
     }
 }
