@@ -29,7 +29,7 @@ namespace Menro.Domain.Entities
 
         public TimeSpan OpenTime { get; set; }
         public TimeSpan CloseTime { get; set; }
-
+        public DateTime CreatedAt { get; set; }
         [Display(Name = "توضیحات")]
         [MaxLength(500)]
         public string Description { get; set; } = string.Empty;

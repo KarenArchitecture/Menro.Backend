@@ -1,13 +1,10 @@
 ﻿using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Menro.Application.Common.Settings;
-using Menro.Application.DTO;
 using Menro.Application.Services.Interfaces;
 using Menro.Application.Services.Implementations;
 using Menro.Application.Restaurants.Services.Interfaces;

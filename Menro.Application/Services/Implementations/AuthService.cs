@@ -50,7 +50,7 @@ namespace Menro.Application.Services.Implementations
             };
 
             await _uow.Otp.AddAsync(otp);
-            await _uow.SaveAsync();
+            await _uow.SaveChangesAsync();
             
             
         }
@@ -66,7 +66,7 @@ namespace Menro.Application.Services.Implementations
 
             otp.IsUsed = true;
             await _uow.Otp.UpdateAsync(otp);
-            await _uow.SaveAsync();
+            await _uow.SaveChangesAsync();
 
             return true;
         }
