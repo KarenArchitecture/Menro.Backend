@@ -1,27 +1,17 @@
-﻿using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using System.Reflection;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Menro.Application.Common.Settings;
-using Menro.Application.DTO;
-using Menro.Application.Services.Interfaces;
-using Menro.Application.Services.Implementations;
-using Menro.Application.Restaurants.Services.Interfaces;
-using Menro.Application.Restaurants.Services.Implementations;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
-using Menro.Infrastructure.Repositories;
-using Menro.Infrastructure.Sms;
 using Menro.Web.Middleware;
-using Menro.Application.Common;
-using Menro.Application.Common.Settings;
-using Menro.Application.Foods.Services.Implementations;
-using Menro.Application.Foods.Services.Interfaces;
+using Menro.Infrastructure.Extensions;
+using Menro.Application.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,48 +68,17 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 #endregion
 
-#region Application Services
 
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IFoodService, FoodService>();
-builder.Services.AddScoped<IFoodCategoryService, FoodCategoryService>();
-builder.Services.AddScoped<IFoodCardService, FoodCardService>();
-builder.Services.AddScoped<IRestaurantService, RestaurantService>();
-builder.Services.AddScoped<IFeaturedRestaurantService, FeaturedRestaurantService>();
-builder.Services.AddScoped<IRestaurantCategoryService, RestaurantCategoryService>();
-builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
-builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
+// DI via Extensions
+// builder.Services.AddRepositories();
+// builder.Services.AddApplicationServices();
+builder.Services.AddInfrastructureServices();
 
-#endregion
+var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
+var applicationAssembly = Assembly.Load("Menro.Application");
+builder.Services.AddAutoRegisteredServices(applicationAssembly);
+builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
 
-#region Restaurant Services
-
-builder.Services.AddScoped<IRestaurantService, RestaurantService>();
-builder.Services.AddScoped<IFeaturedRestaurantService, FeaturedRestaurantService>();
-builder.Services.AddScoped<IRestaurantAdBannerService, RestaurantAdBannerService>();
-builder.Services.AddScoped<IRandomRestaurantCardService, RandomRestaurantCardService>();
-builder.Services.AddScoped<IUserRecentOrderCardService, UserRecentOrderCardService>();
-// -------------------- Unit of Work --------------------
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
-builder.Services.AddScoped<IFoodRepository, FoodRepository>();
-builder.Services.AddScoped<IFoodCategoryRepository, FoodCategoryRepository>();
-builder.Services.AddScoped<IRestaurantCategoryRepository, RestaurantCategoryRepository>();
-builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
-builder.Services.AddScoped<ISubscriptionPlanRepository, SubscriptionPlanRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-
-#endregion
-
-#region Infrastructure Services
-
-builder.Services.AddScoped<ISmsSender, FakeSmsSender>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-builder.Services.AddScoped<IDbInitializer, DbInitializer>();
-
-#endregion
 
 #region API & MVC
 

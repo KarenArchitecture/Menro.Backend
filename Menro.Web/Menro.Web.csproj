@@ -7,15 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Areas\**" />
     <Compile Remove="Controllers\Admin\**" />
     <Compile Remove="Controllers\Owner\**" />
     <Compile Remove="Controllers\User\**" />
+    <Content Remove="Areas\**" />
     <Content Remove="Controllers\Admin\**" />
     <Content Remove="Controllers\Owner\**" />
     <Content Remove="Controllers\User\**" />
+    <EmbeddedResource Remove="Areas\**" />
     <EmbeddedResource Remove="Controllers\Admin\**" />
     <EmbeddedResource Remove="Controllers\Owner\**" />
     <EmbeddedResource Remove="Controllers\User\**" />
+    <None Remove="Areas\**" />
     <None Remove="Controllers\Admin\**" />
     <None Remove="Controllers\Owner\**" />
     <None Remove="Controllers\User\**" />
@@ -47,8 +51,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Areas\BusinessOwner\Data\" />
-    <Folder Include="Areas\BusinessOwner\Models\" />
     <Folder Include="Controllers\AdminPanel\" />
     <Folder Include="Controllers\OwnerPanel\" />
   </ItemGroup>
