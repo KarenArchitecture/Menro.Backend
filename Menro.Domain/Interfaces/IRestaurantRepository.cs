@@ -9,16 +9,19 @@ namespace Menro.Domain.Interfaces
 {
     public interface IRestaurantRepository : IRepository<Restaurant>
     {
-        //Featured Restaurants Carousel
+        //Home Page - Featured Restaurants Carousel
         Task<IEnumerable<Restaurant>> GetFeaturedRestaurantsAsync();
 
-        //Random Restaurants Cards
+        //Home Page - Random Restaurants Cards
         Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync();
 
-        //Featured Restaurant Banner
+        //Home Page - Featured Restaurant Banner
         Task<RestaurantAdBanner> GetActiveAdBannerAsync();
 
-        //Latest Orders
+        //Home Page - Latest Orders
         Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId);
+
+        //Shop Page - Restaurant Banner 
+        Task<Restaurant?> GetBySlugWithCategoryAsync(string slug);
     }
 }

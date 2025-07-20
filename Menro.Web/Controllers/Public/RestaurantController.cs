@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Application.Restaurants.DTOs;
-using Menro.Application.Restaurants.Services.Implementations;
-
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -16,19 +16,22 @@ namespace Menro.Web.Controllers.Public
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
         private readonly IUserRecentOrderCardService _userRecentOrderCardService;
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
+        private readonly IRestaurantShopBannerService _restaurantShopBannerService;
 
         public RestaurantController(
             IRestaurantService restaurantService,
             IFeaturedRestaurantService featuredRestaurantService,
             IRandomRestaurantCardService randomRestaurantCardService,
             IRestaurantAdBannerService restaurantAdBannerService,
-            IUserRecentOrderCardService userRecentOrderCardService)
+            IUserRecentOrderCardService userRecentOrderCardService,
+            IRestaurantShopBannerService restaurantShopBannerService)
         {
             _restaurantService = restaurantService;
             _featuredRestaurantService = featuredRestaurantService;
             _randomRestaurantCardService = randomRestaurantCardService;
             _restaurantAdBannerService = restaurantAdBannerService;
             _userRecentOrderCardService = userRecentOrderCardService;
+            _restaurantShopBannerService = restaurantShopBannerService;
         }
 
         [HttpGet("featured")]
@@ -53,6 +56,17 @@ namespace Menro.Web.Controllers.Public
                 return NoContent();
 
             return Ok(banner);
+        }
+
+        // ✅ New Shop Page - Get restaurant info for banner by slug
+        [HttpGet("banner/{slug}")]
+        public async Task<ActionResult<RestaurantShopBannerDto>> GetBannerBySlug(string slug)
+        {
+            var dto = await _restaurantShopBannerService.GetShopBannerAsync(slug);
+            if (dto == null)
+                return NotFound();
+
+            return Ok(dto);
         }
     }
 }

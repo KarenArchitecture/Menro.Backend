@@ -17,7 +17,7 @@ namespace Menro.Infrastructure.Repositories
             _context = context;
         }
 
-        //Featured Restaurants Carousel
+        //Home Page - Featured Restaurants Carousel
         public async Task<IEnumerable<Restaurant>> GetFeaturedRestaurantsAsync()
         {
             return await _context.Restaurants
@@ -25,7 +25,7 @@ namespace Menro.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        //Random Restaurants Cards
+        //Home Page - Random Restaurants Cards
         public async Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync()
         {
             return await _context.Restaurants
@@ -36,7 +36,7 @@ namespace Menro.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        //Featured Restaurant Banner
+        //Home Page - Featured Restaurant Banner
         public async Task<RestaurantAdBanner?> GetActiveAdBannerAsync()
         {
             return await _context.RestaurantAdBanners
@@ -44,7 +44,7 @@ namespace Menro.Infrastructure.Repositories
                 .FirstOrDefaultAsync(b => b.StartDate <= DateTime.UtcNow && b.EndDate >= DateTime.UtcNow);
         }
 
-        //Latest Orders
+        //Home Page - Latest Orders
         public async Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId)
         {
             return await _context.Orders
@@ -56,6 +56,14 @@ namespace Menro.Infrastructure.Repositories
                 .Include(r => r.Ratings)
                 .Include(r => r.Discounts)
                 .ToListAsync();
+        }
+
+        //Shop Page - Restaurant Banner 
+        public async Task<Restaurant?> GetBySlugWithCategoryAsync(string slug)
+        {
+            return await _context.Restaurants
+                .Include(r => r.RestaurantCategory)
+                .FirstOrDefaultAsync(r => r.Slug == slug && r.IsActive && r.IsApproved);
         }
 
     }

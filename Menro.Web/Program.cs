@@ -67,6 +67,8 @@ builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
 builder.Services.AddScoped<IRestaurantAdBannerService, RestaurantAdBannerService>();
 builder.Services.AddScoped<IRandomRestaurantCardService, RandomRestaurantCardService>();
 builder.Services.AddScoped<IUserRecentOrderCardService, UserRecentOrderCardService>();
+builder.Services.AddScoped<IRestaurantShopBannerService, RestaurantShopBannerService>();
+
 // -------------------- Unit of Work --------------------
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 

@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers
+namespace Menro.Web.Controllers.AdminPanel
 {
     public class FoodsController : Controller
     {

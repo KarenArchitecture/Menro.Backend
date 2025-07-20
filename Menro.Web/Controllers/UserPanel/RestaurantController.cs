@@ -7,7 +7,7 @@ using System.Security.Claims;
 namespace Menro.Web.Controllers.UserPanel
 {
     [ApiController]
-    [Authorize]
+    //[Authorize]
     [Route("api/user/restaurant")]
     public class RestaurantController : ControllerBase
     {

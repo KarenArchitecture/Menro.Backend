@@ -29,7 +29,8 @@ namespace Menro.Application.Restaurants.Services.Implementations
             {
                 RestaurantId = banner.RestaurantId,
                 RestaurantName = banner.Restaurant.Name,
-                ImageUrl = banner.ImageUrl
+                ImageUrl = banner.ImageUrl,
+                Slug = banner.Restaurant.Slug
             };
         }
     }
