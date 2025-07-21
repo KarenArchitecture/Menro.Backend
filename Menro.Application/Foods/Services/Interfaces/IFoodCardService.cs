@@ -1,8 +1,5 @@
 ﻿using Menro.Application.Foods.DTOs;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Menro.Application.Foods.Services.Interfaces
@@ -12,5 +9,6 @@ namespace Menro.Application.Foods.Services.Interfaces
         Task<PopularFoodCategoryDto?> GetPopularFoodsFromRandomCategoryAsync(int count = 8);
         Task<List<FoodCardDto>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8);
         Task<List<int>> GetAllCategoryIdsAsync();
+        Task<PopularFoodCategoryDto?> GetPopularFoodsFromRandomCategoryExcludingAsync(List<string> excludeCategoryTitles);
     }
 }
