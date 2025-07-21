@@ -51,6 +51,7 @@ namespace Menro.Application.Foods.Services.Implementations
             return new PopularFoodCategoryDto
             {
                 CategoryTitle = randomCategory.Name,
+                SvgIcon = randomCategory.SvgIcon,
                 Foods = foodDtos
             };
         }
@@ -115,6 +116,7 @@ namespace Menro.Application.Foods.Services.Implementations
             return new PopularFoodCategoryDto
             {
                 CategoryTitle = randomCategory.Name,
+                SvgIcon = randomCategory.SvgIcon,
                 Foods = foodDtos
             };
         }

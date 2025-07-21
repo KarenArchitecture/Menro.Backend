@@ -16,6 +16,8 @@ using Menro.Infrastructure.Data;
 using Menro.Web.Middleware;
 using Menro.Infrastructure.Extensions;
 using Menro.Application.Extensions;
+using Menro.Application.Foods.Services.Interfaces;
+using Menro.Application.Foods.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,18 +76,15 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 
 // DI via Extensions
-// builder.Services.AddRepositories();
-// builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices();
-
-var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
 var applicationAssembly = Assembly.Load("Menro.Application");
 builder.Services.AddAutoRegisteredServices(applicationAssembly);
+var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
 builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
 
 
-#region API & MVC
 
+#region API & MVC
 builder.Services.AddControllersWithViews();
 builder.Services.AddControllers();
 

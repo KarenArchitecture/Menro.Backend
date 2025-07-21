@@ -10,5 +10,6 @@ namespace Menro.Application.Foods.DTOs
     {
         public string CategoryTitle { get; set; } = string.Empty;
         public List<FoodCardDto> Foods { get; set; } = new List<FoodCardDto>();
+        public string SvgIcon { get; set; } = string.Empty;
     }
 }

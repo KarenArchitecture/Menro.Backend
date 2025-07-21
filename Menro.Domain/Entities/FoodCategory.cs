@@ -17,6 +17,9 @@ namespace Menro.Domain.Entities
         [Required(ErrorMessage = "نام دسته بندی الزامی است")]
         public string Name { get; set; } // مثل "نوشیدنی سرد"، "پیتزا"
 
+        [Display(Name = "آیکون SVG")]
+        public string SvgIcon { get; set; } = string.Empty;
+
         // ارتباط با جدول رستوران
         public int RestaurantId { get; set; }
 

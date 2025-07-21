@@ -1,13 +1,15 @@
 ﻿using Menro.Application.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Menro.Application.Restaurants.Services.Interfaces;
+using Menro.Application.Restaurants.DTOs;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Menro.Application.Restaurants.Services.Implementations;
 using Menro.Application.Restaurants.DTOs;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
-
 
 namespace Menro.Web.Controllers.Public
 {
@@ -22,6 +24,7 @@ namespace Menro.Web.Controllers.Public
         private readonly IUserRecentOrderCardService _userRecentOrderCardService;
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IRestaurantShopBannerService _restaurantShopBannerService;
 
         public RestaurantController(
             IRestaurantService restaurantService,
@@ -29,6 +32,7 @@ namespace Menro.Web.Controllers.Public
             IRandomRestaurantCardService randomRestaurantCardService,
             IUserRecentOrderCardService userRecentOrderCardService,
             IRestaurantAdBannerService restaurantAdBannerService,
+            IRestaurantShopBannerService restaurantShopBannerService,
             IHttpContextAccessor httpContextAccessor)
         {
             _restaurantService = restaurantService;
@@ -36,6 +40,7 @@ namespace Menro.Web.Controllers.Public
             _randomRestaurantCardService = randomRestaurantCardService;
             _userRecentOrderCardService = userRecentOrderCardService;
             _restaurantAdBannerService = restaurantAdBannerService;
+            _restaurantShopBannerService = restaurantShopBannerService;
             _httpContextAccessor = httpContextAccessor;
         }
 
@@ -88,6 +93,17 @@ namespace Menro.Web.Controllers.Public
         {
             var categories = await _restaurantService.GetRestaurantCategoriesAsync();
             return Ok(categories); // JSON اتوماتیک ارسال میشه
+        }
+
+        // ✅ New Shop Page - Get restaurant info for banner by slug
+        [HttpGet("banner/{slug}")]
+        public async Task<ActionResult<RestaurantShopBannerDto>> GetBannerBySlug(string slug)
+        {
+            var dto = await _restaurantShopBannerService.GetShopBannerAsync(slug);
+            if (dto == null)
+                return NotFound();
+
+            return Ok(dto);
         }
     }
 }
