@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace Menro.Web.Controllers.Public
 {
     [ApiController]
-    [Route("api/restaurants")]
+    [Route("api/restaurant")]
     public class RestaurantController : ControllerBase
     {
 
