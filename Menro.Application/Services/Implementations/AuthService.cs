@@ -59,15 +59,31 @@ namespace Menro.Application.Services.Implementations
         public async Task<bool> VerifyOtpAsync(string phoneNumber, string code)
         {
             var otp = await _uow.Otp.GetLatestUnexpiredAsync(phoneNumber);
-
-            // شاید بهتر باشه این قابلیت رو هم اضافه کنیم که بخاطر هر ارور یک خروجی متفاوت بده (استفاده از int بعنوان خروجی؟!)
-            if (otp == null || otp.Code != code)
+            if (otp is null || otp.Code != code)
                 return false;
 
             otp.IsUsed = true;
+
             await _uow.Otp.UpdateAsync(otp);
+
             await _uow.SaveChangesAsync();
 
+            return true;
+        }
+        
+        public async Task<bool> PhoneConfirmed(string phoneNumber)
+        {
+            var user = await _userService.GetByPhoneNumberAsync(phoneNumber);
+            if (user is null)
+            {
+                return false;
+            }
+            if (!user.PhoneNumberConfirmed)
+            {
+                user.PhoneNumberConfirmed = true;
+                await _uow.User.UpdateAsync(user);
+                await _uow.SaveChangesAsync();
+            }
             return true;
         }
         // token generation for user

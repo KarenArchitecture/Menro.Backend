@@ -1,6 +1,14 @@
 //const { get } = require("jquery");
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Authorization Control
+    token = localStorage.getItem("token");
+
+    if (!token) {
+        // توکن وجود نداره، کاربر رو به صفحه لاگین منتقل کن
+        window.location.href = "/pages/login.html";
+    }
+
     const ownerForm = document.getElementById("owner-form");
     const messageArea = document.getElementById("message-area");
     const categorySelect = document.getElementById("restaurant-category");

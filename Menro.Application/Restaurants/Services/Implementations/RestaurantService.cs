@@ -55,29 +55,6 @@ namespace Menro.Application.Restaurants.Services.Implementations
             {
                 return false;
             }
-
-            //if (dto == null)
-            //    throw new ArgumentNullException(nameof(dto));
-
-            //var restaurant = new Restaurant
-            //{
-            //    Name = dto.Name,
-            //    BannerImageUrl = dto.BannerImageUrl,
-            //    Address = dto.Address,
-            //    NationalCode = dto.NationalCode,
-            //    BankAccountNumber = dto.BankAccountNumber,
-            //    ShebaNumber = dto.ShebaNumber,
-            //    RestaurantCategoryId = dto.RestaurantCategoryId
-            //};
-
-            //var success = await _uow.Restaurant.AddAsync(restaurant);
-
-            //if (!success)
-            //    return false;
-
-            //await _uow.SaveAsync(); // ✅ Commit to database here
-
-            //return true;
         }
         public async Task<List<RestaurantCategoryDto>> GetRestaurantCategoriesAsync()
         {
