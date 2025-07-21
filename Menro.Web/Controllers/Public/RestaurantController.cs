@@ -23,23 +23,20 @@ namespace Menro.Web.Controllers.Public
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-
         public RestaurantController(
             IRestaurantService restaurantService,
             IFeaturedRestaurantService featuredRestaurantService,
-            IRestaurantCardService restaurantCardService,
+            IRandomRestaurantCardService randomRestaurantCardService,
+            IUserRecentOrderCardService userRecentOrderCardService,
             IRestaurantAdBannerService restaurantAdBannerService,
             IHttpContextAccessor httpContextAccessor)
-            IRandomRestaurantCardService randomRestaurantCardService,
-            IRestaurantAdBannerService restaurantAdBannerService,
-            IUserRecentOrderCardService userRecentOrderCardService)
         {
             _restaurantService = restaurantService;
             _featuredRestaurantService = featuredRestaurantService;
             _randomRestaurantCardService = randomRestaurantCardService;
+            _userRecentOrderCardService = userRecentOrderCardService;
             _restaurantAdBannerService = restaurantAdBannerService;
             _httpContextAccessor = httpContextAccessor;
-            _userRecentOrderCardService = userRecentOrderCardService;
         }
 
         [HttpGet("featured")]

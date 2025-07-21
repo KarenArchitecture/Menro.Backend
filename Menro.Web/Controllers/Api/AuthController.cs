@@ -108,6 +108,9 @@ namespace Menro.Web.Controllers.Api
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var (isSuccess, result, user) = await _userService.RegisterUserAsync(
                 dto.FullName,
                 dto.Email,
@@ -121,6 +124,8 @@ namespace Menro.Web.Controllers.Api
                 return BadRequest(new { message = "ثبت‌نام ناموفق بود.", errors });
             }
 
+            await _authService.PhoneConfirmed(dto.PhoneNumber);
+
             var roles = await _userService.GetRolesAsync(user);
             var token = _authService.GenerateToken(
                 Guid.Parse(user.Id),
@@ -128,7 +133,6 @@ namespace Menro.Web.Controllers.Api
                 user.Email ?? "",
                 roles.ToList()
             );
-            await _authService.PhoneConfirmed(dto.PhoneNumber);
 
             return Ok(new
             {

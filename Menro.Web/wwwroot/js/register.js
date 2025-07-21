@@ -56,6 +56,7 @@ if (customerForm) {
             if (response.ok) {
                 // ذخیره توکن و حذف شماره تلفن
                 localStorage.setItem("token", result.token);
+                localStorage.setItem("user", result.user);
                 localStorage.removeItem('userPhone');
                 window.location.href = "/Home/Index";
             } else {

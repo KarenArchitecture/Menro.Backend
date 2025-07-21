@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!token) {
         // توکن وجود نداره، کاربر رو به صفحه لاگین منتقل کن
-        window.location.href = "/pages/login.html";
+        window.location.href = "/pages/auth/login.html";
     }
 
     const ownerForm = document.getElementById("owner-form");
