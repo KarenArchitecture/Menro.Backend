@@ -11,6 +11,7 @@ namespace Menro.Application.Services.Interfaces
     {
         Task SendOtpAsync(string phoneNumber);
         Task<bool> VerifyOtpAsync(string phoneNumber, string code);
+        Task<bool> PhoneConfirmed(string phoneNumber);
         string GenerateToken(Guid userId, string fullName, string email, List<string> roles);
         public Task<(string Token, User User, List<string> Roles)> LoginWithPasswordAsync(string phoneNumber, string password);
 

@@ -41,8 +41,7 @@ namespace Menro.Infrastructure.Repositories
             _context = context;
         }
 
-        // commit/save
-        public async Task<int> SaveAsync()
+        public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();
         }

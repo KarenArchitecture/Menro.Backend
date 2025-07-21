@@ -84,7 +84,8 @@ namespace Menro.Infrastructure.Data
                         BannerImageUrl = $"/img/res-cards.png",
                         IsFeatured = (i % 3 == 0),
                         IsActive = true,
-                        IsApproved = true
+                        IsApproved = true,
+                        CreatedAt = DateTime.Now.AddDays(-i) // فرض: هر رستوران چند روز قبل‌تر ساخته شده
                     };
                     _db.Restaurants.Add(rest);
                     await _db.SaveChangesAsync(); // get ID

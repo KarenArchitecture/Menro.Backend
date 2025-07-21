@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fa-IR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تکمیل اطلاعات کاربری</title>
+    <link rel="stylesheet" href="/css/register-rastaurant.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"
+    />
+  </head>
+  <body>
+      <div class="form-container">
+          <form id="owner-form" class="profile-form">
+              <h2>تکمیل اطلاعات صاحب رستوران</h2>
+              <p>این اطلاعات برای راه‌اندازی پنل مدیریت شما استفاده خواهد شد.</p>
+              <!-- restaurant info -->
+              <div class="input-group">
+                  <label for="restaurant-name">نام رستوران</label>
+                  <input type="text"
+                         id="restaurant-name"
+                         name="restaurantName"
+                         required />
+              </div>
+              <div class="input-group">
+                  <label for="restaurant-description">توضیحات رستوران</label>
+                  <textarea id="restaurant-description"
+                            name="restaurantDescription"
+                            rows="4"></textarea>
+              </div>
+              <div class="input-group">
+                  <label for="restaurant-address">آدرس</label>
+                  <input type="text"
+                         id="restaurant-address"
+                         name="restaurantAddress"
+                         required />
+              </div>
+              <div class="input-group">
+                  <label for="restaurant-category">نوع رستوران</label>
+                  <select id="restaurant-category" name="restaurantCategoryId" required>
+                      <option value="">-- انتخاب کنید --</option>
+                  </select>
+              </div>
+              <div class="input-group">
+                  <label for="restaurant-open-time">ساعت شروع فعالیت</label>
+                  <input type="time"
+                         id="restaurant-open-time"
+                         name="restaurantOpenTime"
+                         required />
+              </div>
+              <div class="input-group">
+                  <label for="restaurant-close-time">ساعت پایان فعالیت</label>
+                  <input type="time"
+                         id="restaurant-close-time"
+                         name="restaurantCloseTime"
+                         required />
+              </div>
+              <!-- owner info -->
+              <p>اطلاعات تکمیلی صاحب رستوران</p>
+              <div class="input-group">
+                  <label for="owner-national-id">کد ملی</label>
+                  <input type="text"
+                         id="owner-national-id"
+                         name="ownerNationalId"
+                         required />
+              </div>
+              <div class="input-group">
+                  <label for="restaurant-account-number">شماره حساب</label>
+                  <input type="text"
+                         id="restaurant-account-number"
+                         name="restaurantAccountNumber"
+                         required />
+              </div>
+
+              <button type="submit">ثبت و ایجاد پنل</button>
+          </form>
+
+          <p id="message-area" class="message"></p>
+      </div>
+      <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+      <script src="/js/register-rastaurant.js"></script>
+  </body>
+</html>

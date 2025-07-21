@@ -56,7 +56,7 @@ if (customerForm) {
             if (response.ok) {
                 // ذخیره توکن و حذف شماره تلفن
                 localStorage.setItem("token", result.token);
-                localStorage.removeItem('pendingPhoneNumber');
+                localStorage.removeItem('userPhone');
                 window.location.href = "/Home/Index";
             } else {
                 messageArea.textContent = result.message || "ثبت‌نام ناموفق بود";

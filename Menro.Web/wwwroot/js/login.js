@@ -1,4 +1,4 @@
-﻿// otp service (سازگار با فرم loginFormOtp)
+﻿// login with otp
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("loginFormOtp");
     const phoneInput = document.getElementById("phone");
@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             try {
-                const response = await fetch("/api/auth/verify-otp", {
+                const response = await fetch("/api/auth/login-otp", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

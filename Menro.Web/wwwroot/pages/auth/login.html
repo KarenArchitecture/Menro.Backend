@@ -12,7 +12,7 @@
             <h1>ورود یا ثبت‌نام</h1>
             <div class="login-tabs">
                 <button id="otp-tab" class="tab active">ورود با کد یکبار مصرف</button>
-                <button id="password-tab" class="tab">ورود با رمز عبور</button>
+                <!-- <button id="password-tab" class="tab">ورود با رمز عبور</button> -->
             </div>
 
             <!-- فرم OTP -->
@@ -26,7 +26,7 @@
                            required />
                 </div>
 
-                <div class="input-group" id="code-group" style="display: none">
+                <div class="input-group" id="code-group">
                     <label for="code">کد تایید ۴ رقمی</label>
                     <input type="text"
                            id="code"
@@ -53,9 +53,10 @@
                 </div>
                 <button type="submit">ورود</button>
             </form>
-            <!--<a href="#" class="login-password-btn" id="password-tab">ورود با رمز عبور</a>-->
+            <a href="#" class="login-password-btn" id="password-tab">ورود با رمز عبور</a>
             <p id="message-area" class="message"></p>
         </div>
     </div>
     <script src="/js/login.js"></script>
-</body></html>
+</body>
+</html>

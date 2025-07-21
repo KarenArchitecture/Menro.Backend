@@ -1,5 +1,6 @@
 ﻿using Menro.Application.DTO;
 using Menro.Application.Restaurants.DTOs;
+using Menro.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace Menro.Application.Restaurants.Services.Interfaces
 {
     public interface IRestaurantService
     {
-        Task<bool> AddRestaurantAsync(RestaurantDto dto);
+        Task<bool> AddRestaurantAsync(RegisterRestaurantDto dto, string ownerUserId);
+        Task<List<RestaurantCategoryDto>> GetRestaurantCategoriesAsync();
     }
 }

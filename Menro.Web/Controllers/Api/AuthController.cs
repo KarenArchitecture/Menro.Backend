@@ -1,10 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Menro.Domain.Entities;
-using Microsoft.AspNetCore.Identity;
 using Menro.Application.Services.Interfaces;
-using Menro.Application.Services.Implementations;
-using Microsoft.EntityFrameworkCore;
-using static Menro.Application.Common.SD.SD;
 using Menro.Application.Authentication.DTOs;
 
 namespace Menro.Web.Controllers.Api
@@ -35,8 +30,8 @@ namespace Menro.Web.Controllers.Api
             return Ok(new { message = "کد تأیید ارسال شد." });
 
         }
-        [HttpPost("verify-otp")]
-        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+        [HttpPost("login-otp")]
+        public async Task<IActionResult> LoginWithOtp([FromBody] VerifyOtpDto dto)
         {
             try
             {
@@ -44,8 +39,9 @@ namespace Menro.Web.Controllers.Api
                     return BadRequest(new { message = "کد تایید نامعتبر است." });
 
                 /*error*/ var user = await _userService.GetByPhoneNumberAsync(dto.PhoneNumber);
-                if (user == null)
+                if (user is null)
                     return Ok(new { needsRegister = true });
+
 
                 var roles = await _userService.GetRolesAsync(user);
                 var token = _authService.GenerateToken(
@@ -54,6 +50,7 @@ namespace Menro.Web.Controllers.Api
                     user.Email ?? "",
                     roles.ToList()
                 );
+                await _authService.PhoneConfirmed(dto.PhoneNumber);
 
                 return Ok(new
                 {
@@ -79,7 +76,6 @@ namespace Menro.Web.Controllers.Api
                 });
             }
         }
-
         [HttpPost("login-password")]
         public async Task<IActionResult> LoginWithPassword([FromBody] LoginPasswordDto dto)
         {
@@ -132,6 +128,7 @@ namespace Menro.Web.Controllers.Api
                 user.Email ?? "",
                 roles.ToList()
             );
+            await _authService.PhoneConfirmed(dto.PhoneNumber);
 
             return Ok(new
             {
@@ -146,7 +143,6 @@ namespace Menro.Web.Controllers.Api
                 }
             });
         }
-        
         [HttpPost("logout")]
         public IActionResult Logout()
         {
