@@ -132,7 +132,7 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-//app.UseCors("AllowReactDevClient");
+app.UseCors("AllowReactDevClient");
 
 app.UseErrorHandlingMiddleware();
 
