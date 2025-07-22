@@ -14,10 +14,9 @@ using Microsoft.AspNetCore.Authorization;
 namespace Menro.Web.Controllers.Public
 {
     [ApiController]
-    [Route("api/restaurant")]
+    [Route("api/public/restaurant")]
     public class RestaurantController : ControllerBase
     {
-
         private readonly IRestaurantService _restaurantService;
         private readonly IFeaturedRestaurantService _featuredRestaurantService;
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
@@ -88,6 +87,7 @@ namespace Menro.Web.Controllers.Public
 
             return Ok("رستوران با موفقیت ثبت شد.");
         }
+
         [HttpGet("categories")]
         public async Task<IActionResult> GetCategories()
         {
