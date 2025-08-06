@@ -20,6 +20,7 @@ namespace Menro.Infrastructure.Repositories
             return await _context.FoodCategories.ToListAsync();
         }
 
+        //Home Page
         public async Task<List<Food>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
         {
             return await _context.Foods
@@ -59,5 +60,27 @@ namespace Menro.Infrastructure.Repositories
                 .Take(take)
                 .ToListAsync();
         }
+
+        //Restaurant Page
+        public async Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug)
+        {
+            if (string.IsNullOrWhiteSpace(slug))
+                return new List<Food>();
+
+            return await _context.Foods
+                .AsNoTracking()
+                .Include(f => f.FoodCategory)
+                .Include(f => f.Ratings)
+                .Include(f => f.Restaurant)                 
+                    .ThenInclude(r => r.RestaurantCategory)
+                .Where(f =>
+                    f.Restaurant.Slug == slug &&
+                    f.Restaurant.IsActive &&
+                    f.Restaurant.IsApproved)
+                .OrderBy(f => f.Name)
+                .ToListAsync();
+        }
+
+
     }
 }

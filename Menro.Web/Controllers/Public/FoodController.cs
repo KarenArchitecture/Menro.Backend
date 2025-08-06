@@ -1,18 +1,23 @@
 ﻿using Menro.Application.Foods.DTOs;
 using Menro.Application.Foods.Services.Interfaces;
+using Menro.Application.Restaurants.DTOs;
+using Menro.Application.Restaurants.Services.Implementations;
+using Menro.Application.Restaurants.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Public
 {
     [ApiController]
-    [Route("api/public/food")]
+    [Route("api/public/[controller]")]
     public class FoodController : ControllerBase
     {
         private readonly IFoodCardService _foodCardService;
+        private readonly IRestaurantMenuService _restaurantService;
 
-        public FoodController(IFoodCardService foodCardService)
+        public FoodController(IFoodCardService foodCardService, IRestaurantMenuService restaurantService)
         {
             _foodCardService = foodCardService;
+            _restaurantService = restaurantService;
         }
 
         /// <summary>
@@ -45,5 +50,6 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(result);
         }
+
     }
 }

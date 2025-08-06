@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace Menro.Web.Controllers.Public
 {
     [ApiController]
-    [Route("api/public/restaurant")]
+    [Route("api/public/[controller]")]
     public class RestaurantController : ControllerBase
     {
         private readonly IRestaurantService _restaurantService;
@@ -24,6 +24,7 @@ namespace Menro.Web.Controllers.Public
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRestaurantShopBannerService _restaurantShopBannerService;
+        private readonly IRestaurantMenuService _restaurantMenuService;
 
         public RestaurantController(
             IRestaurantService restaurantService,
@@ -32,6 +33,7 @@ namespace Menro.Web.Controllers.Public
             IUserRecentOrderCardService userRecentOrderCardService,
             IRestaurantAdBannerService restaurantAdBannerService,
             IRestaurantShopBannerService restaurantShopBannerService,
+            IRestaurantMenuService restaurantMenuService,
             IHttpContextAccessor httpContextAccessor)
         {
             _restaurantService = restaurantService;
@@ -41,6 +43,7 @@ namespace Menro.Web.Controllers.Public
             _restaurantAdBannerService = restaurantAdBannerService;
             _restaurantShopBannerService = restaurantShopBannerService;
             _httpContextAccessor = httpContextAccessor;
+            _restaurantMenuService = restaurantMenuService;
         }
 
         [HttpGet("featured")]
@@ -96,7 +99,7 @@ namespace Menro.Web.Controllers.Public
         }
 
         // ✅ New Shop Page - Get restaurant info for banner by slug
-        [HttpGet("banner/{slug}")]
+        [HttpGet("{slug}/banner")]
         public async Task<ActionResult<RestaurantShopBannerDto>> GetBannerBySlug(string slug)
         {
             var dto = await _restaurantShopBannerService.GetShopBannerAsync(slug);
@@ -104,6 +107,23 @@ namespace Menro.Web.Controllers.Public
                 return NotFound();
 
             return Ok(dto);
+        }
+
+
+        //Restaurant Public Page
+        /// <summary>
+        /// Returns the full menu of a restaurant, grouped by category.
+        /// GET: api/public/restaurant/{slug}/menu
+        /// </summary>
+        [HttpGet("{slug}/menu")]
+        public async Task<ActionResult<List<RestaurantMenuDto>>> GetMenu(string slug)
+        {
+            var sections = await _restaurantMenuService.GetRestaurantMenuBySlugAsync(slug);
+
+            if (sections == null || sections.Count == 0)
+                return NotFound();                           // 404 if restaurant not found / no foods
+
+            return Ok(sections);                            // 200 + JSON payload
         }
     }
 }

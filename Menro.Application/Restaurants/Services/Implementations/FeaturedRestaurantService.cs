@@ -26,7 +26,8 @@ namespace Menro.Application.Restaurants.Services.Implementations
             {
                 Id = r.Id,
                 Name = r.Name,
-                CarouselImageUrl = r.CarouselImageUrl
+                CarouselImageUrl = r.CarouselImageUrl,
+                Slug = r.Slug
             });
         }
     }

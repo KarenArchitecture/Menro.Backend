@@ -19,6 +19,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
         {
             _uow = uow;
         }
+
         public async Task<bool> AddRestaurantAsync(RegisterRestaurantDto dto, string ownerUserId)
         {
             // بررسی صحت داده‌ها (تکراری بودن نام؟ موجود بودن دسته‌بندی؟)
@@ -56,6 +57,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
                 return false;
             }
         }
+
         public async Task<List<RestaurantCategoryDto>> GetRestaurantCategoriesAsync()
         {
             var categories = await _uow.RestaurantCategory.GetAllAsync();
@@ -69,6 +71,21 @@ namespace Menro.Application.Restaurants.Services.Implementations
 
             return categoryDtos;
 
+        }
+
+        public async Task<string> GenerateUniqueSlugAsync(string name)
+        {
+            string baseSlug = name.ToLower().Replace(" ", "-"); // use slugify lib if needed
+            string slug = baseSlug;
+            int counter = 1;
+
+            while (await _uow.Restaurant.SlugExistsAsync(slug))
+            {
+                slug = $"{baseSlug}-{counter}";
+                counter++;
+            }
+
+            return slug;
         }
     }
 }

@@ -23,5 +23,8 @@ namespace Menro.Domain.Interfaces
 
         //Shop Page - Restaurant Banner 
         Task<Restaurant?> GetBySlugWithCategoryAsync(string slug);
+
+        //Shop Page - Preventing Save For an Existing Slug
+        Task<bool> SlugExistsAsync(string slug);
     }
 }

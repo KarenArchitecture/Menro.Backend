@@ -8,7 +8,7 @@ namespace Menro.Web.Controllers.UserPanel
 {
     [ApiController]
     //[Authorize]
-    [Route("api/user/restaurant")]
+    [Route("api/user/[controller]")]
     public class RestaurantController : ControllerBase
     {
         private readonly IUserRecentOrderCardService _recentOrderCardService;

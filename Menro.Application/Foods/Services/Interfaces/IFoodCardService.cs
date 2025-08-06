@@ -10,5 +10,6 @@ namespace Menro.Application.Foods.Services.Interfaces
         Task<List<FoodCardDto>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8);
         Task<List<int>> GetAllCategoryIdsAsync();
         Task<PopularFoodCategoryDto?> GetPopularFoodsFromRandomCategoryExcludingAsync(List<string> excludeCategoryTitles);
+        //Task<List<RestaurantMenuDto>> GetFoodsByRestaurantIdAsync(int restaurantId);
     }
 }

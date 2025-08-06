@@ -84,6 +84,7 @@ builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
 
 
 
+
 #region API & MVC
 builder.Services.AddControllersWithViews();
 builder.Services.AddControllers();
