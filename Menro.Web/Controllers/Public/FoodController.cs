@@ -41,7 +41,7 @@ namespace Menro.Web.Controllers.Public
             var result = await _foodCardService.GetPopularFoodsFromRandomCategoryExcludingAsync(usedCategories);
 
             if (result == null)
-                return NotFound("No more unique food categories found.");
+                return Ok(null);
 
             return Ok(result);
         }
