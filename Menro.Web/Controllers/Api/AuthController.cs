@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Menro.Application.Services.Interfaces;
 using Menro.Application.Authentication.DTOs;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Menro.Web.Controllers.Api
 {
@@ -23,9 +24,6 @@ namespace Menro.Web.Controllers.Api
         [HttpPost("send-otp")]
         public async Task<IActionResult> SendOtp([FromBody] SendOtpDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
-                return BadRequest("شماره تلفن نامعتبر است.");
-
             await _authService.SendOtpAsync(dto.PhoneNumber);
             return Ok(new { message = "کد تأیید ارسال شد." });
 
@@ -146,6 +144,19 @@ namespace Menro.Web.Controllers.Api
                     Roles = roles
                 }
             });
+        }
+        
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        {
+            if (dto == null) return BadRequest();
+
+            var result = await _authService.ResetPasswordAsync(dto.PhoneNumber, dto.NewPassword, dto.NewPasswordConfirm);
+
+            if (!result.IsSuccess)
+                return BadRequest(new { message = "عملیات ناموفق" });
+
+            return Ok(new { message = "رمز عبور با موفقیت تغییر کرد." });
         }
         [HttpPost("logout")]
         public IActionResult Logout()

@@ -1,7 +1,10 @@
-﻿using Menro.Application.Services.Interfaces;
+﻿using Menro.Application.Common.Models;
+using Menro.Application.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using static Menro.Application.Common.SD.SD;
 
 
@@ -19,13 +22,21 @@ namespace Menro.Application.Services.Implementations
         private readonly IUnitOfWork _uow;
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IPasswordHasher<User> _passwordHasher;
 
 
-        public UserService(IUnitOfWork uow, UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+        public UserService(IUnitOfWork uow, 
+            UserManager<User> userManager, 
+            RoleManager<IdentityRole> roleManager, 
+            IHttpContextAccessor httpContextAccessor, 
+            IPasswordHasher<User> passwordHasher)
         {
             _uow = uow;
             _userManager = userManager;
             _roleManager = roleManager;
+            _httpContextAccessor = httpContextAccessor;
+            _passwordHasher = passwordHasher;
         }
         public async Task<User> GetByIdAsync(string userId)
         {
@@ -93,7 +104,28 @@ namespace Menro.Application.Services.Implementations
             bool isCorrect = await _userManager.CheckPasswordAsync(user, password);
             return isCorrect;
         }
+        public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword, string confirmPassword)
+        {
+            if (newPassword != confirmPassword)
+                return Result.Failure("رمز جدید و تکرار آن برابر نیست.");
 
+            // از متد موجود برای یافتن کاربر استفاده کن تا منطق جستجو یکجا باشه
+            var user = await GetByPhoneNumberAsync(phoneNumber);
+            if (user == null)
+                return Result.Failure("کاربری با این شماره یافت نشد.");
+
+            // تولید توکن ریست (سرور-side) و استفاده از ResetPasswordAsync تا ولیدیشن‌ها اجرا شوند
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var identityResult = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (!identityResult.Succeeded)
+            {
+                var errors = string.Join(" | ", identityResult.Errors.Select(e => e.Description));
+                return Result.Failure(errors);
+            }
+
+            return Result.Success();
+        }
 
     }
 }

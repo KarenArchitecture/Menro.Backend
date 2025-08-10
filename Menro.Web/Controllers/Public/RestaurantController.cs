@@ -2,13 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Application.Restaurants.DTOs;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Menro.Application.Restaurants.Services.Implementations;
-using Menro.Application.Restaurants.DTOs;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Menro.Web.Controllers.Public

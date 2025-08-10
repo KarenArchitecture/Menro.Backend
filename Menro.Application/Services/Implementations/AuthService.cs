@@ -7,6 +7,8 @@ using System.Security.Claims;
 using System.Text;
 using System.Security.Cryptography;
 using Menro.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using Menro.Application.Common.Models;
 
 
 namespace Menro.Application.Services.Implementations
@@ -25,16 +27,16 @@ namespace Menro.Application.Services.Implementations
         private readonly ISmsSender _smsSender;
 
         public AuthService(
-            JwtSettings jwtSettings, 
-            IUnitOfWork uow, 
-            ISmsSender smsSender, 
+            JwtSettings jwtSettings,
+            IUnitOfWork uow,
+            ISmsSender smsSender,
             IUserService userService)
         {
             _jwtSettings = jwtSettings;
             _uow = uow;
             _smsSender = smsSender;
             _userService = userService;
-        }        
+        }
         /* --- OTP services --- */
         // send otp
         public async Task SendOtpAsync(string phoneNumber)
@@ -51,8 +53,8 @@ namespace Menro.Application.Services.Implementations
 
             await _uow.Otp.AddAsync(otp);
             await _uow.SaveChangesAsync();
-            
-            
+
+
         }
 
         // verify otp
@@ -70,7 +72,7 @@ namespace Menro.Application.Services.Implementations
 
             return true;
         }
-        
+
         public async Task<bool> PhoneConfirmed(string phoneNumber)
         {
             var user = await _userService.GetByPhoneNumberAsync(phoneNumber);
@@ -132,6 +134,13 @@ namespace Menro.Application.Services.Implementations
             );
 
             return (token, user, roles);
+        }
+
+        // داخل AuthService
+        public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword, string confirmPassword)
+        {
+            var result = await _userService.ResetPasswordAsync(phoneNumber, newPassword, confirmPassword);
+            return result;
         }
 
 

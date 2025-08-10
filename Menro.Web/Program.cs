@@ -6,18 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Menro.Application.Common.Settings;
-using Menro.Application.Services.Interfaces;
-using Menro.Application.Services.Implementations;
-using Menro.Application.Restaurants.Services.Interfaces;
-using Menro.Application.Restaurants.Services.Implementations;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Menro.Web.Middleware;
 using Menro.Infrastructure.Extensions;
 using Menro.Application.Extensions;
-using Menro.Application.Foods.Services.Interfaces;
-using Menro.Application.Foods.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -105,7 +99,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactDevClient", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("https://localhost:5173")
+        //policy.WithOrigins("http://localhost:5174")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
