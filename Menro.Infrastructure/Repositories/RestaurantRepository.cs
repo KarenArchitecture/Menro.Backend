@@ -66,5 +66,10 @@ namespace Menro.Infrastructure.Repositories
                 .FirstOrDefaultAsync(r => r.Slug == slug && r.IsActive && r.IsApproved);
         }
 
+        //Shop Page - Preventing Save For an Existing Slug
+        public async Task<bool> SlugExistsAsync(string slug)
+        {
+            return await _context.Restaurants.AnyAsync(r => r.Slug == slug);
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,13 @@ namespace Menro.Infrastructure.Repositories
         public FoodCategoryRepository(MenroDbContext context) : base(context)
         {
             _context = context;
+        }
+
+        public async Task<IEnumerable<FoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug)
+        {
+            return await _context.FoodCategories
+                .Where(fc => fc.Restaurant.Slug == restaurantSlug)
+                .ToListAsync();
         }
 
     }

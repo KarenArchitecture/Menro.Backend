@@ -1,8 +1,11 @@
 ﻿using Menro.Application.Foods.DTOs;
 using Menro.Application.Foods.Services.Interfaces;
+using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -120,5 +123,35 @@ namespace Menro.Application.Foods.Services.Implementations
                 Foods = foodDtos
             };
         }
+
+        //public async Task<List<RestaurantMenuDto>> GetFoodsByRestaurantIdAsync(int restaurantId)
+        //{
+        //    var foods = await _foodRepository.GetFoodsByRestaurantIdAsync(restaurantId);
+
+        //    var grouped = foods
+        //        .GroupBy(f => f.FoodCategory)
+        //        .Select(g => new RestaurantMenuDto
+        //        {
+        //            CategoryId = g.Key.Id,
+        //            CategoryTitle = g.Key.Name,
+        //            SvgIcon = g.Key.SvgIcon,
+        //            Foods = g.Select(f => new FoodCardDto
+        //            {
+        //                Id = f.Id,
+        //                Name = f.Name,
+        //                Ingredients = f.Ingredients,
+        //                Price = f.Price,
+        //                ImageUrl = f.ImageUrl,
+        //                Rating = f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0,
+        //                Voters = f.Ratings.Count,
+        //                RestaurantName = f.Restaurant?.Name ?? "",
+        //                RestaurantCategory = f.Restaurant?.RestaurantCategory?.Name ?? ""
+        //            }).ToList()
+        //        }).ToList();
+
+        //    return grouped;
+        //}
+
+        
     }
 }

@@ -20,6 +20,9 @@ namespace Menro.Domain.Entities
         [Display(Name = "آیکون SVG")]
         public string SvgIcon { get; set; } = string.Empty;
 
+        public bool IsAvailable { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
+
         // ارتباط با جدول رستوران
         public int RestaurantId { get; set; }
 

@@ -31,6 +31,10 @@ namespace Menro.Domain.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public bool IsAvailable { get; set; } = true;  // Shows if food can be ordered
+
+        public bool IsDeleted { get; set; } = false;   // Soft delete flag
+
         // FK to Restaurant
         public int RestaurantId { get; set; }
 

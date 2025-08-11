@@ -22,9 +22,24 @@ namespace Menro.Infrastructure.Data
             _userManager = userManager;
         }
 
-        private string GenerateSlug(int index)
+        private async Task<string> GenerateUniqueSlugAsync(string baseName)
         {
-            return $"restaurant-number-{index}";
+            string baseSlug = Sluggify(baseName); // e.g. "Restaurant Number 1" -> "restaurant-number-1"
+            string slug = baseSlug;
+            int i = 1;
+
+            while (await _db.Restaurants.AnyAsync(r => r.Slug == slug))
+            {
+                slug = $"{baseSlug}-{i}";
+                i++;
+            }
+            return slug;
+        }
+
+        private string Sluggify(string text)
+        {
+            // simple example: replace spaces with -, remove invalid chars
+            return text.Trim().ToLower().Replace(" ", "-");
         }
 
         public async Task InitializeAsync()
@@ -58,7 +73,13 @@ namespace Menro.Infrastructure.Data
 
                 // Sample SVG icon string
                 var sampleSvg = """
-                <svg width="6" height="9" viewBox="0 0 6 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.07174 0.0373714C5.15805 0.00893344 5.24959 -0.00348178 5.34111 0.000837744C5.52489 0.0107347 5.69693 0.0874758 5.81958 0.214267C5.94329 0.340265 6.00789 0.506412 5.99923 0.676314C5.99057 0.846216 5.90935 1.00602 5.77336 1.12072L1.73486 4.50298L5.77336 7.88146C5.90935 7.99616 5.99057 8.15597 5.99923 8.32587C6.00789 8.49577 5.94329 8.66192 5.81958 8.78792C5.69614 8.91422 5.52352 8.99017 5.33955 8.99911C5.15558 9.00805 4.97528 8.94927 4.83816 8.83563L0.228749 4.97755C0.156718 4.91728 0.0991497 4.84375 0.0597519 4.76169C0.0203541 4.67963 0 4.59086 0 4.50109C0 4.41133 0.0203541 4.32256 0.0597519 4.2405C0.0991497 4.15843 0.156718 4.08491 0.228749 4.02464L4.83816 0.166554C4.90606 0.109711 4.98543 0.0658094 5.07174 0.0373714Z" fill="white"/></svg>
+                <svg width="43" height="43" viewBox="0 0 43 43" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10.75 9.17527C10.0154 9.17527 9.40625 8.56611 9.40625 7.83152V4.69611C9.40625 3.96152 10.0154 3.35236 10.75 3.35236C11.4846 3.35236 12.0938 3.96152 12.0938 4.69611V7.83152C12.0938 8.58402 11.4846 9.17527 10.75 9.17527Z" fill="#999FA8"/>
+                <path d="M17.9167 9.17527C17.1822 9.17527 16.573 8.56611 16.573 7.83152V4.69611C16.573 3.96152 17.1822 3.35236 17.9167 3.35236C18.6513 3.35236 19.2605 3.96152 19.2605 4.69611V7.83152C19.2605 8.58402 18.6513 9.17527 17.9167 9.17527Z" fill="#999FA8"/>
+                <path d="M25.0833 9.17527C24.3487 9.17527 23.7395 8.56611 23.7395 7.83152V4.69611C23.7395 3.96152 24.3487 3.35236 25.0833 3.35236C25.8178 3.35236 26.427 3.96152 26.427 4.69611V7.83152C26.427 8.58402 25.8178 9.17527 25.0833 9.17527Z" fill="#999FA8"/>
+                <path d="M39.8647 23.7426C39.8647 19.0485 36.2276 15.2502 31.6409 14.856C30.3151 12.6881 27.9501 11.2189 25.2267 11.2189H12.0222C7.8655 11.2189 4.47925 14.6052 4.47925 18.7618V19.7114H32.7697V18.7618C32.7697 18.4214 32.7159 18.081 32.6622 17.7585C35.2601 18.5289 37.1772 20.8939 37.1772 23.7426C37.1772 26.5555 35.3138 28.9026 32.7697 29.6909V21.503H4.47925V31.8768C4.47925 36.0335 7.8655 39.4197 12.0222 39.4197H25.2267C29.1684 39.4197 32.3755 36.3739 32.698 32.5039C36.783 31.6797 39.8647 28.0605 39.8647 23.7426Z" fill="#999FA8"/>
+                </svg>
+                
                 """;
 
                 // 3️⃣ Owners and Restaurants
@@ -78,13 +99,17 @@ namespace Menro.Infrastructure.Data
                     await _userManager.CreateAsync(owner, "Owner123!");
                     await _userManager.AddToRoleAsync(owner, SD.Role_Owner);
 
+                    // English name for SEO in slug and Name property
+                    string restaurantName = $"Restaurant Number {i}";
+                    string slug = await GenerateUniqueSlugAsync(restaurantName);
+
                     var restaurant = new Restaurant
                     {
-                        Name = $"رستوران شماره {i}",
-                        Address = $"تهران، خیابان نمونه شماره {i}",
+                        Name = restaurantName, // English for SEO
+                        Address = $"تهران، خیابان نمونه شماره {i}", // Keep Persian address
                         OpenTime = new TimeSpan(8 + (i % 5), 0, 0),
                         CloseTime = new TimeSpan(20 + (i % 4), 0, 0),
-                        Description = $"توضیح نمونه برای رستوران {i}",
+                        Description = $"توضیح نمونه برای رستوران {i}", // Keep Farsi description
                         NationalCode = (1000000000 + i).ToString(),
                         BankAccountNumber = (2000000000 + i).ToString(),
                         ShebaNumber = $"IR{3000000000 + i}",
@@ -95,7 +120,7 @@ namespace Menro.Infrastructure.Data
                         IsFeatured = (i % 3 == 0),
                         IsActive = true,
                         IsApproved = true,
-                        Slug = GenerateSlug(i),
+                        Slug = slug,
                         CreatedAt = DateTime.Now.AddDays(-i) // فرض: هر رستوران چند روز قبل‌تر ساخته شده
                     };
 
@@ -108,7 +133,7 @@ namespace Menro.Infrastructure.Data
                     {
                         var categories = Enumerable.Range(1, 5).Select(j => new FoodCategory
                         {
-                            Name = $"دسته {j}",
+                            Name = $"دسته {j}", // keep Farsi categories
                             RestaurantId = restaurant.Id,
                             SvgIcon = sampleSvg
                         }).ToList();
@@ -135,7 +160,8 @@ namespace Menro.Infrastructure.Data
                     {
                         foods.Add(new Food
                         {
-                            Name = $"غذای نمونه {i} دسته {category.Name}",
+                            // Change "نمونه" to "Sample" for partial English SEO benefit
+                            Name = $"Sample Food {i} Category {category.Name}",
                             Ingredients = "مواد اولیه نمونه",
                             Price = rand.Next(15000, 80000),
                             FoodCategoryId = category.Id,
