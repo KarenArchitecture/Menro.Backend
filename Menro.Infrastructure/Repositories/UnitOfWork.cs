@@ -24,6 +24,8 @@ namespace Menro.Infrastructure.Repositories
         private ISubscriptionRepository _subscription;
         private ISubscriptionPlanRepository _subscriptionPlan;
         private IOtpRepository _otp;
+        private IOrderRepository _order;
+        private IOrderItemRepository _orderItem;
 
         // public properties with lazy instantiation
         public IUserRepository User => _user ??= new UserRepository(_context);
@@ -34,6 +36,8 @@ namespace Menro.Infrastructure.Repositories
         public ISubscriptionRepository Subscription => _subscription ??= new SubscriptionRepository(_context);
         public ISubscriptionPlanRepository SubscriptionPlan => _subscriptionPlan ??= new SubscriptionPlanRepository(_context);
         public IOtpRepository Otp => _otp ??= new OtpRepository(_context);
+        public IOrderRepository Order => _order ??= new OrderRepository(_context);
+        public IOrderItemRepository OrderItem => _orderItem ??= new OrderItemRepository(_context);
 
         // constructor
         public UnitOfWork(MenroDbContext context)

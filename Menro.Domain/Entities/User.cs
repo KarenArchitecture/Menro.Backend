@@ -19,5 +19,8 @@ namespace Menro.Domain.Entities
         public string? ProfileImageUrl { get; set; } = string.Empty;
         // تاریخ عضویت
         public ICollection<Restaurant>? Restaurants { get; set; } = new List<Restaurant>();
+        // ارتباط با سفارشات مربوط به کاربر
+        public ICollection<Order> Orders { get; set; } = new List<Order>(); // این رو اضافه کن
+
     }
 }

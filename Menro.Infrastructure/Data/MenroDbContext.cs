@@ -1,5 +1,6 @@
 ﻿using Menro.Application.Services.Interfaces;
 using Menro.Domain.Entities;
+using Menro.Domain.Enums;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +24,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<RestaurantAdBanner> RestaurantAdBanners { get; set; }
         public DbSet<Otp> Otps { get; set; }
         public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
 
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
         {
@@ -88,7 +90,54 @@ namespace Menro.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(d => d.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
+            /* for order module */
+            // User → Order (One-to-Many)
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.User)
+                .WithMany(u => u.Orders)
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            // Order
+            modelBuilder.Entity<Order>(entity =>
+            {
+                // مقدار پیش‌فرض برای Status
+                entity.Property(o => o.Status)
+                      .HasDefaultValue(OrderStatus.Pending);
 
+                // مقدار پیش‌فرض برای CreatedAt
+                entity.Property(o => o.CreatedAt)
+                      .HasDefaultValueSql("GETUTCDATE()"); // برای SQL Server
+            });
+
+            // Restaurant → Order (One-to-Many)
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Restaurant)
+                .WithMany(r => r.Orders)
+                .HasForeignKey(o => o.RestaurantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Order → OrderItem (One-to-Many)
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(oi => oi.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Food → OrderItem (One-to-Many)
+            modelBuilder.Entity<OrderItem>()
+                .HasOne(oi => oi.Food)
+                .WithMany(f => f.OrderItems)
+                .HasForeignKey(oi => oi.FoodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // مقدار دقیق decimal برای قیمت
+            modelBuilder.Entity<Order>()
+                .Property(o => o.TotalAmount)
+                .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<OrderItem>()
+                .Property(oi => oi.UnitPrice)
+                .HasColumnType("decimal(18,2)");
             /* ---------------------------- Seed Data ---------------------------- */
             modelBuilder.Entity<RestaurantCategory>().HasData(
                 new RestaurantCategory { Id = 1, Name = "رستوران سنتی" },

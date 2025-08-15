@@ -84,7 +84,11 @@ namespace Menro.Domain.Entities
 
         public ICollection<RestaurantDiscount> Discounts { get; set; } = new List<RestaurantDiscount>();
 
-        public RestaurantAdBanner AdBanner { get; set; }
+        public RestaurantAdBanner AdBanner { get; set; } = new RestaurantAdBanner();
+
+        // connection to Orders from specific restaurant
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
+
 
     }
 }

@@ -1,11 +1,13 @@
 ﻿using Menro.Application.Common.SD;
 using Menro.Domain.Entities;
+using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Menro.Infrastructure.Data
 {
+    // seeds data whenever the project runs
     public class DbInitializer : IDbInitializer
     {
         private readonly MenroDbContext _db;
@@ -263,6 +265,51 @@ namespace Menro.Infrastructure.Data
                     await _userManager.AddToRoleAsync(customer, SD.Role_Customer);
                 }
 
+
+                // 9th Order + OrderItems
+                var userId = "da892b02-12c5-4e5a-bcae-51c339a2ca0a";
+                var restaurantId = 3;
+                //var rand = new Random();
+                int orderCount = 10; // تعداد سفارش‌ها که میخوای بسازی
+
+                for (int i = 1; i <= orderCount; i++)
+                {
+                    var order = new Order
+                    {
+                        UserId = userId,
+                        RestaurantId = restaurantId,
+                        Status = OrderStatus.Completed, // عدد 3
+                        CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(1, 30)), // تاریخ فرضی
+                        TotalAmount = 0m // بعداً با جمع OrderItems پر می‌کنیم
+                    };
+
+                    _db.Orders.Add(order);
+                    await _db.SaveChangesAsync(); // تا Id ساخته بشه
+
+                    int itemsCount = rand.Next(1, 5); // هر سفارش چند آیتم داشته باشه
+                    decimal orderTotal = 0;
+
+                    for (int j = 0; j < itemsCount; j++)
+                    {
+                        int foodId = rand.Next(1, 11); // FoodId از 1 تا 10 رندوم
+                        int quantity = rand.Next(1, 4); // تعداد رندوم بین 1 تا 3
+                        decimal unitPrice = rand.Next(10000, 100000); // قیمت رندوم
+
+                        var orderItem = new OrderItem
+                        {
+                            OrderId = order.Id,
+                            FoodId = foodId,
+                            Quantity = quantity,
+                            UnitPrice = unitPrice
+                        };
+
+                        orderTotal += quantity * unitPrice;
+                        _db.OrderItem.Add(orderItem);
+                    }
+
+                    order.TotalAmount = orderTotal;
+                    await _db.SaveChangesAsync();
+                }
                 await _db.SaveChangesAsync();
             }
             catch (Exception ex)
