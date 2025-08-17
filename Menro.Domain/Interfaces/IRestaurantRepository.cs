@@ -26,5 +26,7 @@ namespace Menro.Domain.Interfaces
 
         //Shop Page - Preventing Save For an Existing Slug
         Task<bool> SlugExistsAsync(string slug);
+
+        Task<int?> GetRestaurantIdByUserIdAsync(string userId);
     }
 }

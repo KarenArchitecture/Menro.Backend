@@ -304,7 +304,7 @@ namespace Menro.Infrastructure.Data
                         };
 
                         orderTotal += quantity * unitPrice;
-                        _db.OrderItem.Add(orderItem);
+                        _db.OrderItems.Add(orderItem);
                     }
 
                     order.TotalAmount = orderTotal;

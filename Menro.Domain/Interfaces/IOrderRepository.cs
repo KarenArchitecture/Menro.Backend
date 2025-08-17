@@ -9,5 +9,9 @@ namespace Menro.Domain.Interfaces
 {
     public interface IOrderRepository : IRepository<Order>
     {
+        Task<decimal> GetTotalRevenueAsync();
+        IQueryable<Order> Query();
+
+
     }
 }

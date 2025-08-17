@@ -11,6 +11,7 @@ namespace Menro.Web.Controllers.Public
     [Route("api/public/[controller]")]
     public class RestaurantController : ControllerBase
     {
+        #region
         private readonly IRestaurantService _restaurantService;
         private readonly IFeaturedRestaurantService _featuredRestaurantService;
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
@@ -39,7 +40,7 @@ namespace Menro.Web.Controllers.Public
             _httpContextAccessor = httpContextAccessor;
             _restaurantMenuService = restaurantMenuService;
         }
-
+        #endregion
         [HttpGet("featured")]
         public async Task<IActionResult> GetFeaturedRestaurants()
         {
@@ -92,7 +93,7 @@ namespace Menro.Web.Controllers.Public
             return Ok(categories); // JSON اتوماتیک ارسال میشه
         }
 
-        // ✅ New Shop Page - Get restaurant info for banner by slug
+        // New Shop Page - Get restaurant info for banner by slug
         [HttpGet("{slug}/banner")]
         public async Task<ActionResult<RestaurantShopBannerDto>> GetBannerBySlug(string slug)
         {
@@ -102,22 +103,27 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(dto);
         }
-
-
-        //Restaurant Public Page
-        /// <summary>
-        /// Returns the full menu of a restaurant, grouped by category.
-        /// GET: api/public/restaurant/{slug}/menu
-        /// </summary>
+        /* Restaurant Public Page
+        Returns the full menu of a restaurant, grouped by category.
+        GET: api/public/restaurant/{slug}/menu
+        */
         [HttpGet("{slug}/menu")]
         public async Task<ActionResult<List<RestaurantMenuDto>>> GetMenu(string slug)
         {
             var sections = await _restaurantMenuService.GetRestaurantMenuBySlugAsync(slug);
 
             if (sections == null || sections.Count == 0)
-                return NotFound();                           // 404 if restaurant not found / no foods
+                return NotFound(); // 404 if restaurant not found / no foods
 
-            return Ok(sections);                            // 200 + JSON payload
+            return Ok(sections); // 200 + JSON payload
+        }
+
+        [HttpGet("restaurant-id")]
+        public async Task<IActionResult> GetRestaurantId()
+        {
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // یا روش JWT خودت
+            int? restaurantId = await _restaurantService.GetRestaurantIdByUserIdAsync(userId);
+            return Ok(new { restaurantId });
         }
     }
 }
