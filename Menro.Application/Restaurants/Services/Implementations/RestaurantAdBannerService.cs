@@ -25,6 +25,12 @@ namespace Menro.Application.Restaurants.Services.Implementations
             if (banner == null)
                 return null;
 
+
+            // Optional gate: show only if the restaurant is active/approved
+            var r = banner.Restaurant;
+            if (r == null || !r.IsActive || !r.IsApproved) return null;
+
+
             return new RestaurantAdBannerDto
             {
                 RestaurantId = banner.RestaurantId,
