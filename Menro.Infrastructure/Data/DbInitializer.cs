@@ -266,49 +266,52 @@ namespace Menro.Infrastructure.Data
                 }
 
 
-                // 9th Order + OrderItems
-                var userId = "da892b02-12c5-4e5a-bcae-51c339a2ca0a";
-                var restaurantId = 3;
-                //var rand = new Random();
-                int orderCount = 10; // تعداد سفارش‌ها که میخوای بسازی
-
-                for (int i = 1; i <= orderCount; i++)
+                // 9️⃣ Orders + OrderItems
+                if (!await _db.Orders.AnyAsync())  // 👈 فقط اگه دیتابیس خالیه
                 {
-                    var order = new Order
+                    var userId = "d3f574d2-db33-4e78-83c1-af64dbaa5a55";
+                    var restaurantId = 3;
+                    int orderCount = 10; // تعداد سفارش‌ها که میخوای بسازی
+                    var rand2 = new Random();
+
+                    for (int i = 1; i <= orderCount; i++)
                     {
-                        UserId = userId,
-                        RestaurantId = restaurantId,
-                        Status = OrderStatus.Completed, // عدد 3
-                        CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(1, 30)), // تاریخ فرضی
-                        TotalAmount = 0m // بعداً با جمع OrderItems پر می‌کنیم
-                    };
-
-                    _db.Orders.Add(order);
-                    await _db.SaveChangesAsync(); // تا Id ساخته بشه
-
-                    int itemsCount = rand.Next(1, 5); // هر سفارش چند آیتم داشته باشه
-                    decimal orderTotal = 0;
-
-                    for (int j = 0; j < itemsCount; j++)
-                    {
-                        int foodId = rand.Next(1, 11); // FoodId از 1 تا 10 رندوم
-                        int quantity = rand.Next(1, 4); // تعداد رندوم بین 1 تا 3
-                        decimal unitPrice = rand.Next(10000, 100000); // قیمت رندوم
-
-                        var orderItem = new OrderItem
+                        var order = new Order
                         {
-                            OrderId = order.Id,
-                            FoodId = foodId,
-                            Quantity = quantity,
-                            UnitPrice = unitPrice
+                            UserId = userId,
+                            RestaurantId = restaurantId,
+                            Status = OrderStatus.Completed,
+                            CreatedAt = DateTime.UtcNow.AddDays(-rand2.Next(1, 30)),
+                            TotalAmount = 0m
                         };
 
-                        orderTotal += quantity * unitPrice;
-                        _db.OrderItems.Add(orderItem);
-                    }
+                        _db.Orders.Add(order);
+                        await _db.SaveChangesAsync(); // تا Id ساخته بشه
 
-                    order.TotalAmount = orderTotal;
-                    await _db.SaveChangesAsync();
+                        int itemsCount = rand2.Next(1, 5);
+                        decimal orderTotal = 0;
+
+                        for (int j = 0; j < itemsCount; j++)
+                        {
+                            int foodId = rand2.Next(1, 11);
+                            int quantity = rand2.Next(1, 4);
+                            decimal unitPrice = rand2.Next(10000, 100000);
+
+                            var orderItem = new OrderItem
+                            {
+                                OrderId = order.Id,
+                                FoodId = foodId,
+                                Quantity = quantity,
+                                UnitPrice = unitPrice
+                            };
+
+                            orderTotal += quantity * unitPrice;
+                            _db.OrderItems.Add(orderItem);
+                        }
+
+                        order.TotalAmount = orderTotal;
+                        await _db.SaveChangesAsync();
+                    }
                 }
                 await _db.SaveChangesAsync();
             }

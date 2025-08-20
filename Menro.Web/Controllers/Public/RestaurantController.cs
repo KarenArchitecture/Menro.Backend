@@ -4,6 +4,8 @@ using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Application.Restaurants.DTOs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Menro.Application.Services.Interfaces;
+using Menro.Application.Common.SD;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -20,6 +22,7 @@ namespace Menro.Web.Controllers.Public
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRestaurantShopBannerService _restaurantShopBannerService;
         private readonly IRestaurantMenuService _restaurantMenuService;
+        private readonly IAuthService _authService;
 
         public RestaurantController(
             IRestaurantService restaurantService,
@@ -29,7 +32,8 @@ namespace Menro.Web.Controllers.Public
             IRestaurantAdBannerService restaurantAdBannerService,
             IRestaurantShopBannerService restaurantShopBannerService,
             IRestaurantMenuService restaurantMenuService,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IAuthService authService)
         {
             _restaurantService = restaurantService;
             _featuredRestaurantService = featuredRestaurantService;
@@ -39,6 +43,7 @@ namespace Menro.Web.Controllers.Public
             _restaurantShopBannerService = restaurantShopBannerService;
             _httpContextAccessor = httpContextAccessor;
             _restaurantMenuService = restaurantMenuService;
+            _authService = authService;
         }
         #endregion
         [HttpGet("featured")]
@@ -72,8 +77,9 @@ namespace Menro.Web.Controllers.Public
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             
-            // گرفتن شناسه کاربر از توکن (claims)
-            var ownerUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            // گرفتن شناسه کاربر از توکن (claims) مناسب برای کلاس ها و سرویس هایی که کنترلر نیستن و User رو در دسترس ندارن
+            //var ownerUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            string? ownerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(ownerUserId))
                 return Unauthorized("کاربر شناسایی نشد.");
@@ -82,7 +88,7 @@ namespace Menro.Web.Controllers.Public
 
             if (!success)
                 return BadRequest("ثبت رستوران با خطا مواجه شد.");
-
+            await _authService.AddRoleToUserAsync(ownerUserId, SD.Role_Owner);
             return Ok("رستوران با موفقیت ثبت شد.");
         }
 
@@ -116,14 +122,6 @@ namespace Menro.Web.Controllers.Public
                 return NotFound(); // 404 if restaurant not found / no foods
 
             return Ok(sections); // 200 + JSON payload
-        }
-
-        [HttpGet("restaurant-id")]
-        public async Task<IActionResult> GetRestaurantId()
-        {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier); // یا روش JWT خودت
-            int? restaurantId = await _restaurantService.GetRestaurantIdByUserIdAsync(userId);
-            return Ok(new { restaurantId });
         }
     }
 }

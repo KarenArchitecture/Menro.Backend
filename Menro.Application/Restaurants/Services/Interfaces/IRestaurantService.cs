@@ -14,7 +14,6 @@ namespace Menro.Application.Restaurants.Services.Interfaces
         Task<bool> AddRestaurantAsync(RegisterRestaurantDto dto, string ownerUserId);
         Task<List<RestaurantCategoryDto>> GetRestaurantCategoriesAsync();
         Task<string> GenerateUniqueSlugAsync(string name);
-        Task<int?> GetRestaurantIdByUserIdAsync(string userId);
 
 
     }

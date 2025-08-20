@@ -57,6 +57,11 @@ namespace Menro.Application.Features.AdminPanel.Dashboard
                 .OrderBy(x => x.Month)
                 .ToList();
         }
+        public async Task<int?> GetRestaurantIdByUserIdAsync(string userId)
+        {
+            int? restaurantId = await _uow.Restaurant.GetRestaurantIdByUserIdAsync(userId);
+            return restaurantId;
+        }
 
 
     }

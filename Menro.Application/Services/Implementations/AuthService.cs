@@ -143,6 +143,14 @@ namespace Menro.Application.Services.Implementations
             return result;
         }
         
-        
+        public async Task<bool> AddRoleToUserAsync(string userId, string roleName)
+        {
+            if (await _userService.AddRoleToUserAsync(userId, roleName))
+            {
+                return true;
+            }
+            return false;
+        }
+
     }
 }

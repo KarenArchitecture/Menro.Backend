@@ -1,13 +1,17 @@
 ﻿using Menro.Application.Features.AdminPanel.Dashboard;
+using Menro.Application.Restaurants.Services.Implementations;
 using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
 using System.Security.Claims;
 
 namespace Menro.Web.Controllers.AdminPanel
 {
     [ApiController]
     [Route("api/adminpanel/[controller]")]
+    [Authorize]
     public class DashboardController : ControllerBase
     {
         private readonly IDashboardService _dashboardService;
@@ -38,6 +42,16 @@ namespace Menro.Web.Controllers.AdminPanel
             var data = await _dashboardService.GetMonthlySalesAsync(restaurantId);
             return Ok(data); // [{month:1,totalSales:...}, ...]
         }
+
+        [HttpGet("restaurant-id")]
+        [Authorize(Roles = "Owner,Admin")]  // فقط کاربرانی که Owner یا Admin هستند
+        public async Task<IActionResult> GetRestaurantId()
+        {
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            int? restaurantId = await _dashboardService.GetRestaurantIdByUserIdAsync(userId);
+            return Ok(new { restaurantId });
+        }
+
 
     }
 

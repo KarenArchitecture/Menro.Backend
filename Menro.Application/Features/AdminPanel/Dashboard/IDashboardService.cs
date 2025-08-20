@@ -14,6 +14,8 @@ namespace Menro.Application.Features.AdminPanel.Dashboard
         Task<decimal> GetTotalRevenueAsync();
         Task<int> GetNewOrdersCountAsync(int? restaurantId = null);
         Task<List<SalesByMonthDto>> GetMonthlySalesAsync(int? restaurantId = null);
+        Task<int?> GetRestaurantIdByUserIdAsync(string userId);
+
 
     }
 }

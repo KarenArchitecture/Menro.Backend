@@ -16,6 +16,8 @@ namespace Menro.Application.Services.Interfaces
         string GenerateToken(Guid userId, string fullName, string email, List<string> roles);
         Task<(string Token, User User, List<string> Roles)> LoginWithPasswordAsync(string phoneNumber, string password);
         Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword, string confirmPassword);
+        Task<bool> AddRoleToUserAsync(string userId, string roleName);
+
 
     }
 

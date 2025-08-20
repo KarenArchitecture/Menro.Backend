@@ -28,7 +28,7 @@ namespace Menro.Web.Controllers.Api
             return Ok(new { message = "کد تأیید ارسال شد." });
 
         }
-        [HttpPost("login-otp")]
+        [HttpPost("verify-otp")]
         public async Task<IActionResult> LoginWithOtp([FromBody] VerifyOtpDto dto)
         {
             try

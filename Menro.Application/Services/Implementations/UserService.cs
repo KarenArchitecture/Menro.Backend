@@ -126,6 +126,24 @@ namespace Menro.Application.Services.Implementations
 
             return Result.Success();
         }
+        public async Task<bool> AddRoleToUserAsync(string userId, string roleName)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                    throw new Exception("User not found");
 
+                if (!await _userManager.IsInRoleAsync(user, roleName))
+                {
+                    await _userManager.AddToRoleAsync(user, roleName);
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
 }
