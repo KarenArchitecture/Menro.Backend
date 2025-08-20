@@ -49,6 +49,7 @@ namespace Menro.Infrastructure.Data
                 if (_db.Database.GetPendingMigrations().Any())
                     await _db.Database.MigrateAsync();
 
+
                 // 1️⃣ Roles
                 if (!await _roleManager.RoleExistsAsync(SD.Role_Admin))
                 {
