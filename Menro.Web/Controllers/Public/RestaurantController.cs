@@ -63,7 +63,8 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(banner);
         }
-        
+
+
         [HttpPost("register")]
         [Authorize]
         public async Task<ActionResult> RestaurantRegister([FromBody] RegisterRestaurantDto dto)
