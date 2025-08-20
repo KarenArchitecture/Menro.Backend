@@ -260,7 +260,7 @@ namespace Menro.Infrastructure.Data
                 }
 
                 // 8️⃣ Customer User
-                if (!await _db.Users.AnyAsync(u => u.PhoneNumber == "+989121112233"))
+                if (!await _db.Users.AnyAsync(u => u.PhoneNumber == "09121112233"))
                 {
                     var customer = new User
                     {
