@@ -49,6 +49,7 @@ namespace Menro.Infrastructure.Data
                 if (_db.Database.GetPendingMigrations().Any())
                     await _db.Database.MigrateAsync();
 
+
                 // 1️⃣ Roles
                 if (!await _roleManager.RoleExistsAsync(SD.Role_Admin))
                 {
@@ -260,7 +261,7 @@ namespace Menro.Infrastructure.Data
                 }
 
                 // 8️⃣ Customer User
-                if (!await _db.Users.AnyAsync(u => u.PhoneNumber == "+989121112233"))
+                if (!await _db.Users.AnyAsync(u => u.PhoneNumber == "09121112233"))
                 {
                     var customer = new User
                     {
