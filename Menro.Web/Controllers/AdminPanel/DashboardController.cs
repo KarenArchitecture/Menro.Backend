@@ -11,7 +11,7 @@ namespace Menro.Web.Controllers.AdminPanel
 {
     [ApiController]
     [Route("api/adminpanel/[controller]")]
-    [Authorize]
+    [Authorize(Roles = "Owner,Admin")]
     public class DashboardController : ControllerBase
     {
         private readonly IDashboardService _dashboardService;
@@ -37,14 +37,17 @@ namespace Menro.Web.Controllers.AdminPanel
         
         // GET /api/adminpanel/dashboard/monthly-sales?restaurantId=3
         [HttpGet("monthly-sales")]
-        public async Task<IActionResult> GetMonthlySales([FromQuery] int? restaurantId)
+        [Authorize(Roles = "Owner,Admin")]
+        public async Task<IActionResult> GetMonthlySales()
         {
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            int? restaurantId = await _dashboardService.GetRestaurantIdByUserIdAsync(userId);
             var data = await _dashboardService.GetMonthlySalesAsync(restaurantId);
             return Ok(data); // [{month:1,totalSales:...}, ...]
         }
 
         [HttpGet("restaurant-id")]
-        [Authorize(Roles = "Owner,Admin")]  // فقط کاربرانی که Owner یا Admin هستند
+        [Authorize(Roles = "Owner,Admin")]
         public async Task<IActionResult> GetRestaurantId()
         {
             string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
