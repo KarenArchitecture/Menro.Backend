@@ -11,7 +11,7 @@ namespace Menro.Web.Controllers.AdminPanel
 {
     [ApiController]
     [Route("api/adminpanel/[controller]")]
-    [Authorize(Roles = "Owner,Admin")]
+    [Authorize]
     public class DashboardController : ControllerBase
     {
         private readonly IDashboardService _dashboardService;
@@ -20,41 +20,59 @@ namespace Menro.Web.Controllers.AdminPanel
         {
             _dashboardService = dashboardService;
         }
-
-        [HttpGet("total-revenue")]
-        public async Task<IActionResult> GetTotalRevenue()
+        // hepler for getting restaurant Id by userId
+        private string? GetUserId()
         {
-            var total = await _dashboardService.GetTotalRevenueAsync();
-            return Ok(total);
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
-
-        [HttpGet("new-orders")]
-        public async Task<IActionResult> NewOrdersCount([FromQuery] int? restaurantId)
+        private async Task<int?> GetRestaurantIdAsync()
         {
-            int count = await _dashboardService.GetNewOrdersCountAsync(restaurantId);
-            return Ok(count);
-        }
-        
-        // GET /api/adminpanel/dashboard/monthly-sales?restaurantId=3
-        [HttpGet("monthly-sales")]
-        [Authorize(Roles = "Owner,Admin")]
-        public async Task<IActionResult> GetMonthlySales()
-        {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            string userId = GetUserId()!;
             int? restaurantId = await _dashboardService.GetRestaurantIdByUserIdAsync(userId);
-            var data = await _dashboardService.GetMonthlySalesAsync(restaurantId);
-            return Ok(data); // [{month:1,totalSales:...}, ...]
+            return restaurantId;
         }
 
+        /* controller endpoints */
+
+        [HttpGet("admin-details")]
+        [Authorize]
+        public async Task<IActionResult> GetAdminDetails()
+        {
+            var adminDetails = await _dashboardService.GetAdminDetailsAsync(GetUserId()!);
+            return Ok(adminDetails);
+        }
         [HttpGet("restaurant-id")]
         [Authorize(Roles = "Owner,Admin")]
         public async Task<IActionResult> GetRestaurantId()
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            int? restaurantId = await _dashboardService.GetRestaurantIdByUserIdAsync(userId);
+            string? userId = GetUserId();
+            int? restaurantId = await GetRestaurantIdAsync();
             return Ok(new { restaurantId });
         }
 
+
+        [HttpGet("total-revenue")]
+        public async Task<IActionResult> GetTotalRevenue()
+        {
+            var total = await _dashboardService.GetTotalRevenueAsync(await GetRestaurantIdAsync());
+            return Ok(total);
+        }
+
+        [HttpGet("new-orders")]
+        public async Task<IActionResult> GetNewOrdersCount()
+        {
+            int count = await _dashboardService.GetNewOrdersCountAsync(await GetRestaurantIdAsync());
+            return Ok(count);
+        }
+        
+        [HttpGet("monthly-sales")]
+        [Authorize(Roles = "Owner,Admin")]
+        public async Task<IActionResult> GetMonthlySales()
+        {
+            int? restaurantId = await GetRestaurantIdAsync();
+            var data = await _dashboardService.GetMonthlySalesAsync(restaurantId);
+            return Ok(data); // [{month:1,totalSales:...}, ...]
+        }
 
     }
 

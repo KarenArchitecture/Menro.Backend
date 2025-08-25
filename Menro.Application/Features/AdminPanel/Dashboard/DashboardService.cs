@@ -1,10 +1,15 @@
 ﻿using Menro.Application.Features.AdminPanel.DTOs;
+using Menro.Application.Features.Order.Services;
+using Menro.Application.Restaurants.Services.Interfaces;
+using Menro.Application.Services.Interfaces;
+using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,57 +17,58 @@ namespace Menro.Application.Features.AdminPanel.Dashboard
 {
     public class DashboardService : IDashboardService
     {
-        private IUnitOfWork _uow;
-        public DashboardService(IUnitOfWork uow)
+        private readonly IUserService _userService;
+        private readonly IOrderService _orderService;
+        private readonly IRestaurantService _restaurantService;
+
+        public DashboardService(IUserService userService, IOrderService orderService, IRestaurantService restaurantService)
         {
-            _uow = uow;
+            _userService = userService;
+            _orderService = orderService;
+            _restaurantService = restaurantService;
         }
-        public async Task<decimal> GetTotalRevenueAsync()
+        public async Task<AdminDto> GetAdminDetailsAsync(string userId)
         {
-            return await _uow.Order.GetTotalRevenueAsync();
+            var user = await _userService.GetByIdAsync(userId);
+
+            int? restaurantId = await _restaurantService.GetRestaurantIdByUserIdAsync(userId);
+
+            string restaurantName = "منرو"; // fallback
+            if (restaurantId is not null)
+            {
+                restaurantName = await _restaurantService.GetRestaurantName(restaurantId!.Value);
+            }
+
+            return new AdminDto
+            {
+                UserFullName = user?.FullName?? user?.UserName!,
+                RestaurantName = restaurantName
+            };
+        }
+
+        public async Task<decimal> GetTotalRevenueAsync(int? restaurantId = null)
+        {
+            return await _orderService.GetTotalRevenueAsync(restaurantId);
         }
         public async Task<int> GetNewOrdersCountAsync(int? restaurantId = null)
         {
-            var since = DateTime.UtcNow.AddDays(-17).ToLocalTime(); // داخل پرانتز => تا فلان روز قبل تر
-            var query = _uow.Order.Query();
-
-            if (restaurantId.HasValue)
-                query = query.Where(o => o.RestaurantId == restaurantId.Value);
-
-            return await query.CountAsync(o => o.CreatedAt >= since);
+            // می‌تونه default daysBack خودش رو هم override کنه یا ثابت بذاره
+            return await _orderService.GetNewOrdersCountAsync(restaurantId, 23);
         }
-        public async Task<List<SalesByMonthDto>> GetMonthlySalesAsync(int? restaurantId = null)
+        public async Task<List<SalesByMonthDto>> GetMonthlySalesAsync(int? restaurantId)
         {
-            var year = DateTime.UtcNow.Year;
-
-            var q = _uow.Order.Query()
-                .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt.Year == year);
-
-            if (restaurantId.HasValue)
-                q = q.Where(o => o.RestaurantId == restaurantId.Value);
-
-            var list = await q
-                .GroupBy(o => o.CreatedAt.Month)
-                .Select(g => new SalesByMonthDto
-                {
-                    Month = g.Key,
-                    TotalSales = g.Sum(x => x.TotalAmount)
-                })
-                .ToListAsync();
-
-            // پر کردن ماه‌های خالی
-            return Enumerable.Range(1, 12)
-                .GroupJoin(list, m => m, x => x.Month, (m, g) =>
-                    g.FirstOrDefault() ?? new SalesByMonthDto { Month = m, TotalSales = 0 })
-                .OrderBy(x => x.Month)
-                .ToList();
+            var rawSales = await _orderService.GetMonthlySalesRawAsync(restaurantId);
+            return rawSales.Select(r => new SalesByMonthDto
+            {
+                Month = r.Month,
+                TotalSales = r.TotalAmount
+            }).ToList();
         }
         public async Task<int?> GetRestaurantIdByUserIdAsync(string userId)
         {
-            int? restaurantId = await _uow.Restaurant.GetRestaurantIdByUserIdAsync(userId);
+            int? restaurantId = await _restaurantService.GetRestaurantIdByUserIdAsync(userId);
             return restaurantId;
         }
-
 
     }
 }

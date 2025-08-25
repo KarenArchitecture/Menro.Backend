@@ -9,9 +9,10 @@ namespace Menro.Domain.Interfaces
 {
     public interface IOrderRepository : IRepository<Order>
     {
-        Task<decimal> GetTotalRevenueAsync();
-        IQueryable<Order> Query();
-
+        Task<decimal> GetTotalRevenueAsync(int? restaurantId = null);
+        //IQueryable<Order> Query();
+        Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, int year);
+        Task<int> CountNewOrdersAsync(int? restaurantId, DateTime since);
 
     }
 }

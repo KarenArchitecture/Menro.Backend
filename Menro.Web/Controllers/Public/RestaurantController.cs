@@ -19,7 +19,6 @@ namespace Menro.Web.Controllers.Public
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
         private readonly IUserRecentOrderCardService _userRecentOrderCardService;
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRestaurantShopBannerService _restaurantShopBannerService;
         private readonly IRestaurantMenuService _restaurantMenuService;
         private readonly IAuthService _authService;
@@ -32,7 +31,6 @@ namespace Menro.Web.Controllers.Public
             IRestaurantAdBannerService restaurantAdBannerService,
             IRestaurantShopBannerService restaurantShopBannerService,
             IRestaurantMenuService restaurantMenuService,
-            IHttpContextAccessor httpContextAccessor,
             IAuthService authService)
         {
             _restaurantService = restaurantService;
@@ -41,7 +39,6 @@ namespace Menro.Web.Controllers.Public
             _userRecentOrderCardService = userRecentOrderCardService;
             _restaurantAdBannerService = restaurantAdBannerService;
             _restaurantShopBannerService = restaurantShopBannerService;
-            _httpContextAccessor = httpContextAccessor;
             _restaurantMenuService = restaurantMenuService;
             _authService = authService;
         }

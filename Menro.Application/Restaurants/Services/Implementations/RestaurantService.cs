@@ -87,5 +87,15 @@ namespace Menro.Application.Restaurants.Services.Implementations
 
             return slug;
         }
+
+        public async Task<int?> GetRestaurantIdByUserIdAsync(string userId)
+        {
+            return await _uow.Restaurant.GetRestaurantIdByUserIdAsync(userId);
+        }
+        public async Task<string> GetRestaurantName(int restaurantId)
+        {
+            return await _uow.Restaurant.GetRestaurantName(restaurantId);
+        }
+
     }
 }

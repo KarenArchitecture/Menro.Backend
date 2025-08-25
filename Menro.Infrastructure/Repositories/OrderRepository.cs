@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Menro.Infrastructure.Data;
 using Menro.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 namespace Menro.Infrastructure.Repositories
@@ -20,15 +21,36 @@ namespace Menro.Infrastructure.Repositories
         {
             _context = context;
         }
-        public IQueryable<Order> Query()
+        //public IQueryable<Order> Query()
+        //{
+        //    return _context.Orders.AsQueryable();
+        //}
+        public async Task<decimal> GetTotalRevenueAsync(int? restaurantId = null)
         {
-            return _context.Orders.AsQueryable();
+            var query = _context.Orders.Where(o => o.Status == OrderStatus.Completed);
+            if (restaurantId.HasValue)
+                query = query.Where(o => o.RestaurantId == restaurantId.Value);
+            return await query.SumAsync(o => o.TotalAmount);
         }
-        public async Task<decimal> GetTotalRevenueAsync()
+
+        public async Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, int year)
         {
-            return await _context.Orders
-                .Where(o => o.Status == OrderStatus.Completed)
-                .SumAsync(o => o.TotalAmount);
+            var query = _context.Orders
+                .Where(o => o.Status == OrderStatus.Completed && o.CreatedAt.Year == year);
+
+            if (restaurantId.HasValue)
+                query = query.Where(o => o.RestaurantId == restaurantId.Value);
+
+            return await query.ToListAsync();
+        }
+        public async Task<int> CountNewOrdersAsync(int? restaurantId, DateTime since)
+        {
+            var query = _context.Orders.AsQueryable();
+
+            if (restaurantId.HasValue)
+                query = query.Where(o => o.RestaurantId == restaurantId.Value);
+
+            return await query.CountAsync(o => o.CreatedAt >= since);
         }
 
     }

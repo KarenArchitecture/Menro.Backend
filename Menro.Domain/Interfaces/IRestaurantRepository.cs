@@ -9,6 +9,7 @@ namespace Menro.Domain.Interfaces
 {
     public interface IRestaurantRepository : IRepository<Restaurant>
     {
+        Task<string> GetRestaurantName(int restaurantId);
         //Home Page - Featured Restaurants Carousel
         Task<IEnumerable<Restaurant>> GetFeaturedRestaurantsAsync();
 
