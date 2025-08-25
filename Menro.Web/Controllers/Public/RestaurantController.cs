@@ -4,8 +4,8 @@ using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Application.Restaurants.DTOs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Menro.Application.Services.Interfaces;
 using Menro.Application.Common.SD;
+using Menro.Application.Features.Identity.Services;
 
 namespace Menro.Web.Controllers.Public
 {
