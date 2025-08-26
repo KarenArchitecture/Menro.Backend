@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Menro.Application.Authentication.DTOs
+namespace Menro.Application.Features.Identity.DTOs
 {
     public class ResetPasswordDto
     {
