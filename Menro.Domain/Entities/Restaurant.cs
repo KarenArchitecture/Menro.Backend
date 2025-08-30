@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -83,7 +83,8 @@ namespace Menro.Domain.Entities
         public ICollection<RestaurantRating> Ratings { get; set; } = new List<RestaurantRating>();
 
         public ICollection<RestaurantDiscount> Discounts { get; set; } = new List<RestaurantDiscount>();
-
+        // connection to Orders from specific restaurant
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
         public RestaurantAdBanner? AdBanner { get; set; }
 
     }

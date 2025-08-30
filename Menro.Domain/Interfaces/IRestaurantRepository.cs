@@ -9,6 +9,7 @@ namespace Menro.Domain.Interfaces
 {
     public interface IRestaurantRepository : IRepository<Restaurant>
     {
+        Task<string> GetRestaurantName(int restaurantId);
         //Home Page - Featured Restaurants Carousel
         Task<IEnumerable<Restaurant>> GetFeaturedRestaurantsAsync();
 
@@ -26,5 +27,7 @@ namespace Menro.Domain.Interfaces
 
         //Shop Page - Preventing Save For an Existing Slug
         Task<bool> SlugExistsAsync(string slug);
+
+        Task<int?> GetRestaurantIdByUserIdAsync(string userId);
     }
 }

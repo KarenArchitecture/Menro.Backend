@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Menro.Application.Services.Interfaces
+namespace Menro.Application.Features.Identity.Services
 {
     public interface IUserService
     {
@@ -19,6 +19,7 @@ namespace Menro.Application.Services.Interfaces
         Task<List<string>> GetRolesAsync(User user);
         Task<bool> CheckPasswordAsync(User user, string password);
         Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword, string confirmPassword);
+        Task<bool> AddRoleToUserAsync(string userId, string roleName);
 
     }
 }

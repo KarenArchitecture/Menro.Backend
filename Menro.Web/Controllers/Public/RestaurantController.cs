@@ -4,6 +4,8 @@ using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Application.Restaurants.DTOs;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Menro.Application.Common.SD;
+using Menro.Application.Features.Identity.Services;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -11,14 +13,15 @@ namespace Menro.Web.Controllers.Public
     [Route("api/public/[controller]")]
     public class RestaurantController : ControllerBase
     {
+        #region
         private readonly IRestaurantService _restaurantService;
         private readonly IFeaturedRestaurantService _featuredRestaurantService;
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
         private readonly IUserRecentOrderCardService _userRecentOrderCardService;
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IRestaurantShopBannerService _restaurantShopBannerService;
         private readonly IRestaurantMenuService _restaurantMenuService;
+        private readonly IAuthService _authService;
 
         public RestaurantController(
             IRestaurantService restaurantService,
@@ -28,7 +31,7 @@ namespace Menro.Web.Controllers.Public
             IRestaurantAdBannerService restaurantAdBannerService,
             IRestaurantShopBannerService restaurantShopBannerService,
             IRestaurantMenuService restaurantMenuService,
-            IHttpContextAccessor httpContextAccessor)
+            IAuthService authService)
         {
             _restaurantService = restaurantService;
             _featuredRestaurantService = featuredRestaurantService;
@@ -36,10 +39,10 @@ namespace Menro.Web.Controllers.Public
             _userRecentOrderCardService = userRecentOrderCardService;
             _restaurantAdBannerService = restaurantAdBannerService;
             _restaurantShopBannerService = restaurantShopBannerService;
-            _httpContextAccessor = httpContextAccessor;
             _restaurantMenuService = restaurantMenuService;
+            _authService = authService;
         }
-
+        #endregion
         [HttpGet("featured")]
         public async Task<IActionResult> GetFeaturedRestaurants()
         {
@@ -72,8 +75,9 @@ namespace Menro.Web.Controllers.Public
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             
-            // گرفتن شناسه کاربر از توکن (claims)
-            var ownerUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            // گرفتن شناسه کاربر از توکن (claims) مناسب برای کلاس ها و سرویس هایی که کنترلر نیستن و User رو در دسترس ندارن
+            //var ownerUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            string? ownerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(ownerUserId))
                 return Unauthorized("کاربر شناسایی نشد.");
@@ -82,7 +86,7 @@ namespace Menro.Web.Controllers.Public
 
             if (!success)
                 return BadRequest("ثبت رستوران با خطا مواجه شد.");
-
+            await _authService.AddRoleToUserAsync(ownerUserId, SD.Role_Owner);
             return Ok("رستوران با موفقیت ثبت شد.");
         }
 
@@ -93,7 +97,7 @@ namespace Menro.Web.Controllers.Public
             return Ok(categories); // JSON اتوماتیک ارسال میشه
         }
 
-        // ✅ New Shop Page - Get restaurant info for banner by slug
+        // New Shop Page - Get restaurant info for banner by slug
         [HttpGet("{slug}/banner")]
         public async Task<ActionResult<RestaurantShopBannerDto>> GetBannerBySlug(string slug)
         {
@@ -103,22 +107,19 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(dto);
         }
-
-
-        //Restaurant Public Page
-        /// <summary>
-        /// Returns the full menu of a restaurant, grouped by category.
-        /// GET: api/public/restaurant/{slug}/menu
-        /// </summary>
+        /* Restaurant Public Page
+        Returns the full menu of a restaurant, grouped by category.
+        GET: api/public/restaurant/{slug}/menu
+        */
         [HttpGet("{slug}/menu")]
         public async Task<ActionResult<List<RestaurantMenuDto>>> GetMenu(string slug)
         {
             var sections = await _restaurantMenuService.GetRestaurantMenuBySlugAsync(slug);
 
             if (sections == null || sections.Count == 0)
-                return NotFound();                           // 404 if restaurant not found / no foods
+                return NotFound(); // 404 if restaurant not found / no foods
 
-            return Ok(sections);                            // 200 + JSON payload
+            return Ok(sections); // 200 + JSON payload
         }
     }
 }

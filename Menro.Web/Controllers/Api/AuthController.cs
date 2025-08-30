@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Menro.Application.Services.Interfaces;
-using Menro.Application.Authentication.DTOs;
+using Menro.Application.Features.Identity.DTOs;
 using System.Reflection.Metadata.Ecma335;
+using Menro.Application.Features.Identity.Services;
 
 namespace Menro.Web.Controllers.Api
 {
@@ -29,7 +29,6 @@ namespace Menro.Web.Controllers.Api
 
         }
         [HttpPost("verify-otp")]
-        //[HttpPost("login-otp")]
         public async Task<IActionResult> LoginWithOtp([FromBody] VerifyOtpDto dto)
         {
             try

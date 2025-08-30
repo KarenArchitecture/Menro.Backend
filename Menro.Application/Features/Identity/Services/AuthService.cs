@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Menro.Application.Common.Models;
 
 
-namespace Menro.Application.Services.Implementations
+namespace Menro.Application.Features.Identity.Services
 {
     /*
     * شرح وظایف:
@@ -37,6 +37,7 @@ namespace Menro.Application.Services.Implementations
             _smsSender = smsSender;
             _userService = userService;
         }
+
         /* --- OTP services --- */
         // send otp
         public async Task SendOtpAsync(string phoneNumber)
@@ -137,12 +138,22 @@ namespace Menro.Application.Services.Implementations
         }
 
         // داخل AuthService
+        /*!remove!*/
         public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword, string confirmPassword)
         {
             var result = await _userService.ResetPasswordAsync(phoneNumber, newPassword, confirmPassword);
             return result;
         }
 
+        /*!remove!*/
+        public async Task<bool> AddRoleToUserAsync(string userId, string roleName)
+        {
+            if (await _userService.AddRoleToUserAsync(userId, roleName))
+            {
+                return true;
+            }
+            return false;
+        }
 
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Menro.Application.Common.Models;
-using Menro.Application.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -8,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using static Menro.Application.Common.SD.SD;
 
 
-namespace Menro.Application.Services.Implementations
+namespace Menro.Application.Features.Identity.Services
 {
     /*
     * شرح وظایف:
@@ -26,10 +25,10 @@ namespace Menro.Application.Services.Implementations
         private readonly IPasswordHasher<User> _passwordHasher;
 
 
-        public UserService(IUnitOfWork uow, 
-            UserManager<User> userManager, 
-            RoleManager<IdentityRole> roleManager, 
-            IHttpContextAccessor httpContextAccessor, 
+        public UserService(IUnitOfWork uow,
+            UserManager<User> userManager,
+            RoleManager<IdentityRole> roleManager,
+            IHttpContextAccessor httpContextAccessor,
             IPasswordHasher<User> passwordHasher)
         {
             _uow = uow;
@@ -126,6 +125,24 @@ namespace Menro.Application.Services.Implementations
 
             return Result.Success();
         }
+        public async Task<bool> AddRoleToUserAsync(string userId, string roleName)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user == null)
+                    throw new Exception("User not found");
 
+                if (!await _userManager.IsInRoleAsync(user, roleName))
+                {
+                    await _userManager.AddToRoleAsync(user, roleName);
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
     }
 }
