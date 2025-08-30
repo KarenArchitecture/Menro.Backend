@@ -4,6 +4,7 @@ using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    partial class MenroDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250818081139_ABDbIititalizerStep7Modified")]
+    partial class ABDbIititalizerStep7Modified
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -143,20 +146,10 @@ namespace Menro.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("RestaurantId")
                         .HasColumnType("int");
-
-                    b.Property<int>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -169,35 +162,6 @@ namespace Menro.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Orders");
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.OrderItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("FoodId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FoodId");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("OrderItem");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Otp", b =>
@@ -776,39 +740,20 @@ namespace Menro.Infrastructure.Migrations
             modelBuilder.Entity("Menro.Domain.Entities.Order", b =>
                 {
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
-                        .WithMany("Orders")
+                        .WithMany()
                         .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Menro.Domain.Entities.User", "User")
-                        .WithMany("Orders")
+                        .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Restaurant");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.OrderItem", b =>
-                {
-                    b.HasOne("Menro.Domain.Entities.Food", "Food")
-                        .WithMany("OrderItems")
-                        .HasForeignKey("FoodId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Menro.Domain.Entities.Order", "Order")
-                        .WithMany("OrderItems")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Food");
-
-                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Restaurant", b =>
@@ -950,19 +895,12 @@ namespace Menro.Infrastructure.Migrations
 
             modelBuilder.Entity("Menro.Domain.Entities.Food", b =>
                 {
-                    b.Navigation("OrderItems");
-
                     b.Navigation("Ratings");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.FoodCategory", b =>
                 {
                     b.Navigation("Foods");
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.Order", b =>
-                {
-                    b.Navigation("OrderItems");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Restaurant", b =>
@@ -974,8 +912,6 @@ namespace Menro.Infrastructure.Migrations
                     b.Navigation("FoodCategories");
 
                     b.Navigation("Foods");
-
-                    b.Navigation("Orders");
 
                     b.Navigation("Ratings");
 
@@ -994,8 +930,6 @@ namespace Menro.Infrastructure.Migrations
 
             modelBuilder.Entity("Menro.Domain.Entities.User", b =>
                 {
-                    b.Navigation("Orders");
-
                     b.Navigation("Restaurants");
                 });
 #pragma warning restore 612, 618

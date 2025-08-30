@@ -7,8 +7,8 @@ using System.Security.Claims;
 namespace Menro.Web.Controllers.UserPanel
 {
     [ApiController]
-    //[Authorize]
-    [Route("api/user/[controller]")]
+    [Route("api/user/[controller]")] // => /api/userpanel/restaurant/...
+    [Authorize] // JWT required
     public class RestaurantController : ControllerBase
     {
         private readonly IUserRecentOrderCardService _recentOrderCardService;
@@ -18,16 +18,18 @@ namespace Menro.Web.Controllers.UserPanel
             _recentOrderCardService = recentOrderCardService;
         }
 
-        // GET: api/user/restaurant/recent-orders
+        // GET /api/userpanel/restaurant/recent-orders?count=8
         [HttpGet("recent-orders")]
-        public async Task<ActionResult<List<RestaurantCardDto>>> GetUserRecentOrders()
+        [ProducesResponseType(typeof(List<RestaurantCardDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<List<RestaurantCardDto>>> GetRecentOrders([FromQuery] int count = 8)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
 
-            var recentRestaurants = await _recentOrderCardService.GetRecentOrderedRestaurantCardsAsync(userId);
-            return Ok(recentRestaurants);
+            var items = await _recentOrderCardService.GetRecentOrderedRestaurantCardsAsync(userId, count);
+            return Ok(items ?? new List<RestaurantCardDto>());
         }
     }
 }
