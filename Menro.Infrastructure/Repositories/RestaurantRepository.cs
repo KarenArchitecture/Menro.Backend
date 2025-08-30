@@ -44,19 +44,44 @@ namespace Menro.Infrastructure.Repositories
                 .FirstOrDefaultAsync(b => b.StartDate <= DateTime.UtcNow && b.EndDate >= DateTime.UtcNow);
         }
 
-        //Home Page - Latest Orders
+        // Home Page - Latest Orders (unique restaurants, ordered by user's latest order time desc)
         public async Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId)
         {
-            return await _context.Orders
+            if (string.IsNullOrWhiteSpace(userId)) return new();
+
+            // 1) Compute the latest order timestamp per restaurant for this user
+            var latestByRestaurant = await _context.Orders
                 .Where(o => o.UserId == userId)
-                .OrderByDescending(o => o.CreatedAt)
-                .Select(o => o.Restaurant)
-                .Distinct()
+                .GroupBy(o => o.RestaurantId)
+                .Select(g => new
+                {
+                    RestaurantId = g.Key,
+                    LastOrderAt = g.Max(o => o.CreatedAt)
+                })
+                .OrderByDescending(x => x.LastOrderAt)
+                .ToListAsync();
+
+            if (latestByRestaurant.Count == 0) return new();
+
+            var ids = latestByRestaurant.Select(x => x.RestaurantId).ToList();
+
+            // 2) Load restaurants (with details) for those ids
+            var restaurants = await _context.Restaurants
+                .Where(r => ids.Contains(r.Id))
                 .Include(r => r.RestaurantCategory)
                 .Include(r => r.Ratings)
                 .Include(r => r.Discounts)
                 .ToListAsync();
+
+            // 3) Preserve the "latest order" sort
+            var orderMap = latestByRestaurant.ToDictionary(x => x.RestaurantId, x => x.LastOrderAt);
+            var ordered = restaurants
+                .OrderBy(r => orderMap.ContainsKey(r.Id) ? -orderMap[r.Id].Ticks : long.MinValue) // desc by LastOrderAt
+                .ToList();
+
+            return ordered;
         }
+
 
         //Shop Page - Restaurant Banner 
         public async Task<Restaurant?> GetBySlugWithCategoryAsync(string slug)

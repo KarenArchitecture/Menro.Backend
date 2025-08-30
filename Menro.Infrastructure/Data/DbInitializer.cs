@@ -49,6 +49,7 @@ namespace Menro.Infrastructure.Data
                 if (_db.Database.GetPendingMigrations().Any())
                     await _db.Database.MigrateAsync();
 
+
                 // 1️⃣ Roles
                 if (!await _roleManager.RoleExistsAsync(SD.Role_Admin))
                 {
@@ -233,35 +234,73 @@ namespace Menro.Infrastructure.Data
                     }
                 }
 
-                // 7️⃣ Banner
-                if (!await _db.RestaurantAdBanners.AnyAsync())
+                // 7️⃣ Restaurant Ad Banner — ensure there's ALWAYS one active now
+                var firstRes = await _db.Restaurants
+                    .Where(r => r.IsActive && r.IsApproved)
+                    .OrderBy(r => r.Id)
+                    .FirstOrDefaultAsync();
+
+                if (firstRes != null)
                 {
-                    var firstRes = await _db.Restaurants.FirstOrDefaultAsync();
-                    if (firstRes != null)
+                    // Is there any banner active right now?
+                    var active = await _db.RestaurantAdBanners
+                        .FirstOrDefaultAsync(b => b.StartDate <= DateTime.UtcNow && b.EndDate >= DateTime.UtcNow);
+
+                    if (active == null)
                     {
+                        // No active banner → create one right now
                         _db.RestaurantAdBanners.Add(new RestaurantAdBanner
                         {
                             RestaurantId = firstRes.Id,
                             ImageUrl = "/img/optcropban.jpg",
-                            StartDate = DateTime.UtcNow.AddDays(-2),
-                            EndDate = DateTime.UtcNow.AddDays(5)
+                            StartDate = DateTime.UtcNow.AddDays(-1),
+                            EndDate = DateTime.UtcNow.AddDays(7)
                         });
                         await _db.SaveChangesAsync();
                     }
                 }
 
                 // 8️⃣ Customer User
-                if (!await _db.Users.AnyAsync(u => u.PhoneNumber == "+989121112233"))
+                if (!await _db.Users.AnyAsync(u => u.PhoneNumber == "09121112233"))
                 {
                     var customer = new User
                     {
-                        UserName = "+989121112233",
-                        PhoneNumber = "+989121112233",
+                        UserName = "09121112233",
+                        PhoneNumber = "09121112233",
                         FullName = "مشتری نمونه"
                     };
                     await _userManager.CreateAsync(customer, "Customer123!");
                     await _userManager.AddToRoleAsync(customer, SD.Role_Customer);
                 }
+
+                // 9️⃣ Seed demo recent Orders for the sample customer so the home row has data
+                var demoCustomer = await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == "09121112233");
+                if (demoCustomer != null)
+                {
+                    var hasAny = await _db.Orders.AnyAsync(o => o.UserId == demoCustomer.Id);
+                    if (!hasAny)
+                    {
+                        var restIds = await _db.Restaurants
+                            .Where(r => r.IsActive && r.IsApproved)
+                            .OrderBy(r => r.Id)
+                            .Select(r => r.Id)
+                            .Take(8)
+                            .ToListAsync();
+
+                        int offset = 0;
+                        foreach (var rid in restIds)
+                        {
+                            _db.Orders.Add(new Order
+                            {
+                                UserId = demoCustomer.Id,
+                                RestaurantId = rid,
+                                CreatedAt = DateTime.UtcNow.AddDays(-offset++) // most recent first
+                            });
+                        }
+                        await _db.SaveChangesAsync();
+                    }
+                }
+
 
                 await _db.SaveChangesAsync();
             }
