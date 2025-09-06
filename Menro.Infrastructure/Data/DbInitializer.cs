@@ -173,147 +173,31 @@ namespace Menro.Infrastructure.Data
                 }
 
                 // 5️⃣ Food Ratings
-                var allFoods = await _db.Foods.ToListAsync();
+                var allFoods = await _db.Foods.Include(f => f.Restaurant).ToListAsync();
                 foreach (var food in allFoods)
                 {
-                    bool foodHasRatings = await _db.FoodRatings.AnyAsync(fr => fr.FoodId == food.Id);
-                    if (foodHasRatings)
-                        continue;
+                    bool hasRatings = await _db.FoodRatings.AnyAsync(r => r.FoodId == food.Id);
+                    if (hasRatings) continue;
 
-                    var foodRatings = new List<FoodRating>();
-                    var raters = allUsers.OrderBy(_ => rand.Next()).Take(rand.Next(3, 6));
-                    foreach (var user in raters)
+                    // pick 3 random users to rate this food
+                    var randomUsers = allUsers.OrderBy(u => rand.Next()).Take(3).ToList();
+                    foreach (var user in randomUsers)
                     {
-                        foodRatings.Add(new FoodRating
+                        var rating = new FoodRating
                         {
-                            FoodId = food.Id,
                             UserId = user.Id,
-                            Score = rand.Next(3, 6),
-                            CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 10))
-                        });
-                    }
-                    _db.FoodRatings.AddRange(foodRatings);
-                    await _db.SaveChangesAsync();
-                }
-
-                // 6️⃣ Restaurant Ratings
-                var allRestaurants = await _db.Restaurants.ToListAsync();
-                foreach (var res in allRestaurants)
-                {
-                    bool hasRatings = await _db.RestaurantRatings.AnyAsync(rr => rr.RestaurantId == res.Id);
-                    if (hasRatings)
-                        continue;
-
-                    var restaurantRatings = new List<RestaurantRating>();
-                    var raters = allUsers.OrderBy(_ => rand.Next()).Take(rand.Next(3, 6));
-                    foreach (var user in raters)
-                    {
-                        bool exists = await _db.RestaurantRatings.AnyAsync(rr => rr.RestaurantId == res.Id && rr.UserId == user.Id);
-                        if (!exists)
-                        {
-                            restaurantRatings.Add(new RestaurantRating
-                            {
-                                RestaurantId = res.Id,
-                                UserId = user.Id,
-                                Score = rand.Next(3, 6),
-                                CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 10))
-                            });
-                        }
-                    }
-                    if (restaurantRatings.Count > 0)
-                    {
-                        _db.RestaurantRatings.AddRange(restaurantRatings);
-                        await _db.SaveChangesAsync();
-                    }
-                }
-
-                // 7️⃣ Restaurant Ad Banner
-                var firstRes = await _db.Restaurants
-                    .Where(r => r.IsActive && r.IsApproved)
-                    .OrderBy(r => r.Id)
-                    .FirstOrDefaultAsync();
-
-                if (firstRes != null)
-                {
-                    var active = await _db.RestaurantAdBanners
-                        .FirstOrDefaultAsync(b => b.StartDate <= DateTime.UtcNow && b.EndDate >= DateTime.UtcNow);
-
-                    if (active == null)
-                    {
-                        _db.RestaurantAdBanners.Add(new RestaurantAdBanner
-                        {
-                            RestaurantId = firstRes.Id,
-                            ImageUrl = "/img/optcropban.jpg",
-                            StartDate = DateTime.UtcNow.AddDays(-1),
-                            EndDate = DateTime.UtcNow.AddDays(7)
-                        });
-                        await _db.SaveChangesAsync();
-                    }
-                }
-
-                // 8️⃣ Customer User
-                var customer = await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == "09121112233");
-                if (customer == null)
-                {
-                    customer = new User
-                    {
-                        UserName = "09121112233",
-                        PhoneNumber = "09121112233",
-                        FullName = "مشتری نمونه"
-                    };
-                    await _userManager.CreateAsync(customer, "Customer123!");
-                    await _userManager.AddToRoleAsync(customer, SD.Role_Customer);
-                }
-
-                // 9️⃣ Orders + OrderItems
-                if (!await _db.Orders.AnyAsync())
-                {
-                    var restaurantId = firstRes?.Id ?? 1;
-                    int orderCount = 10;
-                    var rand2 = new Random();
-
-                    for (int i = 1; i <= orderCount; i++)
-                    {
-                        var order = new Order
-                        {
-                            UserId = customer.Id,
-                            RestaurantId = restaurantId,
-                            Status = OrderStatus.Completed,
-                            CreatedAt = DateTime.UtcNow.AddDays(-rand2.Next(1, 30)),
-                            TotalAmount = 0m
+                            FoodId = food.Id,
+                            Score = rand.Next(3, 6), // rating 3–5
+                            CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 30))
                         };
-
-                        _db.Orders.Add(order);
-                        await _db.SaveChangesAsync();
-
-                        int itemsCount = rand2.Next(1, 5);
-                        decimal orderTotal = 0;
-
-                        for (int j = 0; j < itemsCount; j++)
-                        {
-                            int foodId = rand2.Next(1, allFoods.Count + 1);
-                            int quantity = rand2.Next(1, 4);
-                            decimal unitPrice = rand2.Next(10000, 100000);
-
-                            var orderItem = new OrderItem
-                            {
-                                OrderId = order.Id,
-                                FoodId = foodId,
-                                Quantity = quantity,
-                                UnitPrice = unitPrice
-                            };
-                            orderTotal += unitPrice * quantity;
-                            _db.OrderItems.Add(orderItem);
-                        }
-
-                        order.TotalAmount = orderTotal;
-                        await _db.SaveChangesAsync();
+                        _db.FoodRatings.Add(rating);
                     }
                 }
+                await _db.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error in DbInitializer: " + ex.Message);
+                Console.WriteLine($"❌ Seeding error: {ex.Message}");
                 throw;
             }
         }
