@@ -22,7 +22,7 @@ namespace Menro.Domain.Entities
         public string? Ingredients { get; set; }
 
         [Display(Name = "قیمت ثابت")]
-        public int? Price { get; set; }   // فقط زمانی پر میشه که Variants نداشته باشه
+        public int Price { get; set; }   // فقط زمانی پر میشه که Variants نداشته باشه
 
         [Display(Name = "آدرس عکس")]
         public string ImageUrl { get; set; } = string.Empty;
