@@ -14,6 +14,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Food> Foods { get; set; }
         public DbSet<FoodCategory> FoodCategories { get; set; }
+        public DbSet<GlobalFoodCategory> GlobalFoodCategories { get; set; }
         public DbSet<FoodRating> FoodRatings { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<RestaurantCategory> RestaurantCategories { get; set; }
@@ -51,6 +52,20 @@ namespace Menro.Infrastructure.Data
                 .HasForeignKey(fc => fc.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<GlobalFoodCategory>()
+                .HasIndex(gc => gc.Name)
+                .IsUnique();
+
+            modelBuilder.Entity<FoodCategory>()
+                .HasIndex(fc => new { fc.RestaurantId, fc.Name })
+                .IsUnique();
+
+            modelBuilder.Entity<FoodCategory>()
+                .HasOne(fc => fc.GlobalFoodCategory)
+                .WithMany(gc => gc.RestaurantCategories)
+                .HasForeignKey(fc => fc.GlobalFoodCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Restaurant <-> RestaurantCategory (Many-to-One)
             modelBuilder.Entity<Restaurant>()
                 .HasOne(r => r.RestaurantCategory)
@@ -64,6 +79,13 @@ namespace Menro.Infrastructure.Data
                 .WithOne(r => r.OwnerUser)
                 .HasForeignKey(r => r.OwnerUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Restaurant → AdBanner (One-to-One)
+            modelBuilder.Entity<Restaurant>()
+                .HasOne(r => r.AdBanner)
+                .WithOne(b => b.Restaurant)
+                .HasForeignKey<RestaurantAdBanner>(b => b.RestaurantId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Subscription -> SubscriptionPlan (Many-to-One)
             modelBuilder.Entity<Subscription>()
@@ -90,6 +112,7 @@ namespace Menro.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(d => d.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
+
             /* for order module */
             // User → Order (One-to-Many)
             modelBuilder.Entity<Order>()

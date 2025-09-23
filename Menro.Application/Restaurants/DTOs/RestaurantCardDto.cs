@@ -18,5 +18,7 @@ namespace Menro.Application.DTO
         public int? Discount { get; set; }
         public string OpenTime { get; set; } = string.Empty;
         public string CloseTime { get; set; } = string.Empty;
+        public string? LogoImageUrl { get; set; }
+        public bool IsOpen { get; set; }
     }
 }

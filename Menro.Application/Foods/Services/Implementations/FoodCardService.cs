@@ -1,13 +1,12 @@
-﻿using Menro.Application.Foods.DTOs;
-using Menro.Application.Foods.Services.Interfaces;
-using Menro.Domain.Entities;
-using Menro.Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
+﻿// Menro.Application/Foods/Services/Implementations/FoodCardService.cs
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Menro.Application.Foods.Services.Interfaces;
+using Menro.Application.Orders.DTOs;
+using Menro.Domain.Entities;
+using Menro.Domain.Interfaces;
 
 namespace Menro.Application.Foods.Services.Implementations
 {
@@ -20,138 +19,63 @@ namespace Menro.Application.Foods.Services.Implementations
             _foodRepository = foodRepository;
         }
 
-        public async Task<PopularFoodCategoryDto?> GetPopularFoodsFromRandomCategoryAsync(int count = 8)
+        private static RecentOrdersFoodCardDto MapToHome(Food f)
         {
-            var categories = await _foodRepository.GetAllCategoriesAsync();
-
-            if (categories == null || !categories.Any())
-                return null;
-
-            var random = new Random();
-            var randomCategory = categories[random.Next(categories.Count)];
-
-            var foods = await _foodRepository.GetPopularFoodsByCategoryAsync(randomCategory.Id, count);
-
-            var foodDtos = foods.Select(f =>
+            var avg = f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0.0;
+            return new RecentOrdersFoodCardDto
             {
-                var avgRating = f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0;
-                var voters = f.Ratings.Count;
-
-                return new FoodCardDto
-                {
-                    Id = f.Id,
-                    Name = f.Name,
-                    Ingredients = f.Ingredients,
-                    Price = f.Price,
-                    ImageUrl = f.ImageUrl,
-                    Rating = avgRating,
-                    Voters = voters,
-                    RestaurantName = f.Restaurant?.Name ?? "",
-                    RestaurantCategory = f.Restaurant?.RestaurantCategory?.Name ?? ""
-                };
-            }).ToList();
-
-            return new PopularFoodCategoryDto
-            {
-                CategoryTitle = randomCategory.Name,
-                SvgIcon = randomCategory.SvgIcon,
-                Foods = foodDtos
+                Id = f.Id,
+                Name = f.Name,
+                ImageUrl = f.ImageUrl ?? string.Empty,
+                Rating = Math.Round(avg, 1),
+                Voters = f.Ratings.Count,
+                RestaurantId = f.RestaurantId,
+                RestaurantName = f.Restaurant?.Name ?? string.Empty,
+                RestaurantSlug = f.Restaurant?.Slug
             };
         }
 
-        public async Task<List<FoodCardDto>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
+        public async Task<PopularFoodCategoryDto?> GetPopularFoodsFromRandomCategoryAsync(int count = 8)
         {
-            var foods = await _foodRepository.GetPopularFoodsByCategoryAsync(categoryId, count);
+            // Use GLOBAL categories here
+            var globals = await _foodRepository.GetAllGlobalCategoriesAsync();
+            if (globals == null || globals.Count == 0) return null;
 
-            return foods.Select(f =>
+            var randomGlobal = globals.OrderBy(_ => Guid.NewGuid()).First();
+            var foods = await _foodRepository.GetPopularFoodsByGlobalCategoryIdAsync(randomGlobal.Id, count);
+
+            return new PopularFoodCategoryDto
             {
-                var avgRating = f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0;
-                var voters = f.Ratings.Count;
-
-                return new FoodCardDto
-                {
-                    Id = f.Id,
-                    Name = f.Name,
-                    Ingredients = f.Ingredients,
-                    Price = f.Price,
-                    ImageUrl = f.ImageUrl,
-                    Rating = avgRating,
-                    Voters = voters,
-                    RestaurantName = f.Restaurant?.Name ?? "",
-                    RestaurantCategory = f.Restaurant?.RestaurantCategory?.Name ?? ""
-                };
-            }).ToList();
+                CategoryTitle = randomGlobal.Name,
+                SvgIcon = randomGlobal.SvgIcon,
+                Foods = (foods ?? new List<Food>()).Select(MapToHome).ToList()
+            };
         }
 
-        public async Task<List<int>> GetAllCategoryIdsAsync()
+        public async Task<List<RecentOrdersFoodCardDto>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
         {
-            return await _foodRepository.GetAllCategoryIdsAsync();
+            // Kept for other use-cases; not used by homepage row anymore
+            var foods = await _foodRepository.GetPopularFoodsByCategoryAsync(categoryId, count);
+            return (foods ?? new List<Food>()).Select(MapToHome).ToList();
         }
+
+        public Task<List<int>> GetAllCategoryIdsAsync()
+            => _foodRepository.GetAllGlobalCategoryIdsAsync();
 
         public async Task<PopularFoodCategoryDto?> GetPopularFoodsFromRandomCategoryExcludingAsync(List<string> excludeCategoryTitles)
         {
-            var remainingCategories = await _foodRepository.GetAllCategoriesExcludingAsync(excludeCategoryTitles);
-            if (!remainingCategories.Any())
-                return null;
+            var remaining = await _foodRepository.GetAllGlobalCategoriesExcludingAsync(excludeCategoryTitles ?? new());
+            if (remaining == null || remaining.Count == 0) return null;
 
-            var randomCategory = remainingCategories.OrderBy(_ => Guid.NewGuid()).First();
-            var foods = await _foodRepository.GetPopularFoodsByCategoryAsync(randomCategory.Id, 8);
-
-            var foodDtos = foods.Select(f =>
-            {
-                var avgRating = f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0;
-                var voters = f.Ratings.Count;
-
-                return new FoodCardDto
-                {
-                    Id = f.Id,
-                    Name = f.Name,
-                    Ingredients = f.Ingredients,
-                    Price = f.Price,
-                    ImageUrl = f.ImageUrl,
-                    Rating = avgRating,
-                    Voters = voters,
-                    RestaurantName = f.Restaurant?.Name ?? "",
-                    RestaurantCategory = f.Restaurant?.RestaurantCategory?.Name ?? ""
-                };
-            }).ToList();
+            var randomGlobal = remaining.OrderBy(_ => Guid.NewGuid()).First();
+            var foods = await _foodRepository.GetPopularFoodsByGlobalCategoryIdAsync(randomGlobal.Id, 8);
 
             return new PopularFoodCategoryDto
             {
-                CategoryTitle = randomCategory.Name,
-                SvgIcon = randomCategory.SvgIcon,
-                Foods = foodDtos
+                CategoryTitle = randomGlobal.Name,
+                SvgIcon = randomGlobal.SvgIcon,
+                Foods = (foods ?? new List<Food>()).Select(MapToHome).ToList()
             };
         }
-
-        //public async Task<List<RestaurantMenuDto>> GetFoodsByRestaurantIdAsync(int restaurantId)
-        //{
-        //    var foods = await _foodRepository.GetFoodsByRestaurantIdAsync(restaurantId);
-
-        //    var grouped = foods
-        //        .GroupBy(f => f.FoodCategory)
-        //        .Select(g => new RestaurantMenuDto
-        //        {
-        //            CategoryId = g.Key.Id,
-        //            CategoryTitle = g.Key.Name,
-        //            SvgIcon = g.Key.SvgIcon,
-        //            Foods = g.Select(f => new FoodCardDto
-        //            {
-        //                Id = f.Id,
-        //                Name = f.Name,
-        //                Ingredients = f.Ingredients,
-        //                Price = f.Price,
-        //                ImageUrl = f.ImageUrl,
-        //                Rating = f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0,
-        //                Voters = f.Ratings.Count,
-        //                RestaurantName = f.Restaurant?.Name ?? "",
-        //                RestaurantCategory = f.Restaurant?.RestaurantCategory?.Name ?? ""
-        //            }).ToList()
-        //        }).ToList();
-
-        //    return grouped;
-        //}
-
-        
     }
 }

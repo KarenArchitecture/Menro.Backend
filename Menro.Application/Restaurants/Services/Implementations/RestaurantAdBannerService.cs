@@ -18,27 +18,26 @@ namespace Menro.Application.Restaurants.Services.Implementations
             _restaurantRepository = restaurantRepository;
         }
 
-        public async Task<RestaurantAdBannerDto> GetActiveAdBannerAsync()
+        public async Task<RestaurantAdBannerDto?> GetRandomAdBannerAsync(IEnumerable<int> excludeIds)
         {
-            var banner = await _restaurantRepository.GetActiveAdBannerAsync();
-
-            if (banner == null)
-                return null;
-
-
-            // Optional gate: show only if the restaurant is active/approved
-            var r = banner.Restaurant;
-            if (r == null || !r.IsActive || !r.IsApproved) return null;
-
+            var banner = await _restaurantRepository.GetRandomLiveAdBannerAsync(excludeIds);
+            if (banner == null) return null;
 
             return new RestaurantAdBannerDto
             {
-                RestaurantId = banner.RestaurantId,
-                RestaurantName = banner.Restaurant.Name,
-                ImageUrl = banner.ImageUrl,
-                Slug = banner.Restaurant.Slug
+                Id = banner.Id,
+                ImageUrl = banner.ImageUrl ?? string.Empty,
+                RestaurantName = banner.Restaurant?.Name ?? string.Empty,
+                Slug = banner.Restaurant?.Slug ?? string.Empty,
+                CommercialText = banner.CommercialText
             };
         }
+
+        public Task<bool> AddImpressionAsync(int bannerId)
+        {
+            return _restaurantRepository.IncrementBannerImpressionAsync(bannerId);
+        }
+
     }
 
 }

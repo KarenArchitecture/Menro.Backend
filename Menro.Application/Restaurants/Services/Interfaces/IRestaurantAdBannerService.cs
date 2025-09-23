@@ -9,6 +9,8 @@ namespace Menro.Application.Restaurants.Services.Interfaces
 {
     public interface IRestaurantAdBannerService
     {
-        Task<RestaurantAdBannerDto> GetActiveAdBannerAsync();
+        Task<RestaurantAdBannerDto?> GetRandomAdBannerAsync(IEnumerable<int> excludeIds);
+
+        Task<bool> AddImpressionAsync(int bannerId);
     }
 }
