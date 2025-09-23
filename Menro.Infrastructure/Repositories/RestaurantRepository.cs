@@ -27,7 +27,8 @@ namespace Menro.Infrastructure.Repositories
         public async Task<IEnumerable<Restaurant>> GetFeaturedRestaurantsAsync()
         {
             return await _context.Restaurants
-                .Where(r => r.IsFeatured)
+                .Where(r => r.IsFeatured && r.IsActive && r.IsApproved && !string.IsNullOrEmpty(r.CarouselImageUrl))
+                .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
         }
 
@@ -43,11 +44,45 @@ namespace Menro.Infrastructure.Repositories
         }
 
         //Home Page - Featured Restaurant Banner
-        public async Task<RestaurantAdBanner?> GetActiveAdBannerAsync()
+        // Home Page - Random eligible Ad Banner (exclude already-served ids)
+        public async Task<RestaurantAdBanner?> GetRandomLiveAdBannerAsync(IEnumerable<int> excludeIds)
         {
-            return await _context.RestaurantAdBanners
+            var now = DateTime.UtcNow;
+            var excludes = excludeIds?.ToList() ?? new List<int>();
+
+            var query = _context.RestaurantAdBanners
                 .Include(b => b.Restaurant)
-                .FirstOrDefaultAsync(b => b.StartDate <= DateTime.UtcNow && b.EndDate >= DateTime.UtcNow);
+                .Where(b =>
+                    b.StartDate <= now &&
+                    b.EndDate >= now &&
+                    !b.IsPaused &&
+                    (b.PurchasedViews == 0 || b.ConsumedViews < b.PurchasedViews) &&
+                    b.Restaurant.IsActive &&
+                    b.Restaurant.IsApproved);
+
+            if (excludes.Count > 0)
+                query = query.Where(b => !excludes.Contains(b.Id));
+
+            // random pick
+            return await query
+                .OrderBy(_ => Guid.NewGuid())
+                .FirstOrDefaultAsync();
+        }
+        // Home Page - Count an impression atomically (no overshoot)
+        public async Task<bool> IncrementBannerImpressionAsync(int bannerId)
+        {
+            // Atomic: only increment if still eligible (prevents overshoot with concurrent views)
+            var rows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE [RestaurantAdBanners]
+                SET [ConsumedViews] = [ConsumedViews] + 1
+                WHERE [Id] = {bannerId}
+                  AND [IsPaused] = 0
+                  AND [StartDate] <= GETUTCDATE()
+                  AND [EndDate]   >= GETUTCDATE()
+                  AND ([PurchasedViews] = 0 OR [ConsumedViews] < [PurchasedViews]);
+            ");
+
+            return rows > 0;
         }
 
         // Home Page - Latest Orders (unique restaurants, ordered by user's latest order time desc)
