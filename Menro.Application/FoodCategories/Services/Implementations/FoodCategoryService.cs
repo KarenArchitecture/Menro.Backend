@@ -1,5 +1,6 @@
 ﻿using Menro.Application.FoodCategories.DTOs;
 using Menro.Application.FoodCategories.Services.Interfaces;
+using Menro.Application.Foods.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using System;
@@ -18,6 +19,16 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             _repository = repository;
         }
 
+        public Task<FoodDetailsDto> CreateFoodCategoryAsync(CreateFoodDto dto, int restaurantId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> DeleteFoodCategoryAsync(int foodCategoryId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<List<FoodCategoryDto>> GetAllAsync()
         {
             var entities = await _repository.GetAllAsync();
@@ -26,6 +37,21 @@ namespace Menro.Application.FoodCategories.Services.Implementations
                 Id = c.Id,
                 Name = c.Name
             }).ToList();
+        }
+
+        public Task<FoodCategoryDto> GetByIdAsync(int foodCategoryId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<FoodsListItemDto>> GetFoodCategoriesListAsync(int restaurantId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<FoodDetailsDto?> GetFoodCategoryAsync(int foodCategoryId, int restaurantId)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Menro.Domain.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         //public bool HasVariant { get; set; }
-        public bool? IsAvailable { get; set; } = true;  // Shows if food can be ordered
+        public bool IsAvailable { get; set; } = true;  // Shows if food can be ordered
         public bool IsDeleted { get; set; } = false;   // Soft delete flag
 
         // FK به رستوران
@@ -40,8 +40,6 @@ namespace Menro.Domain.Entities
         public int FoodCategoryId { get; set; }
         public FoodCategory FoodCategory { get; set; } = null!;
 
-        // FK to Orders
-        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
         // ارتباط‌ها
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

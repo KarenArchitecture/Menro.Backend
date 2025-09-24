@@ -425,7 +425,7 @@ namespace Menro.Infrastructure.Data
                             .Take(rand.Next(1, 4))   // use existing rand
                             .ToListAsync();
 
-                        if (foods.Count == 0) continue;
+                        if (foods.Count() == 0) continue;
 
                         var items = new List<OrderItem>();
                         decimal total = 0m;
