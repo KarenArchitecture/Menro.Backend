@@ -13,4 +13,10 @@ public interface IFoodRepository
     //Task<List<Food>> GetFoodsByRestaurantIdAsync(int restaurantId);
     //Task<List<Food>> GetFoodsByRestaurantSlugAsync(string slug);
     Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug);
+
+    // Admin/Owner Panel
+    Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId);
+    Task<bool> AddFoodAsync(Food food);
+    Task<Food> GetFoodDetailsAsync(int foodId);
+    Task<bool> DeleteFoodAsync (int foodId);
 }

@@ -50,6 +50,20 @@ namespace Menro.Infrastructure.Data
                 .WithMany(r => r.FoodCategories)
                 .HasForeignKey(fc => fc.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            // Food <-> FoodVariant (One-to-Many)
+            modelBuilder.Entity<FoodVariant>()
+                .HasOne(v => v.Food)
+                .WithMany(f => f.Variants)
+                .HasForeignKey(v => v.FoodId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // FoodVariant <-> FoodAddon (One-to-Many)
+            modelBuilder.Entity<FoodAddon>()
+                .HasOne(a => a.FoodVariant)
+                .WithMany(v => v.Addons)
+                .HasForeignKey(a => a.FoodVariantId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Restaurant <-> RestaurantCategory (Many-to-One)
             modelBuilder.Entity<Restaurant>()
@@ -90,6 +104,7 @@ namespace Menro.Infrastructure.Data
                 .WithMany()
                 .HasForeignKey(d => d.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
             /* for order module */
             // User → Order (One-to-Many)
             modelBuilder.Entity<Order>()

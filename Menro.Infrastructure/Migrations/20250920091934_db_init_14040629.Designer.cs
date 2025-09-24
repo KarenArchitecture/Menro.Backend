@@ -4,6 +4,7 @@ using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    partial class MenroDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250920091934_db_init_14040629")]
+    partial class db_init_14040629
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,7 +84,7 @@ namespace Menro.Infrastructure.Migrations
                     b.Property<int>("ExtraPrice")
                         .HasColumnType("int");
 
-                    b.Property<int>("FoodVariantId")
+                    b.Property<int>("FoodId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -91,7 +94,7 @@ namespace Menro.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FoodVariantId");
+                    b.HasIndex("FoodId");
 
                     b.ToTable("FoodAddon");
                 });
@@ -795,13 +798,13 @@ namespace Menro.Infrastructure.Migrations
 
             modelBuilder.Entity("Menro.Domain.Entities.FoodAddon", b =>
                 {
-                    b.HasOne("Menro.Domain.Entities.FoodVariant", "FoodVariant")
+                    b.HasOne("Menro.Domain.Entities.Food", "Food")
                         .WithMany("Addons")
-                        .HasForeignKey("FoodVariantId")
+                        .HasForeignKey("FoodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("FoodVariant");
+                    b.Navigation("Food");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.FoodCategory", b =>
@@ -1022,6 +1025,8 @@ namespace Menro.Infrastructure.Migrations
 
             modelBuilder.Entity("Menro.Domain.Entities.Food", b =>
                 {
+                    b.Navigation("Addons");
+
                     b.Navigation("OrderItems");
 
                     b.Navigation("Ratings");
@@ -1032,11 +1037,6 @@ namespace Menro.Infrastructure.Migrations
             modelBuilder.Entity("Menro.Domain.Entities.FoodCategory", b =>
                 {
                     b.Navigation("Foods");
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.FoodVariant", b =>
-                {
-                    b.Navigation("Addons");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Order", b =>

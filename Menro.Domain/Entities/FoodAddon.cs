@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Menro.Domain.Entities
 {
@@ -19,7 +14,7 @@ namespace Menro.Domain.Entities
         public int ExtraPrice { get; set; }
 
         // FK
-        public int FoodId { get; set; }
-        public Food Food { get; set; } = null!;
+        public int FoodVariantId { get; set; }
+        public FoodVariant FoodVariant { get; set; } = null!;
     }
 }

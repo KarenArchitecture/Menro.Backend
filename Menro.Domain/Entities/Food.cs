@@ -44,10 +44,8 @@ namespace Menro.Domain.Entities
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public ICollection<FoodRating> Ratings { get; set; } = new List<FoodRating>();
 
-        // انواع (Variants) - مثلا سایز کوچک/بزرگ
+        // انواع (Variants) - مثلا سایز کوچک/بزرگ یا زعفرانی/دارچینی و غیره
         public ICollection<FoodVariant> Variants { get; set; } = new List<FoodVariant>();
 
-        // مخلفات (Addons) - مثلا پنیر اضافه، نوشابه
-        public ICollection<FoodAddon> Addons { get; set; } = new List<FoodAddon>();
     }
 }

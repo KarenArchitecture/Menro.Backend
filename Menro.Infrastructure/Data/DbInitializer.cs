@@ -68,7 +68,7 @@ namespace Menro.Infrastructure.Data
                         UserName = "MenroAdmin_1",
                         Email = "MenroAdmin@gmail.com",
                         FullName = "Admin",
-                        PhoneNumber = "+989486813486"
+                        PhoneNumber = "09486813486"
                     };
                     await _userManager.CreateAsync(admin, "@Admin123456");
                     await _userManager.AddToRoleAsync(admin, SD.Role_Admin);
@@ -94,10 +94,10 @@ namespace Menro.Infrastructure.Data
 
                     var owner = new User
                     {
-                        UserName = $"+98912{345678 + i}",
+                        UserName = $"0912{345678 + i}",
                         Email = email,
                         FullName = $"رستوران‌دار {i}",
-                        PhoneNumber = $"+98912{345678 + i}"
+                        PhoneNumber = $"0912{345678 + i}"
                     };
                     await _userManager.CreateAsync(owner, "Owner123!");
                     await _userManager.AddToRoleAsync(owner, SD.Role_Owner);
@@ -274,10 +274,11 @@ namespace Menro.Infrastructure.Data
                     await _userManager.CreateAsync(customer, "Customer123!");
                     await _userManager.AddToRoleAsync(customer, SD.Role_Customer);
                 }
+                
                 // 9️⃣ Orders + OrderItems
                 if (!await _db.Orders.AnyAsync())  // 👈 فقط اگه دیتابیس خالیه
                 {
-                    var userId = "d3f574d2-db33-4e78-83c1-af64dbaa5a55";
+                    var userId = "1112d178-09cd-4de1-b00b-01e4a14ec8e7";
                     var restaurantId = 3;
                     int orderCount = 10; // تعداد سفارش‌ها که میخوای بسازی
                     var rand2 = new Random();

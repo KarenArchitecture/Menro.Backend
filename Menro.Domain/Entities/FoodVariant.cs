@@ -14,6 +14,8 @@ namespace Menro.Domain.Entities
         [Required]
         public int Price { get; set; }
 
+        // مخلفات (Addons) - مثلا پنیر اضافه، نوشابه
+        public ICollection<FoodAddon> Addons { get; set; } = new List<FoodAddon>();
         // FK
         public int FoodId { get; set; }
         public Food Food { get; set; } = null!;

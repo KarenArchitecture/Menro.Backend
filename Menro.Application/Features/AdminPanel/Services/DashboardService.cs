@@ -3,7 +3,7 @@ using Menro.Application.Features.Identity.Services;
 using Menro.Application.Features.Order.Services;
 using Menro.Application.Restaurants.Services.Interfaces;
 
-namespace Menro.Application.Features.AdminPanel.Dashboard
+namespace Menro.Application.Features.AdminPanel.Services
 {
     public class DashboardService : IDashboardService
     {

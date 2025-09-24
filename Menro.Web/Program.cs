@@ -12,6 +12,8 @@ using Menro.Infrastructure.Data;
 using Menro.Web.Middleware;
 using Menro.Infrastructure.Extensions;
 using Menro.Application.Extensions;
+using Menro.Application.Features.Identity.Services;
+using Menro.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -75,6 +77,8 @@ var applicationAssembly = Assembly.Load("Menro.Application");
 builder.Services.AddAutoRegisteredServices(applicationAssembly);
 var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
 builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
 
 
 

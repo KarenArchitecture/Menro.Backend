@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Menro.Application.Features.AdminPanel.Dashboard
+namespace Menro.Application.Features.AdminPanel.Services
 {
     public interface IDashboardService
     {
