@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Menro.Domain.Entities;
 
@@ -11,8 +11,7 @@ namespace Menro.Domain.Interfaces
         Task<List<int>> GetAllGlobalCategoryIdsAsync();
         Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesExcludingAsync(List<string> excludeTitles);
         Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count);
-
-        /* Home Page – restaurant-local categories */
+/* Home Page – restaurant-local categories */
         Task<List<FoodCategory>> GetAllCategoriesAsync();
         Task<List<int>> GetAllCategoryIdsAsync();
         Task<List<FoodCategory>> GetAllCategoriesExcludingAsync(List<string> excludeTitles);
@@ -21,5 +20,11 @@ namespace Menro.Domain.Interfaces
 
         /* Restaurant Page */
         Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug);
+
+    // Admin/Owner Panel
+    Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId);
+    Task<bool> AddFoodAsync(Food food);
+    Task<Food> GetFoodDetailsAsync(int foodId);
+    Task<bool> DeleteFoodAsync (int foodId);
     }
 }
