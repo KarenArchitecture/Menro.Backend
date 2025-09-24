@@ -6,6 +6,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Menro.Application.Common.SD;
 using Menro.Application.Features.Identity.Services;
+using Menro.Application.Foods.Services.Interfaces;
+using Menro.Application.Orders.Services.Interfaces;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -43,6 +45,7 @@ namespace Menro.Web.Controllers.Public
             _authService = authService;
         }
         #endregion
+
         [HttpGet("featured")]
         public async Task<IActionResult> GetFeaturedRestaurants()
         {
@@ -57,15 +60,32 @@ namespace Menro.Web.Controllers.Public
             return Ok(result);
         }
 
-        [HttpGet("ad-banner")]
-        public async Task<ActionResult<RestaurantAdBannerDto>> GetAdBanner()
+        // GET api/public/restaurant/ad-banner/random?exclude=1,3,5
+        [HttpGet("ad-banner/random")]
+        public async Task<ActionResult<RestaurantAdBannerDto>> GetRandomAdBanner([FromQuery] string? exclude)
         {
-            var banner = await _restaurantAdBannerService.GetActiveAdBannerAsync();
-            if (banner == null)
-                return NoContent();
+            var excludeIds = string.IsNullOrWhiteSpace(exclude)
+            ? new List<int>()
+            : exclude.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                     .Select(s => int.TryParse(s, out var x) ? (int?)x : null)
+                     .Where(x => x.HasValue)
+                     .Select(x => x.Value)
+                     .Distinct()
+                     .ToList();
 
-            return Ok(banner);
+            var dto = await _restaurantAdBannerService.GetRandomAdBannerAsync(excludeIds);
+            if (dto == null) return NoContent();
+            return Ok(dto);
         }
+
+        // POST api/public/restaurant/ad-banner/{id}/impression
+        [HttpPost("ad-banner/{id}/impression")]
+        public async Task<IActionResult> TrackAdImpression(int id)
+        {
+            var ok = await _restaurantAdBannerService.AddImpressionAsync(id);
+            return ok ? NoContent() : NotFound();
+        }
+
 
 
         [HttpPost("register")]

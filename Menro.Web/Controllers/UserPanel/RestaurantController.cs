@@ -1,35 +1,42 @@
-﻿using Menro.Application.DTO;
-using Menro.Application.Restaurants.Services.Interfaces;
+﻿// Menro.Web/Controllers/User/RestaurantController.cs
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using Menro.Application.Orders.DTOs;
+using Menro.Application.Orders.Services.Interfaces;
 
-namespace Menro.Web.Controllers.UserPanel
+namespace Menro.Web.Controllers.User
 {
     [ApiController]
-    [Route("api/user/[controller]")] // => /api/userpanel/restaurant/...
-    [Authorize] // JWT required
+    [Route("api/user/restaurant")]
+    [Authorize]
+    [ApiExplorerSettings(IgnoreApi = true)] // hide from Swagger
     public class RestaurantController : ControllerBase
     {
-        private readonly IUserRecentOrderCardService _recentOrderCardService;
+        private readonly IUserRecentOrderCardService _recentService;
 
-        public RestaurantController(IUserRecentOrderCardService recentOrderCardService)
+        public RestaurantController(IUserRecentOrderCardService recentService)
         {
-            _recentOrderCardService = recentOrderCardService;
+            _recentService = recentService;
         }
 
-        // GET /api/userpanel/restaurant/recent-orders?count=8
+        /// <summary>DEPRECATED: use GET /api/user/orders/recent-foods</summary>
         [HttpGet("recent-orders")]
-        [ProducesResponseType(typeof(List<RestaurantCardDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<List<RestaurantCardDto>>> GetRecentOrders([FromQuery] int count = 8)
+        [Obsolete("Use GET /api/user/orders/recent-foods")]
+        public async Task<ActionResult<List<RecentOrdersFoodCardDto>>> GetRecentOrders([FromQuery] int count = 8)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized();
+            // Optional deprecation headers for observability
+            Response.Headers["Deprecation"] = "true";
+            Response.Headers["Link"] = "</api/user/orders/recent-foods>; rel=\"successor-version\"";
 
-            var items = await _recentOrderCardService.GetRecentOrderedRestaurantCardsAsync(userId, count);
-            return Ok(items ?? new List<RestaurantCardDto>());
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+            if (count <= 0) count = 8;
+            if (count > 32) count = 32;
+
+            var items = await _recentService.GetUserRecentOrderedFoodsAsync(userId, count);
+            return Ok(items ?? new List<RecentOrdersFoodCardDto>());
         }
     }
 }

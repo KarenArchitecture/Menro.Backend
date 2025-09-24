@@ -11,7 +11,7 @@ namespace Menro.Domain.Entities
         [Display(Name = "نام دسته بندی")]
         [MaxLength(200)]
         [Required(ErrorMessage = "نام دسته بندی الزامی است")]
-        public string Name { get; set; } // مثل "نوشیدنی سرد"، "پیتزا"
+        public string Name { get; set; } = string.Empty; // مثل "نوشیدنی سرد"، "پیتزا"
 
         [Display(Name = "آیکون SVG")]
         public string SvgIcon { get; set; } = string.Empty;
@@ -21,8 +21,10 @@ namespace Menro.Domain.Entities
 
         // ارتباط با جدول رستوران
         public int RestaurantId { get; set; }
-
         public Restaurant Restaurant { get; set; } = null!;
+
+        public int? GlobalFoodCategoryId { get; set; }
+        public GlobalFoodCategory? GlobalFoodCategory { get; set; }
 
         public ICollection<Food> Foods { get; set; } = new List<Food>();
     }

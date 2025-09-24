@@ -17,7 +17,10 @@ namespace Menro.Domain.Interfaces
         Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync();
 
         //Home Page - Featured Restaurant Banner
-        Task<RestaurantAdBanner> GetActiveAdBannerAsync();
+        // Home Page - Random eligible Ad Banner (exclude already-served ids)
+        Task<RestaurantAdBanner?> GetRandomLiveAdBannerAsync(IEnumerable<int> excludeIds);
+        // Home Page - Count an impression atomically (no overshoot)
+        Task<bool> IncrementBannerImpressionAsync(int bannerId);
 
         //Home Page - Latest Orders
         Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId);

@@ -8,9 +8,10 @@ namespace Menro.Application.Restaurants.DTOs
 {
     public class RestaurantAdBannerDto
     {
-        public int RestaurantId { get; set; }
-        public string RestaurantName { get; set; }
-        public string ImageUrl { get; set; }
+        public int Id { get; set; }
+        public string ImageUrl { get; set; } = string.Empty;
+        public string RestaurantName { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
+        public string? CommercialText { get; set; }
     }
 }

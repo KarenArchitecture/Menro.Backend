@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,13 +12,21 @@ namespace Menro.Domain.Entities
         public int Id { get; set; }
 
         public int RestaurantId { get; set; }
-        public Restaurant Restaurant { get; set; }
+        public Restaurant Restaurant { get; set; } = null!; // required nav
 
         public string? ImageUrl { get; set; }
 
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
+        public string? CommercialText { get; set; }   // nullable marketing line
+        public int PurchasedViews { get; set; } = 0;  // 0 => unlimited
+        public int ConsumedViews { get; set; } = 0;   // incremented on impression
+
+        public bool IsPaused { get; set; } = false;   // for future control
+
+        [NotMapped] // computed; don't query with this in EF LINQ
         public bool IsActive => DateTime.UtcNow >= StartDate && DateTime.UtcNow <= EndDate;
+
     }
 }

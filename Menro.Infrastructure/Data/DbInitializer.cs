@@ -2,34 +2,57 @@
 using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
+using Menro.Infrastructure.Seed;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Menro.Infrastructure.Data
 {
-    // seeds data whenever the project runs
     public class DbInitializer : IDbInitializer
     {
         private readonly MenroDbContext _db;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<User> _userManager;
 
-        public DbInitializer(
-            MenroDbContext db,
-            RoleManager<IdentityRole> roleManager,
-            UserManager<User> userManager)
+        /* ---------- knobs you can tune ---------- */
+        private const int RestaurantsToCreate = 12;           // total sample restaurants
+        private const int MinCatsPerRestaurant = 4;           // categories per restaurant (restaurant-local)
+        private const int MaxCatsPerRestaurant = 6;
+        private const int MinFoodsPerCategory = 6;            // foods per (restaurant) category
+        private const int MaxFoodsPerCategory = 9;
+        private const int MinRestRatings = 3;                 // rating counts
+        private const int MaxRestRatings = 7;
+        private const int MinFoodRatings = 2;
+        private const int MaxFoodRatings = 6;
+        private const int TargetAdBanners = 5;                // how many restaurants should have a live ad banner
+        private static readonly string[] BannerImages = new[] { "/img/top-banner.png", "/img/optcropban.jpg", "/img/res-slider.jpg" };
+        private static readonly string[] CarouselImages = new[] { "/img/res-slider.jpg", "/img/optcropban.jpg" };
+        private static readonly string[] CardImages = new[] { "/img/res-card-1.png", "/img/res-card-2.png" };
+        private static readonly string[] Logos = new[] { "/img/logo-orange.png", "/img/logo-green.png" };
+        private static readonly string FoodFallbackImage = "/img/drink.png"; // make sure this exists
+
+        public DbInitializer(MenroDbContext db, RoleManager<IdentityRole> roleManager, UserManager<User> userManager)
         {
             _db = db;
             _roleManager = roleManager;
             _userManager = userManager;
         }
 
+        /* ============================================================
+           Helpers
+        ============================================================ */
+
+        private static string Sluggify(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+            return text.Trim().ToLower().Replace(" ", "-");
+        }
+
         private async Task<string> GenerateUniqueSlugAsync(string baseName)
         {
-            string baseSlug = Sluggify(baseName); // e.g. "Restaurant Number 1" -> "restaurant-number-1"
-            string slug = baseSlug;
-            int i = 1;
-
+            var baseSlug = Sluggify(baseName);
+            var slug = baseSlug;
+            var i = 1;
             while (await _db.Restaurants.AnyAsync(r => r.Slug == slug))
             {
                 slug = $"{baseSlug}-{i}";
@@ -38,21 +61,63 @@ namespace Menro.Infrastructure.Data
             return slug;
         }
 
-        private string Sluggify(string text)
+        // Seed Global Food Categories (uses your Menro.Infrastructure.Seed.GlobalFoodCategorySeed)
+        private async Task SeedGlobalFoodCategoriesAsync()
         {
-            // simple example: replace spaces with -, remove invalid chars
-            return text.Trim().ToLower().Replace(" ", "-");
+            if (await _db.GlobalFoodCategories.AnyAsync()) return;
+            _db.GlobalFoodCategories.AddRange(GlobalFoodCategorySeed.Data);
+            await _db.SaveChangesAsync();
+        }
+
+        // Food name pools for nicer variety (by global category)
+        private static readonly Dictionary<string, string[]> FoodNamesByGlobal = new()
+        {
+            ["پیتزا"] = new[] { "پیتزا ناپلی", "پیتزا پپرونی", "پیتزا مارگاریتا", "پیتزا چهار فصل", "پیتزا قارچ و مرغ", "پیتزا ویژی", "پیتزا باربیکیو" },
+            ["برگر"] = new[] { "چیزبرگر دوبل", "برگر کلاسیک", "اسموکی برگر", "برگر قارچ‌سوخاری", "چیکن برگر", "برگر ویژه منرو" },
+            ["نوشیدنی گرم"] = new[] { "اسپرسو", "کاپوچینو", "لاته", "موکا", "آمریکانو", "هات چاکلت", "چای ماسالا" },
+            ["نوشیدنی سرد"] = new[] { "موکتل بری", "لیموناد نعنایی", "موهیتو", "شیک وانیل", "شیک شکلات", "آیس لاته", "آیس آمریکانو" },
+            ["سالاد"] = new[] { "سالاد سزار", "سالاد یونانی", "سالاد فصل", "سالاد کینوا", "سالاد مرغ گریل" },
+            ["دسر"] = new[] { "براونی شکلاتی", "چیزکیک نیویورکی", "تیرا میسو", "پاناكوتا", "فرانچ‌توست کاراملی" }
+        };
+
+        private static (int min, int max) PriceRangeFor(string globalCat)
+        {
+            // Toman-ish ranges; tweak to your liking
+            return globalCat switch
+            {
+                "پیتزا" => (280_000, 620_000),
+                "برگر" => (220_000, 480_000),
+                "نوشیدنی گرم" => (80_000, 180_000),
+                "نوشیدنی سرد" => (90_000, 220_000),
+                "سالاد" => (160_000, 340_000),
+                "دسر" => (120_000, 260_000),
+                _ => (100_000, 300_000)
+            };
+        }
+
+        private static int NextPrice(Random rnd, (int min, int max) range)
+        {
+            return rnd.Next(range.min, range.max + 1);
         }
 
         public async Task InitializeAsync()
         {
             try
             {
+                /* ============================================================
+                   Migrate (if needed)
+                ============================================================ */
                 if (_db.Database.GetPendingMigrations().Any())
                     await _db.Database.MigrateAsync();
 
+                /* ============================================================
+                   Global Food Categories (admin-managed)
+                ============================================================ */
+                await SeedGlobalFoodCategoriesAsync();
 
-                // 1️⃣ Roles
+                /* ============================================================
+                   Roles
+                ============================================================ */
                 if (!await _roleManager.RoleExistsAsync(SD.Role_Admin))
                 {
                     await _roleManager.CreateAsync(new IdentityRole(SD.Role_Admin));
@@ -60,37 +125,38 @@ namespace Menro.Infrastructure.Data
                     await _roleManager.CreateAsync(new IdentityRole(SD.Role_Customer));
                 }
 
-                // 2️⃣ Admin user
+                /* ============================================================
+                   Admin user
+                ============================================================ */
                 if (!await _db.Users.AnyAsync(u => u.Email == "MenroAdmin@gmail.com"))
                 {
                     var admin = new User
                     {
                         UserName = "MenroAdmin_1",
                         Email = "MenroAdmin@gmail.com",
-                        FullName = "Admin",
-                        PhoneNumber = "09486813486"
+
+                        FullName = "مدیر",
+                        PhoneNumber = "+989486813486"
                     };
                     await _userManager.CreateAsync(admin, "@Admin123456");
                     await _userManager.AddToRoleAsync(admin, SD.Role_Admin);
                 }
 
-                // Sample SVG icon string
-                var sampleSvg = """
-                <svg width="43" height="43" viewBox="0 0 43 43" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10.75 9.17527C10.0154 9.17527 9.40625 8.56611 9.40625 7.83152V4.69611C9.40625 3.96152 10.0154 3.35236 10.75 3.35236C11.4846 3.35236 12.0938 3.96152 12.0938 4.69611V7.83152C12.0938 8.58402 11.4846 9.17527 10.75 9.17527Z" fill="#999FA8"/>
-                <path d="M17.9167 9.17527C17.1822 9.17527 16.573 8.56611 16.573 7.83152V4.69611C16.573 3.96152 17.1822 3.35236 17.9167 3.35236C18.6513 3.35236 19.2605 3.96152 19.2605 4.69611V7.83152C19.2605 8.58402 18.6513 9.17527 17.9167 9.17527Z" fill="#999FA8"/>
-                <path d="M25.0833 9.17527C24.3487 9.17527 23.7395 8.56611 23.7395 7.83152V4.69611C23.7395 3.96152 24.3487 3.35236 25.0833 3.35236C25.8178 3.35236 26.427 3.96152 26.427 4.69611V7.83152C26.427 8.58402 25.8178 9.17527 25.0833 9.17527Z" fill="#999FA8"/>
-                <path d="M39.8647 23.7426C39.8647 19.0485 36.2276 15.2502 31.6409 14.856C30.3151 12.6881 27.9501 11.2189 25.2267 11.2189H12.0222C7.8655 11.2189 4.47925 14.6052 4.47925 18.7618V19.7114H32.7697V18.7618C32.7697 18.4214 32.7159 18.081 32.6622 17.7585C35.2601 18.5289 37.1772 20.8939 37.1772 23.7426C37.1772 26.5555 35.3138 28.9026 32.7697 29.6909V21.503H4.47925V31.8768C4.47925 36.0335 7.8655 39.4197 12.0222 39.4197H25.2267C29.1684 39.4197 32.3755 36.3739 32.698 32.5039C36.783 31.6797 39.8647 28.0605 39.8647 23.7426Z" fill="#999FA8"/>
-                </svg>
-                
-                """;
+                /* ============================================================
+                   Owners + Restaurants + Restaurant-local Categories (mapped to Global)
+                ============================================================ */
+                var rand = new Random();
 
-                // 3️⃣ Owners and Restaurants
-                for (int i = 1; i <= 15; i++)
+                // cached list of global categories (only active)
+                var globalCats = await _db.GlobalFoodCategories
+                    .Where(gc => gc.IsActive)
+                    .OrderBy(gc => gc.DisplayOrder)
+                    .ToListAsync();
+
+                for (int i = 1; i <= RestaurantsToCreate; i++)
                 {
                     string email = $"owner{i}@menro.com";
-                    if (await _db.Users.AnyAsync(u => u.Email == email))
-                        continue;
+                    if (await _db.Users.AnyAsync(u => u.Email == email)) continue;
 
                     var owner = new User
                     {
@@ -102,259 +168,308 @@ namespace Menro.Infrastructure.Data
                     await _userManager.CreateAsync(owner, "Owner123!");
                     await _userManager.AddToRoleAsync(owner, SD.Role_Owner);
 
-                    // English name for SEO in slug and Name property
-                    string restaurantName = $"Restaurant Number {i}";
-                    string slug = await GenerateUniqueSlugAsync(restaurantName);
+                    var restName = $"رستوران شماره {i}";
+                    var slug = await GenerateUniqueSlugAsync(restName);
 
                     var restaurant = new Restaurant
                     {
-                        Name = restaurantName, // English for SEO
-                        Address = $"تهران، خیابان نمونه شماره {i}", // Keep Persian address
-                        OpenTime = new TimeSpan(8 + (i % 5), 0, 0),
-                        CloseTime = new TimeSpan(20 + (i % 4), 0, 0),
-                        Description = $"توضیح نمونه برای رستوران {i}", // Keep Farsi description
+                        Name = restName,
+                        Address = $"تهران، خیابان نمونه {i}",
+                        OpenTime = new TimeSpan(8 + (i % 4), 0, 0),
+                        CloseTime = new TimeSpan(20 + (i % 3), 30, 0),
+                        Description = $"توضیح نمونه برای {restName}؛ غذای باکیفیت و سرویس سریع.",
                         NationalCode = (1000000000 + i).ToString(),
                         BankAccountNumber = (2000000000 + i).ToString(),
                         ShebaNumber = $"IR{3000000000 + i}",
                         OwnerUserId = owner.Id,
                         RestaurantCategoryId = (i % 8) + 1,
-                        CarouselImageUrl = "/img/res-slider.png",
-                        BannerImageUrl = "/img/res-cards.png",
+                        CarouselImageUrl = CarouselImages[i % CarouselImages.Length],
+                        BannerImageUrl = CardImages[i % CardImages.Length],
+                        LogoImageUrl = Logos[i % Logos.Length],
                         IsFeatured = (i % 3 == 0),
                         IsActive = true,
                         IsApproved = true,
                         Slug = slug,
-                        CreatedAt = DateTime.Now.AddDays(-i) // فرض: هر رستوران چند روز قبل‌تر ساخته شده
+                        CreatedAt = DateTime.UtcNow.AddDays(-i)
                     };
-
                     _db.Restaurants.Add(restaurant);
                     await _db.SaveChangesAsync();
 
-                    // Add 5 categories per restaurant with SVG, avoid duplicates
-                    var existingCategoriesCount = await _db.FoodCategories.CountAsync(fc => fc.RestaurantId == restaurant.Id);
-                    if (existingCategoriesCount == 0)
+                    // create 4..6 restaurant-local categories mapped to **distinct** global categories
+                    var howManyCats = rand.Next(MinCatsPerRestaurant, MaxCatsPerRestaurant + 1);
+                    var picks = globalCats.OrderBy(_ => Guid.NewGuid()).Take(howManyCats).ToList();
+
+                    var restCats = new List<FoodCategory>();
+                    foreach (var gc in picks)
                     {
-                        var categories = Enumerable.Range(1, 5).Select(j => new FoodCategory
+                        restCats.Add(new FoodCategory
                         {
-                            Name = $"دسته {j}", // keep Farsi categories
+                            Name = gc.Name,                           // same visible name
+                            SvgIcon = string.Empty,              // ✅ keep locals empty
                             RestaurantId = restaurant.Id,
-                            SvgIcon = sampleSvg
-                        }).ToList();
-
-                        _db.FoodCategories.AddRange(categories);
-                        await _db.SaveChangesAsync();
-                    }
-                }
-
-                // 4️⃣ Foods
-                var allFoodCategories = await _db.FoodCategories.Include(fc => fc.Restaurant).ToListAsync();
-                var allUsers = await _db.Users.ToListAsync();
-                var rand = new Random();
-
-                foreach (var category in allFoodCategories)
-                {
-                    // Check if foods exist for this category
-                    bool foodsExist = await _db.Foods.AnyAsync(f => f.FoodCategoryId == category.Id);
-                    if (foodsExist)
-                        continue;
-
-                    var foods = new List<Food>();
-                    for (int i = 1; i <= 5; i++)
-                    {
-                        foods.Add(new Food
-                        {
-                            // Change "نمونه" to "Sample" for partial English SEO benefit
-                            Name = $"Sample Food {i} Category {category.Name}",
-                            Ingredients = "مواد اولیه نمونه",
-                            Price = rand.Next(15000, 80000),
-                            FoodCategoryId = category.Id,
-                            RestaurantId = category.RestaurantId,
-                            ImageUrl = "/img/drink.png",
-                            CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 30))
+                            GlobalFoodCategoryId = gc.Id              // map to global
                         });
                     }
+                    _db.FoodCategories.AddRange(restCats);
+                    await _db.SaveChangesAsync();
+                }
 
+                /* ============================================================
+                   Foods (names & prices depend on mapped global category)
+                ============================================================ */
+                var allRestCats = await _db.FoodCategories
+                    .Include(fc => fc.Restaurant)
+                    .Include(fc => fc.GlobalFoodCategory)
+                    .ToListAsync();
+
+                foreach (var cat in allRestCats)
+                {
+                    if (await _db.Foods.AnyAsync(f => f.FoodCategoryId == cat.Id)) continue;
+
+                    var catTitle = cat.GlobalFoodCategory?.Name ?? cat.Name;
+                    FoodNamesByGlobal.TryGetValue(catTitle, out var pool);
+                    pool ??= new[] { "آیتم ویژه", "آیتم کلاسیک", "آیتم مخصوص", "آیتم محبوب" };
+
+                    var count = rand.Next(MinFoodsPerCategory, MaxFoodsPerCategory + 1);
+                    var priceRange = PriceRangeFor(catTitle);
+
+                    var foods = new List<Food>();
+                    for (int k = 0; k < count; k++)
+                    {
+                        var baseName = pool[k % pool.Length];
+                        foods.Add(new Food
+                        {
+                            Name = baseName,                                     // don't append category
+                            Ingredients = "مواد اولیه تازه و با کیفیت",
+                            Price = NextPrice(rand, priceRange),
+                            FoodCategoryId = cat.Id,
+                            RestaurantId = cat.RestaurantId,
+                            ImageUrl = FoodFallbackImage,
+                            CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 45)),
+                            IsAvailable = true
+                        });
+                    }
                     _db.Foods.AddRange(foods);
                     await _db.SaveChangesAsync();
                 }
 
-                // 5️⃣ Food Ratings
+                /* ============================================================
+                   Restaurant Discounts (item-level / sometimes null-wide)
+                ============================================================ */
+                var restaurantsWithFoods = await _db.Restaurants
+                    .Include(r => r.Foods)
+                    .ToListAsync();
+
+                var percentPool = new[] { 10, 15, 20, 25, 30 };
+                foreach (var r in restaurantsWithFoods)
+                {
+                    if (rand.NextDouble() < 0.45) continue; // ~55% of restaurants have some discount
+
+                    if (await _db.RestaurantDiscounts.AnyAsync(d => d.RestaurantId == r.Id))
+                        continue;
+
+                    int howMany = rand.Next(1, 3); // 1..2 discounts
+                    var foodIds = r.Foods.Select(f => f.Id).ToList();
+
+                    for (int k = 0; k < howMany; k++)
+                    {
+                        var percent = percentPool[rand.Next(percentPool.Length)];
+                        int? foodId = null;
+                        if (foodIds.Count > 0 && rand.NextDouble() < 0.8)
+                            foodId = foodIds[rand.Next(foodIds.Count)];
+
+                        _db.RestaurantDiscounts.Add(new RestaurantDiscount
+                        {
+                            RestaurantId = r.Id,
+                            FoodId = foodId, // null => applies broader
+                            Percent = percent,
+                            StartDate = DateTime.UtcNow.AddDays(-rand.Next(0, 2)),
+                            EndDate = DateTime.UtcNow.AddDays(rand.Next(7, 20))
+                        });
+                    }
+                }
+                await _db.SaveChangesAsync();
+
+                /* ============================================================
+                   Ratings (restaurants & foods)
+                ============================================================ */
+                var allUsers = await _db.Users.ToListAsync();
+                var allRestaurants = await _db.Restaurants.ToListAsync();
+
+                foreach (var r in allRestaurants)
+                {
+                    if (await _db.RestaurantRatings.AnyAsync(x => x.RestaurantId == r.Id)) continue;
+
+                    int howMany = rand.Next(MinRestRatings, MaxRestRatings + 1);
+                    var voters = allUsers.Where(u => u.Id != r.OwnerUserId)
+                                         .OrderBy(_ => Guid.NewGuid())
+                                         .Take(howMany)
+                                         .ToList();
+
+                    foreach (var user in voters)
+                    {
+                        _db.RestaurantRatings.Add(new RestaurantRating
+                        {
+                            RestaurantId = r.Id,
+                            UserId = user.Id,
+                            Score = rand.Next(3, 6), // 3..5
+                            CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 60))
+                        });
+                    }
+                }
+                await _db.SaveChangesAsync();
+
                 var allFoods = await _db.Foods.ToListAsync();
                 foreach (var food in allFoods)
                 {
-                    // Add ratings only if none exist for this food
-                    bool foodHasRatings = await _db.FoodRatings.AnyAsync(fr => fr.FoodId == food.Id);
-                    if (foodHasRatings)
-                        continue;
+                    if (await _db.FoodRatings.AnyAsync(fr => fr.FoodId == food.Id)) continue;
 
-                    var foodRatings = new List<FoodRating>();
-                    var raters = allUsers.OrderBy(_ => rand.Next()).Take(rand.Next(3, 6));
-                    foreach (var user in raters)
+                    int howMany = rand.Next(MinFoodRatings, MaxFoodRatings + 1);
+                    var voters = allUsers.OrderBy(_ => Guid.NewGuid()).Take(howMany).ToList();
+
+                    foreach (var user in voters)
                     {
-                        foodRatings.Add(new FoodRating
+                        _db.FoodRatings.Add(new FoodRating
                         {
                             FoodId = food.Id,
                             UserId = user.Id,
                             Score = rand.Next(3, 6),
-                            CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 10))
+                            CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 45))
                         });
-                    }
-                    _db.FoodRatings.AddRange(foodRatings);
-                    await _db.SaveChangesAsync();
-                }
-
-                // 6️⃣ Restaurant Ratings
-                var allRestaurants = await _db.Restaurants.ToListAsync();
-                foreach (var res in allRestaurants)
-                {
-                    // Check if ratings exist for this restaurant
-                    bool hasRatings = await _db.RestaurantRatings.AnyAsync(rr => rr.RestaurantId == res.Id);
-                    if (hasRatings)
-                        continue;
-
-                    var restaurantRatings = new List<RestaurantRating>();
-                    var raters = allUsers.OrderBy(_ => rand.Next()).Take(rand.Next(3, 6));
-                    foreach (var user in raters)
-                    {
-                        // Check if rating for user-restaurant already exists to avoid duplicates
-                        bool exists = await _db.RestaurantRatings.AnyAsync(rr => rr.RestaurantId == res.Id && rr.UserId == user.Id);
-                        if (!exists)
-                        {
-                            restaurantRatings.Add(new RestaurantRating
-                            {
-                                RestaurantId = res.Id,
-                                UserId = user.Id,
-                                Score = rand.Next(3, 6),
-                                CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 10))
-                            });
-                        }
-                    }
-                    if (restaurantRatings.Count > 0)
-                    {
-                        _db.RestaurantRatings.AddRange(restaurantRatings);
-                        await _db.SaveChangesAsync();
-                    }
-                }
-
-                // 7️⃣ Restaurant Ad Banner — ensure there's ALWAYS one active now
-                var firstRes = await _db.Restaurants
-                    .Where(r => r.IsActive && r.IsApproved)
-                    .OrderBy(r => r.Id)
-                    .FirstOrDefaultAsync();
-
-                if (firstRes != null)
-                {
-                    // Is there any banner active right now?
-                    var active = await _db.RestaurantAdBanners
-                        .FirstOrDefaultAsync(b => b.StartDate <= DateTime.UtcNow && b.EndDate >= DateTime.UtcNow);
-
-                    if (active == null)
-                    {
-                        // No active banner → create one right now
-                        _db.RestaurantAdBanners.Add(new RestaurantAdBanner
-                        {
-                            RestaurantId = firstRes.Id,
-                            ImageUrl = "/img/optcropban.jpg",
-                            StartDate = DateTime.UtcNow.AddDays(-1),
-                            EndDate = DateTime.UtcNow.AddDays(7)
-                        });
-                        await _db.SaveChangesAsync();
-                    }
-                }
-
-                // 8️⃣ Customer User
-                if (!await _db.Users.AnyAsync(u => u.PhoneNumber == "09121112233"))
-                {
-                    var customer = new User
-                    {
-                        UserName = "09121112233",
-                        PhoneNumber = "09121112233",
-                        FullName = "مشتری نمونه"
-                    };
-                    await _userManager.CreateAsync(customer, "Customer123!");
-                    await _userManager.AddToRoleAsync(customer, SD.Role_Customer);
-                }
-                
-                // 9️⃣ Orders + OrderItems
-                if (!await _db.Orders.AnyAsync())  // 👈 فقط اگه دیتابیس خالیه
-                {
-                    var userId = "1112d178-09cd-4de1-b00b-01e4a14ec8e7";
-                    var restaurantId = 3;
-                    int orderCount = 10; // تعداد سفارش‌ها که میخوای بسازی
-                    var rand2 = new Random();
-
-                    for (int i = 1; i <= orderCount; i++)
-                    {
-                        var order = new Order
-                        {
-                            UserId = userId,
-                            RestaurantId = restaurantId,
-                            Status = OrderStatus.Completed,
-                            CreatedAt = DateTime.UtcNow.AddDays(-rand2.Next(1, 30)),
-                            TotalAmount = 0m
-                        };
-
-                        _db.Orders.Add(order);
-                        await _db.SaveChangesAsync(); // تا Id ساخته بشه
-
-                        int itemsCount = rand2.Next(1, 5);
-                        decimal orderTotal = 0;
-
-                        for (int j = 0; j < itemsCount; j++)
-                        {
-                            int foodId = rand2.Next(1, 11);
-                            int quantity = rand2.Next(1, 4);
-                            decimal unitPrice = rand2.Next(10000, 100000);
-
-                            var orderItem = new OrderItem
-                            {
-                                OrderId = order.Id,
-                                FoodId = foodId,
-                                Quantity = quantity,
-                                UnitPrice = unitPrice
-                            };
-
-                            orderTotal += quantity * unitPrice;
-                            _db.OrderItems.Add(orderItem);
-                        }
-
-                        order.TotalAmount = orderTotal;
-                        await _db.SaveChangesAsync();
-                    }
-                }
-
-                // 9️⃣ Seed demo recent Orders for the sample customer so the home row has data
-                var demoCustomer = await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == "09121112233");
-                if (demoCustomer != null)
-                {
-                    var hasAny = await _db.Orders.AnyAsync(o => o.UserId == demoCustomer.Id);
-                    if (!hasAny)
-                    {
-                        var restIds = await _db.Restaurants
-                            .Where(r => r.IsActive && r.IsApproved)
-                            .OrderBy(r => r.Id)
-                            .Select(r => r.Id)
-                            .Take(8)
-                            .ToListAsync();
-
-                        int offset = 0;
-                        foreach (var rid in restIds)
-                        {
-                            _db.Orders.Add(new Order
-                            {
-                                UserId = demoCustomer.Id,
-                                RestaurantId = rid,
-                                CreatedAt = DateTime.UtcNow.AddDays(-offset++) // most recent first
-                            });
-                        }
-                        await _db.SaveChangesAsync();
                     }
                 }
                 await _db.SaveChangesAsync();
+
+                /* ============================================================
+                   Ad Banners (1 per restaurant max; view quota + time window)
+                ============================================================ */
+                var now = DateTime.UtcNow;
+
+                var bannerRestaurantIds = await _db.RestaurantAdBanners
+                    .Select(b => b.RestaurantId)
+                    .ToListAsync();
+
+                if (bannerRestaurantIds.Count < TargetAdBanners)
+                {
+                    var candidates = await _db.Restaurants
+                        .Where(r => r.IsActive && r.IsApproved && !bannerRestaurantIds.Contains(r.Id))
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Take(TargetAdBanners - bannerRestaurantIds.Count)
+                        .Select(r => new { r.Id })
+                        .ToListAsync();
+
+                    var slogans = new[]
+                    {
+                        "قهوه‌هامون تازه‌برشتن ☕",
+                        "پیتزاهای داغ با تخفیف 🍕",
+                        "ساندویچ‌های خوشمزه دمِ‌دست 🥪",
+                        "غذای خونگی با طعم نوستالژی 🍲",
+                        "دسرهای ویژه امروز 🍮"
+                    };
+
+                    foreach (var c in candidates)
+                    {
+                        _db.RestaurantAdBanners.Add(new RestaurantAdBanner
+                        {
+                            RestaurantId = c.Id,
+                            ImageUrl = BannerImages[rand.Next(BannerImages.Length)],
+                            StartDate = now.AddDays(-1),
+                            EndDate = now.AddDays(14),
+                            CommercialText = slogans[rand.Next(slogans.Length)],
+                            PurchasedViews = 600 + rand.Next(0, 900), // 600..1500
+                            ConsumedViews = 0,
+                            IsPaused = false
+                        });
+                    }
+                    await _db.SaveChangesAsync();
+                }
+
+                /* ============================================================
+                    Demo Customer + Orders (+ OrderItems!)
+                ============================================================ */
+                var demoPhone = "09121112233";
+                var demoCustomer = await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == demoPhone);
+                if (demoCustomer == null)
+                {
+                    demoCustomer = new User
+                    {
+                        UserName = demoPhone,
+                        PhoneNumber = demoPhone,
+                        FullName = "مشتری نمونه"
+                    };
+                    await _userManager.CreateAsync(demoCustomer, "Customer123!");
+                    await _userManager.AddToRoleAsync(demoCustomer, SD.Role_Customer);
+                }
+                // Only seed if this user has no orders yet.
+                if (!await _db.Orders.AnyAsync(o => o.UserId == demoCustomer.Id))
+                {
+                    // re-use the existing `rand` defined earlier in InitializeAsync()
+
+                    // pick some active restaurants
+                    var restIds = await _db.Restaurants
+                        .Where(r => r.IsActive && r.IsApproved)
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Select(r => r.Id)
+                        .Take(8)
+                        .ToListAsync();
+
+                    var newOrders = new List<Order>();
+                    int dayOffset = 0;
+
+                    foreach (var rid in restIds)
+                    {
+                        // choose 1..3 foods from this restaurant
+                        var foods = await _db.Foods
+                            .Where(f => f.RestaurantId == rid && f.IsAvailable && !f.IsDeleted)
+                            .OrderBy(_ => Guid.NewGuid())
+                            .Take(rand.Next(1, 4))   // use existing rand
+                            .ToListAsync();
+
+                        if (foods.Count == 0) continue;
+
+                        var items = new List<OrderItem>();
+                        decimal total = 0m;
+
+                        foreach (var f in foods)
+                        {
+                            var qty = rand.Next(1, 3);       // use existing rand
+                            var unit = (decimal)f.Price;     // Price is int; UnitPrice is decimal
+                            total += unit * qty;
+
+                            items.Add(new OrderItem
+                            {
+                                FoodId = f.Id,
+                                Quantity = qty,
+                                UnitPrice = unit
+                            });
+                        }
+
+                        var order = new Order
+                        {
+                            UserId = demoCustomer.Id,
+                            RestaurantId = rid,
+                            Status = OrderStatus.Completed,
+                            CreatedAt = DateTime.UtcNow.AddDays(-dayOffset++),
+                            TotalAmount = total,
+                            OrderItems = items
+                        };
+
+                        newOrders.Add(order);
+                    }
+
+                    if (newOrders.Count > 0)
+                    {
+                        _db.Orders.AddRange(newOrders);
+                        await _db.SaveChangesAsync();
+                    }
+                }
+
+
             }
             catch (Exception ex)
             {
-                throw new Exception("Database seeding failed: " + ex.Message, ex);
+                Console.WriteLine($"❌ Seeding error: {ex.Message}");
+                throw;
             }
         }
     }

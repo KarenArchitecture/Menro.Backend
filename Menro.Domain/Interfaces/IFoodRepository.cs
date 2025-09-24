@@ -1,22 +1,30 @@
-﻿using Menro.Domain.Entities;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Menro.Domain.Entities;
 
-public interface IFoodRepository
+namespace Menro.Domain.Interfaces
 {
-    //Home Page
-    Task<List<FoodCategory>> GetAllCategoriesAsync();
-    Task<List<Food>> GetPopularFoodsByCategoryAsync(int categoryId, int count);
-    Task<List<int>> GetAllCategoryIdsAsync();
-    Task<List<FoodCategory>> GetAllCategoriesExcludingAsync(List<string> excludeTitles);
-    Task<List<Food>> GetPopularFoodsByCategoryIdAsync(int categoryId, int take);
+    public interface IFoodRepository
+    {
+        /* Home Page (GLOBAL categories) */
+        Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesAsync();
+        Task<List<int>> GetAllGlobalCategoryIdsAsync();
+        Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesExcludingAsync(List<string> excludeTitles);
+        Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count);
+/* Home Page – restaurant-local categories */
+        Task<List<FoodCategory>> GetAllCategoriesAsync();
+        Task<List<int>> GetAllCategoryIdsAsync();
+        Task<List<FoodCategory>> GetAllCategoriesExcludingAsync(List<string> excludeTitles);
+        Task<List<Food>> GetPopularFoodsByCategoryAsync(int categoryId, int count);
+        Task<List<Food>> GetPopularFoodsByCategoryIdAsync(int categoryId, int take);
 
-    //Restaurant Page
-    //Task<List<Food>> GetFoodsByRestaurantIdAsync(int restaurantId);
-    //Task<List<Food>> GetFoodsByRestaurantSlugAsync(string slug);
-    Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug);
+        /* Restaurant Page */
+        Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug);
 
     // Admin/Owner Panel
     Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId);
     Task<bool> AddFoodAsync(Food food);
     Task<Food> GetFoodDetailsAsync(int foodId);
     Task<bool> DeleteFoodAsync (int foodId);
+    }
 }

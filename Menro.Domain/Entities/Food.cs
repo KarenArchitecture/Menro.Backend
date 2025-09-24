@@ -40,6 +40,9 @@ namespace Menro.Domain.Entities
         public int FoodCategoryId { get; set; }
         public FoodCategory FoodCategory { get; set; } = null!;
 
+        // FK to Orders
+        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
         // ارتباط‌ها
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public ICollection<FoodRating> Ratings { get; set; } = new List<FoodRating>();

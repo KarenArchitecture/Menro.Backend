@@ -104,6 +104,9 @@ namespace Menro.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("GlobalFoodCategoryId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
 
@@ -124,7 +127,10 @@ namespace Menro.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RestaurantId");
+                    b.HasIndex("GlobalFoodCategoryId");
+
+                    b.HasIndex("RestaurantId", "Name")
+                        .IsUnique();
 
                     b.ToTable("FoodCategories");
                 });
@@ -158,15 +164,8 @@ namespace Menro.Infrastructure.Migrations
 
                     b.ToTable("FoodRatings");
                 });
-
             modelBuilder.Entity("Menro.Domain.Entities.FoodVariant", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
+            
                     b.Property<int>("FoodId")
                         .HasColumnType("int");
 
@@ -183,6 +182,35 @@ namespace Menro.Infrastructure.Migrations
                     b.HasIndex("FoodId");
 
                     b.ToTable("FoodVariant");
+            modelBuilder.Entity("Menro.Domain.Entities.GlobalFoodCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("SvgIcon")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("GlobalFoodCategories");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Order", b =>
@@ -321,6 +349,9 @@ namespace Menro.Infrastructure.Migrations
                     b.Property<bool>("IsFeatured")
                         .HasColumnType("bit");
 
+                    b.Property<string>("LogoImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -367,11 +398,23 @@ namespace Menro.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CommercialText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ConsumedViews")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsPaused")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PurchasedViews")
+                        .HasColumnType("int");
 
                     b.Property<int>("RestaurantId")
                         .HasColumnType("int");
@@ -806,11 +849,18 @@ namespace Menro.Infrastructure.Migrations
 
             modelBuilder.Entity("Menro.Domain.Entities.FoodCategory", b =>
                 {
+                    b.HasOne("Menro.Domain.Entities.GlobalFoodCategory", "GlobalFoodCategory")
+                        .WithMany("RestaurantCategories")
+                        .HasForeignKey("GlobalFoodCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
                         .WithMany("FoodCategories")
                         .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("GlobalFoodCategory");
 
                     b.Navigation("Restaurant");
                 });
@@ -1037,6 +1087,9 @@ namespace Menro.Infrastructure.Migrations
             modelBuilder.Entity("Menro.Domain.Entities.FoodVariant", b =>
                 {
                     b.Navigation("Addons");
+            modelBuilder.Entity("Menro.Domain.Entities.GlobalFoodCategory", b =>
+                {
+                    b.Navigation("RestaurantCategories");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Order", b =>

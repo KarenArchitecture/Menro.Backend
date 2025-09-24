@@ -10,5 +10,6 @@ namespace Menro.Application.Restaurants.Services.Interfaces
     public interface IRandomRestaurantCardService
     {
         Task<List<RestaurantCardDto>> GetRandomRestaurantCardsAsync(int count = 8);
+
     }
 }
