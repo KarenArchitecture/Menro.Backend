@@ -134,7 +134,6 @@ namespace Menro.Infrastructure.Data
                     {
                         UserName = "MenroAdmin_1",
                         Email = "MenroAdmin@gmail.com",
-
                         FullName = "مدیر",
                         PhoneNumber = "+989486813486"
                     };

@@ -29,15 +29,15 @@ namespace Menro.Domain.Entities
         [Display(Name = "آدرس عکس بنر تبلیغاتی ")]
         public string? CarouselImageUrl { get; set; }
 
+        [Display(Name = "آدرس لوگو")]
+        public string? LogoImageUrl { get; set; }
+
         [Required(ErrorMessage = "افزودن آدرس رستوران الزامی است")]
         public string Address { get; set; } = string.Empty;
 
         public TimeSpan OpenTime { get; set; }
         public TimeSpan CloseTime { get; set; }
         public DateTime CreatedAt { get; set; }
-
-        public string? LogoImageUrl { get; set; }
-
 
         [Display(Name = "توضیحات")]
         [MaxLength(500)]

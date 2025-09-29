@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
@@ -19,7 +20,8 @@ namespace Menro.Domain.Entities
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
-        public string? CommercialText { get; set; }   // nullable marketing line
+        [MaxLength(200)]
+        public string? CommercialText { get; set; }
         public int PurchasedViews { get; set; } = 0;  // 0 => unlimited
         public int ConsumedViews { get; set; } = 0;   // incremented on impression
 
