@@ -134,6 +134,7 @@ namespace Menro.Infrastructure.Data
                     {
                         UserName = "MenroAdmin_1",
                         Email = "MenroAdmin@gmail.com",
+
                         FullName = "مدیر",
                         PhoneNumber = "+989486813486"
                     };
@@ -159,10 +160,10 @@ namespace Menro.Infrastructure.Data
 
                     var owner = new User
                     {
-                        UserName = $"+98912{345678 + i}",
+                        UserName = $"0912{345678 + i}",
                         Email = email,
                         FullName = $"رستوران‌دار {i}",
-                        PhoneNumber = $"+98912{345678 + i}"
+                        PhoneNumber = $"0912{345678 + i}"
                     };
                     await _userManager.CreateAsync(owner, "Owner123!");
                     await _userManager.AddToRoleAsync(owner, SD.Role_Owner);
@@ -415,7 +416,6 @@ namespace Menro.Infrastructure.Data
                     await _userManager.CreateAsync(demoCustomer, "Customer123!");
                     await _userManager.AddToRoleAsync(demoCustomer, SD.Role_Customer);
                 }
-
                 // Only seed if this user has no orders yet.
                 if (!await _db.Orders.AnyAsync(o => o.UserId == demoCustomer.Id))
                 {
@@ -441,7 +441,7 @@ namespace Menro.Infrastructure.Data
                             .Take(rand.Next(1, 4))   // use existing rand
                             .ToListAsync();
 
-                        if (foods.Count == 0) continue;
+                        if (foods.Count() == 0) continue;
 
                         var items = new List<OrderItem>();
                         decimal total = 0m;
