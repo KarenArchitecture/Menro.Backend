@@ -25,4 +25,8 @@
     <ProjectReference Include="..\Menro.Domain\Menro.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>
