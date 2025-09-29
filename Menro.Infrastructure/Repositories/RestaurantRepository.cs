@@ -125,10 +125,10 @@ namespace Menro.Infrastructure.Repositories
 
 
         //Shop Page - Restaurant Banner 
-        public async Task<Restaurant?> GetBySlugWithCategoryAsync(string slug)
+        public async Task<Restaurant?> GetBySlugWithRatingsAsync(string slug)
         {
             return await _context.Restaurants
-                .Include(r => r.RestaurantCategory)
+                .Include(r => r.Ratings)
                 .FirstOrDefaultAsync(r => r.Slug == slug && r.IsActive && r.IsApproved);
         }
 

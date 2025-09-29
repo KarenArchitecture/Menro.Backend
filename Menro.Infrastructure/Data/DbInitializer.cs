@@ -194,23 +194,39 @@ namespace Menro.Infrastructure.Data
                     _db.Restaurants.Add(restaurant);
                     await _db.SaveChangesAsync();
 
-                    // create 4..6 restaurant-local categories mapped to **distinct** global categories
-                    var howManyCats = rand.Next(MinCatsPerRestaurant, MaxCatsPerRestaurant + 1);
-                    var picks = globalCats.OrderBy(_ => Guid.NewGuid()).Take(howManyCats).ToList();
+                    var specialCategoryNames = new[] { "پیشنهاد سرآشپز", "پرفروش‌ترین‌ها", "ویژه امروز" };
 
-                    var restCats = new List<FoodCategory>();
-                    foreach (var gc in picks)
+                    foreach (var specialName in specialCategoryNames)
                     {
-                        restCats.Add(new FoodCategory
+                        var specialCat = new FoodCategory
                         {
-                            Name = gc.Name,                           // same visible name
-                            SvgIcon = string.Empty,              // ✅ keep locals empty
-                            RestaurantId = restaurant.Id,
-                            GlobalFoodCategoryId = gc.Id              // map to global
-                        });
+                            Name = specialName,
+                            SvgIcon = globalCats[rand.Next(globalCats.Count)].SvgIcon, // pick any existing SVG from global
+                            RestaurantId = restaurant.Id
+                            // GlobalFoodCategoryId stays null
+                        };
+                        _db.FoodCategories.Add(specialCat);
+                        await _db.SaveChangesAsync();
+
+                        // Add 2-3 foods to this special category
+                        var count = rand.Next(2, 4);
+                        for (int f = 0; f < count; f++)
+                        {
+                            _db.Foods.Add(new Food
+                            {
+                                Name = $"{specialName} {f + 1}",
+                                Ingredients = "مواد اولیه تازه و با کیفیت",
+                                Price = rand.Next(150_000, 400_000), // random price
+                                FoodCategoryId = specialCat.Id,
+                                RestaurantId = restaurant.Id,
+                                ImageUrl = FoodFallbackImage,
+                                CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 30)),
+                                IsAvailable = true
+                            });
+                        }
+                        await _db.SaveChangesAsync();
                     }
-                    _db.FoodCategories.AddRange(restCats);
-                    await _db.SaveChangesAsync();
+
                 }
 
                 /* ============================================================

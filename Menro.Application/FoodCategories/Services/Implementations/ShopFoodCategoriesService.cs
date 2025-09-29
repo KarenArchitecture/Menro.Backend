@@ -19,16 +19,47 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             _foodCategoryRepository = foodCategoryRepository;
         }
 
-        public async Task<IEnumerable<ShopFoodCategoryDto>> GetCategoriesForRestaurantAsync(string restaurantSlug)
+        public async Task<List<ShopFoodCategoryDto>> GetByRestaurantAsync(int restaurantId)
         {
-            var categories = await _foodCategoryRepository.GetByRestaurantSlugAsync(restaurantSlug);
+            var categories = await _foodCategoryRepository.GetAllByRestaurantAsync(restaurantId);
 
             return categories.Select(c => new ShopFoodCategoryDto
             {
                 Id = c.Id,
                 Name = c.Name,
-                SvgIcon = c.SvgIcon
-            });
+                SvgIcon = c.SvgIcon,
+                GlobalFoodCategoryId = c.GlobalFoodCategoryId
+            }).ToList();
         }
+
+        public async Task<List<ShopFoodCategoryDto>> GetGlobalCategoriesAsync()
+        {
+            var categories = await _foodCategoryRepository.GetGlobalCategoriesAsync();
+
+            return categories.Select(c => new ShopFoodCategoryDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                SvgIcon = c.SvgIcon,
+                GlobalFoodCategoryId = c.GlobalFoodCategoryId
+            }).ToList();
+        }
+
+    //    public async Task<List<ShopFoodCategoryDto>> GetAllForRestaurantAsync(string restaurantSlug)
+    //    {
+    //        var categories = await _foodCategoryRepository.GetAllFoodCategoriesForRestaurantAsync(restaurantSlug);
+
+    //        var categoryIds = categories.Select(c => c.Id).ToList();
+    //        var foods = await _foodCategoryRepository.GetByCategoryIdsAsync(categoryIds);
+
+    //        return categories.Select(c => new ShopFoodCategoryDto
+    //        {
+    //            Id = c.Id,
+    //            Name = c.Name,
+    //            SvgIcon = c.SvgIcon,
+    //            GlobalFoodCategoryId = c.GlobalFoodCategoryId,
+    //            Foods = foods.Where(f => f.CategoryId == c.Id).ToList()
+    //        }).ToList();
+    //    }
     }
 }

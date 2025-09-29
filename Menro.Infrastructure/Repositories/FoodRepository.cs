@@ -119,7 +119,8 @@ namespace Menro.Infrastructure.Repositories
             return await _context.Foods
                 .AsNoTracking()
                 .Where(f => topIds.Contains(f.Id))
-                .Include(f => f.Restaurant)    // minimal
+                .Include(f => f.Restaurant)
+                .Include(f => f.Ratings)
                 .ToListAsync();
         }
 
@@ -188,6 +189,7 @@ namespace Menro.Infrastructure.Repositories
                 .AsNoTracking()
                 .Where(f => topIds.Contains(f.Id))
                 .Include(f => f.Restaurant)
+                .Include(f => f.Ratings)
                 .ToListAsync();
         }
 
@@ -221,6 +223,12 @@ namespace Menro.Infrastructure.Repositories
         }
 
         /* ===================== Restaurant Page ===================== */
+        public async Task<List<Food>> GetByCategoryIdsAsync(List<int> categoryIds)
+        {
+            return await _context.Foods
+                .Where(f => categoryIds.Contains(f.FoodCategoryId) && !f.IsDeleted && f.IsAvailable)
+                .ToListAsync();
+        }
 
         public async Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug)
         {

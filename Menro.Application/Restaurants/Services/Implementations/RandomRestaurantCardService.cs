@@ -59,10 +59,11 @@ namespace Menro.Application.Restaurants.Services.Implementations
                     LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl) ? "/img/res-slider.png" : r.LogoImageUrl,
                     Rating = avgRating,
                     Voters = voters,
-                    Discount = discountPercent,   // 👈 max active percent (or null)
+                    Discount = discountPercent,
                     OpenTime = r.OpenTime.ToString(@"hh\:mm"),
                     CloseTime = r.CloseTime.ToString(@"hh\:mm"),
-                    IsOpen = isOpen               // 👈 باز است / بسته است
+                    IsOpen = isOpen,
+                    Slug = r.Slug
                 };
             })
             .OrderBy(_ => Guid.NewGuid())

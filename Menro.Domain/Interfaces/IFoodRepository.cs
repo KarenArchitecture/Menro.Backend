@@ -20,6 +20,7 @@ namespace Menro.Domain.Interfaces
         Task<List<Food>> GetPopularFoodsByCategoryIdAsync(int categoryId, int take);
 
         /* Restaurant Page */
+        Task<List<Food>> GetByCategoryIdsAsync(List<int> categoryIds);
         Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug);
     }
 }
