@@ -126,101 +126,101 @@ namespace Menro.Infrastructure.Repositories
 
         /* ===================== Home Page – restaurant-local categories (kept) ===================== */
 
-        public async Task<List<FoodCategory>> GetAllCategoriesAsync()
-        {
-            return await _context.FoodCategories
-                .AsNoTracking()
-                .Include(c => c.Restaurant)
-                .Where(c =>
-                    c.IsAvailable && !c.IsDeleted &&
-                    c.Restaurant.IsActive && c.Restaurant.IsApproved)
-                .ToListAsync();
-        }
+        //public async Task<List<FoodCategory>> GetAllCategoriesAsync()
+        //{
+        //    return await _context.FoodCategories
+        //        .AsNoTracking()
+        //        .Include(c => c.Restaurant)
+        //        .Where(c =>
+        //            c.IsAvailable && !c.IsDeleted &&
+        //            c.Restaurant.IsActive && c.Restaurant.IsApproved)
+        //        .ToListAsync();
+        //}
 
-        public async Task<List<int>> GetAllCategoryIdsAsync()
-        {
-            return await _context.FoodCategories
-                .AsNoTracking()
-                .Include(c => c.Restaurant)
-                .Where(c =>
-                    c.IsAvailable && !c.IsDeleted &&
-                    c.Restaurant.IsActive && c.Restaurant.IsApproved)
-                .Select(fc => fc.Id)
-                .ToListAsync();
-        }
+        //public async Task<List<int>> GetAllCategoryIdsAsync()
+        //{
+        //    return await _context.FoodCategories
+        //        .AsNoTracking()
+        //        .Include(c => c.Restaurant)
+        //        .Where(c =>
+        //            c.IsAvailable && !c.IsDeleted &&
+        //            c.Restaurant.IsActive && c.Restaurant.IsApproved)
+        //        .Select(fc => fc.Id)
+        //        .ToListAsync();
+        //}
 
-        public async Task<List<FoodCategory>> GetAllCategoriesExcludingAsync(List<string> excludeTitles)
-        {
-            excludeTitles ??= new List<string>();
+        //public async Task<List<FoodCategory>> GetAllCategoriesExcludingAsync(List<string> excludeTitles)
+        //{
+        //    excludeTitles ??= new List<string>();
 
-            return await _context.FoodCategories
-                .AsNoTracking()
-                .Include(c => c.Restaurant)
-                .Where(c =>
-                    !excludeTitles.Contains(c.Name) &&
-                    c.IsAvailable && !c.IsDeleted &&
-                    c.Restaurant.IsActive && c.Restaurant.IsApproved)
-                .ToListAsync();
-        }
+        //    return await _context.FoodCategories
+        //        .AsNoTracking()
+        //        .Include(c => c.Restaurant)
+        //        .Where(c =>
+        //            !excludeTitles.Contains(c.Name) &&
+        //            c.IsAvailable && !c.IsDeleted &&
+        //            c.Restaurant.IsActive && c.Restaurant.IsApproved)
+        //        .ToListAsync();
+        //}
 
-        public async Task<List<Food>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
-        {
-            var topIds = await _context.Foods
-                .AsNoTracking()
-                .Where(f =>
-                    f.FoodCategoryId == categoryId &&
-                    f.IsAvailable && !f.IsDeleted &&
-                    f.Restaurant.IsActive && f.Restaurant.IsApproved &&
-                    f.FoodCategory.IsAvailable && !f.FoodCategory.IsDeleted)
-                .Select(f => new
-                {
-                    f.Id,
-                    Avg = _context.FoodRatings.Where(r => r.FoodId == f.Id)
-                                              .Select(r => (double?)r.Score).Average() ?? 0.0,
-                    Voters = _context.FoodRatings.Count(r => r.FoodId == f.Id)
-                })
-                .OrderByDescending(x => x.Avg)
-                .ThenByDescending(x => x.Voters)
-                .Take(count)
-                .Select(x => x.Id)
-                .ToListAsync();
+        //public async Task<List<Food>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
+        //{
+        //    var topIds = await _context.Foods
+        //        .AsNoTracking()
+        //        .Where(f =>
+        //            f.FoodCategoryId == categoryId &&
+        //            f.IsAvailable && !f.IsDeleted &&
+        //            f.Restaurant.IsActive && f.Restaurant.IsApproved &&
+        //            f.FoodCategory.IsAvailable && !f.FoodCategory.IsDeleted)
+        //        .Select(f => new
+        //        {
+        //            f.Id,
+        //            Avg = _context.FoodRatings.Where(r => r.FoodId == f.Id)
+        //                                      .Select(r => (double?)r.Score).Average() ?? 0.0,
+        //            Voters = _context.FoodRatings.Count(r => r.FoodId == f.Id)
+        //        })
+        //        .OrderByDescending(x => x.Avg)
+        //        .ThenByDescending(x => x.Voters)
+        //        .Take(count)
+        //        .Select(x => x.Id)
+        //        .ToListAsync();
 
-            return await _context.Foods
-                .AsNoTracking()
-                .Where(f => topIds.Contains(f.Id))
-                .Include(f => f.Restaurant)
-                .Include(f => f.Ratings)
-                .ToListAsync();
-        }
+        //    return await _context.Foods
+        //        .AsNoTracking()
+        //        .Where(f => topIds.Contains(f.Id))
+        //        .Include(f => f.Restaurant)
+        //        .Include(f => f.Ratings)
+        //        .ToListAsync();
+        //}
 
-        public async Task<List<Food>> GetPopularFoodsByCategoryIdAsync(int categoryId, int take)
-        {
-            var topIds = await _context.Foods
-                .AsNoTracking()
-                .Where(f =>
-                    f.FoodCategoryId == categoryId &&
-                    f.IsAvailable && !f.IsDeleted &&
-                    f.Restaurant.IsActive && f.Restaurant.IsApproved &&
-                    f.FoodCategory.IsAvailable && !f.FoodCategory.IsDeleted)
-                .Select(f => new
-                {
-                    f.Id,
-                    Avg = _context.FoodRatings.Where(r => r.FoodId == f.Id)
-                                              .Select(r => (double?)r.Score).Average() ?? 0.0,
-                    Voters = _context.FoodRatings.Count(r => r.FoodId == f.Id)
-                })
-                .OrderByDescending(x => x.Avg)
-                .ThenByDescending(x => x.Voters)
-                .Take(take)
-                .Select(x => x.Id)
-                .ToListAsync();
+        //public async Task<List<Food>> GetPopularFoodsByCategoryIdAsync(int categoryId, int take)
+        //{
+        //    var topIds = await _context.Foods
+        //        .AsNoTracking()
+        //        .Where(f =>
+        //            f.FoodCategoryId == categoryId &&
+        //            f.IsAvailable && !f.IsDeleted &&
+        //            f.Restaurant.IsActive && f.Restaurant.IsApproved &&
+        //            f.FoodCategory.IsAvailable && !f.FoodCategory.IsDeleted)
+        //        .Select(f => new
+        //        {
+        //            f.Id,
+        //            Avg = _context.FoodRatings.Where(r => r.FoodId == f.Id)
+        //                                      .Select(r => (double?)r.Score).Average() ?? 0.0,
+        //            Voters = _context.FoodRatings.Count(r => r.FoodId == f.Id)
+        //        })
+        //        .OrderByDescending(x => x.Avg)
+        //        .ThenByDescending(x => x.Voters)
+        //        .Take(take)
+        //        .Select(x => x.Id)
+        //        .ToListAsync();
 
-            return await _context.Foods
-                .AsNoTracking()
-                .Where(f => topIds.Contains(f.Id))
-                .Include(f => f.Restaurant)
-                .ToListAsync();
-        }
+        //    return await _context.Foods
+        //        .AsNoTracking()
+        //        .Where(f => topIds.Contains(f.Id))
+        //        .Include(f => f.Restaurant)
+        //        .ToListAsync();
+        //}
 
         /* ===================== Restaurant Page ===================== */
         public async Task<List<Food>> GetByCategoryIdsAsync(List<int> categoryIds)

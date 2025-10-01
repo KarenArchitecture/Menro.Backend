@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Menro.Infrastructure.Repositories
 {
-    public class FoodCategoryRepository : Repository<FoodCategory>, IFoodCategoryRepository
+    public class FoodCategoryRepository : Repository<CustomFoodCategory>, IFoodCategoryRepository
     {
         private readonly MenroDbContext _context;
 
@@ -19,27 +19,27 @@ namespace Menro.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<FoodCategory>> GetAllByRestaurantAsync(int restaurantId)
+        public async Task<List<CustomFoodCategory>> GetAllByRestaurantAsync(int restaurantId)
         {
             return await _context.FoodCategories
                 .Where(c => c.RestaurantId == restaurantId && !c.IsDeleted && c.IsAvailable)
                 .ToListAsync();
         }
 
-        public async Task<List<FoodCategory>> GetGlobalCategoriesAsync()
+        public async Task<List<CustomFoodCategory>> GetGlobalCategoriesAsync()
         {
             return await _context.FoodCategories
                 .Where(c => c.GlobalFoodCategoryId != null && !c.IsDeleted && c.IsAvailable)
                 .ToListAsync();
         }
 
-        public async Task<List<FoodCategory>> GetAllFoodCategoriesForRestaurantAsync(string restaurantSlug)
+        public async Task<List<CustomFoodCategory>> GetAllFoodCategoriesForRestaurantAsync(string restaurantSlug)
         {
             var restaurant = await _context.Restaurants
                 .AsNoTracking()
                 .FirstOrDefaultAsync(r => r.Slug == restaurantSlug);
 
-            if (restaurant == null) return new List<FoodCategory>();
+            if (restaurant == null) return new List<CustomFoodCategory>();
 
             var globalCategories = await _context.FoodCategories
                 .Where(c => c.GlobalFoodCategoryId != null && !c.IsDeleted && c.IsAvailable)

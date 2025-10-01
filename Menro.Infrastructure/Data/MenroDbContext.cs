@@ -13,7 +13,7 @@ namespace Menro.Infrastructure.Data
         // DbSets
         public DbSet<User> Users { get; set; }
         public DbSet<Food> Foods { get; set; }
-        public DbSet<FoodCategory> FoodCategories { get; set; }
+        public DbSet<CustomFoodCategory> FoodCategories { get; set; }
         public DbSet<GlobalFoodCategory> GlobalFoodCategories { get; set; }
         public DbSet<FoodRating> FoodRatings { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }
@@ -46,7 +46,7 @@ namespace Menro.Infrastructure.Data
                 .OnDelete(DeleteBehavior.Restrict);
 
             // FoodCategory -> Restaurant (Many-to-One)
-            modelBuilder.Entity<FoodCategory>()
+            modelBuilder.Entity<CustomFoodCategory>()
                 .HasOne(fc => fc.Restaurant)
                 .WithMany(r => r.FoodCategories)
                 .HasForeignKey(fc => fc.RestaurantId)
@@ -70,11 +70,11 @@ namespace Menro.Infrastructure.Data
                 .HasIndex(gc => gc.Name)
                 .IsUnique();
 
-            modelBuilder.Entity<FoodCategory>()
+            modelBuilder.Entity<CustomFoodCategory>()
                 .HasIndex(fc => new { fc.RestaurantId, fc.Name })
                 .IsUnique();
 
-            modelBuilder.Entity<FoodCategory>()
+            modelBuilder.Entity<CustomFoodCategory>()
                 .HasOne(fc => fc.GlobalFoodCategory)
                 .WithMany(gc => gc.RestaurantCategories)
                 .HasForeignKey(fc => fc.GlobalFoodCategoryId)

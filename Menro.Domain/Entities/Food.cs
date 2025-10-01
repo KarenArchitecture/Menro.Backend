@@ -36,10 +36,13 @@ namespace Menro.Domain.Entities
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; } = null!;
 
-        // FK به دسته‌بندی
-        public int FoodCategoryId { get; set; }
-        public FoodCategory FoodCategory { get; set; } = null!;
+        // FK: SpecialFoodCategory
+        public int? FoodCategoryId { get; set; }
+        public CustomFoodCategory? CustomFoodCategory { get; set; } = null!;
 
+        // FK: GlobalFoodCategory
+        public int? GlobalFoodCategoryId { get; set; }
+        public GlobalFoodCategory? GlobalFoodCategory { get; set; }
 
         // ارتباط‌ها
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

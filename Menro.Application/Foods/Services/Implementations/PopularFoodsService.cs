@@ -11,32 +11,30 @@ using Menro.Domain.Interfaces;
 
 namespace Menro.Application.Foods.Services.Implementations
 {
-    public class FoodCardService : IFoodCardService
+    public class PopularFoodsService : IPopularFoodsService
     {
         private readonly IFoodRepository _foodRepository;
 
-        public FoodCardService(IFoodRepository foodRepository)
+        public PopularFoodsService(IFoodRepository foodRepository)
         {
             _foodRepository = foodRepository;
         }
 
-        private static RecentOrdersFoodCardDto MapToHome(Food f)
+        private static HomeFoodCardDto MapToHomeFoodCardDto(Food f)
         {
-            var avg = f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0.0;
-            return new RecentOrdersFoodCardDto
+            var avg = f.Ratings?.Any() == true ? f.Ratings.Average(r => r.Score) : 0.0;
+            return new HomeFoodCardDto
             {
                 Id = f.Id,
                 Name = f.Name,
                 ImageUrl = f.ImageUrl ?? string.Empty,
                 Rating = Math.Round(avg, 1),
-                Voters = f.Ratings.Count,
-                RestaurantId = f.RestaurantId,
-                RestaurantName = f.Restaurant?.Name ?? string.Empty,
-                RestaurantSlug = f.Restaurant?.Slug
+                Voters = f.Ratings?.Count ?? 0,
+                RestaurantName = f.Restaurant?.Name ?? string.Empty
             };
         }
 
-        public async Task<PopularFoodCategoryDto?> GetPopularFoodsFromRandomCategoryAsync(int count = 8)
+        public async Task<PopularFoodsDto?> GetPopularFoodsFromRandomCategoryAsync(int count = 8)
         {
             // Use GLOBAL categories here
             var globals = await _foodRepository.GetAllGlobalCategoriesAsync();
@@ -45,25 +43,42 @@ namespace Menro.Application.Foods.Services.Implementations
             var randomGlobal = globals.OrderBy(_ => Guid.NewGuid()).First();
             var foods = await _foodRepository.GetPopularFoodsByGlobalCategoryIdAsync(randomGlobal.Id, count);
 
-            return new PopularFoodCategoryDto
+            return new PopularFoodsDto
             {
                 CategoryTitle = randomGlobal.Name,
                 SvgIcon = randomGlobal.SvgIcon,
-                Foods = (foods ?? new List<Food>()).Select(MapToHome).ToList()
+                Foods = (foods ?? new List<Food>()).Select(MapToHomeFoodCardDto).ToList()
             };
         }
 
-        public async Task<List<RecentOrdersFoodCardDto>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
+        public async Task<List<HomeFoodCardDto>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
         {
-            // Kept for other use-cases; not used by homepage row anymore
-            var foods = await _foodRepository.GetPopularFoodsByCategoryAsync(categoryId, count);
-            return (foods ?? new List<Food>()).Select(MapToHome).ToList();
+            // Ask repository for foods of a specific global category
+            var foods = await _foodRepository.GetPopularFoodsByGlobalCategoryIdAsync(categoryId, count);
+
+            if (foods == null || foods.Count == 0)
+                return new List<HomeFoodCardDto>();
+
+            // Map entity → DTO
+            return foods.Select(f =>
+            {
+                var avg = f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0.0;
+                return new HomeFoodCardDto
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    ImageUrl = f.ImageUrl ?? string.Empty,
+                    Rating = Math.Round(avg, 1),
+                    Voters = f.Ratings.Count,
+                    RestaurantName = f.Restaurant?.Name ?? string.Empty
+                };
+            }).ToList();
         }
 
         public Task<List<int>> GetAllCategoryIdsAsync()
             => _foodRepository.GetAllGlobalCategoryIdsAsync();
 
-        public async Task<PopularFoodCategoryDto?> GetPopularFoodsFromRandomCategoryExcludingAsync(List<string> excludeCategoryTitles)
+        public async Task<PopularFoodsDto?> GetPopularFoodsFromRandomCategoryExcludingAsync(List<string> excludeCategoryTitles)
         {
             var remaining = await _foodRepository.GetAllGlobalCategoriesExcludingAsync(excludeCategoryTitles ?? new());
             if (remaining == null || remaining.Count == 0) return null;
@@ -71,11 +86,11 @@ namespace Menro.Application.Foods.Services.Implementations
             var randomGlobal = remaining.OrderBy(_ => Guid.NewGuid()).First();
             var foods = await _foodRepository.GetPopularFoodsByGlobalCategoryIdAsync(randomGlobal.Id, 8);
 
-            return new PopularFoodCategoryDto
+            return new PopularFoodsDto
             {
                 CategoryTitle = randomGlobal.Name,
                 SvgIcon = randomGlobal.SvgIcon,
-                Foods = (foods ?? new List<Food>()).Select(MapToHome).ToList()
+                Foods = (foods ?? new List<Food>()).Select(MapToHomeFoodCardDto).ToList()
             };
         }
     }

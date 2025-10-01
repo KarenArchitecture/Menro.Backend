@@ -5,7 +5,7 @@
 namespace Menro.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class ABTestMaster : Migration
+    public partial class AddGlobalFoodCategory2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

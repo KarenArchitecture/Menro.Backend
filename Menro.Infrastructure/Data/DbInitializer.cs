@@ -198,12 +198,14 @@ namespace Menro.Infrastructure.Data
 
                     foreach (var specialName in specialCategoryNames)
                     {
-                        var specialCat = new FoodCategory
+                        var selectedGlobalCat = globalCats[rand.Next(globalCats.Count)];
+
+                        var specialCat = new CustomFoodCategory
                         {
                             Name = specialName,
-                            SvgIcon = globalCats[rand.Next(globalCats.Count)].SvgIcon, // pick any existing SVG from global
-                            RestaurantId = restaurant.Id
-                            // GlobalFoodCategoryId stays null
+                            SvgIcon = selectedGlobalCat.SvgIcon, // just icon, no semantic link
+                            RestaurantId = restaurant.Id,
+                            GlobalFoodCategoryId = null          // optional: leave null
                         };
                         _db.FoodCategories.Add(specialCat);
                         await _db.SaveChangesAsync();
@@ -232,16 +234,51 @@ namespace Menro.Infrastructure.Data
                 /* ============================================================
                    Foods (names & prices depend on mapped global category)
                 ============================================================ */
+                //var allRestCats = await _db.FoodCategories
+                //    .Include(fc => fc.Restaurant)
+                //    .Include(fc => fc.GlobalFoodCategory)
+                //    .ToListAsync();
+
+                //foreach (var cat in allRestCats)
+                //{
+                //    if (await _db.Foods.AnyAsync(f => f.FoodCategoryId == cat.Id)) continue;
+
+                //    var catTitle = cat.GlobalFoodCategory?.Name ?? cat.Name;
+                //    FoodNamesByGlobal.TryGetValue(catTitle, out var pool);
+                //    pool ??= new[] { "آیتم ویژه", "آیتم کلاسیک", "آیتم مخصوص", "آیتم محبوب" };
+
+                //    var count = rand.Next(MinFoodsPerCategory, MaxFoodsPerCategory + 1);
+                //    var priceRange = PriceRangeFor(catTitle);
+
+                //    var foods = new List<Food>();
+                //    for (int k = 0; k < count; k++)
+                //    {
+                //        var baseName = pool[k % pool.Length];
+                //        foods.Add(new Food
+                //        {
+                //            Name = baseName,                                     // don't append category
+                //            Ingredients = "مواد اولیه تازه و با کیفیت",
+                //            Price = NextPrice(rand, priceRange),
+                //            FoodCategoryId = cat.Id,
+                //            RestaurantId = cat.RestaurantId,
+                //            ImageUrl = FoodFallbackImage,
+                //            CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 45)),
+                //            IsAvailable = true
+                //        });
+                //    }
+                //    _db.Foods.AddRange(foods);
+                //    await _db.SaveChangesAsync();
+                //}
+
                 var allRestCats = await _db.FoodCategories
                     .Include(fc => fc.Restaurant)
-                    .Include(fc => fc.GlobalFoodCategory)
                     .ToListAsync();
 
                 foreach (var cat in allRestCats)
                 {
                     if (await _db.Foods.AnyAsync(f => f.FoodCategoryId == cat.Id)) continue;
 
-                    var catTitle = cat.GlobalFoodCategory?.Name ?? cat.Name;
+                    var catTitle = cat.Name;
                     FoodNamesByGlobal.TryGetValue(catTitle, out var pool);
                     pool ??= new[] { "آیتم ویژه", "آیتم کلاسیک", "آیتم مخصوص", "آیتم محبوب" };
 
@@ -254,7 +291,7 @@ namespace Menro.Infrastructure.Data
                         var baseName = pool[k % pool.Length];
                         foods.Add(new Food
                         {
-                            Name = baseName,                                     // don't append category
+                            Name = baseName,
                             Ingredients = "مواد اولیه تازه و با کیفیت",
                             Price = NextPrice(rand, priceRange),
                             FoodCategoryId = cat.Id,
