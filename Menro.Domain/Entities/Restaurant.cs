@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -48,6 +49,13 @@ namespace Menro.Domain.Entities
 
         [Display(Name = "تأیید شده")]
         public bool IsApproved { get; set; } = false;  // New: to indicate admin approval status
+
+        // --- Computed (NotMapped) ---
+        [NotMapped]
+        public double AverageRating => Ratings.Any() ? Ratings.Average(r => r.Score) : 0;
+
+        [NotMapped]
+        public int VotersCount => Ratings.Count;
 
         // مشخصات صاحب رستوران
         [Display(Name = "کد ملی")]

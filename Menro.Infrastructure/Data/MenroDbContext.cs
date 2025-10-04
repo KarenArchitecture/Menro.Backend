@@ -16,6 +16,8 @@ namespace Menro.Infrastructure.Data
         public DbSet<CustomFoodCategory> FoodCategories { get; set; }
         public DbSet<GlobalFoodCategory> GlobalFoodCategories { get; set; }
         public DbSet<FoodRating> FoodRatings { get; set; }
+        public DbSet<FoodVariant> FoodVariants { get; set; }
+        public DbSet<FoodAddon> FoodAddons { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<RestaurantCategory> RestaurantCategories { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
