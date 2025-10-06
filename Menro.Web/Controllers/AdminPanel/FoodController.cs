@@ -4,10 +4,7 @@ using Menro.Application.FoodCategories.Services.Interfaces;
 using Menro.Application.Foods.DTOs;
 using Menro.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.DotNet.Scaffolding.Shared.Messaging;
-using System.Security.Claims;
 
 namespace Menro.Web.Controllers.AdminPanel
 {

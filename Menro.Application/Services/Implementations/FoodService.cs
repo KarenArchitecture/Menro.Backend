@@ -1,11 +1,6 @@
 ﻿using Menro.Application.Services.Interfaces;
 using Menro.Application.Foods.DTOs;
 using Menro.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Menro.Domain.Entities;
 using Menro.Application.Foods.Mappers;
 

@@ -10,5 +10,6 @@ namespace Menro.Domain.Interfaces
     public interface IFoodCategoryRepository : IRepository<FoodCategory>
     {
         Task<IEnumerable<FoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug);
+
     }
 }

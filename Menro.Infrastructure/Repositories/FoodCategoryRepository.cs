@@ -25,6 +25,5 @@ namespace Menro.Infrastructure.Repositories
                 .Where(fc => fc.Restaurant.Slug == restaurantSlug)
                 .ToListAsync();
         }
-
     }
 }
