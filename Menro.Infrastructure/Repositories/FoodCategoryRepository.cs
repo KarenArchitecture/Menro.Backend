@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Menro.Infrastructure.Repositories
 {
-    public class FoodCategoryRepository : Repository<FoodCategory>, IFoodCategoryRepository
+    public class FoodCategoryRepository : Repository<CustomFoodCategory>, IFoodCategoryRepository
     {
         private readonly MenroDbContext _context;
 
@@ -19,7 +19,7 @@ namespace Menro.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<FoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug)
+        public async Task<IEnumerable<CustomFoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug)
         {
             return await _context.FoodCategories
                 .Where(fc => fc.Restaurant.Slug == restaurantSlug)

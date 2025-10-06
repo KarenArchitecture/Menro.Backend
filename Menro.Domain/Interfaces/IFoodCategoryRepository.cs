@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Menro.Domain.Interfaces
 {
-    public interface IFoodCategoryRepository : IRepository<FoodCategory>
+    public interface IFoodCategoryRepository : IRepository<CustomFoodCategory>
     {
-        Task<IEnumerable<FoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug);
+        Task<IEnumerable<CustomFoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug);
 
     }
 }

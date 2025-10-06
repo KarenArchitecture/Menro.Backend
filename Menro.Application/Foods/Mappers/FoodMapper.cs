@@ -1,10 +1,6 @@
 ﻿using Menro.Application.Foods.DTOs;
 using Menro.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Menro.Application.Foods.Mappers
 {
@@ -19,7 +15,7 @@ namespace Menro.Application.Foods.Mappers
                 Ingredients = food.Ingredients,
                 Price = food.Price,
                 ImageUrl = food.ImageUrl,
-                FoodCategoryId = food.FoodCategoryId,
+                FoodCategoryId = food.CustomFoodCategoryId!.Value,
 
                 Variants = (food.Variants ?? Enumerable.Empty<FoodVariant>())
             .Select(v => new FoodVariantDetailsDto

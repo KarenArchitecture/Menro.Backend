@@ -131,15 +131,15 @@ namespace Menro.Web.Controllers.Public
         Returns the full menu of a restaurant, grouped by category.
         GET: api/public/restaurant/{slug}/menu
         */
-        [HttpGet("{slug}/menu")]
-        public async Task<ActionResult<List<RestaurantMenuDto>>> GetMenu(string slug)
-        {
-            var sections = await _restaurantMenuService.GetRestaurantMenuBySlugAsync(slug);
+        //[HttpGet("{slug}/menu")]
+        //public async Task<ActionResult<List<RestaurantMenuDto>>> GetMenu(string slug)
+        //{
+        //    var sections = await _restaurantMenuService.GetRestaurantMenuBySlugAsync(slug);
 
-            if (sections == null || sections.Count == 0)
-                return NotFound(); // 404 if restaurant not found / no foods
+        //    if (sections == null || sections.Count == 0)
+        //        return NotFound(); // 404 if restaurant not found / no foods
 
-            return Ok(sections); // 200 + JSON payload
-        }
+        //    return Ok(sections); // 200 + JSON payload
+        //}
     }
 }

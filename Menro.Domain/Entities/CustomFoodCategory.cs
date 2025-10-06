@@ -1,9 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-
 namespace Menro.Domain.Entities
 {
-    public class FoodCategory
+    public class CustomFoodCategory
     {
         [Key]
         public int Id { get; set; }
@@ -23,9 +22,7 @@ namespace Menro.Domain.Entities
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; } = null!;
 
-        public int? GlobalFoodCategoryId { get; set; }
-        public GlobalFoodCategory? GlobalFoodCategory { get; set; }
-
+        // ارتباط با جدول غذا
         public ICollection<Food> Foods { get; set; } = new List<Food>();
     }
 }

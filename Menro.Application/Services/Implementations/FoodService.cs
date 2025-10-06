@@ -24,7 +24,7 @@ namespace Menro.Application.Services.Implementations
                 Name = f.Name,
                 Price = f.Variants.Any() ? 0 : f.Price, // یا هر لاجیک دیگه که داری
                 IsAvailable = f.IsAvailable,
-                FoodCategoryName = f.FoodCategory.Name
+                FoodCategoryName = f.CustomFoodCategory.Name
             }).ToList();
 
             return list;
@@ -45,7 +45,7 @@ namespace Menro.Application.Services.Implementations
                 Ingredients = string.IsNullOrWhiteSpace(dto.Ingredients) ? null : dto.Ingredients.Trim(),
                 Price = dto.HasVariants ? 0 : dto.Price,
                 ImageUrl = dto.ImageUrl ?? string.Empty,
-                FoodCategoryId = dto.FoodCategoryId,
+                CustomFoodCategoryId = dto.FoodCategoryId,
                 RestaurantId = restaurantId,
                 IsAvailable = true,
 
