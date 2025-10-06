@@ -75,12 +75,14 @@ namespace Menro.Application.Restaurants.Services.Implementations
 
         public async Task<List<RestaurantCardDto>> GetRandomRestaurantCardsAsync(int count = 8)
         {
-            var restaurants = await _restaurantRepository.GetRandomActiveApprovedWithDetailsAsync(count);
+            // ✅ Step 1: Get random subset directly from DB
+            var randomRestaurants = await _restaurantRepository.GetRandomActiveApprovedWithDetailsAsync(count * 2);
 
+            // ✅ Step 2: Process fields safely in memory
             var nowTime = DateTime.Now.TimeOfDay;
             var nowUtc = DateTime.UtcNow;
 
-            var dtoList = restaurants.Select(r =>
+            var dtoList = randomRestaurants.Select(r =>
             {
                 var avgRating = r.Ratings.Any() ? r.Ratings.Average(rt => rt.Score) : 0;
                 var voters = r.Ratings.Count;
@@ -92,11 +94,11 @@ namespace Menro.Application.Restaurants.Services.Implementations
                 if (activeDiscounts.Count > 0)
                     discountPercent = activeDiscounts.Max(d => d.Percent);
 
-                var open = r.OpenTime;
-                var close = r.CloseTime;
-                bool isOpen = open <= close
-                    ? nowTime >= open && nowTime < close
-                    : nowTime >= open || nowTime < close;
+                bool isOpen;
+                if (r.OpenTime <= r.CloseTime)
+                    isOpen = nowTime >= r.OpenTime && nowTime < r.CloseTime; // same-day range
+                else
+                    isOpen = nowTime >= r.OpenTime || nowTime < r.CloseTime; // overnight range
 
                 return new RestaurantCardDto
                 {
@@ -108,15 +110,20 @@ namespace Menro.Application.Restaurants.Services.Implementations
                     Rating = avgRating,
                     Voters = voters,
                     Discount = discountPercent,
-                    OpenTime = r.OpenTime.ToString(@"hh\\:mm"),
-                    CloseTime = r.CloseTime.ToString(@"hh\\:mm"),
+                    OpenTime = r.OpenTime.ToString(@"hh\:mm"),
+                    CloseTime = r.CloseTime.ToString(@"hh\:mm"),
                     IsOpen = isOpen,
                     Slug = r.Slug
                 };
-            }).ToList();
+            })
+            .OrderBy(_ => Guid.NewGuid()) // small extra shuffle in memory
+            .Take(count)
+            .ToList();
 
             return dtoList;
         }
+
+
 
 
 
