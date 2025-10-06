@@ -19,7 +19,7 @@ namespace Menro.Application.Foods.Mappers
                 Ingredients = food.Ingredients,
                 Price = food.Price,
                 ImageUrl = food.ImageUrl,
-                FoodCategoryId = food.FoodCategoryId,
+                CustomFoodCategoryId = food.CustomFoodCategoryId,
 
                 Variants = (food.Variants ?? Enumerable.Empty<FoodVariant>())
             .Select(v => new FoodVariantDetailsDto

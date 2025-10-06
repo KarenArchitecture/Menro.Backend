@@ -14,7 +14,8 @@ namespace Menro.Domain.Interfaces
         Task<IEnumerable<Restaurant>> GetFeaturedRestaurantsAsync();
 
         //Home Page - Random Restaurants Cards
-        Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync();
+        //Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync();
+        Task<List<Restaurant>> GetRandomActiveApprovedWithDetailsAsync(int count);
 
         //Home Page - Featured Restaurant Banner
         // Home Page - Random eligible Ad Banner (exclude already-served ids)

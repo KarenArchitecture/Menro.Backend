@@ -40,11 +40,18 @@ namespace Menro.Infrastructure.Data
 
             /* ---------------------------- Fluent API ---------------------------- */
 
-            // Food <-> FoodCategory (Many-to-One)
+            // Food -> CustomFoodCategory (optional)
             modelBuilder.Entity<Food>()
-                .HasOne(f => f.FoodCategory)
-                .WithMany(c => c.Foods)
-                .HasForeignKey(f => f.FoodCategoryId)
+                .HasOne(f => f.CustomFoodCategory)
+                .WithMany(c => c.Foods) // make sure CustomFoodCategory has ICollection<Food> Foods
+                .HasForeignKey(f => f.CustomFoodCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Food -> GlobalFoodCategory (optional)
+            modelBuilder.Entity<Food>()
+                .HasOne(f => f.GlobalFoodCategory)
+                .WithMany(g => g.Foods) // make sure GlobalFoodCategory has ICollection<Food> Foods
+                .HasForeignKey(f => f.GlobalFoodCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // FoodCategory -> Restaurant (Many-to-One)
@@ -77,10 +84,10 @@ namespace Menro.Infrastructure.Data
                 .IsUnique();
 
             modelBuilder.Entity<CustomFoodCategory>()
-                .HasOne(fc => fc.GlobalFoodCategory)
-                .WithMany(gc => gc.RestaurantCategories)
-                .HasForeignKey(fc => fc.GlobalFoodCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasOne(fc => fc.Restaurant)
+                .WithMany(r => r.FoodCategories)
+                .HasForeignKey(fc => fc.RestaurantId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Restaurant <-> RestaurantCategory (Many-to-One)
             modelBuilder.Entity<Restaurant>()

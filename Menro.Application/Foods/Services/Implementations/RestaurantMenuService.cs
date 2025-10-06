@@ -21,44 +21,44 @@ namespace Menro.Application.Foods.Services.Implementations
             _foodRepository = foodRepository;
         }
 
-        public async Task<List<RestaurantMenuDto>> GetRestaurantMenuBySlugAsync(string slug)
-        {
-            // 1️⃣  Pull all foods that belong to this restaurant
-            List<Food> foods = await _foodRepository.GetRestaurantMenuBySlugAsync(slug);
+        //public async Task<List<RestaurantMenuDto>> GetRestaurantMenuBySlugAsync(string slug)
+        //{
+            //// 1️⃣  Pull all foods that belong to this restaurant
+            //List<Food> foods = await _foodRepository.GetRestaurantMenuBySlugAsync(slug);
 
-            // 2️⃣  Group by category -> shape into DTOs
-            var sections = foods
-            .GroupBy(f => new                // ← value-based key
-            {
-                f.FoodCategoryId,
-                f.FoodCategory.Name,
-                f.FoodCategory.SvgIcon
-            })
-            .Select(g => new RestaurantMenuDto
-            {
-                CategoryId = g.Key.FoodCategoryId,
-                CategoryKey = g.Key.FoodCategoryId.ToString(),
-                CategoryTitle = g.Key.Name,
-                SvgIcon = g.Key.SvgIcon,
+            //// 2️⃣  Group by category -> shape into DTOs
+            //var sections = foods
+            //.GroupBy(f => new                // ← value-based key
+            //{
+            //    f.FoodCategoryId,
+            //    f.FoodCategory.Name,
+            //    f.FoodCategory.SvgIcon
+            //})
+            //.Select(g => new RestaurantMenuDto
+            //{
+            //    CategoryId = g.Key.FoodCategoryId,
+            //    CategoryKey = g.Key.FoodCategoryId.ToString(),
+            //    CategoryTitle = g.Key.Name,
+            //    SvgIcon = g.Key.SvgIcon,
 
-                Foods = g.Select(f => new FoodCardDto
-                {
-                    Id = f.Id,
-                    Name = f.Name,
-                    Ingredients = f.Ingredients,
-                    Price = f.Price,
-                    ImageUrl = f.ImageUrl,
-                    Rating = f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0,
-                    Voters = f.Ratings.Count,
-                    RestaurantName = f.Restaurant?.Name ?? string.Empty,
-                    RestaurantCategory = f.Restaurant?.RestaurantCategory?.Name ?? string.Empty
-                }).ToList()
-            })
-            .OrderBy(sec => sec.CategoryTitle,
-                     StringComparer.CurrentCultureIgnoreCase)
-            .ToList();
+            //    Foods = g.Select(f => new FoodCardDto
+            //    {
+            //        Id = f.Id,
+            //        Name = f.Name,
+            //        Ingredients = f.Ingredients,
+            //        Price = f.Price,
+            //        ImageUrl = f.ImageUrl,
+            //        Rating = f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0,
+            //        Voters = f.Ratings.Count,
+            //        RestaurantName = f.Restaurant?.Name ?? string.Empty,
+            //        RestaurantCategory = f.Restaurant?.RestaurantCategory?.Name ?? string.Empty
+            //    }).ToList()
+            //})
+            //.OrderBy(sec => sec.CategoryTitle,
+            //         StringComparer.CurrentCultureIgnoreCase)
+            //.ToList();
 
-            return sections;
-        }
+            //return sections;
+        //}
     }
 }

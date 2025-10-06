@@ -244,7 +244,7 @@ namespace Menro.Infrastructure.Data
                                 Name = $"{specialName} {f + 1}",
                                 Ingredients = "مواد اولیه تازه و با کیفیت",
                                 Price = rand.Next(150_000, 400_000),
-                                FoodCategoryId = specialCat.Id, // note: FoodCategoryId (nullable int) -> CustomFoodCategory
+                                CustomFoodCategoryId = specialCat.Id, // note: FoodCategoryId (nullable int) -> CustomFoodCategory
                                 RestaurantId = restaurant.Id,
                                 ImageUrl = FoodFallbackImage,
                                 CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 30)),
@@ -296,20 +296,20 @@ namespace Menro.Infrastructure.Data
                             await _db.SaveChangesAsync();
 
                             int foodCount = rand.Next(MinFoodsPerCategory, MaxFoodsPerCategory + 1);
-                            for (int k = 0; k < foodCount; k++)
-                            {
-                                _db.Foods.Add(new Food
-                                {
-                                    Name = $"آیتم {c + 1}-{k + 1}",
-                                    Ingredients = "مواد اولیه تازه و با کیفیت",
-                                    Price = rand.Next(150_000, 400_000),
-                                    FoodCategoryId = customCat.Id,
-                                    RestaurantId = restaurant.Id,
-                                    ImageUrl = FoodFallbackImage,
-                                    CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 45)),
-                                    IsAvailable = true
-                                });
-                            }
+                            //for (int k = 0; k < foodCount; k++)
+                            //{
+                            //    _db.Foods.Add(new Food
+                            //    {
+                            //        Name = $"آیتم {c + 1}-{k + 1}",
+                            //        Ingredients = "مواد اولیه تازه و با کیفیت",
+                            //        Price = rand.Next(150_000, 400_000),
+                            //        CustomFoodCategoryId = customCat.Id,
+                            //        RestaurantId = restaurant.Id,
+                            //        ImageUrl = FoodFallbackImage,
+                            //        CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 45)),
+                            //        IsAvailable = true
+                            //    });
+                            //}
                             await _db.SaveChangesAsync();
                         }
                     }
@@ -509,10 +509,11 @@ namespace Menro.Infrastructure.Data
                 }
 
                 /* ============================================================
-                    Demo Customer + Orders (+ OrderItems!)
-                ============================================================ */
+    Demo Customer + Orders (+ OrderItems!)
+============================================================ */
                 var demoPhone = "09121112233";
                 var demoCustomer = await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == demoPhone);
+
                 if (demoCustomer == null)
                 {
                     demoCustomer = new User
@@ -524,42 +525,47 @@ namespace Menro.Infrastructure.Data
                     await _userManager.CreateAsync(demoCustomer, "Customer123!");
                     await _userManager.AddToRoleAsync(demoCustomer, SD.Role_Customer);
                 }
+
+                // Only seed orders if none exist yet
                 if (!await _db.Orders.AnyAsync(o => o.UserId == demoCustomer.Id))
                 {
-                    var restIds = await _db.Restaurants
+                    // Fetch active restaurants
+                    var restaurantIds = await _db.Restaurants
                         .Where(r => r.IsActive && r.IsApproved)
                         .OrderBy(_ => Guid.NewGuid())
                         .Select(r => r.Id)
                         .Take(8)
                         .ToListAsync();
 
-                    var newOrders = new List<Order>();
                     int dayOffset = 0;
 
-                    foreach (var rid in restIds)
+                    foreach (var rid in restaurantIds)
                     {
+                        // Fetch available foods only for this restaurant
                         var foods = await _db.Foods
                             .Where(f => f.RestaurantId == rid && f.IsAvailable && !f.IsDeleted)
                             .OrderBy(_ => Guid.NewGuid())
-                            .Take(rand.Next(1, 4))
+                            .Take(rand.Next(2, 5)) // 2–4 items per order
                             .ToListAsync();
 
-                        if (!foods.Any()) continue;
+                        if (!foods.Any()) continue; // skip if restaurant has no foods
 
-                        var items = new List<OrderItem>();
-                        decimal total = 0m;
+                        decimal totalAmount = 0m;
+                        var orderItems = new List<OrderItem>();
 
-                        foreach (var f in foods)
+                        foreach (var food in foods)
                         {
-                            var qty = rand.Next(1, 3);
-                            var unit = (decimal)f.Price;
-                            total += unit * qty;
+                            var quantity = rand.Next(1, 3); // 1–2 quantity
+                            var unitPrice = food.Price;
+                            var itemTotal = unitPrice * quantity;
 
-                            items.Add(new OrderItem
+                            totalAmount += itemTotal;
+
+                            orderItems.Add(new OrderItem
                             {
-                                FoodId = f.Id,
-                                Quantity = qty,
-                                UnitPrice = unit
+                                FoodId = food.Id,
+                                Quantity = quantity,
+                                UnitPrice = unitPrice
                             });
                         }
 
@@ -569,20 +575,15 @@ namespace Menro.Infrastructure.Data
                             RestaurantId = rid,
                             Status = OrderStatus.Completed,
                             CreatedAt = DateTime.UtcNow.AddDays(-dayOffset++),
-                            TotalAmount = total,
-                            OrderItems = items
+                            TotalAmount = totalAmount,
+                            OrderItems = orderItems
                         };
 
-                        newOrders.Add(order);
+                        _db.Orders.Add(order);
                     }
 
-                    if (newOrders.Count > 0)
-                    {
-                        _db.Orders.AddRange(newOrders);
-                        await _db.SaveChangesAsync();
-                    }
-                } // end orders seeding
-
+                    await _db.SaveChangesAsync();
+                }
             }
             catch (Exception ex)
             {

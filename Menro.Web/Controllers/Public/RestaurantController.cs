@@ -187,25 +187,6 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(banner);
         }
-
-        /// <summary>
-        /// Retrieves the full menu of a restaurant, grouped by category.
-        /// </summary>
-        /// <param name="slug">The SEO-friendly slug of the restaurant.</param>
-        /// <returns>A structured list of menu sections with foods.</returns>
-        /// <response code="200">Menu retrieved successfully.</response>
-        /// <response code="404">Restaurant not found or no menu available.</response>
-        [HttpGet("{slug}/menu")]
-        public async Task<ActionResult<List<RestaurantMenuDto>>> GetMenu(string slug)
-        {
-            var sections = await _restaurantMenuService.GetRestaurantMenuBySlugAsync(slug);
-
-            if (sections == null || sections.Count == 0)
-                return NotFound();
-
-            return Ok(sections);
-        }
-
         #endregion
     }
 }

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Menro.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddGlobalFoodCategory : Migration
+    public partial class ABNewFoodCategoryVersionsPlusNewDataSeeding : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -273,18 +273,11 @@ namespace Menro.Infrastructure.Migrations
                     SvgIcon = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
-                    RestaurantId = table.Column<int>(type: "int", nullable: false),
-                    GlobalFoodCategoryId = table.Column<int>(type: "int", nullable: true)
+                    RestaurantId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_FoodCategories", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_FoodCategories_GlobalFoodCategories_GlobalFoodCategoryId",
-                        column: x => x.GlobalFoodCategoryId,
-                        principalTable: "GlobalFoodCategories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_FoodCategories_Restaurants_RestaurantId",
                         column: x => x.RestaurantId,
@@ -418,15 +411,22 @@ namespace Menro.Infrastructure.Migrations
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     RestaurantId = table.Column<int>(type: "int", nullable: false),
-                    FoodCategoryId = table.Column<int>(type: "int", nullable: false)
+                    CustomFoodCategoryId = table.Column<int>(type: "int", nullable: true),
+                    GlobalFoodCategoryId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Foods", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Foods_FoodCategories_FoodCategoryId",
-                        column: x => x.FoodCategoryId,
+                        name: "FK_Foods_FoodCategories_CustomFoodCategoryId",
+                        column: x => x.CustomFoodCategoryId,
                         principalTable: "FoodCategories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Foods_GlobalFoodCategories_GlobalFoodCategoryId",
+                        column: x => x.GlobalFoodCategoryId,
+                        principalTable: "GlobalFoodCategories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -466,20 +466,21 @@ namespace Menro.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "FoodVariant",
+                name: "FoodVariants",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Price = table.Column<int>(type: "int", nullable: false),
+                    IsAvailable = table.Column<bool>(type: "bit", nullable: false),
                     FoodId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_FoodVariant", x => x.Id);
+                    table.PrimaryKey("PK_FoodVariants", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_FoodVariant_Foods_FoodId",
+                        name: "FK_FoodVariants_Foods_FoodId",
                         column: x => x.FoodId,
                         principalTable: "Foods",
                         principalColumn: "Id",
@@ -544,7 +545,7 @@ namespace Menro.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "FoodAddon",
+                name: "FoodAddons",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -555,11 +556,11 @@ namespace Menro.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_FoodAddon", x => x.Id);
+                    table.PrimaryKey("PK_FoodAddons", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_FoodAddon_FoodVariant_FoodVariantId",
+                        name: "FK_FoodAddons_FoodVariants_FoodVariantId",
                         column: x => x.FoodVariantId,
-                        principalTable: "FoodVariant",
+                        principalTable: "FoodVariants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -619,14 +620,9 @@ namespace Menro.Infrastructure.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FoodAddon_FoodVariantId",
-                table: "FoodAddon",
+                name: "IX_FoodAddons_FoodVariantId",
+                table: "FoodAddons",
                 column: "FoodVariantId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_FoodCategories_GlobalFoodCategoryId",
-                table: "FoodCategories",
-                column: "GlobalFoodCategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FoodCategories_RestaurantId_Name",
@@ -645,9 +641,14 @@ namespace Menro.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Foods_FoodCategoryId",
+                name: "IX_Foods_CustomFoodCategoryId",
                 table: "Foods",
-                column: "FoodCategoryId");
+                column: "CustomFoodCategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Foods_GlobalFoodCategoryId",
+                table: "Foods",
+                column: "GlobalFoodCategoryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Foods_RestaurantId",
@@ -655,8 +656,8 @@ namespace Menro.Infrastructure.Migrations
                 column: "RestaurantId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FoodVariant_FoodId",
-                table: "FoodVariant",
+                name: "IX_FoodVariants_FoodId",
+                table: "FoodVariants",
                 column: "FoodId");
 
             migrationBuilder.CreateIndex(
@@ -753,7 +754,7 @@ namespace Menro.Infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "FoodAddon");
+                name: "FoodAddons");
 
             migrationBuilder.DropTable(
                 name: "FoodRatings");
@@ -780,7 +781,7 @@ namespace Menro.Infrastructure.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "FoodVariant");
+                name: "FoodVariants");
 
             migrationBuilder.DropTable(
                 name: "Orders");

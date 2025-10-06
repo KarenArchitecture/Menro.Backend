@@ -33,15 +33,41 @@ namespace Menro.Infrastructure.Repositories
         }
 
         //Home Page - Random Restaurants Cards
-        public async Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync()
+        //public async Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync()
+        //{
+        //    return await _context.Restaurants
+        //        .Include(r => r.RestaurantCategory)
+        //        .Include(r => r.Ratings)
+        //        .Include(r => r.Discounts)
+        //        .Where(r => r.IsActive && r.IsApproved)
+        //        .ToListAsync();
+        //}
+
+        //public async Task<List<Restaurant>> GetRandomActiveApprovedWithDetailsAsync(int count)
+        //{
+        //    return await _context.Restaurants
+        //        .Where(r => r.IsActive && r.IsApproved)
+        //        .Include(r => r.Ratings)
+        //        .Include(r => r.Discounts)
+        //        .Include(r => r.RestaurantCategory)
+        //        .OrderBy(r => EF.Functions.Random())
+        //        .Take(count)
+        //        .ToListAsync();
+        //}
+
+        public async Task<List<Restaurant>> GetRandomActiveApprovedWithDetailsAsync(int count)
         {
             return await _context.Restaurants
-                .Include(r => r.RestaurantCategory)
+                .Where(r => r.IsActive && r.IsApproved)
+                .OrderBy(r => EF.Functions.Random())                // ✅ randomize at DB level
+                .Take(count)                                        // ✅ only fetch needed rows
                 .Include(r => r.Ratings)
                 .Include(r => r.Discounts)
-                .Where(r => r.IsActive && r.IsApproved)
+                .Include(r => r.RestaurantCategory)
+                .AsNoTracking()                                     // ✅ no EF tracking for read-only
                 .ToListAsync();
         }
+
 
         //Home Page - Featured Restaurant Banner
         // Home Page - Random eligible Ad Banner (exclude already-served ids)

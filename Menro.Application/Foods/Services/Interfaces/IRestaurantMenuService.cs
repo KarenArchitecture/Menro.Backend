@@ -9,6 +9,6 @@ namespace Menro.Application.Foods.Services.Interfaces
 {
     public interface IRestaurantMenuService
     {
-        Task<List<RestaurantMenuDto>> GetRestaurantMenuBySlugAsync(string slug);
+        //Task<List<RestaurantMenuDto>> GetRestaurantMenuBySlugAsync(string slug);
     }
 }

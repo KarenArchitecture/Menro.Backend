@@ -45,7 +45,7 @@ namespace Menro.Domain.Entities
         public Restaurant Restaurant { get; set; } = null!;
 
         // FK: SpecialFoodCategory
-        public int? FoodCategoryId { get; set; }
+        public int? CustomFoodCategoryId { get; set; }
         public CustomFoodCategory? CustomFoodCategory { get; set; } = null!;
 
         // FK: GlobalFoodCategory

@@ -5,7 +5,7 @@
 namespace Menro.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddGlobalFoodCategory2 : Migration
+    public partial class ABNewFoodCategoryVersionsPlusNewDataSeedingVersion2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

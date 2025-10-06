@@ -27,8 +27,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             {
                 Id = c.Id,
                 Name = c.Name,
-                SvgIcon = c.SvgIcon,
-                GlobalFoodCategoryId = c.GlobalFoodCategoryId
+                SvgIcon = c.SvgIcon
             }).ToList();
         }
 
@@ -40,8 +39,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             {
                 Id = c.Id,
                 Name = c.Name,
-                SvgIcon = c.SvgIcon,
-                GlobalFoodCategoryId = c.GlobalFoodCategoryId
+                SvgIcon = c.SvgIcon
             }).ToList();
         }
 
