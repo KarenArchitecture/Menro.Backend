@@ -7,10 +7,18 @@ namespace Menro.Domain.Interfaces
     public interface IFoodRepository
     {
         /* Home Page (Popular Foods from random GLOBAL categories) */
+
+        // ?? Get top-rated or most popular foods in a given Global Category
+        Task<List<Food>> GetPopularFoodsByGlobalCategoryIdOptimizedAsync(int globalCategoryId, int count = 8);
+
+        // ?? Get all global categories (for picking random)
         Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesAsync();
+
+        // ?? Get all category IDs
         Task<List<int>> GetAllGlobalCategoryIdsAsync();
-        Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesExcludingAsync(List<string> excludeTitles);
-        Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count);
+
+        // ?? Get all categories except given names
+        Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesExcludingAsync(List<string> excludeCategoryTitles);
 
         /* Restaurant Page */
         Task<List<Food>> GetByCategoryIdsAsync(List<int> categoryIds);

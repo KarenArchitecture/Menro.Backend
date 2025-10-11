@@ -2,6 +2,7 @@
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -71,29 +72,70 @@ namespace Menro.Infrastructure.Repositories
 
         //Home Page - Featured Restaurant Banner
         // Home Page - Random eligible Ad Banner (exclude already-served ids)
+        //public async Task<RestaurantAdBanner?> GetRandomLiveAdBannerAsync(IEnumerable<int> excludeIds)
+        //{
+        //    var now = DateTime.UtcNow;
+        //    var excludes = excludeIds?.ToList() ?? new List<int>();
+
+        //    var query = _context.RestaurantAdBanners
+        //        .Include(b => b.Restaurant)
+        //        .Where(b =>
+        //            b.StartDate <= now &&
+        //            b.EndDate >= now &&
+        //            !b.IsPaused &&
+        //            (b.PurchasedViews == 0 || b.ConsumedViews < b.PurchasedViews) &&
+        //            b.Restaurant.IsActive &&
+        //            b.Restaurant.IsApproved);
+
+        //    if (excludes.Count > 0)
+        //        query = query.Where(b => !excludes.Contains(b.Id));
+
+        //    // random pick
+        //    return await query
+        //        .OrderBy(_ => Guid.NewGuid())
+        //        .FirstOrDefaultAsync();
+        //}
+
+        private static readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
+
         public async Task<RestaurantAdBanner?> GetRandomLiveAdBannerAsync(IEnumerable<int> excludeIds)
         {
             var now = DateTime.UtcNow;
             var excludes = excludeIds?.ToList() ?? new List<int>();
 
-            var query = _context.RestaurantAdBanners
+            // cache only eligible IDs
+            var cacheKey = "LiveBannerIds";
+            if (!_cache.TryGetValue(cacheKey, out List<int> bannerIds))
+            {
+                bannerIds = await _context.RestaurantAdBanners
+                    .Where(b =>
+                        b.StartDate <= now &&
+                        b.EndDate >= now &&
+                        !b.IsPaused &&
+                        (b.PurchasedViews == 0 || b.ConsumedViews < b.PurchasedViews) &&
+                        b.Restaurant.IsActive &&
+                        b.Restaurant.IsApproved)
+                    .Select(b => b.Id)
+                    .ToListAsync();
+
+                _cache.Set(cacheKey, bannerIds, TimeSpan.FromSeconds(5));
+            }
+
+            var availableIds = bannerIds.Except(excludes).ToList();
+            if (!availableIds.Any()) return null;
+
+            var random = new Random();
+            var selectedId = availableIds[random.Next(availableIds.Count)];
+
+            // fetch only the selected banner
+            var banner = await _context.RestaurantAdBanners
                 .Include(b => b.Restaurant)
-                .Where(b =>
-                    b.StartDate <= now &&
-                    b.EndDate >= now &&
-                    !b.IsPaused &&
-                    (b.PurchasedViews == 0 || b.ConsumedViews < b.PurchasedViews) &&
-                    b.Restaurant.IsActive &&
-                    b.Restaurant.IsApproved);
+                .FirstOrDefaultAsync(b => b.Id == selectedId);
 
-            if (excludes.Count > 0)
-                query = query.Where(b => !excludes.Contains(b.Id));
-
-            // random pick
-            return await query
-                .OrderBy(_ => Guid.NewGuid())
-                .FirstOrDefaultAsync();
+            return banner;
         }
+
+
         // Home Page - Count an impression atomically (no overshoot)
         public async Task<bool> IncrementBannerImpressionAsync(int bannerId)
         {

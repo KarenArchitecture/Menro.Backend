@@ -100,37 +100,51 @@ namespace Menro.Infrastructure.Repositories
         /// <summary>
         /// Get popular foods for a specific global category, ordered by average rating
         /// </summary>
-        public async Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count)
-        {
-            var topIds = await _context.Foods
-                .AsNoTracking()
-                .Where(f =>
-                    f.GlobalFoodCategoryId == globalCategoryId &&
-                    f.IsAvailable &&
-                    !f.IsDeleted &&
-                    f.Restaurant.IsActive &&
-                    f.Restaurant.IsApproved
-                )
-                .Select(f => new
-                {
-                    f.Id,
-                    Avg = _context.FoodRatings
-                            .Where(r => r.FoodId == f.Id)
-                            .Select(r => (double?)r.Score)
-                            .Average() ?? 0.0,
-                    Voters = _context.FoodRatings.Count(r => r.FoodId == f.Id)
-                })
-                .OrderByDescending(x => x.Avg)
-                .ThenByDescending(x => x.Voters)
-                .Take(count)
-                .Select(x => x.Id)
-                .ToListAsync();
+        //public async Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count)
+        //{
+        //    var topIds = await _context.Foods
+        //        .AsNoTracking()
+        //        .Where(f =>
+        //            f.GlobalFoodCategoryId == globalCategoryId &&
+        //            f.IsAvailable &&
+        //            !f.IsDeleted &&
+        //            f.Restaurant.IsActive &&
+        //            f.Restaurant.IsApproved
+        //        )
+        //        .Select(f => new
+        //        {
+        //            f.Id,
+        //            Avg = _context.FoodRatings
+        //                    .Where(r => r.FoodId == f.Id)
+        //                    .Select(r => (double?)r.Score)
+        //                    .Average() ?? 0.0,
+        //            Voters = _context.FoodRatings.Count(r => r.FoodId == f.Id)
+        //        })
+        //        .OrderByDescending(x => x.Avg)
+        //        .ThenByDescending(x => x.Voters)
+        //        .Take(count)
+        //        .Select(x => x.Id)
+        //        .ToListAsync();
 
+        //    return await _context.Foods
+        //        .AsNoTracking()
+        //        .Where(f => topIds.Contains(f.Id))
+        //        .Include(f => f.Restaurant)
+        //        .Include(f => f.Ratings)
+        //        .ToListAsync();
+        //}
+
+        public async Task<List<Food>> GetPopularFoodsByGlobalCategoryIdOptimizedAsync(int globalCategoryId, int count = 8)
+        {
             return await _context.Foods
-                .AsNoTracking()
-                .Where(f => topIds.Contains(f.Id))
-                .Include(f => f.Restaurant)
+                .Where(f => f.GlobalFoodCategoryId == globalCategoryId && f.IsAvailable && !f.IsDeleted)
                 .Include(f => f.Ratings)
+                .Include(f => f.Restaurant)
+                .Include(f => f.OrderItems) // needed for number of orders
+                .OrderByDescending(f => f.OrderItems.Sum(oi => oi.Quantity))  // most ordered
+                .ThenByDescending(f => f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0)  // then rating
+                .ThenByDescending(f => f.Ratings.Count)  // then voters
+                .Take(count)
                 .ToListAsync();
         }
 

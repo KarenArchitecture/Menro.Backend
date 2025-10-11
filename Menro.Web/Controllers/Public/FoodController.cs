@@ -1,4 +1,5 @@
-﻿using Menro.Application.Foods.Services.Implementations;
+﻿using Menro.Application.Foods.DTOs;
+using Menro.Application.Foods.Services.Implementations;
 using Menro.Application.Foods.Services.Interfaces;
 using Menro.Application.Orders.DTOs;
 using Menro.Application.Restaurants.DTOs;
@@ -24,17 +25,35 @@ namespace Menro.Web.Controllers.Public
         /// Gets popular foods from a random category (without excluding any).
         /// GET: api/public/food/popular-foods
         /// </summary>
+        //[HttpGet("popular-foods")]
+        //public async Task<ActionResult<PopularFoodsDto>> GetPopularFoodsFromRandomCategory()
+        //{
+        //    var result = await _popularFoodsService.GetPopularFoodsFromRandomCategoryAsync();
+
+        //    if (result == null)
+        //        return Ok(null); // ✅ Return 200 with null
+
+        //    return Ok(result);
+        //}
+
         [HttpGet("popular-foods")]
-        public async Task<ActionResult<PopularFoodsDto>> GetPopularFoodsFromRandomCategory()
+        public async Task<ActionResult<PopularFoodsDto>> GetPopularFoods()
         {
             var result = await _popularFoodsService.GetPopularFoodsFromRandomCategoryAsync();
 
+            // If no popular foods exist, return an empty DTO instead of null
             if (result == null)
-                return Ok(null); // ✅ Return 200 with null
+            {
+                return Ok(new PopularFoodsDto
+                {
+                    CategoryTitle = string.Empty,
+                    SvgIcon = string.Empty,
+                    Foods = new List<HomeFoodCardDto>()
+                });
+            }
 
             return Ok(result);
         }
-
         /// <summary>
         /// Gets popular foods from a random category, excluding already-used category titles.
         /// POST: api/public/food/popular-foods

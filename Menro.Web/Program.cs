@@ -79,8 +79,8 @@ var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
 builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-
-
+//Caching Setup
+builder.Services.AddMemoryCache();
 
 
 #region API & MVC

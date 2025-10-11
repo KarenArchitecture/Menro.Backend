@@ -184,6 +184,42 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<OrderItem>()
                 .Property(oi => oi.UnitPrice)
                 .HasColumnType("decimal(18,2)");
+
+            /* -------------------- Indexes for Home Page Features -------------------- */
+
+            // ---- Carousel & Ad Banners ----
+            modelBuilder.Entity<RestaurantAdBanner>()
+                .HasIndex(b => b.RestaurantId);
+
+            modelBuilder.Entity<Restaurant>()
+                .HasIndex(r => r.IsActive);
+            modelBuilder.Entity<Restaurant>()
+                .HasIndex(r => r.IsApproved);
+
+            // ---- Random Restaurant Cards ----
+            modelBuilder.Entity<Restaurant>()
+                .HasIndex(r => new { r.IsActive, r.IsApproved });
+
+            // ---- Popular Foods / Home Food Cards ----
+            modelBuilder.Entity<Food>()
+                .HasIndex(f => f.GlobalFoodCategoryId);
+            modelBuilder.Entity<Food>()
+                .HasIndex(f => f.RestaurantId);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasIndex(oi => oi.FoodId);
+
+            modelBuilder.Entity<FoodRating>()
+                .HasIndex(fr => fr.FoodId);
+
+            // ---- Recent Orders ----
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => o.UserId);
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => o.RestaurantId);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasIndex(oi => oi.OrderId);
             /* ---------------------------- Seed Data ---------------------------- */
             modelBuilder.Entity<RestaurantCategory>().HasData(
                 new RestaurantCategory { Id = 1, Name = "رستوران سنتی" },
