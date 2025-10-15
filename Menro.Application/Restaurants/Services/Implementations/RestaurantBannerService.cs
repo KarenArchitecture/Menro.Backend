@@ -1,40 +1,58 @@
 ﻿using Menro.Application.Restaurants.DTOs;
 using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Menro.Application.Restaurants.Services.Implementations
 {
     public class RestaurantBannerService : IRestaurantBannerService
     {
         private readonly IRestaurantRepository _restaurantRepository;
+        private readonly IMemoryCache _cache;
 
-        public RestaurantBannerService(IRestaurantRepository restaurantRepository)
+        // cache duration: short because banners may change
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+
+        public RestaurantBannerService(IRestaurantRepository restaurantRepository, IMemoryCache cache)
         {
             _restaurantRepository = restaurantRepository;
+            _cache = cache;
         }
 
-        public async Task<RestaurantBannerDto?> GetRestaurantBannerBySlugAsync(string slug)
+        public async Task<RestaurantBannerDto?> GetBannerBySlugAsync(string slug)
         {
-            var restaurant = await _restaurantRepository.GetBySlugWithRatingsAsync(slug);
+            string cacheKey = $"restaurant_banner_{slug}";
 
-            if (restaurant == null)
-                return null;
+            if (_cache.TryGetValue(cacheKey, out RestaurantBannerDto cached))
+            {
+                return cached;
+            }
 
-            return new RestaurantBannerDto
+            var restaurant = await _restaurantRepository.GetRestaurantBannerBySlugAsync(slug);
+            if (restaurant == null) return null;
+
+            var dto = new RestaurantBannerDto
             {
                 Name = restaurant.Name,
-                BannerImageUrl = restaurant.BannerImageUrl,
-                AverageRating = restaurant.Ratings.Any()
-                    ? restaurant.Ratings.Average(r => r.Score)
-                    : 0,
-                VotersCount = restaurant.Ratings.Count
+                BannerImageUrl = string.IsNullOrWhiteSpace(restaurant.BannerImageUrl)
+                    ? "/img/res-slider.png"
+                    : restaurant.BannerImageUrl,
+                AverageRating = restaurant.Ratings?.Any() == true
+                    ? Math.Round(restaurant.Ratings.Average(r => r.Score), 1)
+                    : 0.0,
+                VotersCount = restaurant.Ratings?.Count ?? 0
             };
+
+            // store in cache
+            _cache.Set(cacheKey, dto, CacheDuration);
+
+            return dto;
         }
 
+        public void InvalidateCache(string slug)
+        {
+            string cacheKey = $"restaurant_banner_{slug}";
+            _cache.Remove(cacheKey);
+        }
     }
 }

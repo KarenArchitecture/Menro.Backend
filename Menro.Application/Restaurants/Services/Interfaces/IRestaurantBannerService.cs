@@ -9,6 +9,9 @@ namespace Menro.Application.Restaurants.Services.Interfaces
 {
     public interface IRestaurantBannerService
     {
-        Task<RestaurantBannerDto?> GetRestaurantBannerBySlugAsync(string slug);
+        Task<RestaurantBannerDto?> GetBannerBySlugAsync(string slug);
+
+        // Optional: call this after owner updates the banner
+        void InvalidateCache(string slug);
     }
 }

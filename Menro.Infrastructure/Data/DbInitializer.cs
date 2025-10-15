@@ -5,6 +5,8 @@ using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Seed;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Menro.Application.Extensions; // for TransliterateToEnglish()
+using Menro.Application.Restaurants.Services.Interfaces; // for IRestaurantService
 
 namespace Menro.Infrastructure.Data
 {
@@ -13,6 +15,7 @@ namespace Menro.Infrastructure.Data
         private readonly MenroDbContext _db;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly UserManager<User> _userManager;
+        private readonly IRestaurantService _restaurantService;
 
         /* ---------- knobs you can tune (kept original values) ---------- */
         private const int RestaurantsToCreate = 12;           // total sample restaurants
@@ -33,34 +36,12 @@ namespace Menro.Infrastructure.Data
         private static readonly string[] Logos = new[] { "/img/logo-orange.png", "/img/logo-green.png" };
         private static readonly string FoodFallbackImage = "/img/drink.png"; // make sure this exists
 
-        public DbInitializer(MenroDbContext db, RoleManager<IdentityRole> roleManager, UserManager<User> userManager)
+        public DbInitializer(MenroDbContext db, RoleManager<IdentityRole> roleManager, UserManager<User> userManager, IRestaurantService restaurantService)
         {
             _db = db;
             _roleManager = roleManager;
             _userManager = userManager;
-        }
-
-        /* ============================================================
-           Helpers
-        ============================================================ */
-
-        private static string Sluggify(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text)) return string.Empty;
-            return text.Trim().ToLower().Replace(" ", "-");
-        }
-
-        private async Task<string> GenerateUniqueSlugAsync(string baseName)
-        {
-            var baseSlug = Sluggify(baseName);
-            var slug = baseSlug;
-            var i = 1;
-            while (await _db.Restaurants.AnyAsync(r => r.Slug == slug))
-            {
-                slug = $"{baseSlug}-{i}";
-                i++;
-            }
-            return slug;
+            _restaurantService = restaurantService;
         }
 
         // Seed Global Food Categories (uses your Menro.Infrastructure.Seed.GlobalFoodCategorySeed)
@@ -190,7 +171,8 @@ namespace Menro.Infrastructure.Data
 
                     // choose a realistic name (cyclic)
                     var restName = restNames[(i - 1) % restNames.Length];
-                    var slug = await GenerateUniqueSlugAsync(restName + "-" + i); // ensure uniqueness
+                    var englishSlugBase = restName.TransliterateToEnglish();
+                    var slug = await _restaurantService.GenerateUniqueSlugAsync(englishSlugBase);
 
                     var restaurant = new Restaurant
                     {

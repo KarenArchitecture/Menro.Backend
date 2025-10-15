@@ -28,41 +28,50 @@ namespace Menro.Application.Restaurants.Services.Implementations
         {
             if (_cache.TryGetValue(CacheKey, out List<RestaurantCardDto> cachedList))
             {
-                // ✅ Pick random items from cached list
                 return cachedList.OrderBy(_ => Guid.NewGuid()).Take(count).ToList();
             }
 
-            // Fetch from DB if cache is empty
-            var randomRestaurants = await _restaurantRepository.GetRandomActiveApprovedWithDetailsAsync(count * 2);
-
+            var restaurants = await _restaurantRepository.GetRandomActiveApprovedWithDetailsAsync(count * 2);
             var nowTime = DateTime.Now.TimeOfDay;
             var nowUtc = DateTime.UtcNow;
 
-            var dtoList = randomRestaurants.Select(r =>
+            var dtoList = restaurants.Select(r =>
             {
-                var avgRating = r.Ratings?.Any() == true ? r.Ratings.Average(rt => rt.Score) : 0;
-                var voters = r.Ratings?.Count ?? 0;
+                // ✅ Compute rating from Restaurant.Ratings (new system)
+                double avgRating = 0.0;
+                int voters = 0;
 
+                if (r.Ratings != null && r.Ratings.Any())
+                {
+                    avgRating = Math.Round(r.Ratings.Average(rt => rt.Score), 1);
+                    voters = r.Ratings.Count;
+                }
+
+                // ✅ Active discounts
                 int? discountPercent = null;
-                var activeDiscounts = r.Discounts?.Where(d => d.StartDate <= nowUtc && d.EndDate >= nowUtc).ToList()
-                      ?? new List<RestaurantDiscount>();
+                var activeDiscounts = r.Discounts?
+                    .Where(d => d.StartDate <= nowUtc && d.EndDate >= nowUtc)
+                    .ToList() ?? new List<RestaurantDiscount>();
 
                 if (activeDiscounts.Count > 0)
                     discountPercent = activeDiscounts.Max(d => d.Percent);
 
-                bool isOpen;
-                if (r.OpenTime <= r.CloseTime)
-                    isOpen = nowTime >= r.OpenTime && nowTime < r.CloseTime;
-                else
-                    isOpen = nowTime >= r.OpenTime || nowTime < r.CloseTime;
+                // ✅ Open/close status
+                bool isOpen = r.OpenTime <= r.CloseTime
+                    ? nowTime >= r.OpenTime && nowTime < r.CloseTime
+                    : nowTime >= r.OpenTime || nowTime < r.CloseTime;
 
                 return new RestaurantCardDto
                 {
                     Id = r.Id,
                     Name = r.Name,
                     Category = r.RestaurantCategory?.Name ?? "بدون دسته‌بندی",
-                    BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl) ? "/img/res-cards.png" : r.BannerImageUrl,
-                    LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl) ? "/img/res-slider.png" : r.LogoImageUrl,
+                    BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl)
+                        ? "/img/res-cards.png"
+                        : r.BannerImageUrl,
+                    LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl)
+                        ? "/img/res-slider.png"
+                        : r.LogoImageUrl,
                     Rating = avgRating,
                     Voters = voters,
                     Discount = discountPercent,
@@ -73,10 +82,8 @@ namespace Menro.Application.Restaurants.Services.Implementations
                 };
             }).ToList();
 
-            // Store full list in cache
             _cache.Set(CacheKey, dtoList, CacheDuration);
 
-            // Return randomized subset
             return dtoList.OrderBy(_ => Guid.NewGuid()).Take(count).ToList();
         }
 

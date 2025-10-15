@@ -27,7 +27,7 @@ namespace Menro.Domain.Interfaces
         Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId);
 
         //Restaurant Page - Restaurant Banner 
-        Task<Restaurant?> GetBySlugWithRatingsAsync(string slug);
+        Task<Restaurant?> GetRestaurantBannerBySlugAsync(string slug);
 
         //Restaurant Page - Preventing Save For an Existing Slug
         Task<bool> SlugExistsAsync(string slug);

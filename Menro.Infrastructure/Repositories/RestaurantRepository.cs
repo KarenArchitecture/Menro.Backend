@@ -33,29 +33,6 @@ namespace Menro.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        //Home Page - Random Restaurants Cards
-        //public async Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync()
-        //{
-        //    return await _context.Restaurants
-        //        .Include(r => r.RestaurantCategory)
-        //        .Include(r => r.Ratings)
-        //        .Include(r => r.Discounts)
-        //        .Where(r => r.IsActive && r.IsApproved)
-        //        .ToListAsync();
-        //}
-
-        //public async Task<List<Restaurant>> GetRandomActiveApprovedWithDetailsAsync(int count)
-        //{
-        //    return await _context.Restaurants
-        //        .Where(r => r.IsActive && r.IsApproved)
-        //        .Include(r => r.Ratings)
-        //        .Include(r => r.Discounts)
-        //        .Include(r => r.RestaurantCategory)
-        //        .OrderBy(r => EF.Functions.Random())
-        //        .Take(count)
-        //        .ToListAsync();
-        //}
-
         public async Task<List<Restaurant>> GetRandomActiveApprovedWithDetailsAsync(int count)
         {
             return await _context.Restaurants
@@ -68,33 +45,6 @@ namespace Menro.Infrastructure.Repositories
                 .AsNoTracking()                                     // ✅ no EF tracking for read-only
                 .ToListAsync();
         }
-
-
-        //Home Page - Featured Restaurant Banner
-        // Home Page - Random eligible Ad Banner (exclude already-served ids)
-        //public async Task<RestaurantAdBanner?> GetRandomLiveAdBannerAsync(IEnumerable<int> excludeIds)
-        //{
-        //    var now = DateTime.UtcNow;
-        //    var excludes = excludeIds?.ToList() ?? new List<int>();
-
-        //    var query = _context.RestaurantAdBanners
-        //        .Include(b => b.Restaurant)
-        //        .Where(b =>
-        //            b.StartDate <= now &&
-        //            b.EndDate >= now &&
-        //            !b.IsPaused &&
-        //            (b.PurchasedViews == 0 || b.ConsumedViews < b.PurchasedViews) &&
-        //            b.Restaurant.IsActive &&
-        //            b.Restaurant.IsApproved);
-
-        //    if (excludes.Count > 0)
-        //        query = query.Where(b => !excludes.Contains(b.Id));
-
-        //    // random pick
-        //    return await query
-        //        .OrderBy(_ => Guid.NewGuid())
-        //        .FirstOrDefaultAsync();
-        //}
 
         private static readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
 
@@ -193,10 +143,11 @@ namespace Menro.Infrastructure.Repositories
 
 
         //Shop Page - Restaurant Banner 
-        public async Task<Restaurant?> GetBySlugWithRatingsAsync(string slug)
+        public async Task<Restaurant?> GetRestaurantBannerBySlugAsync(string slug)
         {
             return await _context.Restaurants
-                .Include(r => r.Ratings)
+                .AsNoTracking()
+                .Include(r => r.Ratings) // include ratings to calculate average
                 .FirstOrDefaultAsync(r => r.Slug == slug && r.IsActive && r.IsApproved);
         }
 

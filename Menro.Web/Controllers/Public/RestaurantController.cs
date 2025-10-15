@@ -28,9 +28,10 @@ namespace Menro.Web.Controllers.Public
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
         private readonly IUserRecentOrderCardService _userRecentOrderCardService;
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
-        private readonly IRestaurantBannerService _restaurantShopBannerService;
+        private readonly IRestaurantBannerService _restaurantBannerService;
         private readonly IRestaurantMenuService _restaurantMenuService;
         private readonly IAuthService _authService;
+        private readonly IRestaurantBannerService _bannerService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RestaurantController"/>.
@@ -41,7 +42,7 @@ namespace Menro.Web.Controllers.Public
             IRandomRestaurantCardService randomRestaurantCardService,
             IUserRecentOrderCardService userRecentOrderCardService,
             IRestaurantAdBannerService restaurantAdBannerService,
-            IRestaurantBannerService restaurantShopBannerService,
+            IRestaurantBannerService restaurantBannerService,
             IRestaurantMenuService restaurantMenuService,
             IAuthService authService)
         {
@@ -50,7 +51,7 @@ namespace Menro.Web.Controllers.Public
             _randomRestaurantCardService = randomRestaurantCardService;
             _userRecentOrderCardService = userRecentOrderCardService;
             _restaurantAdBannerService = restaurantAdBannerService;
-            _restaurantShopBannerService = restaurantShopBannerService;
+            _restaurantBannerService = restaurantBannerService;
             _restaurantMenuService = restaurantMenuService;
             _authService = authService;
         }
@@ -169,21 +170,13 @@ namespace Menro.Web.Controllers.Public
         #endregion
 
         #region Restaurant Page Endpoints
-
-        /// <summary>
-        /// Retrieves banner info for a specific restaurant by slug.
-        /// </summary>
-        /// <param name="slug">The SEO-friendly slug of the restaurant.</param>
-        /// <returns>Banner details including name, image, and rating.</returns>
-        /// <response code="200">Successfully returned banner details.</response>
-        /// <response code="404">Restaurant not found.</response>
-        [HttpGet("{slug}/banner")]
-        public async Task<ActionResult<RestaurantBannerDto>> GetRestaurantBanner(string slug)
+        // ===== BANNER =====
+        [HttpGet("banner/{slug}")]
+        public async Task<ActionResult<RestaurantBannerDto?>> GetBanner(string slug)
         {
-            var banner = await _restaurantShopBannerService.GetRestaurantBannerBySlugAsync(slug);
-
+            var banner = await _restaurantBannerService.GetBannerBySlugAsync(slug);
             if (banner == null)
-                return NotFound(new { message = "Restaurant not found" });
+                return NotFound();
 
             return Ok(banner);
         }
