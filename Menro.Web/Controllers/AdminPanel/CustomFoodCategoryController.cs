@@ -24,11 +24,10 @@ namespace Menro.Web.Controllers.AdminPanel
 
         [HttpPost("add-from-global")]
         [Authorize]
-        public async Task<IActionResult> AddFromGlobalsAsync(int globalCategoryId, int restaurantId)
+        public async Task<IActionResult> AddFromGlobalsAsync([FromQuery] int globalCategoryId)
         {
-            bool res = await _cCatService.AddFromGlobalAsync(globalCategoryId, restaurantId);
-
-            if (!res)
+            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            if (!await _cCatService.AddFromGlobalAsync(globalCategoryId, restaurantId))
             {
                 return BadRequest(new { message = "خطا در افزودن دسته‌بندی از دسته‌بندی‌های عمومی." });
             }

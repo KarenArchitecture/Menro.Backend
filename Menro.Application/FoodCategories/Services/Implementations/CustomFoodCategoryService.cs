@@ -34,9 +34,9 @@ namespace Menro.Application.FoodCategories.Services.Implementations
                 GlobalCategoryId = globalCategoryId,
                 GlobalCategory = globalCat,
             };
-            await _cCatRepository.CreateAsync(customCat);
+            
 
-            return false;
+            return await _cCatRepository.CreateAsync(customCat);
         }
 
 
