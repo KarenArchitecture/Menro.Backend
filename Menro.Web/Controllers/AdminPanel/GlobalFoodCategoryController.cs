@@ -1,6 +1,6 @@
-﻿using Menro.Application.Common.SD;
-using Menro.Application.Features.GlobalFoodCategories.DTOs;
-using Menro.Application.Features.GlobalFoodCategories.Services.Interfaces;
+﻿using Menro.Application.Features.GlobalFoodCategories.Services.Interfaces;
+using Menro.Application.Features.Identity.Services;
+using Menro.Application.FoodCategories.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,36 +11,26 @@ namespace Menro.Web.Controllers.AdminPanel
     [Authorize]
     public class GlobalFoodCategoryController : ControllerBase
     {
-        private readonly IGlobalFoodCategoryService _service;
-
-        public GlobalFoodCategoryController(IGlobalFoodCategoryService service)
+        private readonly ICustomFoodCategoryService _cCatService;
+        private readonly IGlobalFoodCategoryService _gCatService;
+        private readonly ICurrentUserService _currentUserService;
+        public GlobalFoodCategoryController(ICustomFoodCategoryService cCatService, IGlobalFoodCategoryService gCatService, ICurrentUserService currentUserService)
         {
-            _service = service;
+            _cCatService = cCatService;
+            _gCatService = gCatService;
+            _currentUserService = currentUserService;
         }
 
-        // create
-        [HttpPost("add")]
-        [Authorize(Roles = SD.Role_Owner)]
-        public async Task<ActionResult<GlobalCategoryDTO>> Create([FromBody] CreateGlobalCategoryDTO dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            if (await _service.CreateCategoryAsync(dto))
-            {
-                return Ok();
-            }
-            return BadRequest("افزودن غذا ناموفق بود");
-            
-        }
 
         // read-all
         [HttpGet("read-all")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAllGlobalCategories()
         {
-            var list = await _service.GetAllCategoriesAsync();
+            var list = await _gCatService.GetAllGlobalCategoriesAsync();
             return Ok(list);
         }
+
 
         // read
         [HttpGet("{id:int}")]
@@ -49,7 +39,7 @@ namespace Menro.Web.Controllers.AdminPanel
         {
             try
             {
-                var cat = await _service.GetGlobalCategoryAsync(id);
+                var cat = await _gCatService.GetGlobalCategoryAsync(id);
                 return Ok(cat);
             }
             catch (Exception ex)

@@ -4,8 +4,8 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Interfaces
 {
     public interface IGlobalFoodCategoryService
     {
-        Task<bool> CreateCategoryAsync(CreateGlobalCategoryDTO dto);
-        Task<List<GlobalCategoryDTO>> GetAllCategoriesAsync();
+        Task<bool> CreateGlobalCategoryAsync(CreateGlobalCategoryDTO dto);
+        Task<List<GlobalCategoryDTO>> GetAllGlobalCategoriesAsync();
         Task<GlobalCategoryDTO> GetGlobalCategoryAsync(int Id);
     }
 }

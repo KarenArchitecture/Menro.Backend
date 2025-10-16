@@ -10,7 +10,7 @@ namespace Menro.Domain.Interfaces
     {
         IUserRepository User { get; }
         IFoodRepository Food { get;}
-        IFoodCategoryRepository FoodCategory { get;}
+        ICustomFoodCategoryRepository FoodCategory { get;}
         IRestaurantRepository Restaurant { get;}
         IRestaurantCategoryRepository RestaurantCategory { get;}
         ISubscriptionRepository Subscription { get;}

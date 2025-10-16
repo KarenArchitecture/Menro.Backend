@@ -14,9 +14,9 @@ namespace Menro.Web.Controllers.AdminPanel
     public class FoodController : ControllerBase
     {
         private readonly IFoodService _foodService;
-        private readonly IFoodCategoryService _foodCategoryService;
+        private readonly ICustomFoodCategoryService _foodCategoryService;
         private readonly ICurrentUserService _currentUserService;
-        public FoodController(IFoodService foodService, IFoodCategoryService foodCategoryService, ICurrentUserService currentUserService)
+        public FoodController(IFoodService foodService, ICustomFoodCategoryService foodCategoryService, ICurrentUserService currentUserService)
         {
             _foodService = foodService;
             _foodCategoryService = foodCategoryService;
@@ -25,7 +25,7 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpPost("add")]
-        [Authorize(Roles = SD.Role_Owner)]
+        [Authorize]
         public async Task<IActionResult> Create([FromBody] CreateFoodDto dto)
         {
             if (!ModelState.IsValid)
@@ -33,10 +33,7 @@ namespace Menro.Web.Controllers.AdminPanel
 
             // گرفتن رستوران کاربر از سرویس کاربر جاری
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-            if (restaurantId == null)
-                return Unauthorized("RestaurantId not found for current user.");
-
-            var createdFood = await _foodService.CreateFoodAsync(dto, restaurantId.Value);
+            var createdFood = await _foodService.CreateFoodAsync(dto, restaurantId);
 
             return Ok(createdFood);
         }
@@ -46,7 +43,8 @@ namespace Menro.Web.Controllers.AdminPanel
         [AllowAnonymous]
         public async Task<IActionResult> GetCategories()
         {
-            var categories = await _foodCategoryService.GetAllAsync();
+            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var categories = await _foodCategoryService.GetCustomFoodCategoriesAsync(restaurantId);
             return Ok(categories);
         }
         
@@ -82,9 +80,9 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpDelete("{foodId:int}")]
-        public async Task<IActionResult> Delete(int? foodId)
+        public async Task<IActionResult> Delete(int foodId)
         {
-            var success = await _foodService.DeleteFoodAsync(foodId.Value);
+            var success = await _foodService.DeleteFoodAsync(foodId);
             if (!success)
             {
                 return NotFound(new { message = "محصول یافت نشد" });

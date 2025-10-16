@@ -22,6 +22,10 @@ namespace Menro.Domain.Entities
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; } = null!;
 
+        // ارتباط با جدول دسته بندی های عمومی
+        public int? GlobalCategoryId { get; set; }
+        public GlobalFoodCategory? GlobalCategory { get; set; }
+
         // ارتباط با جدول غذا
         public ICollection<Food> Foods { get; set; } = new List<Food>();
     }

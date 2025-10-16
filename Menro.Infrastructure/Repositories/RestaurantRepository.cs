@@ -137,11 +137,11 @@ namespace Menro.Infrastructure.Repositories
         {
             return await _context.Restaurants.AnyAsync(r => r.Slug == slug);
         }
-        public async Task<int?> GetRestaurantIdByUserIdAsync(string userId)
+        public async Task<int> GetRestaurantIdByUserIdAsync(string userId)
         {
             return await _context.Restaurants
                 .Where(r => r.OwnerUserId == userId)
-                .Select(r => (int?)r.Id)
+                .Select(r => (int)r.Id)
                 .FirstOrDefaultAsync();
         }
 

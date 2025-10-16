@@ -54,9 +54,9 @@ namespace Menro.Application.Features.AdminPanel.Services
                 TotalSales = r.TotalAmount
             }).ToList();
         }
-        public async Task<int?> GetRestaurantIdByUserIdAsync(string userId)
+        public async Task<int> GetRestaurantIdByUserIdAsync(string userId)
         {
-            int? restaurantId = await _restaurantService.GetRestaurantIdByUserIdAsync(userId);
+            int restaurantId = await _restaurantService.GetRestaurantIdByUserIdAsync(userId);
             return restaurantId;
         }
 

@@ -88,7 +88,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
             return slug;
         }
 
-        public async Task<int?> GetRestaurantIdByUserIdAsync(string userId)
+        public async Task<int> GetRestaurantIdByUserIdAsync(string userId)
         {
             return await _uow.Restaurant.GetRestaurantIdByUserIdAsync(userId);
         }

@@ -1,6 +1,8 @@
-﻿using Menro.Application.Features.GlobalFoodCategories.Services.Interfaces;
+﻿using Menro.Domain.Interfaces;
+using Menro.Domain.Entities;
+using Menro.Application.Features.GlobalFoodCategories.Services.Interfaces;
 using Menro.Application.Features.GlobalFoodCategories.DTOs;
-using Menro.Domain.Interfaces;
+
 
 namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementations
 {
@@ -12,9 +14,10 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
             _repository = repository;
         }
 
-        public async Task<bool> CreateCategoryAsync(CreateGlobalCategoryDTO dto)
+        // modify for icon url/name
+        public async Task<bool> CreateGlobalCategoryAsync(CreateGlobalCategoryDTO dto)
         {
-            var entity = new Domain.Entities.GlobalFoodCategory
+            var entity = new GlobalFoodCategory
             {
                 Name = dto.Name,
                 IsActive = true
@@ -28,15 +31,15 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
             return false;
 
         }
-
-        public async Task<List<GlobalCategoryDTO>> GetAllCategoriesAsync()
+        public async Task<List<GlobalCategoryDTO>> GetAllGlobalCategoriesAsync()
         {
             var list = await _repository.GetAllAsync();
 
             return list.Select(x => new GlobalCategoryDTO
             {
                 Id = x.Id,
-                Name = x.Name
+                Name = x.Name,
+                SvgIcon = x.SvgIcon
             }).ToList();
         }
         public async Task<GlobalCategoryDTO> GetGlobalCategoryAsync(int id)
@@ -47,6 +50,7 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
             {
                 Id = category.Id,
                 Name = category.Name,
+                SvgIcon = category.SvgIcon
             };
         }
 

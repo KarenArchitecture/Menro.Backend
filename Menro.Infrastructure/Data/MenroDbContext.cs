@@ -13,7 +13,7 @@ namespace Menro.Infrastructure.Data
         // DbSets
         public DbSet<User> Users { get; set; }
         public DbSet<Food> Foods { get; set; }
-        public DbSet<CustomFoodCategory> FoodCategories { get; set; }
+        public DbSet<CustomFoodCategory> CustomFoodCategory { get; set; }
         public DbSet<GlobalFoodCategory> GlobalFoodCategories { get; set; }
         public DbSet<FoodRating> FoodRatings { get; set; }
         public DbSet<FoodVariant> FoodVariants { get; set; }
