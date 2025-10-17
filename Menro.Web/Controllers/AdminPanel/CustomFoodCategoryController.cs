@@ -48,5 +48,17 @@ namespace Menro.Web.Controllers.AdminPanel
             }
             return BadRequest(new { message = "بارگیری دسته بندی ها ناموفق بود" });
         }
+
+        [HttpDelete("delete/{catId}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteCustomCategory(int catId)
+        {
+            var result = await _cCatService.DeleteCustomCategoryAsync(catId);
+            if (!result)
+                return BadRequest(new { message = "حذف دسته‌بندی موفق نبود." });
+
+            return Ok(new { message = "دسته‌بندی حذف شد." });
+        }
+
     }
 }

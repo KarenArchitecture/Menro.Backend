@@ -17,7 +17,7 @@ namespace Menro.Application.FoodCategories.Services.Interfaces
         //Task<FoodDetailsDto?> GetFoodCategoryAsync(int foodCategoryId, int restaurantId);
         //Task<FoodDetailsDto> CreateFoodCategoryAsync(CreateFoodDto dto, int restaurantId);
         Task<bool> AddFromGlobalAsync(int globalCategoryId, int restaurantId);
-        //Task<bool> DeleteFoodCategoryAsync(int foodCategoryId);
+        Task<bool> DeleteCustomCategoryAsync(int catId);
 
     }
 }

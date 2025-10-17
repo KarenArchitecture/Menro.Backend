@@ -3,6 +3,7 @@ using Menro.Application.FoodCategories.DTOs;
 using Menro.Application.FoodCategories.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
+using System.Security.Cryptography.Pkcs;
 
 namespace Menro.Application.FoodCategories.Services.Implementations
 {
@@ -50,29 +51,11 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             }).ToList();
         }
 
-
+        public async Task<bool> DeleteCustomCategoryAsync(int catId)
+        {
+            bool result = await _cCatRepository.DeleteCustomCategoryAsync(catId);
+            return result;
+        }
     }
 }
 
-//public Task<FoodDetailsDto> CreateFoodCategoryAsync(CreateFoodDto dto, int restaurantId)
-//{
-//    throw new NotImplementedException();
-//}
-//public Task<FoodCategoryDto> GetByIdAsync(int foodCategoryId)
-//{
-//    throw new NotImplementedException();
-//}
-
-//public Task<List<FoodsListItemDto>> GetFoodCategoriesListAsync(int restaurantId)
-//{
-//    throw new NotImplementedException();
-//}
-
-//public Task<FoodDetailsDto?> GetFoodCategoryAsync(int foodCategoryId, int restaurantId)
-//{
-//    throw new NotImplementedException();
-//}
-//public Task<bool> DeleteFoodCategoryAsync(int foodCategoryId)
-//{
-//    throw new NotImplementedException();
-//}

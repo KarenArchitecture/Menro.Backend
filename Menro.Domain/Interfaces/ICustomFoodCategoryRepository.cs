@@ -7,6 +7,7 @@ namespace Menro.Domain.Interfaces
         Task<IEnumerable<CustomFoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug);
         Task<bool> CreateAsync(CustomFoodCategory category);
         Task<IEnumerable<CustomFoodCategory>> GetCustomFoodCategoriesAsync(int restaurantId);
+        Task<bool> DeleteCustomCategoryAsync(int catId);
 
     }
 }
