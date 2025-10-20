@@ -82,7 +82,7 @@ namespace Menro.Domain.Entities
         // غذاها
         public ICollection<Food> Foods { get; set; } = new List<Food>();
 
-        public ICollection<FoodCategory> FoodCategories { get; set; } = new List<FoodCategory>();
+        public ICollection<CustomFoodCategory> FoodCategories { get; set; } = new List<CustomFoodCategory>();
 
         public ICollection<RestaurantRating> Ratings { get; set; } = new List<RestaurantRating>();
 

@@ -23,14 +23,14 @@ namespace Menro.Application.Features.Order.Services
             return await _orderRepository.GetTotalRevenueAsync(restaurantId);
         }
         // ✅
-        public async Task<List<MonthlySales>> GetMonthlySalesRawAsync(int? restaurantId = null)
+        public async Task<List<MonthlySalesDto>> GetMonthlySalesRawAsync(int? restaurantId = null)
         {
             var year = DateTime.UtcNow.Year;
             var orders = await _orderRepository.GetCompletedOrdersAsync(restaurantId, year);
 
             var grouped = orders
                 .GroupBy(o => o.CreatedAt.Month)
-                .Select(g => new MonthlySales
+                .Select(g => new MonthlySalesDto
                 {
                     Month = g.Key,
                     TotalAmount = g.Sum(x => x.TotalAmount)
@@ -40,7 +40,7 @@ namespace Menro.Application.Features.Order.Services
             // پر کردن ماه‌های خالی
             return Enumerable.Range(1, 12)
                 .GroupJoin(grouped, m => m, x => x.Month, (m, g) =>
-                    g.FirstOrDefault() ?? new MonthlySales { Month = m, TotalAmount = 0 })
+                    g.FirstOrDefault() ?? new MonthlySalesDto { Month = m, TotalAmount = 0 })
                 .OrderBy(x => x.Month)
                 .ToList();
         }

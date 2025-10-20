@@ -10,7 +10,7 @@ namespace Menro.Application.Features.Identity.Services
     public interface ICurrentUserService
     {
         string? GetUserId();
-        Task<int?> GetRestaurantIdAsync();
+        Task<int> GetRestaurantIdAsync();
     }
 
 

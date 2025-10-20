@@ -22,11 +22,9 @@ namespace Menro.Web.Services
             return _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
 
-        public async Task<int?> GetRestaurantIdAsync()
+        public async Task<int> GetRestaurantIdAsync()
         {
             var userId = GetUserId();
-            if (userId == null) return null;
-
             return await _dashboardService.GetRestaurantIdByUserIdAsync(userId);
         }
     }

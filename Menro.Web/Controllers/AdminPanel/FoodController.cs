@@ -4,10 +4,7 @@ using Menro.Application.FoodCategories.Services.Interfaces;
 using Menro.Application.Foods.DTOs;
 using Menro.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.DotNet.Scaffolding.Shared.Messaging;
-using System.Security.Claims;
 
 namespace Menro.Web.Controllers.AdminPanel
 {
@@ -17,9 +14,9 @@ namespace Menro.Web.Controllers.AdminPanel
     public class FoodController : ControllerBase
     {
         private readonly IFoodService _foodService;
-        private readonly IFoodCategoryService _foodCategoryService;
+        private readonly ICustomFoodCategoryService _foodCategoryService;
         private readonly ICurrentUserService _currentUserService;
-        public FoodController(IFoodService foodService, IFoodCategoryService foodCategoryService, ICurrentUserService currentUserService)
+        public FoodController(IFoodService foodService, ICustomFoodCategoryService foodCategoryService, ICurrentUserService currentUserService)
         {
             _foodService = foodService;
             _foodCategoryService = foodCategoryService;
@@ -28,35 +25,23 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpPost("add")]
-        [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> Create([FromBody] CreateFoodDto dto)
+        [Authorize]
+        public async Task<IActionResult> CreateAsync([FromBody] CreateFoodDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             // گرفتن رستوران کاربر از سرویس کاربر جاری
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-            if (restaurantId == null)
-                return Unauthorized("RestaurantId not found for current user.");
-
-            var createdFood = await _foodService.CreateFoodAsync(dto, restaurantId.Value);
+            var createdFood = await _foodService.CreateFoodAsync(dto, restaurantId);
 
             return Ok(createdFood);
         }
-        
-        // ✅
-        [HttpGet("categories")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetCategories()
-        {
-            var categories = await _foodCategoryService.GetAllAsync();
-            return Ok(categories);
-        }
-        
+
         // ✅
         [HttpGet("read-all")]
         [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> ReadAll()
+        public async Task<IActionResult> ReadAllAsync()
         {
             int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
             if (restaurantId is not null)
@@ -67,9 +52,10 @@ namespace Menro.Web.Controllers.AdminPanel
             return BadRequest("User is not a restaurant owner.");
         }
 
+        // ✅
         [HttpGet("{foodId:int}")]
         [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> Read(int foodId)
+        public async Task<IActionResult> ReadAsync(int foodId)
         {
             int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
             var food = await _foodService.GetFoodAsync(foodId, restaurantId.Value);
@@ -78,22 +64,33 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(food);
         }
 
-        public IActionResult Update()
+        public async Task<IActionResult> UpdateAsync()
         {
             return Ok();
         }
 
         // ✅
         [HttpDelete("{foodId:int}")]
-        public async Task<IActionResult> Delete(int? foodId)
+        public async Task<IActionResult> DeleteAsync(int foodId)
         {
-            var success = await _foodService.DeleteFoodAsync(foodId.Value);
+            var success = await _foodService.DeleteFoodAsync(foodId);
             if (!success)
             {
                 return NotFound(new { message = "محصول یافت نشد" });
             }
 
             return Ok(new { message = "محصول با موفقیت حذف شد" });
+        }
+        
+        
+        // ✅
+        [HttpGet("categories")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetCategoriesAsync()
+        {
+            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var categories = await _foodCategoryService.GetCustomFoodCategoriesAsync(restaurantId);
+            return Ok(categories);
         }
 
 

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Menro.Application.Foods.DTOs;
 using Menro.Application.Foods.Services.Interfaces;
 using Menro.Application.Orders.DTOs;
 using Menro.Domain.Entities;
@@ -52,12 +53,12 @@ namespace Menro.Application.Foods.Services.Implementations
             };
         }
 
-        public async Task<List<RecentOrdersFoodCardDto>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
-        {
-            // Kept for other use-cases; not used by homepage row anymore
-            var foods = await _foodRepository.GetPopularFoodsByCategoryAsync(categoryId, count);
-            return (foods ?? new List<Food>()).Select(MapToHome).ToList();
-        }
+        //public async Task<List<RecentOrdersFoodCardDto>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
+        //{
+        //    // Kept for other use-cases; not used by homepage row anymore
+        //    var foods = await _foodRepository.GetPopularFoodsByCategoryAsync(categoryId, count);
+        //    return (foods ?? new List<Food>()).Select(MapToHome).ToList();
+        //}
 
         public Task<List<int>> GetAllCategoryIdsAsync()
             => _foodRepository.GetAllGlobalCategoryIdsAsync();

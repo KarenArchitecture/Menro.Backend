@@ -18,7 +18,7 @@ namespace Menro.Infrastructure.Repositories
         // private fields for lazy initialization
         private IUserRepository _user;
         private IFoodRepository _food;
-        private IFoodCategoryRepository _foodCategory;
+        private ICustomFoodCategoryRepository _foodCategory;
         private IRestaurantRepository _restaurant;
         private IRestaurantCategoryRepository _restaurantCategory;
         private ISubscriptionRepository _subscription;
@@ -30,7 +30,7 @@ namespace Menro.Infrastructure.Repositories
         // public properties with lazy instantiation
         public IUserRepository User => _user ??= new UserRepository(_context);
         public IFoodRepository Food => _food ??= new FoodRepository(_context);
-        public IFoodCategoryRepository FoodCategory => _foodCategory ??= new FoodCategoryRepository(_context);
+        public ICustomFoodCategoryRepository FoodCategory => _foodCategory ??= new CustomFoodCategoryRepository(_context);
         public IRestaurantRepository Restaurant => _restaurant ??= new RestaurantRepository(_context);
         public IRestaurantCategoryRepository RestaurantCategory => _restaurantCategory ??= new RestaurantCategoryRepository(_context);
         public ISubscriptionRepository Subscription => _subscription ??= new SubscriptionRepository(_context);

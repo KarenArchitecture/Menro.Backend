@@ -12,9 +12,9 @@ namespace Menro.Application.FoodCategories.Services.Implementations
 {
     public class ShopFoodCategoriesService : IShopFoodCategoriesService
     {
-        private readonly IFoodCategoryRepository _foodCategoryRepository;
+        private readonly ICustomFoodCategoryRepository _foodCategoryRepository;
 
-        public ShopFoodCategoriesService(IFoodCategoryRepository foodCategoryRepository)
+        public ShopFoodCategoriesService(ICustomFoodCategoryRepository foodCategoryRepository)
         {
             _foodCategoryRepository = foodCategoryRepository;
         }
