@@ -18,11 +18,11 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             _gCatRepository = gCatRepository;
             _currentUserService = currentUserService;
         }
-        public async Task<bool> AddCategoryAsync (CreateCustomFoodCategoryDto category)
+        public async Task<bool> AddCategoryAsync (CreateCustomFoodCategoryDto dto)
         {
-            if (category is null) return false; // invalid model
+            if (dto is null) return false; // invalid model
 
-            var name = (category.Name ?? string.Empty).Trim();
+            var name = (dto.Name ?? string.Empty).Trim();
 
             int restaurantId = await _currentUserService.GetRestaurantIdAsync();
             if (restaurantId == null || restaurantId == 0) return false; // invalid restaurantId
@@ -35,10 +35,11 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             var customCategory = new CustomFoodCategory
             {
                 Name = name,
-                SvgIcon = category.SvgIcon ?? string.Empty,
+                SvgIcon = dto.SvgIcon ?? string.Empty,
                 RestaurantId = restaurantId,
                 IsAvailable = true,
                 IsDeleted = false,
+                GlobalCategoryId = null
             };
             return await _cCatRepository.CreateAsync(customCategory);
         }
@@ -69,15 +70,41 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             return entities.Select(c => new FoodCategoryDto
             {
                 Id = c.Id,
-                Name = c.Name
+                Name = c.Name,
+                GlobalCategoryId = c.GlobalCategoryId
             }).ToList();
         }
+        public async Task<GetCustomCategoryDto> GetCategoryAsync(int catId)
+        {
+            var category = await _cCatRepository.GetCategoryAsync(catId);
+            var catDto = new GetCustomCategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                SvgIcon = category.SvgIcon
+            };
+            return catDto;
+        }
+        public async Task<bool> UpdateCategoryAsync(UpdateCustomFoodCategoryDto dto)
+        {
+            // دسته رو از دیتابیس بیار
+            var category = await _cCatRepository.GetCategoryAsync(dto.Id); // فرض بر اینه که متد GetByIdAsync موجوده
 
+            if (category == null || category.IsDeleted)
+                return false; // دسته وجود ندارد یا soft deleted است
+
+            // آپدیت فیلدها
+            category.Name = dto.Name;
+            category.SvgIcon = dto.SvgIcon;
+
+            return await _cCatRepository.UpdateCategoryAsync(category);
+        }
         public async Task<bool> DeleteCustomCategoryAsync(int catId)
         {
             bool result = await _cCatRepository.DeleteCustomCategoryAsync(catId);
             return result;
         }
+
     }
 }
 

@@ -174,8 +174,8 @@ namespace Menro.Infrastructure.Repositories
         public async Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId)
         {
             return await _context.Foods
-                .Where(f => f.RestaurantId == restaurantId && !f.IsDeleted && f.IsAvailable)
                 .Include(f => f.CustomFoodCategory)
+                .Where(f => f.RestaurantId == restaurantId && !f.IsDeleted && f.IsAvailable)
                 .ToListAsync();
         }
 

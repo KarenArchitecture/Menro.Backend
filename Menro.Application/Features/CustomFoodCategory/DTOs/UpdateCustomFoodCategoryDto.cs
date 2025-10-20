@@ -1,8 +1,10 @@
 ﻿namespace Menro.Application.Features.CustomFoodCategory.DTOs
 {
-    public class CreateCustomFoodCategoryDto
+    public class UpdateCustomFoodCategoryDto
     {
-        public string Name { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
         public string SvgIcon { get; set; } = string.Empty;
     }
+
 }

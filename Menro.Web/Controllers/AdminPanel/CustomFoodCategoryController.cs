@@ -54,9 +54,35 @@ namespace Menro.Web.Controllers.AdminPanel
             return BadRequest(new { message = "بارگیری دسته بندی ها ناموفق بود" });
         }
 
+        // ...
+        [HttpGet("read")]
+        public async Task<IActionResult> GetAsync([FromQuery] int catId)
+        {
+            var category = await _cCatService.GetCategoryAsync(catId);
+            if (category == null)
+                return NotFound(new { message = "دسته‌بندی یافت نشد." });
+
+            return Ok(category);
+        }
+
+        // ...
+        [HttpPut("update")]
+        [Authorize(Roles = SD.Role_Owner)]
+        public async Task<IActionResult> UpdateAsync(UpdateCustomFoodCategoryDto dto)
+        {
+            if (dto == null || dto.Id <= 0 || string.IsNullOrWhiteSpace(dto.Name))
+                return BadRequest(new { message = "داده‌های ارسالی معتبر نیستند." });
+
+            var success = await _cCatService.UpdateCategoryAsync(dto);
+            if (!success)
+                return BadRequest(new { message = "به‌روزرسانی ناموفق بود یا دسته‌بندی وجود ندارد." });
+
+            return Ok(new { message = "دسته‌بندی با موفقیت ویرایش شد." });
+        }
+
         // ✅
         [HttpDelete("delete/{catId}")]
-        //[Authorize(Roles = SD.Role_Owner)]
+        [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> DeleteAsync(int catId)
         {
             var result = await _cCatService.DeleteCustomCategoryAsync(catId);

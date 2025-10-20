@@ -40,22 +40,47 @@ namespace Menro.Infrastructure.Repositories
         }
         public async Task<IEnumerable<CustomFoodCategory>> GetCustomFoodCategoriesAsync(int restaurantId)
         {
-            return await _context.CustomFoodCategory.Where(u => u.RestaurantId == restaurantId).ToListAsync();
+            return await _context.CustomFoodCategory.Where(u => u.RestaurantId == restaurantId && !u.IsDeleted && u.IsAvailable).ToListAsync();
         }
+        public async Task<CustomFoodCategory> GetCategoryAsync(int catId)
+        {
+            var category = await _context.CustomFoodCategory.FirstOrDefaultAsync(c => c.Id == catId);
+            
+            if (category == null) throw new Exception($"Custom category with ID {catId} not found.");
+            
+            return category;
+        }
+
         public async Task<bool> ExistsByNameAsync(int restaurantId, string catName)
         {
             return await _context.CustomFoodCategory.AnyAsync(u => u.RestaurantId == restaurantId && u.Name == catName);
         }
         public async Task<bool> DeleteCustomCategoryAsync(int catId)
         {
-            var cat = await _context.CustomFoodCategory.FirstOrDefaultAsync(c => c.Id == catId);
+            var cat = await _context.CustomFoodCategory.Include(c => c.Foods).FirstOrDefaultAsync(c => c.Id == catId);
             if (cat is null)
             {
                 return false;
             }
-            _context.CustomFoodCategory.Remove(cat);
+            if (cat.Foods.Count == 0)
+            {
+                _context.CustomFoodCategory.Remove(cat);
+            }
+            else
+            {
+                cat.IsDeleted = true;
+            }
             await _context.SaveChangesAsync();
             return true;
         }
+        public async Task<bool> UpdateCategoryAsync(CustomFoodCategory category)
+        {
+            if (category == null) return false;
+
+            _context.CustomFoodCategory.Update(category);
+            var saved = await _context.SaveChangesAsync();
+            return saved > 0;
+        }
+
     }
 }
