@@ -12,7 +12,7 @@ namespace Menro.Application.Features.Order.Services
 {
     public interface IOrderService
     {
-        Task<List<MonthlySales>> GetMonthlySalesRawAsync(int? restaurantId = null);
+        Task<List<MonthlySalesDto>> GetMonthlySalesRawAsync(int? restaurantId = null);
         Task<decimal> GetTotalRevenueAsync(int? restaurantId = null);
         Task<int> GetNewOrdersCountAsync(int? restaurantId = null, int daysBack = 30);
 

@@ -22,6 +22,7 @@ namespace Menro.Web.Controllers.AdminPanel
         }
 
 
+        // ✅ - minus svg system!
         // read-all
         [HttpGet("read-all")]
         [AllowAnonymous]

@@ -1,4 +1,5 @@
-﻿using Menro.Application.FoodCategories.DTOs;
+﻿using Menro.Application.Features.CustomFoodCategory.DTOs;
+using Menro.Application.FoodCategories.DTOs;
 using Menro.Application.Foods.DTOs;
 using Menro.Domain.Entities;
 using System;
@@ -15,7 +16,7 @@ namespace Menro.Application.FoodCategories.Services.Interfaces
         //Task<FoodCategoryDto> GetByIdAsync(int foodCategoryId);
         //Task<List<FoodsListItemDto>> GetFoodCategoriesListAsync(int restaurantId);
         //Task<FoodDetailsDto?> GetFoodCategoryAsync(int foodCategoryId, int restaurantId);
-        //Task<FoodDetailsDto> CreateFoodCategoryAsync(CreateFoodDto dto, int restaurantId);
+        Task<bool> AddCategoryAsync(CreateCustomFoodCategoryDto category);
         Task<bool> AddFromGlobalAsync(int globalCategoryId, int restaurantId);
         Task<bool> DeleteCustomCategoryAsync(int catId);
 

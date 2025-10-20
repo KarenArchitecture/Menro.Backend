@@ -42,6 +42,10 @@ namespace Menro.Infrastructure.Repositories
         {
             return await _context.CustomFoodCategory.Where(u => u.RestaurantId == restaurantId).ToListAsync();
         }
+        public async Task<bool> ExistsByNameAsync(int restaurantId, string catName)
+        {
+            return await _context.CustomFoodCategory.AnyAsync(u => u.RestaurantId == restaurantId && u.Name == catName);
+        }
         public async Task<bool> DeleteCustomCategoryAsync(int catId)
         {
             var cat = await _context.CustomFoodCategory.FirstOrDefaultAsync(c => c.Id == catId);

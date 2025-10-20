@@ -1,9 +1,9 @@
 ﻿using Menro.Application.Features.Identity.Services;
 using Menro.Application.FoodCategories.DTOs;
 using Menro.Application.FoodCategories.Services.Interfaces;
+using Menro.Application.Features.CustomFoodCategory.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
-using System.Security.Cryptography.Pkcs;
 
 namespace Menro.Application.FoodCategories.Services.Implementations
 {
@@ -11,14 +11,38 @@ namespace Menro.Application.FoodCategories.Services.Implementations
     {
         private readonly ICustomFoodCategoryRepository _cCatRepository;
         private readonly IGlobalFoodCategoryRepository _gCatRepository;
-        //private readonly ICurrentUserService _currentUserService;
+        private readonly ICurrentUserService _currentUserService;
         public CustomFoodCategoryService(ICustomFoodCategoryRepository cCatRepository, IGlobalFoodCategoryRepository gCatRepository, ICurrentUserService currentUserService)
         {
             _cCatRepository = cCatRepository;
             _gCatRepository = gCatRepository;
-            //_currentUserService = currentUserService;
+            _currentUserService = currentUserService;
         }
+        public async Task<bool> AddCategoryAsync (CreateCustomFoodCategoryDto category)
+        {
+            if (category is null) return false; // invalid model
 
+            var name = (category.Name ?? string.Empty).Trim();
+
+            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            if (restaurantId == null || restaurantId == 0) return false; // invalid restaurantId
+
+            if (await _cCatRepository.ExistsByNameAsync(restaurantId, name))
+            {
+                return false; // duplicate
+            }
+            
+            var customCategory = new CustomFoodCategory
+            {
+                Name = name,
+                SvgIcon = category.SvgIcon ?? string.Empty,
+                RestaurantId = restaurantId,
+                IsAvailable = true,
+                IsDeleted = false,
+            };
+            return await _cCatRepository.CreateAsync(customCategory);
+        }
+        
         public async Task<bool> AddFromGlobalAsync(int globalCategoryId, int restaurantId)
         {
             var globalCat = await _gCatRepository.GetByIdAsync(globalCategoryId);
@@ -39,8 +63,6 @@ namespace Menro.Application.FoodCategories.Services.Implementations
 
             return await _cCatRepository.CreateAsync(customCat);
         }
-
-
         public async Task<List<FoodCategoryDto>> GetCustomFoodCategoriesAsync(int restaurantId)
         {
             var entities = await _cCatRepository.GetCustomFoodCategoriesAsync(restaurantId);

@@ -12,7 +12,7 @@ namespace Menro.Domain.Entities
         [Required(ErrorMessage = "نام دسته بندی الزامی است")]
         public string Name { get; set; } = string.Empty; // مثل "نوشیدنی سرد"، "پیتزا"
 
-        [Display(Name = "آیکون SVG")]
+        [Display(Name = "آیکن SVG")]
         public string SvgIcon { get; set; } = string.Empty;
 
         public bool IsAvailable { get; set; } = true;

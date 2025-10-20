@@ -1,15 +1,17 @@
 ﻿using Menro.Application.Features.GlobalFoodCategories.Services.Interfaces;
+using Menro.Application.Features.CustomFoodCategory.DTOs;
 using Menro.Application.Features.Identity.Services;
 using Menro.Application.FoodCategories.Services.Interfaces;
+using Menro.Application.Common.SD;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+
 
 namespace Menro.Web.Controllers.AdminPanel
 {
     [ApiController]
     [Route("api/adminpanel/[controller]")]
-    [Authorize]
+    [Authorize(Roles = SD.Role_Owner)]
     public class CustomFoodCategoryController : ControllerBase
     {
         private readonly ICustomFoodCategoryService _cCatService;
@@ -22,8 +24,51 @@ namespace Menro.Web.Controllers.AdminPanel
             _currentUserService = currentUserService;
         }
 
+
+        // ✅
+        [HttpPost("add")]
+        //[Authorize(Roles = SD.Role_Owner)]
+        public async Task<IActionResult> CreateAsync (CreateCustomFoodCategoryDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
+                return BadRequest(new { message = "نام دسته‌بندی الزامی است." });
+
+            var result = await _cCatService.AddCategoryAsync(dto);
+            if (!result)
+                return BadRequest(new { message = "افزودن دسته‌بندی موفق نبود (ممکن است تکراری باشد)." });
+
+            return Ok(new { message = "دسته‌بندی با موفقیت اضافه شد." });
+        }
+
+        // ✅
+        [HttpGet("read-all")]
+        //[Authorize(Roles = SD.Role_Owner)]
+        public async Task<IActionResult> GetAllAsync()
+        {
+            int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            if (restaurantId is not null)
+            {
+                var catList = await _cCatService.GetCustomFoodCategoriesAsync(restaurantId.Value);
+                return Ok(catList);
+            }
+            return BadRequest(new { message = "بارگیری دسته بندی ها ناموفق بود" });
+        }
+
+        // ✅
+        [HttpDelete("delete/{catId}")]
+        //[Authorize(Roles = SD.Role_Owner)]
+        public async Task<IActionResult> DeleteAsync(int catId)
+        {
+            var result = await _cCatService.DeleteCustomCategoryAsync(catId);
+            if (!result)
+                return BadRequest(new { message = "حذف دسته‌بندی موفق نبود." });
+
+            return Ok(new { message = "دسته‌بندی حذف شد." });
+        }
+
+        // ✅
         [HttpPost("add-from-global")]
-        [Authorize]
+        //[Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> AddFromGlobalsAsync([FromQuery] int globalCategoryId)
         {
             int restaurantId = await _currentUserService.GetRestaurantIdAsync();
@@ -36,29 +81,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         }
 
-        [HttpGet("read-all")]
-        [Authorize]
-        public async Task<IActionResult> GetAllCategoriesAsync()
-        {
-            int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
-            if (restaurantId is not null)
-            {
-                var catList = await _cCatService.GetCustomFoodCategoriesAsync(restaurantId.Value);
-                return Ok(catList);
-            }
-            return BadRequest(new { message = "بارگیری دسته بندی ها ناموفق بود" });
-        }
-
-        [HttpDelete("delete/{catId}")]
-        [Authorize]
-        public async Task<IActionResult> DeleteCustomCategory(int catId)
-        {
-            var result = await _cCatService.DeleteCustomCategoryAsync(catId);
-            if (!result)
-                return BadRequest(new { message = "حذف دسته‌بندی موفق نبود." });
-
-            return Ok(new { message = "دسته‌بندی حذف شد." });
-        }
 
     }
 }
