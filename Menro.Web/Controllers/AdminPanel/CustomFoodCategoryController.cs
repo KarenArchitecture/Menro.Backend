@@ -54,7 +54,7 @@ namespace Menro.Web.Controllers.AdminPanel
             return BadRequest(new { message = "بارگیری دسته بندی ها ناموفق بود" });
         }
 
-        // ...
+        // ✅
         [HttpGet("read")]
         public async Task<IActionResult> GetAsync([FromQuery] int catId)
         {
@@ -65,7 +65,7 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(category);
         }
 
-        // ...
+        // ✅
         [HttpPut("update")]
         [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> UpdateAsync(UpdateCustomFoodCategoryDto dto)

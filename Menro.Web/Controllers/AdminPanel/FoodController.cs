@@ -14,26 +14,26 @@ namespace Menro.Web.Controllers.AdminPanel
     public class FoodController : ControllerBase
     {
         private readonly IFoodService _foodService;
-        private readonly ICustomFoodCategoryService _foodCategoryService;
+        private readonly ICustomFoodCategoryService _cCatService;
         private readonly ICurrentUserService _currentUserService;
-        public FoodController(IFoodService foodService, ICustomFoodCategoryService foodCategoryService, ICurrentUserService currentUserService)
+        public FoodController(IFoodService foodService, ICustomFoodCategoryService cCatService, ICurrentUserService currentUserService)
         {
             _foodService = foodService;
-            _foodCategoryService = foodCategoryService;
+            _cCatService = cCatService;
             _currentUserService = currentUserService;
         }
 
         // ✅
         [HttpPost("add")]
-        [Authorize]
-        public async Task<IActionResult> CreateAsync([FromBody] CreateFoodDto dto)
+        [Authorize(Roles = SD.Role_Owner)]
+        public async Task<IActionResult> AddAsync([FromBody] CreateFoodDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             // گرفتن رستوران کاربر از سرویس کاربر جاری
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-            var createdFood = await _foodService.CreateFoodAsync(dto, restaurantId);
+            var createdFood = await _foodService.AddFoodAsync(dto, restaurantId);
 
             return Ok(createdFood);
         }
@@ -41,7 +41,7 @@ namespace Menro.Web.Controllers.AdminPanel
         // ✅
         [HttpGet("read-all")]
         [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> ReadAllAsync()
+        public async Task<IActionResult> GetAllAsync()
         {
             int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
             if (restaurantId is not null)
@@ -55,7 +55,7 @@ namespace Menro.Web.Controllers.AdminPanel
         // ✅
         [HttpGet("{foodId:int}")]
         [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> ReadAsync(int foodId)
+        public async Task<IActionResult> GetAsync(int foodId)
         {
             int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
             var food = await _foodService.GetFoodAsync(foodId, restaurantId.Value);
@@ -64,8 +64,10 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(food);
         }
 
+        
         public async Task<IActionResult> UpdateAsync()
         {
+
             return Ok();
         }
 
@@ -89,7 +91,7 @@ namespace Menro.Web.Controllers.AdminPanel
         public async Task<IActionResult> GetCategoriesAsync()
         {
             int restaurantId = await _currentUserService.GetRestaurantIdAsync();
-            var categories = await _foodCategoryService.GetCustomFoodCategoriesAsync(restaurantId);
+            var categories = await _cCatService.GetCustomFoodCategoriesAsync(restaurantId);
             return Ok(categories);
         }
 

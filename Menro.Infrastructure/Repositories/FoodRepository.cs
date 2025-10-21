@@ -205,6 +205,19 @@ namespace Menro.Infrastructure.Repositories
 
             return food;
         }
+        public async Task<bool> UpdateFoodAsync(Food food)
+        {
+            try
+            {
+                _context.Foods.Update(food);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         public async Task<bool> DeleteFoodAsync(int foodId)
         {

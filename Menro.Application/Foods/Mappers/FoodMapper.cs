@@ -16,15 +16,13 @@ namespace Menro.Application.Foods.Mappers
                 Price = food.Price,
                 ImageUrl = food.ImageUrl,
                 FoodCategoryId = food.CustomFoodCategoryId!.Value,
-
+                HasVariants = food.Variants.Any(),
                 Variants = (food.Variants ?? Enumerable.Empty<FoodVariant>())
             .Select(v => new FoodVariantDetailsDto
             {
                 Id = v.Id,
                 Name = v.Name,
                 Price = v.Price,
-
-                // ⬅️ Addons حالا زیر Variant هست
                 Addons = (v.Addons ?? Enumerable.Empty<FoodAddon>())
                     .Select(a => new FoodAddonDetailsDto
                     {

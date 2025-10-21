@@ -17,9 +17,10 @@ namespace Menro.Domain.Interfaces
         Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug);
 
         // Admin/Owner Panel
-        Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId);
         Task<bool> AddFoodAsync(Food food);
+        Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId);
         Task<Food> GetFoodDetailsAsync(int foodId);
+        Task<bool> UpdateFoodAsync(Food food);
         Task<bool> DeleteFoodAsync(int foodId);
     }
 }
