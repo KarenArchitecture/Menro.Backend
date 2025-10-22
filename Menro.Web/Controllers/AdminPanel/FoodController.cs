@@ -64,11 +64,20 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(food);
         }
 
-        
-        public async Task<IActionResult> UpdateAsync()
-        {
 
-            return Ok();
+        [HttpPut("update")]
+        //[HttpPut("{id}")]
+        [Authorize(Roles = SD.Role_Owner)]
+        public async Task<IActionResult> UpdateAsync([FromBody] UpdateFoodDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var res = await _foodService.UpdateFoodAsync(dto);
+            if (!res)
+            {
+                return BadRequest("ویرایش غذا ناموفق بود");
+            }
+            return Ok(res);
         }
 
         // ✅
