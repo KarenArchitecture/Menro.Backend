@@ -27,8 +27,7 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpPost("add")]
-        //[Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> CreateAsync (CreateCustomFoodCategoryDto dto)
+        public async Task<IActionResult> AddAsync (CreateCustomFoodCategoryDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
                 return BadRequest(new { message = "نام دسته‌بندی الزامی است." });
@@ -42,7 +41,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpGet("read-all")]
-        //[Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> GetAllAsync()
         {
             int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
@@ -67,7 +65,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpPut("update")]
-        [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> UpdateAsync(UpdateCustomFoodCategoryDto dto)
         {
             if (dto == null || dto.Id <= 0 || string.IsNullOrWhiteSpace(dto.Name))
@@ -82,7 +79,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpDelete("delete/{catId}")]
-        [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> DeleteAsync(int catId)
         {
             var result = await _cCatService.DeleteCustomCategoryAsync(catId);
@@ -94,7 +90,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpPost("add-from-global")]
-        //[Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> AddFromGlobalsAsync([FromQuery] int globalCategoryId)
         {
             int restaurantId = await _currentUserService.GetRestaurantIdAsync();

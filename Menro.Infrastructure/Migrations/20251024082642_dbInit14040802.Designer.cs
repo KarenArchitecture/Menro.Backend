@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    [Migration("20251006061748_db_init_14040714")]
-    partial class db_init_14040714
+    [Migration("20251024082642_dbInit14040802")]
+    partial class dbInit14040802
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,6 +32,9 @@ namespace Menro.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("GlobalCategoryId")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
@@ -53,10 +56,12 @@ namespace Menro.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GlobalCategoryId");
+
                     b.HasIndex("RestaurantId", "Name")
                         .IsUnique();
 
-                    b.ToTable("FoodCategories");
+                    b.ToTable("CustomFoodCategory");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Food", b =>
@@ -831,11 +836,17 @@ namespace Menro.Infrastructure.Migrations
 
             modelBuilder.Entity("Menro.Domain.Entities.CustomFoodCategory", b =>
                 {
+                    b.HasOne("Menro.Domain.Entities.GlobalFoodCategory", "GlobalCategory")
+                        .WithMany()
+                        .HasForeignKey("GlobalCategoryId");
+
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
                         .WithMany("FoodCategories")
                         .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("GlobalCategory");
 
                     b.Navigation("Restaurant");
                 });

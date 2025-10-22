@@ -10,7 +10,7 @@ namespace Menro.Web.Controllers.AdminPanel
 {
     [ApiController]
     [Route("api/adminpanel/[controller]")]
-    [Authorize]
+    [Authorize(Roles = SD.Role_Owner)]
     public class FoodController : ControllerBase
     {
         private readonly IFoodService _foodService;
@@ -25,7 +25,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpPost("add")]
-        [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> AddAsync([FromBody] CreateFoodDto dto)
         {
             if (!ModelState.IsValid)
@@ -40,7 +39,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpGet("read-all")]
-        [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> GetAllAsync()
         {
             int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
@@ -54,7 +52,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpGet("{foodId:int}")]
-        [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> GetAsync(int foodId)
         {
             int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
@@ -64,15 +61,22 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(food);
         }
 
-        
-        public async Task<IActionResult> UpdateAsync()
+        // ✅
+        [HttpPut("update")]
+        public async Task<IActionResult> UpdateAsync([FromBody] UpdateFoodDto dto)
         {
-
-            return Ok();
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var res = await _foodService.UpdateFoodAsync(dto);
+            if (!res)
+            {
+                return BadRequest("ویرایش غذا ناموفق بود");
+            }
+            return Ok(res);
         }
 
         // ✅
-        [HttpDelete("{foodId:int}")]
+        [HttpDelete("{foodId:int}")] // change it to "read" later
         public async Task<IActionResult> DeleteAsync(int foodId)
         {
             var success = await _foodService.DeleteFoodAsync(foodId);
@@ -84,10 +88,9 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(new { message = "محصول با موفقیت حذف شد" });
         }
         
-        
+
         // ✅
         [HttpGet("categories")]
-        [AllowAnonymous]
         public async Task<IActionResult> GetCategoriesAsync()
         {
             int restaurantId = await _currentUserService.GetRestaurantIdAsync();
