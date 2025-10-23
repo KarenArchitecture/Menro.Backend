@@ -9,6 +9,8 @@ using Menro.Application.Features.Identity.Services;
 using Menro.Application.Foods.Services.Interfaces;
 using Menro.Application.Orders.Services.Interfaces;
 using Menro.Application.Restaurants.Services.Implementations;
+using Menro.Application.Foods.DTOs;
+using Menro.Application.Foods.Services.Implementations;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -32,6 +34,8 @@ namespace Menro.Web.Controllers.Public
         private readonly IRestaurantMenuService _restaurantMenuService;
         private readonly IAuthService _authService;
         private readonly IRestaurantBannerService _bannerService;
+        private readonly IMenuListService _menuListService;
+        private readonly IMenuItemService _menuItemService;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RestaurantController"/>.
@@ -44,7 +48,9 @@ namespace Menro.Web.Controllers.Public
             IRestaurantAdBannerService restaurantAdBannerService,
             IRestaurantBannerService restaurantBannerService,
             IRestaurantMenuService restaurantMenuService,
-            IAuthService authService)
+            IAuthService authService,
+            IMenuListService menuListService,
+            IMenuItemService menuItemService)
         {
             _restaurantService = restaurantService;
             _featuredRestaurantService = featuredRestaurantService;
@@ -54,6 +60,8 @@ namespace Menro.Web.Controllers.Public
             _restaurantBannerService = restaurantBannerService;
             _restaurantMenuService = restaurantMenuService;
             _authService = authService;
+            _menuListService = menuListService;
+            _menuItemService = menuItemService;
         }
 
         #endregion
@@ -180,6 +188,35 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(banner);
         }
+
+        /// <summary>
+        /// Get full menu list of a restaurant (optional category filter)
+        /// GET: /api/public/restaurant/menu/{restaurantId}?globalCategoryId=1&customCategoryId=2
+        /// </summary>
+        [HttpGet("menu/{slug}")]
+        public async Task<ActionResult<List<MenuListFoodDto>>> GetRestaurantMenuBySlug(
+            string slug,
+            [FromQuery] int? globalCategoryId = null,
+            [FromQuery] int? customCategoryId = null)
+        {
+            var foods = await _menuListService.GetMenuListBySlugAsync(slug, globalCategoryId, customCategoryId);
+            return Ok(foods);
+        }
+
+        /// <summary>
+        /// Get detailed info of a single food item (with variants & addons)
+        /// GET: /api/public/restaurant/{foodId}/details
+        /// </summary>
+        [HttpGet("{foodId}/details")]
+        public async Task<ActionResult<MenuFoodDetailDto>> GetRestaurantFoodDetail(int foodId)
+        {
+            var foodDetail = await _menuItemService.GetMenuItemDetailAsync(foodId);
+            if (foodDetail == null) return NotFound();
+            return Ok(foodDetail);
+        }
         #endregion
+
+
+
     }
 }

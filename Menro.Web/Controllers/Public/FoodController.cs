@@ -13,29 +13,13 @@ namespace Menro.Web.Controllers.Public
     public class FoodController : ControllerBase
     {
         private readonly IPopularFoodsService _popularFoodsService;
-        private readonly IRestaurantMenuService _restaurantService;
 
-        public FoodController(IPopularFoodsService popularFoodsService, IRestaurantMenuService restaurantService)
+        public FoodController(IPopularFoodsService popularFoodsService)
         {
             _popularFoodsService = popularFoodsService;
-            _restaurantService = restaurantService;
         }
 
-        /// <summary>
-        /// Gets popular foods from a random category (without excluding any).
-        /// GET: api/public/food/popular-foods
-        /// </summary>
-        //[HttpGet("popular-foods")]
-        //public async Task<ActionResult<PopularFoodsDto>> GetPopularFoodsFromRandomCategory()
-        //{
-        //    var result = await _popularFoodsService.GetPopularFoodsFromRandomCategoryAsync();
-
-        //    if (result == null)
-        //        return Ok(null); // ✅ Return 200 with null
-
-        //    return Ok(result);
-        //}
-
+        #region Home Page
         [HttpGet("popular-foods")]
         public async Task<ActionResult<PopularFoodsDto>> GetPopularFoods()
         {
@@ -54,6 +38,7 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(result);
         }
+
         /// <summary>
         /// Gets popular foods from a random category, excluding already-used category titles.
         /// POST: api/public/food/popular-foods
@@ -69,6 +54,12 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(result);
         }
+        #endregion
+
+
+        #region Restaurant Page
+
+        #endregion
 
     }
 }

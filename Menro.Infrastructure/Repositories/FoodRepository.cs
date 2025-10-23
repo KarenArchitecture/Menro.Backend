@@ -167,24 +167,76 @@ namespace Menro.Infrastructure.Repositories
         /// <summary>
         /// Get the menu for a restaurant by its slug
         /// </summary>
-        public async Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug)
+        public async Task<List<Food>> GetFoodsByRestaurantSlugAsync(
+            string restaurantSlug,
+            int? globalCategoryId = null,
+            int? customCategoryId = null)
         {
-            if (string.IsNullOrWhiteSpace(slug))
-                return new List<Food>();
+            var query = _context.Foods
+                .AsNoTracking()
+                .Where(f => f.Restaurant.Slug == restaurantSlug && f.IsAvailable && !f.IsDeleted)
+                .Include(f => f.GlobalFoodCategory)
+                .Include(f => f.CustomFoodCategory)
+                .AsQueryable();
 
+            if (globalCategoryId.HasValue && customCategoryId.HasValue)
+            {
+                query = query.Where(f => f.GlobalFoodCategoryId == globalCategoryId
+                                      || f.CustomFoodCategoryId == customCategoryId);
+            }
+            else if (globalCategoryId.HasValue)
+            {
+                query = query.Where(f => f.GlobalFoodCategoryId == globalCategoryId);
+            }
+            else if (customCategoryId.HasValue)
+            {
+                query = query.Where(f => f.CustomFoodCategoryId == customCategoryId);
+            }
+
+            return await query.ToListAsync();
+        }
+
+
+
+        public async Task<List<Food>> GetFoodsByRestaurantAsync(
+            int restaurantId,
+            int? globalCategoryId = null,
+            int? customCategoryId = null)
+        {
+            var query = _context.Foods
+                .AsNoTracking()
+                .Where(f => f.RestaurantId == restaurantId && f.IsAvailable && !f.IsDeleted)
+                .Include(f => f.GlobalFoodCategory)
+                .Include(f => f.CustomFoodCategory)
+                .AsQueryable();
+
+            if (globalCategoryId.HasValue && customCategoryId.HasValue)
+            {
+                query = query.Where(f => f.GlobalFoodCategoryId == globalCategoryId
+                                      || f.CustomFoodCategoryId == customCategoryId);
+            }
+            else if (globalCategoryId.HasValue)
+            {
+                query = query.Where(f => f.GlobalFoodCategoryId == globalCategoryId);
+            }
+            else if (customCategoryId.HasValue)
+            {
+                query = query.Where(f => f.CustomFoodCategoryId == customCategoryId);
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<Food?> GetFoodWithVariantsAsync(int foodId)
+        {
             return await _context.Foods
                 .AsNoTracking()
+                .Where(f => f.Id == foodId && f.IsAvailable && !f.IsDeleted)
+                .Include(f => f.GlobalFoodCategory)
                 .Include(f => f.CustomFoodCategory)
-                .Include(f => f.Ratings)
-                .Include(f => f.Restaurant)
-                    .ThenInclude(r => r.RestaurantCategory)
-                .Where(f =>
-                    f.Restaurant.Slug == slug &&
-                    f.Restaurant.IsActive && f.Restaurant.IsApproved &&
-                    f.IsAvailable && !f.IsDeleted
-                )
-                .OrderBy(f => f.Name)
-                .ToListAsync();
+                .Include(f => f.Variants)
+                    .ThenInclude(v => v.Addons)
+                .FirstOrDefaultAsync();
         }
 
         /* ===================== Admin / CRUD ===================== */

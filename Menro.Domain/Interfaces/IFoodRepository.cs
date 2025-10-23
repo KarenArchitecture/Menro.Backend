@@ -20,9 +20,27 @@ namespace Menro.Domain.Interfaces
         // ?? Get all categories except given names
         Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesExcludingAsync(List<string> excludeCategoryTitles);
 
-        /* Restaurant Page */
+                                            // -- Restaurant Page -- //
         Task<List<Food>> GetByCategoryIdsAsync(List<int> categoryIds);
-        Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug);
+        Task<List<Food>> GetFoodsByRestaurantSlugAsync(
+            string restaurantSlug,
+            int? globalCategoryId = null,
+            int? customCategoryId = null);
+
+        /// <summary>
+        /// Get all foods of a restaurant, optionally filtered by global or custom category.
+        /// Returns Food entities directly (no DTOs).
+        /// </summary>
+        Task<List<Food>> GetFoodsByRestaurantAsync(
+            int restaurantId,
+            int? globalCategoryId = null,
+            int? customCategoryId = null);
+
+        /// <summary>
+        /// Get a single food with its variants and addons for a restaurant.
+        /// Returns Food entity directly.
+        /// </summary>
+        Task<Food?> GetFoodWithVariantsAsync(int foodId);
 
         // Admin/Owner Panel
         Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId);

@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 namespace Menro.Application.FoodCategories.DTOs
 {
-    public class ShopFoodCategoryDto
+    public class RestaurantFoodCategoryDto
     {
-        public int Id { get; set; }
+        public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string SvgIcon { get; set; } = string.Empty;
-        public int? GlobalFoodCategoryId { get; set; }
-        //public List<ShopFoodDto> Foods { get; set; } = new();
+        public bool IsGlobal { get; set; } // true if it's a global category
     }
 }

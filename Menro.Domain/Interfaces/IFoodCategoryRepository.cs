@@ -6,19 +6,17 @@ namespace Menro.Domain.Interfaces
 {
     public interface IFoodCategoryRepository : IRepository<CustomFoodCategory>
     {
+
+        // == Restaurant Page ==
         /// <summary>
-        /// Get all custom (restaurant-specific) categories
+        /// Get all active global food categories (admin-defined) ordered by DisplayOrder.
         /// </summary>
-        Task<List<CustomFoodCategory>> GetAllByRestaurantAsync(int restaurantId);
+        Task<List<GlobalFoodCategory>> GetActiveGlobalCategoriesAsync();
 
         /// <summary>
-        /// Get all global categories
+        /// Get all available (not deleted) custom categories for a specific restaurant.
         /// </summary>
-        Task<List<GlobalFoodCategory>> GetGlobalCategoriesAsync();
+        Task<List<CustomFoodCategory>> GetAvailableCustomCategoriesForRestaurantAsync(int restaurantId);
 
-        /// <summary>
-        /// Get all food categories (global + restaurant-specific) for a restaurant by its slug
-        /// </summary>
-        Task<List<object>> GetAllFoodCategoriesForRestaurantAsync(string restaurantSlug);
     }
 }

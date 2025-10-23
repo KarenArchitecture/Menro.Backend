@@ -214,7 +214,7 @@ namespace Menro.Infrastructure.Data
                             RestaurantId = restaurant.Id
                             // <-- NO GlobalFoodCategoryId (by design)
                         };
-                        _db.FoodCategories.Add(specialCat);
+                        _db.CustomFoodCategories.Add(specialCat);
                         await _db.SaveChangesAsync();
 
                         // Add 2-3 foods to this special category
@@ -274,7 +274,7 @@ namespace Menro.Infrastructure.Data
                                 RestaurantId = restaurant.Id
                                 // <-- NO GlobalFoodCategoryId
                             };
-                            _db.FoodCategories.Add(customCat);
+                            _db.CustomFoodCategories.Add(customCat);
                             await _db.SaveChangesAsync();
 
                             int foodCount = rand.Next(MinFoodsPerCategory, MaxFoodsPerCategory + 1);

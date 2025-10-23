@@ -100,17 +100,42 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowReactDevClient", policy =>
+//    {
+//        //policy.WithOrigins("http://localhost:5175")
+//        policy.WithOrigins("https://localhost:5173")
+//              .AllowAnyHeader()
+//              .AllowAnyMethod()
+//              .AllowCredentials();
+//    });
+//});
+
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactDevClient", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        //policy.WithOrigins("http://localhost:5175")
-        policy.WithOrigins("https://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        var allowedOrigins = builder.Configuration["AllowedOrigins"];
+        if (!string.IsNullOrEmpty(allowedOrigins))
+        {
+            var origins = allowedOrigins.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            policy.WithOrigins(origins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+            // fallback for local dev
+            policy.WithOrigins("https://localhost:5173", "http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
     });
 });
+
 
 #endregion
 
@@ -132,7 +157,8 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseCors("AllowReactDevClient");
+//app.UseCors("AllowReactDevClient");
+app.UseCors("AllowFrontend");
 
 app.UseErrorHandlingMiddleware();
 
@@ -157,10 +183,26 @@ app.MapControllerRoute(
 
 using (var scope = app.Services.CreateScope())
 {
+    var db = scope.ServiceProvider.GetRequiredService<MenroDbContext>();
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Migration failed at startup");
+        throw;
+    }
+}
+
+using (var scope = app.Services.CreateScope())
+{
     var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
     await dbInitializer.InitializeAsync();
 }
 
 #endregion
 
+app.MapGet("/health", () => Results.Ok(new { status = "OK" }));
 app.Run();
