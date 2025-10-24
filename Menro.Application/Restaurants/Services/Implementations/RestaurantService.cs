@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Menro.Application.Restaurants.DTOs;
 using Menro.Application.Restaurants.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Menro.Application.Extensions;
 
 namespace Menro.Application.Restaurants.Services.Implementations
 {
@@ -75,7 +76,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
 
         public async Task<string> GenerateUniqueSlugAsync(string name)
         {
-            string baseSlug = name.ToLower().Replace(" ", "-"); // use slugify lib if needed
+            string baseSlug = name.TransliterateToEnglish(); // use extension
             string slug = baseSlug;
             int counter = 1;
 

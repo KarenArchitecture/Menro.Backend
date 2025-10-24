@@ -1,0 +1,58 @@
+﻿using Menro.Application.Restaurants.DTOs;
+using Menro.Application.Restaurants.Services.Interfaces;
+using Menro.Domain.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
+
+namespace Menro.Application.Restaurants.Services.Implementations
+{
+    public class RestaurantBannerService : IRestaurantBannerService
+    {
+        private readonly IRestaurantRepository _restaurantRepository;
+        private readonly IMemoryCache _cache;
+
+        // cache duration: short because banners may change
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+
+        public RestaurantBannerService(IRestaurantRepository restaurantRepository, IMemoryCache cache)
+        {
+            _restaurantRepository = restaurantRepository;
+            _cache = cache;
+        }
+
+        public async Task<RestaurantBannerDto?> GetBannerBySlugAsync(string slug)
+        {
+            string cacheKey = $"restaurant_banner_{slug}";
+
+            if (_cache.TryGetValue(cacheKey, out RestaurantBannerDto cached))
+            {
+                return cached;
+            }
+
+            var restaurant = await _restaurantRepository.GetRestaurantBannerBySlugAsync(slug);
+            if (restaurant == null) return null;
+
+            var dto = new RestaurantBannerDto
+            {
+                Name = restaurant.Name,
+                BannerImageUrl = string.IsNullOrWhiteSpace(restaurant.BannerImageUrl)
+                    ? "/img/res-slider.png"
+                    : restaurant.BannerImageUrl,
+                AverageRating = restaurant.Ratings?.Any() == true
+                    ? Math.Round(restaurant.Ratings.Average(r => r.Score), 1)
+                    : 0.0,
+                VotersCount = restaurant.Ratings?.Count ?? 0
+            };
+
+            // store in cache
+            _cache.Set(cacheKey, dto, CacheDuration);
+
+            return dto;
+        }
+
+        public void InvalidateCache(string slug)
+        {
+            string cacheKey = $"restaurant_banner_{slug}";
+            _cache.Remove(cacheKey);
+        }
+    }
+}

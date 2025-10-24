@@ -7,8 +7,11 @@ using System.Threading.Tasks;
 
 namespace Menro.Application.Restaurants.Services.Interfaces
 {
-    public interface IRestaurantShopBannerService
+    public interface IRestaurantBannerService
     {
-        Task<RestaurantShopBannerDto?> GetShopBannerAsync(string slug);
+        Task<RestaurantBannerDto?> GetBannerBySlugAsync(string slug);
+
+        // Optional: call this after owner updates the banner
+        void InvalidateCache(string slug);
     }
 }

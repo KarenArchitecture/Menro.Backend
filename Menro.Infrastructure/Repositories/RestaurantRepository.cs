@@ -2,6 +2,7 @@
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,42 +33,59 @@ namespace Menro.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        //Home Page - Random Restaurants Cards
-        public async Task<List<Restaurant>> GetAllActiveApprovedWithDetailsAsync()
+        public async Task<List<Restaurant>> GetRandomActiveApprovedWithDetailsAsync(int count)
         {
             return await _context.Restaurants
-                .Include(r => r.RestaurantCategory)
+                .Where(r => r.IsActive && r.IsApproved)
+                .OrderBy(r => EF.Functions.Random())                // ✅ randomize at DB level
+                .Take(count)                                        // ✅ only fetch needed rows
                 .Include(r => r.Ratings)
                 .Include(r => r.Discounts)
-                .Where(r => r.IsActive && r.IsApproved)
+                .Include(r => r.RestaurantCategory)
+                .AsNoTracking()                                     // ✅ no EF tracking for read-only
                 .ToListAsync();
         }
 
-        //Home Page - Featured Restaurant Banner
-        // Home Page - Random eligible Ad Banner (exclude already-served ids)
+        private static readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
+
         public async Task<RestaurantAdBanner?> GetRandomLiveAdBannerAsync(IEnumerable<int> excludeIds)
         {
             var now = DateTime.UtcNow;
             var excludes = excludeIds?.ToList() ?? new List<int>();
 
-            var query = _context.RestaurantAdBanners
+            // cache only eligible IDs
+            var cacheKey = "LiveBannerIds";
+            if (!_cache.TryGetValue(cacheKey, out List<int> bannerIds))
+            {
+                bannerIds = await _context.RestaurantAdBanners
+                    .Where(b =>
+                        b.StartDate <= now &&
+                        b.EndDate >= now &&
+                        !b.IsPaused &&
+                        (b.PurchasedViews == 0 || b.ConsumedViews < b.PurchasedViews) &&
+                        b.Restaurant.IsActive &&
+                        b.Restaurant.IsApproved)
+                    .Select(b => b.Id)
+                    .ToListAsync();
+
+                _cache.Set(cacheKey, bannerIds, TimeSpan.FromSeconds(5));
+            }
+
+            var availableIds = bannerIds.Except(excludes).ToList();
+            if (!availableIds.Any()) return null;
+
+            var random = new Random();
+            var selectedId = availableIds[random.Next(availableIds.Count)];
+
+            // fetch only the selected banner
+            var banner = await _context.RestaurantAdBanners
                 .Include(b => b.Restaurant)
-                .Where(b =>
-                    b.StartDate <= now &&
-                    b.EndDate >= now &&
-                    !b.IsPaused &&
-                    (b.PurchasedViews == 0 || b.ConsumedViews < b.PurchasedViews) &&
-                    b.Restaurant.IsActive &&
-                    b.Restaurant.IsApproved);
+                .FirstOrDefaultAsync(b => b.Id == selectedId);
 
-            if (excludes.Count > 0)
-                query = query.Where(b => !excludes.Contains(b.Id));
-
-            // random pick
-            return await query
-                .OrderBy(_ => Guid.NewGuid())
-                .FirstOrDefaultAsync();
+            return banner;
         }
+
+
         // Home Page - Count an impression atomically (no overshoot)
         public async Task<bool> IncrementBannerImpressionAsync(int bannerId)
         {
@@ -125,10 +143,11 @@ namespace Menro.Infrastructure.Repositories
 
 
         //Shop Page - Restaurant Banner 
-        public async Task<Restaurant?> GetBySlugWithCategoryAsync(string slug)
+        public async Task<Restaurant?> GetRestaurantBannerBySlugAsync(string slug)
         {
             return await _context.Restaurants
-                .Include(r => r.RestaurantCategory)
+                .AsNoTracking()
+                .Include(r => r.Ratings) // include ratings to calculate average
                 .FirstOrDefaultAsync(r => r.Slug == slug && r.IsActive && r.IsApproved);
         }
 

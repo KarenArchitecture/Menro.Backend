@@ -1,4 +1,6 @@
-﻿using Menro.Application.Foods.Services.Interfaces;
+﻿using Menro.Application.Foods.DTOs;
+using Menro.Application.Foods.Services.Implementations;
+using Menro.Application.Foods.Services.Interfaces;
 using Menro.Application.Orders.DTOs;
 using Menro.Application.Restaurants.DTOs;
 using Menro.Application.Restaurants.Services.Implementations;
@@ -10,45 +12,54 @@ namespace Menro.Web.Controllers.Public
     [Route("api/public/[controller]")]
     public class FoodController : ControllerBase
     {
-        private readonly IFoodCardService _foodCardService;
-        private readonly IRestaurantMenuService _restaurantService;
+        private readonly IPopularFoodsService _popularFoodsService;
 
-        public FoodController(IFoodCardService foodCardService, IRestaurantMenuService restaurantService)
+        public FoodController(IPopularFoodsService popularFoodsService)
         {
-            _foodCardService = foodCardService;
-            _restaurantService = restaurantService;
+            _popularFoodsService = popularFoodsService;
         }
 
-        /// <summary>
-        /// Gets popular foods from a random category (without excluding any).
-        /// GET: api/public/food/popular-by-category-random
-        /// </summary>
-        [HttpGet("popular-by-category-random")]
-        public async Task<ActionResult<PopularFoodCategoryDto>> GetPopularFoodsFromRandomCategory()
+        #region Home Page
+        [HttpGet("popular-foods")]
+        public async Task<ActionResult<PopularFoodsDto>> GetPopularFoods()
         {
-            var result = await _foodCardService.GetPopularFoodsFromRandomCategoryAsync();
+            var result = await _popularFoodsService.GetPopularFoodsFromRandomCategoryAsync();
 
+            // If no popular foods exist, return an empty DTO instead of null
             if (result == null)
-                return Ok(null); // ✅ Return 200 with null
+            {
+                return Ok(new PopularFoodsDto
+                {
+                    CategoryTitle = string.Empty,
+                    SvgIcon = string.Empty,
+                    Foods = new List<HomeFoodCardDto>()
+                });
+            }
 
             return Ok(result);
         }
 
         /// <summary>
         /// Gets popular foods from a random category, excluding already-used category titles.
-        /// POST: api/public/food/popular-by-category-random
+        /// POST: api/public/food/popular-foods
         /// Body: ["Category A", "Category B", ...]
         /// </summary>
-        [HttpPost("popular-by-category-random")]
-        public async Task<ActionResult<PopularFoodCategoryDto>> GetPopularFoodsFromRandomCategoryExcluding([FromBody] List<string> usedCategories)
+        [HttpPost("popular-foods-excluding")]
+        public async Task<ActionResult<PopularFoodsDto>> GetPopularFoodsFromRandomCategoryExcluding([FromBody] List<string> usedCategories)
         {
-            var result = await _foodCardService.GetPopularFoodsFromRandomCategoryExcludingAsync(usedCategories);
+            var result = await _popularFoodsService.GetPopularFoodsFromRandomCategoryExcludingAsync(usedCategories);
 
             if (result == null)
                 return Ok(null);
 
             return Ok(result);
         }
+        #endregion
+
+
+        #region Restaurant Page
+
+        #endregion
 
     }
 }

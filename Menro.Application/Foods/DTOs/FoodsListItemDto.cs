@@ -13,8 +13,9 @@ namespace Menro.Application.Foods.DTOs
         public string Name { get; set; } = string.Empty;
         public int Price { get; set; }   // فقط زمانی پر میشه که Variants نداشته باشه
         public bool? IsAvailable { get; set; } = true;  // Shows if food can be ordered
+        // NEW: display name depending on which category is present
         public string FoodCategoryName { get; set; } = string.Empty;
-
-
+        // optional: type of category for admin reference
+        public string FoodCategoryType { get; set; } = string.Empty; // "custom" | "global"
     }
 }

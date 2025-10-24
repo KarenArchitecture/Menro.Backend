@@ -12,8 +12,13 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
+<<<<<<<< HEAD:Menro.Infrastructure/Migrations/20251024082642_dbInit14040802.Designer.cs
     [Migration("20251024082642_dbInit14040802")]
     partial class dbInit14040802
+========
+    [Migration("20251006043248_ABRandomFunctionForRestaurantTableInSQL")]
+    partial class ABRandomFunctionForRestaurantTableInSQL
+>>>>>>>> origin/restaurantPage:Menro.Infrastructure/Migrations/20251006043248_ABRandomFunctionForRestaurantTableInSQL.Designer.cs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,9 +38,12 @@ namespace Menro.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+<<<<<<<< HEAD:Menro.Infrastructure/Migrations/20251024082642_dbInit14040802.Designer.cs
                     b.Property<int?>("GlobalCategoryId")
                         .HasColumnType("int");
 
+========
+>>>>>>>> origin/restaurantPage:Menro.Infrastructure/Migrations/20251006043248_ABRandomFunctionForRestaurantTableInSQL.Designer.cs
                     b.Property<bool>("IsAvailable")
                         .HasColumnType("bit");
 
@@ -56,12 +64,19 @@ namespace Menro.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+<<<<<<<< HEAD:Menro.Infrastructure/Migrations/20251024082642_dbInit14040802.Designer.cs
                     b.HasIndex("GlobalCategoryId");
 
                     b.HasIndex("RestaurantId", "Name")
                         .IsUnique();
 
                     b.ToTable("CustomFoodCategory");
+========
+                    b.HasIndex("RestaurantId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("FoodCategories");
+>>>>>>>> origin/restaurantPage:Menro.Infrastructure/Migrations/20251006043248_ABRandomFunctionForRestaurantTableInSQL.Designer.cs
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.Food", b =>
@@ -183,6 +198,9 @@ namespace Menro.Infrastructure.Migrations
 
                     b.Property<int>("FoodId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -416,7 +434,8 @@ namespace Menro.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CommercialText")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<int>("ConsumedViews")
                         .HasColumnType("int");
@@ -836,18 +855,24 @@ namespace Menro.Infrastructure.Migrations
 
             modelBuilder.Entity("Menro.Domain.Entities.CustomFoodCategory", b =>
                 {
+<<<<<<<< HEAD:Menro.Infrastructure/Migrations/20251024082642_dbInit14040802.Designer.cs
                     b.HasOne("Menro.Domain.Entities.GlobalFoodCategory", "GlobalCategory")
                         .WithMany()
                         .HasForeignKey("GlobalCategoryId");
 
+========
+>>>>>>>> origin/restaurantPage:Menro.Infrastructure/Migrations/20251006043248_ABRandomFunctionForRestaurantTableInSQL.Designer.cs
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
                         .WithMany("FoodCategories")
                         .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+<<<<<<<< HEAD:Menro.Infrastructure/Migrations/20251024082642_dbInit14040802.Designer.cs
                     b.Navigation("GlobalCategory");
 
+========
+>>>>>>>> origin/restaurantPage:Menro.Infrastructure/Migrations/20251006043248_ABRandomFunctionForRestaurantTableInSQL.Designer.cs
                     b.Navigation("Restaurant");
                 });
 

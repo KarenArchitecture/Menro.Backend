@@ -20,5 +20,6 @@ namespace Menro.Application.DTO
         public string CloseTime { get; set; } = string.Empty;
         public string? LogoImageUrl { get; set; }
         public bool IsOpen { get; set; }
+        public string Slug { get; set; } = string.Empty;
     }
 }

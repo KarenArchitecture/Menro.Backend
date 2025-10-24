@@ -1,23 +1,32 @@
-﻿using Menro.Application.FoodCategories.Services.Interfaces;
+﻿using Menro.Application.FoodCategories.DTOs;
+using Menro.Application.FoodCategories.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.Public
+namespace Menro.Web.Controllers
 {
     [ApiController]
-    [Route("api/public/restaurant/{restaurantSlug}/foodcategories")]
-    public class FoodCategoryController : Controller
+    [Route("api/public/[controller]")]
+    public class FoodCategoryController : ControllerBase
     {
-        private readonly IShopFoodCategoriesService _categoryService;
+        private readonly IRestaurantPageFoodCategoryService _restaurantPageFoodCategoryService;
 
-        public FoodCategoryController(IShopFoodCategoriesService categoryService)
+        public FoodCategoryController(IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService)
         {
-            _categoryService = categoryService;
+            _restaurantPageFoodCategoryService = restaurantPageFoodCategoryService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetCategoriesForShop(string restaurantSlug)
+        /// <summary>
+        /// Get all global + custom food categories for a restaurant.
+        /// </summary>
+        [HttpGet("{restaurantSlug}")]
+        public async Task<ActionResult<List<RestaurantFoodCategoryDto>>> GetRestaurantCategories(string restaurantSlug)
         {
-            var categories = await _categoryService.GetCategoriesForRestaurantAsync(restaurantSlug);
+            if (string.IsNullOrWhiteSpace(restaurantSlug))
+                return BadRequest();
+
+            var categories = await _restaurantPageFoodCategoryService.GetCategoriesByRestaurantSlugAsync(restaurantSlug);
+
+            // Always return 200 OK with an array (even if empty) so the frontend handles states itself
             return Ok(categories);
         }
     }

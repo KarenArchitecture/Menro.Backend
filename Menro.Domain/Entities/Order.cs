@@ -29,6 +29,7 @@ namespace Menro.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // آیتم‌های سفارش
-        public ICollection<OrderItem> OrderItems { get; set; }
+        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
     }
 }

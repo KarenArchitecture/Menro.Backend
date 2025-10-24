@@ -8,7 +8,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Menro.Infrastructure.Migrations
 {
     /// <inheritdoc />
+<<<<<<<< HEAD:Menro.Infrastructure/Migrations/20251024082642_dbInit14040802.cs
     public partial class dbInit14040802 : Migration
+========
+    public partial class ABNewFoodCategoryVersionsPlusNewDataSeeding : Migration
+>>>>>>>> origin/restaurantPage:Menro.Infrastructure/Migrations/20251005083911_ABNewFoodCategoryVersionsPlusNewDataSeeding.cs
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -231,11 +235,11 @@ namespace Menro.Infrastructure.Migrations
                     Slug = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     BannerImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CarouselImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LogoImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     OpenTime = table.Column<TimeSpan>(type: "time", nullable: false),
                     CloseTime = table.Column<TimeSpan>(type: "time", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LogoImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     IsApproved = table.Column<bool>(type: "bit", nullable: false),
@@ -273,19 +277,27 @@ namespace Menro.Infrastructure.Migrations
                     SvgIcon = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+<<<<<<<< HEAD:Menro.Infrastructure/Migrations/20251024082642_dbInit14040802.cs
                     RestaurantId = table.Column<int>(type: "int", nullable: false),
                     GlobalCategoryId = table.Column<int>(type: "int", nullable: true)
+========
+                    RestaurantId = table.Column<int>(type: "int", nullable: false)
+>>>>>>>> origin/restaurantPage:Menro.Infrastructure/Migrations/20251005083911_ABNewFoodCategoryVersionsPlusNewDataSeeding.cs
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_CustomFoodCategory", x => x.Id);
                     table.ForeignKey(
+<<<<<<<< HEAD:Menro.Infrastructure/Migrations/20251024082642_dbInit14040802.cs
                         name: "FK_CustomFoodCategory_GlobalFoodCategories_GlobalCategoryId",
                         column: x => x.GlobalCategoryId,
                         principalTable: "GlobalFoodCategories",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_CustomFoodCategory_Restaurants_RestaurantId",
+========
+                        name: "FK_FoodCategories_Restaurants_RestaurantId",
+>>>>>>>> origin/restaurantPage:Menro.Infrastructure/Migrations/20251005083911_ABNewFoodCategoryVersionsPlusNewDataSeeding.cs
                         column: x => x.RestaurantId,
                         principalTable: "Restaurants",
                         principalColumn: "Id",
@@ -331,7 +343,7 @@ namespace Menro.Infrastructure.Migrations
                     ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CommercialText = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CommercialText = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     PurchasedViews = table.Column<int>(type: "int", nullable: false),
                     ConsumedViews = table.Column<int>(type: "int", nullable: false),
                     IsPaused = table.Column<bool>(type: "bit", nullable: false)
@@ -424,9 +436,21 @@ namespace Menro.Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_Foods", x => x.Id);
                     table.ForeignKey(
+<<<<<<<< HEAD:Menro.Infrastructure/Migrations/20251024082642_dbInit14040802.cs
                         name: "FK_Foods_CustomFoodCategory_CustomFoodCategoryId",
                         column: x => x.CustomFoodCategoryId,
                         principalTable: "CustomFoodCategory",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Foods_GlobalFoodCategories_GlobalFoodCategoryId",
+                        column: x => x.GlobalFoodCategoryId,
+                        principalTable: "GlobalFoodCategories",
+========
+                        name: "FK_Foods_FoodCategories_CustomFoodCategoryId",
+                        column: x => x.CustomFoodCategoryId,
+                        principalTable: "FoodCategories",
+>>>>>>>> origin/restaurantPage:Menro.Infrastructure/Migrations/20251005083911_ABNewFoodCategoryVersionsPlusNewDataSeeding.cs
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -479,6 +503,7 @@ namespace Menro.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Price = table.Column<int>(type: "int", nullable: false),
+                    IsAvailable = table.Column<bool>(type: "bit", nullable: false),
                     FoodId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -625,6 +650,7 @@ namespace Menro.Infrastructure.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+<<<<<<<< HEAD:Menro.Infrastructure/Migrations/20251024082642_dbInit14040802.cs
                 name: "IX_CustomFoodCategory_GlobalCategoryId",
                 table: "CustomFoodCategory",
                 column: "GlobalCategoryId");
@@ -632,6 +658,15 @@ namespace Menro.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_CustomFoodCategory_RestaurantId_Name",
                 table: "CustomFoodCategory",
+========
+                name: "IX_FoodAddons_FoodVariantId",
+                table: "FoodAddons",
+                column: "FoodVariantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FoodCategories_RestaurantId_Name",
+                table: "FoodCategories",
+>>>>>>>> origin/restaurantPage:Menro.Infrastructure/Migrations/20251005083911_ABNewFoodCategoryVersionsPlusNewDataSeeding.cs
                 columns: new[] { "RestaurantId", "Name" },
                 unique: true);
 

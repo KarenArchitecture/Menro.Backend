@@ -9,6 +9,7 @@ namespace Menro.Application.Services.Implementations
     public class FoodService : IFoodService
     {
         private readonly IFoodRepository _repository;
+
         public FoodService(IFoodRepository repository)
         {
             _repository = repository;
@@ -51,17 +52,17 @@ namespace Menro.Application.Services.Implementations
         {
             var foods = await _repository.GetFoodsListForAdminAsync(restaurantId);
 
-            var list = foods.Select(f => new FoodsListItemDto
+            return foods.Select(f => new FoodsListItemDto
             {
                 Id = f.Id,
                 Name = f.Name,
-                Price = f.Variants.Any() ? 0 : f.Price, // یا هر لاجیک دیگه که داری
+                Price = f.Variants.Any() ? 0 : f.Price,
                 IsAvailable = f.IsAvailable,
                 FoodCategoryName = f.CustomFoodCategory.Name
             }).ToList();
-
-            return list;
         }
+
+        // Get food details by id
         public async Task<FoodDetailsDto?> GetFoodAsync(int foodId, int restaurantId)
         {
             var food = await _repository.GetFoodDetailsAsync(foodId);
@@ -140,7 +141,5 @@ namespace Menro.Application.Services.Implementations
         {
             return await _repository.DeleteFoodAsync(foodId);
         }
-
-
     }
 }
