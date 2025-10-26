@@ -13,18 +13,18 @@ namespace Menro.Application.FoodCategories.Services.Implementations
 {
     public class RestaurantPageFoodCategoryService : IRestaurantPageFoodCategoryService
     {
-        private readonly IFoodCategoryRepository _foodCategoryRepository;
+        private readonly ICustomFoodCategoryRepository _foodCategoryRepository;
         private readonly IRestaurantRepository _restaurantRepository;
 
         public RestaurantPageFoodCategoryService(
-            IFoodCategoryRepository foodCategoryRepository,
+            ICustomFoodCategoryRepository foodCategoryRepository,
             IRestaurantRepository restaurantRepository)
         {
             _foodCategoryRepository = foodCategoryRepository;
             _restaurantRepository = restaurantRepository;
         }
 
-        public async Task<List<RestaurantFoodCategoryDto>> GetCategoriesByRestaurantSlugAsync(string restaurantSlug)
+        /*public async Task<List<RestaurantFoodCategoryDto>> GetCategoriesByRestaurantSlugAsync(string restaurantSlug)
         {
             // 1️⃣ Get restaurant by slug (reuse existing method)
             var restaurant = await _restaurantRepository.GetRestaurantBannerBySlugAsync(restaurantSlug);
@@ -56,7 +56,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             .ToList();
 
             return result;
-        }
+        }*/
 
 
     }

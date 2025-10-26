@@ -235,6 +235,17 @@ namespace Menro.Infrastructure.Repositories
                 .FirstOrDefaultAsync();
         }
 
+        public Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug)
+        {
+            throw new NotImplementedException();
+        }
+
+
         /* ===================== Admin / CRUD ===================== */
 
         public async Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId)
@@ -294,5 +305,6 @@ namespace Menro.Infrastructure.Repositories
             await _context.SaveChangesAsync();
             return true;
         }
+
     }
 }

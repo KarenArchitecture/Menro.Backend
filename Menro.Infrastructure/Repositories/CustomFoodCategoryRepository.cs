@@ -21,7 +21,7 @@ namespace Menro.Infrastructure.Repositories
 
         public async Task<IEnumerable<CustomFoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug)
         {
-            return await _context.CustomFoodCategory
+            return await _context.CustomFoodCategories
                 .Where(fc => fc.Restaurant.Slug == restaurantSlug)
                 .ToListAsync();
         }
@@ -29,7 +29,7 @@ namespace Menro.Infrastructure.Repositories
         {
             try
             {
-                await _context.CustomFoodCategory.AddAsync(category);
+                await _context.CustomFoodCategories.AddAsync(category);
                 var result = await _context.SaveChangesAsync();
                 return result > 0;
             }
@@ -40,11 +40,11 @@ namespace Menro.Infrastructure.Repositories
         }
         public async Task<IEnumerable<CustomFoodCategory>> GetCustomFoodCategoriesAsync(int restaurantId)
         {
-            return await _context.CustomFoodCategory.Where(u => u.RestaurantId == restaurantId && !u.IsDeleted && u.IsAvailable).ToListAsync();
+            return await _context.CustomFoodCategories.Where(u => u.RestaurantId == restaurantId && !u.IsDeleted && u.IsAvailable).ToListAsync();
         }
         public async Task<CustomFoodCategory> GetCategoryAsync(int catId)
         {
-            var category = await _context.CustomFoodCategory.FirstOrDefaultAsync(c => c.Id == catId);
+            var category = await _context.CustomFoodCategories.FirstOrDefaultAsync(c => c.Id == catId);
             
             if (category == null) throw new Exception($"Custom category with ID {catId} not found.");
             
@@ -53,18 +53,18 @@ namespace Menro.Infrastructure.Repositories
 
         public async Task<bool> ExistsByNameAsync(int restaurantId, string catName)
         {
-            return await _context.CustomFoodCategory.AnyAsync(u => u.RestaurantId == restaurantId && u.Name == catName);
+            return await _context.CustomFoodCategories.AnyAsync(u => u.RestaurantId == restaurantId && u.Name == catName);
         }
         public async Task<bool> DeleteCustomCategoryAsync(int catId)
         {
-            var cat = await _context.CustomFoodCategory.Include(c => c.Foods).FirstOrDefaultAsync(c => c.Id == catId);
+            var cat = await _context.CustomFoodCategories.Include(c => c.Foods).FirstOrDefaultAsync(c => c.Id == catId);
             if (cat is null)
             {
                 return false;
             }
             if (cat.Foods.Count == 0)
             {
-                _context.CustomFoodCategory.Remove(cat);
+                _context.CustomFoodCategories.Remove(cat);
             }
             else
             {
@@ -77,7 +77,7 @@ namespace Menro.Infrastructure.Repositories
         {
             if (category == null) return false;
 
-            _context.CustomFoodCategory.Update(category);
+            _context.CustomFoodCategories.Update(category);
             var saved = await _context.SaveChangesAsync();
             return saved > 0;
         }

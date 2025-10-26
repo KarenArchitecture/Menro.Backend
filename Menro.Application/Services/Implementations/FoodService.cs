@@ -9,16 +9,19 @@ namespace Menro.Application.Services.Implementations
     public class FoodService : IFoodService
     {
         private readonly IFoodRepository _repository;
+        private readonly ICustomFoodCategoryRepository _cCategoryRepository;
 
-        public FoodService(IFoodRepository repository)
+        public FoodService(IFoodRepository repository, ICustomFoodCategoryRepository cCategoryRepository)
         {
             _repository = repository;
+            _cCategoryRepository = cCategoryRepository;
         }
 
-        public async Task<FoodDetailsDto> AddFoodAsync(CreateFoodDto dto, int restaurantId)
+        public async Task<bool> AddFoodAsync(CreateFoodDto dto, int restaurantId)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
 
+            int? gCat = _cCategoryRepository.GetCategoryAsync(dto.FoodCategoryId).Result.GlobalCategoryId;
             var food = new Food
             {
                 Name = dto.Name.Trim(),
@@ -26,6 +29,7 @@ namespace Menro.Application.Services.Implementations
                 Price = dto.HasVariants ? 0 : dto.Price,
                 ImageUrl = dto.ImageUrl ?? string.Empty,
                 CustomFoodCategoryId = dto.FoodCategoryId,
+                GlobalFoodCategoryId = gCat,
                 RestaurantId = restaurantId,
                 IsAvailable = true,
 
@@ -44,9 +48,8 @@ namespace Menro.Application.Services.Implementations
                     : new List<FoodVariant>()
             };
 
-            await _repository.AddFoodAsync(food);
+            return await _repository.AddFoodAsync(food);
 
-            return FoodMapper.MapToDetailsDto(food);
         }
         public async Task<List<FoodsListItemDto>> GetFoodsListAsync(int restaurantId)
         {
@@ -58,7 +61,7 @@ namespace Menro.Application.Services.Implementations
                 Name = f.Name,
                 Price = f.Variants.Any() ? 0 : f.Price,
                 IsAvailable = f.IsAvailable,
-                FoodCategoryName = f.CustomFoodCategory.Name
+                FoodCategoryName = f.CustomFoodCategory!.Name
             }).ToList();
         }
 

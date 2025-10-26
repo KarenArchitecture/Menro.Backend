@@ -5,7 +5,7 @@
 namespace Menro.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddFoodsToFoodCategoriesReverse : Migration
+    public partial class dbInit14040802_2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

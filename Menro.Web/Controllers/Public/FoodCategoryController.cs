@@ -18,7 +18,7 @@ namespace Menro.Web.Controllers
         /// <summary>
         /// Get all global + custom food categories for a restaurant.
         /// </summary>
-        [HttpGet("{restaurantSlug}")]
+        /*[HttpGet("{restaurantSlug}")]
         public async Task<ActionResult<List<RestaurantFoodCategoryDto>>> GetRestaurantCategories(string restaurantSlug)
         {
             if (string.IsNullOrWhiteSpace(restaurantSlug))
@@ -28,6 +28,6 @@ namespace Menro.Web.Controllers
 
             // Always return 200 OK with an array (even if empty) so the frontend handles states itself
             return Ok(categories);
-        }
+        }*/
     }
 }

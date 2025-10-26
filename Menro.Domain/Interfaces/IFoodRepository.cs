@@ -36,7 +36,6 @@ namespace Menro.Domain.Interfaces
             int restaurantId,
             int? globalCategoryId = null,
             int? customCategoryId = null);
-        Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesExcludingAsync(List<string> excludeTitles);
         Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count);
 
         /// <summary>
@@ -45,7 +44,6 @@ namespace Menro.Domain.Interfaces
         /// </summary>
         Task<Food?> GetFoodWithVariantsAsync(int foodId);
         /* Restaurant Page */
-        Task<List<Food>> GetByCategoryIdsAsync(List<int> categoryIds);
         Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug);
 
         // Admin/Owner Panel
@@ -54,10 +52,5 @@ namespace Menro.Domain.Interfaces
         Task<Food> GetFoodDetailsAsync(int foodId);
         Task<bool> UpdateFoodAsync(Food food);
         Task<bool> DeleteFoodAsync(int foodId);
-        // Admin/Owner Panel
-        Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId);
-        Task<bool> AddFoodAsync(Food food);
-        Task<Food> GetFoodDetailsAsync(int foodId);
-        Task<bool> DeleteFoodAsync (int foodId);
     }
 }

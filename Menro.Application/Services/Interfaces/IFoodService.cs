@@ -11,7 +11,7 @@ namespace Menro.Application.Services.Interfaces
     {
         Task<List<FoodsListItemDto>> GetFoodsListAsync(int restaurantId);
         Task<FoodDetailsDto?> GetFoodAsync(int foodId, int restaurantId);
-        Task<FoodDetailsDto> AddFoodAsync(CreateFoodDto dto, int restaurantId);
+        Task<bool> AddFoodAsync(CreateFoodDto dto, int restaurantId);
         Task<bool> UpdateFoodAsync(UpdateFoodDto dto);
         Task<bool> DeleteFoodAsync(int foodId);
 
