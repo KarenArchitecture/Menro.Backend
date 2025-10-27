@@ -1,5 +1,4 @@
-﻿using Menro.Application.Services.Interfaces;
-
+﻿using Menro.Application.Common.Interfaces;
 
 namespace Menro.Infrastructure.Sms
 {

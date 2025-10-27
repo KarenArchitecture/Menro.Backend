@@ -27,7 +27,7 @@ namespace Menro.Infrastructure.Repositories
         }
         public async Task<List<GlobalFoodCategory>> GetAllAsync()
         {
-            return await _context.GlobalFoodCategories.ToListAsync();
+            return await _context.GlobalFoodCategories.Include(c => c.Icon).ToListAsync();
         }
 
         public async Task<GlobalFoodCategory> GetByIdAsync(int Id)

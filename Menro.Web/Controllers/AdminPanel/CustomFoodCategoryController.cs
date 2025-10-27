@@ -1,10 +1,10 @@
 ﻿using Menro.Application.Features.GlobalFoodCategories.Services.Interfaces;
 using Menro.Application.Features.CustomFoodCategory.DTOs;
-using Menro.Application.Features.Identity.Services;
 using Menro.Application.FoodCategories.Services.Interfaces;
 using Menro.Application.Common.SD;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Menro.Application.Common.Interfaces;
 
 
 namespace Menro.Web.Controllers.AdminPanel

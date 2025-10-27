@@ -1,9 +1,9 @@
-﻿using Menro.Application.Features.Identity.Services;
-using Menro.Application.FoodCategories.DTOs;
+﻿using Menro.Application.FoodCategories.DTOs;
 using Menro.Application.FoodCategories.Services.Interfaces;
 using Menro.Application.Features.CustomFoodCategory.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Application.FoodCategories.Services.Implementations
 {

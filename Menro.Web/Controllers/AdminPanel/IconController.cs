@@ -26,15 +26,15 @@ namespace Menro.Web.Controllers
             return Ok(icons);
         }
 
-        [HttpGet("read")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var icon = await _iconService.GetByIdAsync(id);
-            if (icon == null)
-                return NotFound(new { message = "Icon not found" });
+        //[HttpGet("read")]
+        //public async Task<IActionResult> GetById(int id)
+        //{
+        //    var icon = await _iconService.GetByIdAsync(id);
+        //    if (icon == null)
+        //        return NotFound(new { message = "Icon not found" });
 
-            return Ok(icon);
-        }
+        //    return Ok(icon);
+        //}
 
         [HttpPost("add")]
         public async Task<IActionResult> Add([FromBody] AddIconDto dto)

@@ -1,5 +1,4 @@
-﻿using Menro.Application.Services.Interfaces;
-using Menro.Application.Common.Settings;
+﻿using Menro.Application.Common.Settings;
 using Menro.Domain.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -9,6 +8,7 @@ using System.Security.Cryptography;
 using Menro.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Menro.Application.Common.Models;
+using Menro.Application.Common.Interfaces;
 
 
 namespace Menro.Application.Features.Identity.Services

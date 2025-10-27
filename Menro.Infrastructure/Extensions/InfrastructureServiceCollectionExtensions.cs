@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Sms;
-using Menro.Application.Services.Interfaces;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Repositories;
 using Menro.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Infrastructure.Extensions
 {

@@ -12,8 +12,9 @@ using Menro.Infrastructure.Data;
 using Menro.Web.Middleware;
 using Menro.Infrastructure.Extensions;
 using Menro.Application.Extensions;
-using Menro.Application.Features.Identity.Services;
 using Menro.Web.Services;
+using Menro.Application.Common.Interfaces;
+using Menro.Web.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,6 +79,7 @@ builder.Services.AddAutoRegisteredServices(applicationAssembly);
 var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
 builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IFileUrlService, FileUrlService>();
 
 //Caching Setup
 builder.Services.AddMemoryCache();

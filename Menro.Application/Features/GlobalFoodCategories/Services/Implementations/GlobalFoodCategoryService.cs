@@ -2,6 +2,8 @@
 using Menro.Domain.Entities;
 using Menro.Application.Features.GlobalFoodCategories.Services.Interfaces;
 using Menro.Application.Features.GlobalFoodCategories.DTOs;
+using Menro.Application.Features.Icons.DTOs;
+using Menro.Application.Common.Interfaces;
 
 
 namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementations
@@ -9,9 +11,11 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
     public class GlobalFoodCategoryService : IGlobalFoodCategoryService
     {
         private readonly IGlobalFoodCategoryRepository _repository;
-        public GlobalFoodCategoryService(IGlobalFoodCategoryRepository repository)
+        private readonly IFileUrlService _fileUrlService;
+        public GlobalFoodCategoryService(IGlobalFoodCategoryRepository repository, IFileUrlService fileUrlService)
         {
             _repository = repository;
+            _fileUrlService = fileUrlService;
         }
 
         // modify for icon url/name
@@ -39,7 +43,13 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
             {
                 Id = x.Id,
                 Name = x.Name,
-                IconId = x.IconId
+                Icon = x.Icon == null ? null : new GetIconDto
+                {
+                    Id = x.Icon.Id,
+                    FileName = x.Icon.FileName,
+                    Label = x.Icon.Label,
+                    Url = _fileUrlService.BuildIconUrl(x.Icon.FileName)
+                }
             }).ToList();
         }
         public async Task<GlobalCategoryDTO> GetGlobalCategoryAsync(int id)
@@ -50,7 +60,13 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
             {
                 Id = category.Id,
                 Name = category.Name,
-                IconId = category.IconId
+                Icon = category.Icon == null ? null : new GetIconDto
+                {
+                    Id = category.Icon.Id,
+                    FileName = category.Icon.FileName,
+                    Label = category.Icon.Label,
+                    Url = _fileUrlService.BuildIconUrl(category.Icon.FileName)
+                }
             };
         }
 
