@@ -12,10 +12,8 @@ namespace Menro.Application.FoodCategories.Services.Interfaces
 {
     public interface ICustomFoodCategoryService
     {
-        Task<List<FoodCategoryDto>> GetCustomFoodCategoriesAsync(int restaurantId);
-        //Task<FoodCategoryDto> GetByIdAsync(int foodCategoryId);
-        //Task<List<FoodsListItemDto>> GetFoodCategoriesListAsync(int restaurantId);
-        //Task<FoodDetailsDto?> GetFoodCategoryAsync(int foodCategoryId, int restaurantId);
+        Task<List<FoodCategorySelectListDto>> GetCustomFoodCategoriesAsync(int restaurantId);
+        Task<List<GetCustomCategoryDto>> GetAllCustomFoodCategoriesAsync(int restaurantId);
         Task<GetCustomCategoryDto> GetCategoryAsync(int catId);
         Task<bool> AddCategoryAsync(CreateCustomFoodCategoryDto dto);
         Task<bool> AddFromGlobalAsync(int globalCategoryId, int restaurantId);

@@ -40,7 +40,7 @@ namespace Menro.Infrastructure.Repositories
         }
         public async Task<IEnumerable<CustomFoodCategory>> GetCustomFoodCategoriesAsync(int restaurantId)
         {
-            return await _context.CustomFoodCategories.Where(u => u.RestaurantId == restaurantId && !u.IsDeleted && u.IsAvailable).ToListAsync();
+            return await _context.CustomFoodCategories.Include(u => u.Icon).Where(u => u.RestaurantId == restaurantId && !u.IsDeleted && u.IsAvailable).ToListAsync();
         }
         public async Task<CustomFoodCategory> GetCategoryAsync(int catId)
         {

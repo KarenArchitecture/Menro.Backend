@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace Menro.Application.FoodCategories.DTOs
 {
-    public class FoodCategoryDto
+    public class FoodCategorySelectListDto
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

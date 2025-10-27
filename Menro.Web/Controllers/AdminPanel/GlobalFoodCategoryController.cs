@@ -14,7 +14,11 @@ namespace Menro.Web.Controllers.AdminPanel
         private readonly ICustomFoodCategoryService _cCatService;
         private readonly IGlobalFoodCategoryService _gCatService;
         private readonly ICurrentUserService _currentUserService;
-        public GlobalFoodCategoryController(ICustomFoodCategoryService cCatService, IGlobalFoodCategoryService gCatService, ICurrentUserService currentUserService)
+        public GlobalFoodCategoryController(
+            ICustomFoodCategoryService cCatService, 
+            IGlobalFoodCategoryService gCatService, 
+            ICurrentUserService currentUserService
+            )
         {
             _cCatService = cCatService;
             _gCatService = gCatService;

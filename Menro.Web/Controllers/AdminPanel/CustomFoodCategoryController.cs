@@ -16,7 +16,9 @@ namespace Menro.Web.Controllers.AdminPanel
     {
         private readonly ICustomFoodCategoryService _cCatService;
         private readonly ICurrentUserService _currentUserService;
-        public CustomFoodCategoryController(ICustomFoodCategoryService cCatService, ICurrentUserService currentUserService)
+        public CustomFoodCategoryController(
+            ICustomFoodCategoryService cCatService, 
+            ICurrentUserService currentUserService)
         {
             _cCatService = cCatService;
             _currentUserService = currentUserService;
@@ -44,7 +46,7 @@ namespace Menro.Web.Controllers.AdminPanel
             int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
             if (restaurantId is not null)
             {
-                var catList = await _cCatService.GetCustomFoodCategoriesAsync(restaurantId.Value);
+                var catList = await _cCatService.GetAllCustomFoodCategoriesAsync(restaurantId.Value);
                 return Ok(catList);
             }
             return BadRequest(new { message = "بارگیری دسته بندی ها ناموفق بود" });

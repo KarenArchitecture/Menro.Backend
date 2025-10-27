@@ -4,6 +4,7 @@ using Menro.Application.Features.CustomFoodCategory.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Icons.DTOs;
 
 namespace Menro.Application.FoodCategories.Services.Implementations
 {
@@ -11,12 +12,19 @@ namespace Menro.Application.FoodCategories.Services.Implementations
     {
         private readonly ICustomFoodCategoryRepository _cCatRepository;
         private readonly IGlobalFoodCategoryRepository _gCatRepository;
+        private readonly IFileUrlService _fileUrlService;
         private readonly ICurrentUserService _currentUserService;
-        public CustomFoodCategoryService(ICustomFoodCategoryRepository cCatRepository, IGlobalFoodCategoryRepository gCatRepository, ICurrentUserService currentUserService)
+        public CustomFoodCategoryService(
+            ICustomFoodCategoryRepository cCatRepository,
+            IGlobalFoodCategoryRepository gCatRepository,
+            ICurrentUserService currentUserService,
+            IFileUrlService fileUrlService
+            )
         {
             _cCatRepository = cCatRepository;
             _gCatRepository = gCatRepository;
             _currentUserService = currentUserService;
+            _fileUrlService = fileUrlService;
         }
         public async Task<bool> AddCategoryAsync (CreateCustomFoodCategoryDto dto)
         {
@@ -35,7 +43,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             var customCategory = new CustomFoodCategory
             {
                 Name = name,
-                IconId = null,
+                IconId = null, // change it to get IconId
                 RestaurantId = restaurantId,
                 IsAvailable = true,
                 IsDeleted = false,
@@ -64,16 +72,37 @@ namespace Menro.Application.FoodCategories.Services.Implementations
 
             return await _cCatRepository.CreateAsync(customCat);
         }
-        public async Task<List<FoodCategoryDto>> GetCustomFoodCategoriesAsync(int restaurantId)
+        public async Task<List<GetCustomCategoryDto>> GetAllCustomFoodCategoriesAsync(int restaurantId)
         {
             var entities = await _cCatRepository.GetCustomFoodCategoriesAsync(restaurantId);
-            return entities.Select(c => new FoodCategoryDto
+            return entities.Select(category => new GetCustomCategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name,
+                GlobalCategoryId = category.GlobalCategoryId,
+                Icon = category.Icon == null ? null : new GetIconDto
+                {
+                    Id = category.Icon.Id,
+                    FileName = category.Icon.FileName,
+                    Label = category.Icon.Label,
+                    Url = _fileUrlService.BuildIconUrl(category.Icon.FileName)
+                }
+
+            }).ToList();
+
+        }
+
+        public async Task<List<FoodCategorySelectListDto>> GetCustomFoodCategoriesAsync(int restaurantId)
+        {
+            var entities = await _cCatRepository.GetCustomFoodCategoriesAsync(restaurantId);
+            return entities.Select(c => new FoodCategorySelectListDto
             {
                 Id = c.Id,
                 Name = c.Name,
                 GlobalCategoryId = c.GlobalCategoryId
             }).ToList();
         }
+        
         public async Task<GetCustomCategoryDto> GetCategoryAsync(int catId)
         {
             var category = await _cCatRepository.GetCategoryAsync(catId);
@@ -81,7 +110,14 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             {
                 Id = category.Id,
                 Name = category.Name,
-                IconId = category.IconId
+                Icon = category.Icon == null ? null : new GetIconDto
+                {
+                    Id = category.Icon.Id,
+                    FileName = category.Icon.FileName,
+                    Label = category.Icon.Label,
+                    Url = _fileUrlService.BuildIconUrl(category.Icon.FileName)
+                }
+
             };
             return catDto;
         }
