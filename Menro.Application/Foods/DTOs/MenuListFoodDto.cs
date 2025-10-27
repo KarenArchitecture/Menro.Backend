@@ -19,10 +19,10 @@ namespace Menro.Application.Foods.DTOs
         // Category info (Custom or Global)
         public int? CustomFoodCategoryId { get; set; }
         public string? CustomFoodCategoryName { get; set; }
-        public string? CustomFoodCategorySvg { get; set; }
+        public int? CustomFoodCategorySvg { get; set; }
 
         public int? GlobalFoodCategoryId { get; set; }
         public string? GlobalFoodCategoryName { get; set; }
-        public string? GlobalFoodCategorySvg { get; set; }
+        public int? GlobalFoodCategorySvg { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Menro.Domain.Entities
 {
@@ -7,26 +8,25 @@ namespace Menro.Domain.Entities
         [Key]
         public int Id { get; set; }
 
-        [Display(Name = "نام دسته بندی")]
         [MaxLength(200)]
-        [Required(ErrorMessage = "نام دسته بندی الزامی است")]
-        public string Name { get; set; } = string.Empty; // مثل "نوشیدنی سرد"، "پیتزا"
-
-        [Display(Name = "آیکن SVG")]
-        public string SvgIcon { get; set; } = string.Empty;
-
+        public string Name { get; set; } = string.Empty;
         public bool IsAvailable { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
 
-        // ارتباط با جدول رستوران
+        // to Icons
+        public int? IconId { get; set; }
+
+        [ForeignKey(nameof(IconId))]
+        public Icon? Icon { get; set; }
+
+        // to Restaurants
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; } = null!;
 
-        // ارتباط با جدول دسته بندی های عمومی
+        // to Global Categories
         public int? GlobalCategoryId { get; set; }
         public GlobalFoodCategory? GlobalCategory { get; set; }
 
-        // ارتباط با جدول غذا
         public ICollection<Food> Foods { get; set; } = new List<Food>();
     }
 }

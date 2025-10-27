@@ -51,10 +51,10 @@ namespace Menro.Application.Foods.Services.Implementations
                 ImageUrl = f.ImageUrl,
                 GlobalFoodCategoryId = f.GlobalFoodCategoryId,
                 GlobalFoodCategoryName = f.GlobalFoodCategory?.Name,
-                GlobalFoodCategorySvg = f.GlobalFoodCategory?.SvgIcon,
+                GlobalFoodCategorySvg = f.GlobalFoodCategory?.IconId,
                 CustomFoodCategoryId = f.CustomFoodCategoryId,
                 CustomFoodCategoryName = f.CustomFoodCategory?.Name,
-                CustomFoodCategorySvg = f.CustomFoodCategory?.SvgIcon,
+                CustomFoodCategorySvg = f.CustomFoodCategory?.IconId,
                 IsAvailable = f.IsAvailable,
                 AverageRating = f.AverageRating,
                 VotersCount = f.VotersCount

@@ -39,7 +39,7 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
             {
                 Id = x.Id,
                 Name = x.Name,
-                SvgIcon = x.SvgIcon
+                IconId = x.IconId
             }).ToList();
         }
         public async Task<GlobalCategoryDTO> GetGlobalCategoryAsync(int id)
@@ -50,7 +50,7 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
             {
                 Id = category.Id,
                 Name = category.Name,
-                SvgIcon = category.SvgIcon
+                IconId = category.IconId
             };
         }
 

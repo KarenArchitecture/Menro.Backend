@@ -44,7 +44,15 @@ namespace Menro.Infrastructure.Data
             _restaurantService = restaurantService;
         }
 
-        // Seed Global Food Categories (uses your Menro.Infrastructure.Seed.GlobalFoodCategorySeed)
+        // Seed Icons
+        private async Task SeedIconsAsync()
+        {
+            if (await _db.Icons.AnyAsync()) return;
+
+            _db.Icons.AddRange(IconSeed.Data);
+            await _db.SaveChangesAsync();
+        }
+        // Seed GlobalFoodCategories
         private async Task SeedGlobalFoodCategoriesAsync()
         {
             if (await _db.GlobalFoodCategories.AnyAsync()) return;
@@ -94,7 +102,11 @@ namespace Menro.Infrastructure.Data
                     await _db.Database.MigrateAsync();
 
                 /* ============================================================
-                   Global Food Categories (admin-managed)
+                   Icons
+                ============================================================ */
+                await SeedIconsAsync();
+                /* ============================================================
+                   Global Food Categories
                 ============================================================ */
                 await SeedGlobalFoodCategoriesAsync();
 
@@ -210,7 +222,7 @@ namespace Menro.Infrastructure.Data
                         var specialCat = new CustomFoodCategory
                         {
                             Name = specialName,
-                            SvgIcon = selectedGlobalCat.SvgIcon, // re-use admin-uploaded icon
+                            IconId = selectedGlobalCat.IconId, // re-use admin-uploaded icon
                             RestaurantId = restaurant.Id
                             // <-- NO GlobalFoodCategoryId (by design)
                         };
@@ -270,7 +282,7 @@ namespace Menro.Infrastructure.Data
                             var customCat = new CustomFoodCategory
                             {
                                 Name = $"دسته {c + 1}",
-                                SvgIcon = globalCats[rand.Next(globalCats.Count)].SvgIcon,
+                                IconId = globalCats[rand.Next(globalCats.Count)].IconId,
                                 RestaurantId = restaurant.Id
                                 // <-- NO GlobalFoodCategoryId
                             };

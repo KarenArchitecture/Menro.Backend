@@ -1,9 +1,6 @@
 ﻿using Menro.Application.Foods.DTOs;
-using Menro.Application.Foods.Services.Implementations;
 using Menro.Application.Foods.Services.Interfaces;
 using Menro.Application.Orders.DTOs;
-using Menro.Application.Restaurants.DTOs;
-using Menro.Application.Restaurants.Services.Implementations;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Public
@@ -31,7 +28,7 @@ namespace Menro.Web.Controllers.Public
                 return Ok(new PopularFoodsDto
                 {
                     CategoryTitle = string.Empty,
-                    SvgIcon = string.Empty,
+                    IconId = null,
                     Foods = new List<HomeFoodCardDto>()
                 });
             }

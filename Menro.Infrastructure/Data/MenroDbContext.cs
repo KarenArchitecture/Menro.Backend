@@ -15,6 +15,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<Food> Foods { get; set; }
         public DbSet<CustomFoodCategory> CustomFoodCategories { get; set; }
         public DbSet<GlobalFoodCategory> GlobalFoodCategories { get; set; }
+        public DbSet<Icon> Icons { get; set; }
         public DbSet<FoodRating> FoodRatings { get; set; }
         public DbSet<FoodVariant> FoodVariants { get; set; }
         public DbSet<FoodAddon> FoodAddons { get; set; }
@@ -54,12 +55,26 @@ namespace Menro.Infrastructure.Data
                 .HasForeignKey(f => f.GlobalFoodCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Food -> GlobalFoodCategory (optional)
-            modelBuilder.Entity<Food>()
-                .HasOne(f => f.GlobalFoodCategory)
-                .WithMany(g => g.Foods) // make sure GlobalFoodCategory has ICollection<Food> Foods
-                .HasForeignKey(f => f.GlobalFoodCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // CustomFoodCategory -> GlobalFoodCategory
+            modelBuilder.Entity<CustomFoodCategory>()
+                .HasOne(c => c.GlobalCategory)
+                .WithMany()
+                .HasForeignKey(c => c.GlobalCategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // CustomFoodCategory -> Icon
+            modelBuilder.Entity<CustomFoodCategory>()
+                .HasOne(c => c.Icon)
+                .WithMany() // بدون ICollection در Icon
+                .HasForeignKey(c => c.IconId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // GlobalFoodCategory -> Icon
+            modelBuilder.Entity<GlobalFoodCategory>()
+                .HasOne(g => g.Icon)
+                .WithMany() // بدون ICollection در Icon
+                .HasForeignKey(g => g.IconId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // FoodCategory -> Restaurant (Many-to-One)
             modelBuilder.Entity<CustomFoodCategory>()
@@ -67,6 +82,8 @@ namespace Menro.Infrastructure.Data
                 .WithMany(r => r.FoodCategories)
                 .HasForeignKey(fc => fc.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            /*---*/
 
             // Food <-> FoodVariant (One-to-Many)
             modelBuilder.Entity<FoodVariant>()

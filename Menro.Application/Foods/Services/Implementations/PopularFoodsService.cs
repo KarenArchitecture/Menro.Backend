@@ -58,7 +58,7 @@ namespace Menro.Application.Foods.Services.Implementations
             var result = new PopularFoodsDto
             {
                 CategoryTitle = randomGlobal.Name,
-                SvgIcon = randomGlobal.SvgIcon,
+                IconId = randomGlobal.IconId,
                 Foods = (foods ?? new List<Food>()).Select(MapToHomeFoodCardDto).ToList()
             };
 
@@ -110,7 +110,7 @@ namespace Menro.Application.Foods.Services.Implementations
             var result = new PopularFoodsDto
             {
                 CategoryTitle = randomGlobal.Name,
-                SvgIcon = randomGlobal.SvgIcon,
+                IconId = randomGlobal.IconId,
                 Foods = (foods ?? new List<Food>()).Select(MapToHomeFoodCardDto).ToList()
             };
 

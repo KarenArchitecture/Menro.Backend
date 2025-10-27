@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Menro.Application.Features.Identity.DTOs;
-using System.Reflection.Metadata.Ecma335;
 using Menro.Application.Features.Identity.Services;
 
-namespace Menro.Web.Controllers.Api
+namespace Menro.Web.Controllers.Public
 {
     [ApiController]
     [Route("api/auth")]
@@ -36,7 +35,8 @@ namespace Menro.Web.Controllers.Api
                 if (!await _authService.VerifyOtpAsync(dto.PhoneNumber, dto.Code))
                     return BadRequest(new { message = "کد تایید نامعتبر است." });
 
-                /*error*/ var user = await _userService.GetByPhoneNumberAsync(dto.PhoneNumber);
+                /*error*/
+                var user = await _userService.GetByPhoneNumberAsync(dto.PhoneNumber);
                 if (user is null)
                     return Ok(new { needsRegister = true });
 
@@ -65,7 +65,7 @@ namespace Menro.Web.Controllers.Api
                 });
             }
             catch (Exception ex)
-             {
+            {
                 return StatusCode(500, new
                 {
                     message = "Server error",
@@ -145,7 +145,7 @@ namespace Menro.Web.Controllers.Api
                 }
             });
         }
-        
+
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {

@@ -37,11 +37,11 @@ namespace Menro.Application.Foods.Services.Implementations
 
                 CustomFoodCategoryId = food.CustomFoodCategoryId,
                 CustomFoodCategoryName = food.CustomFoodCategory?.Name,
-                CustomFoodCategorySvg = food.CustomFoodCategory?.SvgIcon,
+                CustomFoodCategorySvg = food.CustomFoodCategory?.IconId,
 
                 GlobalFoodCategoryId = food.GlobalFoodCategoryId,
                 GlobalFoodCategoryName = food.GlobalFoodCategory?.Name,
-                GlobalFoodCategorySvg = food.GlobalFoodCategory?.SvgIcon,
+                GlobalFoodCategorySvg = food.GlobalFoodCategory?.IconId,
 
                 Variants = food.Variants?.Select(v => new MenuFoodVariantDto
                 {

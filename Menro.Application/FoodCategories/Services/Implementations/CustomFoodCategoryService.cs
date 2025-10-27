@@ -35,7 +35,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             var customCategory = new CustomFoodCategory
             {
                 Name = name,
-                SvgIcon = dto.SvgIcon ?? string.Empty,
+                IconId = null,
                 RestaurantId = restaurantId,
                 IsAvailable = true,
                 IsDeleted = false,
@@ -52,7 +52,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             var customCat = new CustomFoodCategory
             {
                 Name = globalCat.Name,
-                SvgIcon = globalCat.SvgIcon,
+                IconId = globalCat.IconId,
                 RestaurantId = restaurantId,
                 IsAvailable = true,
                 IsDeleted = false,
@@ -81,7 +81,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
             {
                 Id = category.Id,
                 Name = category.Name,
-                SvgIcon = category.SvgIcon
+                IconId = category.IconId
             };
             return catDto;
         }
@@ -95,7 +95,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
 
             // آپدیت فیلدها
             category.Name = dto.Name;
-            category.SvgIcon = dto.SvgIcon;
+            category.IconId = dto.IconId;
 
             return await _cCatRepository.UpdateCategoryAsync(category);
         }

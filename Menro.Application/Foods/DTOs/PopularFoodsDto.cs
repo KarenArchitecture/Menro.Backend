@@ -10,7 +10,7 @@ namespace Menro.Application.Orders.DTOs
     public class PopularFoodsDto
     {
         public string CategoryTitle { get; set; } = string.Empty;
-        public string SvgIcon { get; set; } = string.Empty;
+        public int? IconId { get; set; } = 0;
         public List<HomeFoodCardDto> Foods { get; set; } = new();
     }
 }
