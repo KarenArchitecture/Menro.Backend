@@ -1,5 +1,5 @@
-﻿using Menro.Application.Features.AdminPanel.Services;
-using Menro.Application.Features.Identity.Services;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.AdminPanel.Services;
 using System.Security.Claims;
 
 namespace Menro.Web.Services

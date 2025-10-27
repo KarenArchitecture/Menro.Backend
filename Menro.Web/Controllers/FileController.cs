@@ -13,7 +13,7 @@ namespace Menro.Web.Controllers
             _env = env;
         }
 
-        // ICONS
+        // ICONS ✅
         [HttpPost("upload-icon")]
         public async Task<IActionResult> UploadSvg([FromForm] IFormFile file)
         {
@@ -44,7 +44,7 @@ namespace Menro.Web.Controllers
                 {
                     await file.CopyToAsync(stream);
                 }
-                // برگردوندن فقط نام فایل برای ذخیره در دیتابیس
+                // برگردوندن فقط نام فایل + فرمت برای ذخیره در دیتابیس
                 return Ok(new { fileName });
 
             }

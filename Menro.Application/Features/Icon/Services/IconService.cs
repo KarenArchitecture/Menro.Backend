@@ -2,32 +2,31 @@
 using Menro.Domain.Interfaces;
 using Menro.Application.Features.Icons.Interfaces;
 using Menro.Application.Features.Icons.DTOs;
-using Microsoft.Extensions.Configuration;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Application.Features.Icons.Services
 {
     public class IconService : IIconService
     {
         private readonly IIconRepository _repo;
-        private readonly IConfiguration _config;
+        private readonly IFileUrlService _fileUrlService;
 
-        public IconService(IIconRepository repo, IConfiguration config)
+        public IconService(IIconRepository repo, IFileUrlService fileUrlService)
         {
             _repo = repo;
-            _config = config;
+            _fileUrlService = fileUrlService;
         }
 
         public async Task<List<GetIconDto>> GetAllAsync()
         {
             var icons = await _repo.GetAllAsync();
-            var baseUrl = _config["AppSettings:BaseUrl"]?.TrimEnd('/') ?? "";
 
             return icons.Select(x => new GetIconDto
             {
                 Id = x.Id,
                 FileName = x.FileName,
                 Label = x.Label,
-                Url = $"{baseUrl}/icons/{x.FileName}"
+                Url = _fileUrlService.BuildIconUrl(x.FileName)
             }).ToList();
         }
 
@@ -36,14 +35,12 @@ namespace Menro.Application.Features.Icons.Services
             var icon = await _repo.GetByIdAsync(id);
             if (icon == null) return null;
 
-            var baseUrl = _config["AppSettings:BaseUrl"]?.TrimEnd('/') ?? "";
-
             return new GetIconDto
             {
                 Id = icon.Id,
                 FileName = icon.FileName,
                 Label = icon.Label,
-                Url = $"{baseUrl}/icons/{icon.FileName}"
+                Url = _fileUrlService.BuildIconUrl(icon.FileName)
             };
         }
 

@@ -1,5 +1,5 @@
-﻿using Menro.Application.Features.AdminPanel.Services;
-using Menro.Application.Features.Identity.Services;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.AdminPanel.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
