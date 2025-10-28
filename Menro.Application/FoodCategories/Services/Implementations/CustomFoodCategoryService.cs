@@ -125,7 +125,6 @@ namespace Menro.Application.FoodCategories.Services.Implementations
                     Label = category.Icon.Label,
                     Url = _fileUrlService.BuildIconUrl(category.Icon.FileName)
                 }
-
             };
             return catDto;
         }

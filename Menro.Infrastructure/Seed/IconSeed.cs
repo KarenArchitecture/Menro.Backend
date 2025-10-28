@@ -22,7 +22,6 @@ namespace Menro.Infrastructure.Seed
             new Icon { FileName = "CupCakeIcon.svg", Label = "Cup Cake" },
             new Icon { FileName = "CupCakeIcon2.svg", Label = "Cup Cake 2" },
             new Icon { FileName = "DonutIcon.svg", Label = "Donut" },
-            new Icon { FileName = "DonutIcon2.svg", Label = "Donut 2" },
             new Icon { FileName = "EggIcon.svg", Label = "Egg" },
             new Icon { FileName = "FastFoodIcon.svg", Label = "Fast Food" },
             new Icon { FileName = "FishIcon.svg", Label = "Fish" },

@@ -60,7 +60,6 @@ namespace Menro.Web.Controllers
             }
         }
 
-
         [HttpDelete("delete")]
         [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> Delete(int id)

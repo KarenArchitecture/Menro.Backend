@@ -41,7 +41,7 @@ namespace Menro.Infrastructure.Repositories
         }
         public async Task<CustomFoodCategory> GetByIdAsync(int catId)
         {
-            var category = await _context.CustomFoodCategories.FirstOrDefaultAsync(c => c.Id == catId);
+            var category = await _context.CustomFoodCategories.Include(c => c.Icon).FirstOrDefaultAsync(c => c.Id == catId);
             
             if (category == null) throw new Exception($"Custom category with ID {catId} not found.");
             
