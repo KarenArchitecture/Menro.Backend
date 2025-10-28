@@ -8,7 +8,6 @@ namespace Menro.Web.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    //[Authorize(Roles = SD.Role_Admin)]
     public class IconController : ControllerBase
     {
         private readonly IIconService _iconService;
@@ -20,23 +19,16 @@ namespace Menro.Web.Controllers
 
         // ✅
         [HttpGet("read-all")]
+        [Authorize(Roles = $"{SD.Role_Owner},{SD.Role_Admin}")]
         public async Task<IActionResult> GetAll()
         {
             var icons = await _iconService.GetAllAsync();
             return Ok(icons);
         }
 
-        //[HttpGet("read")]
-        //public async Task<IActionResult> GetById(int id)
-        //{
-        //    var icon = await _iconService.GetByIdAsync(id);
-        //    if (icon == null)
-        //        return NotFound(new { message = "Icon not found" });
-
-        //    return Ok(icon);
-        //}
-
+        // ✅
         [HttpPost("add")]
+        [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> Add([FromBody] AddIconDto dto)
         {
             if (!ModelState.IsValid)
@@ -70,6 +62,7 @@ namespace Menro.Web.Controllers
 
 
         [HttpDelete("delete")]
+        [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> Delete(int id)
         {
             var existing = await _iconService.GetByIdAsync(id);

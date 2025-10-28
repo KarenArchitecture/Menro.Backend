@@ -19,12 +19,6 @@ namespace Menro.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<CustomFoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug)
-        {
-            return await _context.CustomFoodCategories
-                .Where(fc => fc.Restaurant.Slug == restaurantSlug)
-                .ToListAsync();
-        }
         public async Task<bool> CreateAsync(CustomFoodCategory category)
         {
             try
@@ -38,11 +32,14 @@ namespace Menro.Infrastructure.Repositories
                 return false;
             }
         }
-        public async Task<IEnumerable<CustomFoodCategory>> GetCustomFoodCategoriesAsync(int restaurantId)
+        public async Task<IEnumerable<CustomFoodCategory>> GetAllAsync(int restaurantId)
         {
-            return await _context.CustomFoodCategories.Include(u => u.Icon).Where(u => u.RestaurantId == restaurantId && !u.IsDeleted && u.IsAvailable).ToListAsync();
+            return await _context.CustomFoodCategories.Include(u => u.Icon)
+                .Where(u => u.RestaurantId == restaurantId && !u.IsDeleted && u.IsAvailable)
+                .OrderBy(u => u.Name)
+                .ToListAsync();
         }
-        public async Task<CustomFoodCategory> GetCategoryAsync(int catId)
+        public async Task<CustomFoodCategory> GetByIdAsync(int catId)
         {
             var category = await _context.CustomFoodCategories.FirstOrDefaultAsync(c => c.Id == catId);
             
@@ -50,12 +47,29 @@ namespace Menro.Infrastructure.Repositories
             
             return category;
         }
+        public async Task<CustomFoodCategory?> GetByNameAsync(int restaurantId, string catName)
+        {
+            return await _context.CustomFoodCategories
+                .FirstOrDefaultAsync(c => c.RestaurantId == restaurantId && c.Name == catName);
+        }
+        public async Task<IEnumerable<CustomFoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug)
+        {
+            return await _context.CustomFoodCategories
+                .Where(fc => fc.Restaurant.Slug == restaurantSlug)
+                .ToListAsync();
+        }
 
         public async Task<bool> ExistsByNameAsync(int restaurantId, string catName)
         {
             return await _context.CustomFoodCategories.AnyAsync(u => u.RestaurantId == restaurantId && u.Name == catName);
         }
-        public async Task<bool> DeleteCustomCategoryAsync(int catId)
+        public async Task<bool> IsSoftDeleted(int restaurantId, string catName)
+        {
+            var cat = await _context.CustomFoodCategories.Where(c => c.IsDeleted == true && c.RestaurantId == restaurantId)
+                .FirstOrDefaultAsync(x => x.Name == catName);
+            return cat != null;
+        }
+        public async Task<bool> DeleteAsync(int catId)
         {
             var cat = await _context.CustomFoodCategories.Include(c => c.Foods).FirstOrDefaultAsync(c => c.Id == catId);
             if (cat is null)

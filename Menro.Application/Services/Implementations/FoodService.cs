@@ -21,7 +21,7 @@ namespace Menro.Application.Services.Implementations
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
 
-            int? gCat = _cCategoryRepository.GetCategoryAsync(dto.FoodCategoryId).Result.GlobalCategoryId;
+            int? gCat = _cCategoryRepository.GetByIdAsync(dto.FoodCategoryId).Result.GlobalCategoryId;
             var food = new Food
             {
                 Name = dto.Name.Trim(),

@@ -8,6 +8,7 @@ namespace Menro.Application.Features.Icons.Services
 {
     public class IconService : IIconService
     {
+        #region DI
         private readonly IIconRepository _repo;
         private readonly IFileUrlService _fileUrlService;
 
@@ -16,7 +17,7 @@ namespace Menro.Application.Features.Icons.Services
             _repo = repo;
             _fileUrlService = fileUrlService;
         }
-
+        #endregion
         public async Task<List<GetIconDto>> GetAllAsync()
         {
             var icons = await _repo.GetAllAsync();
@@ -29,7 +30,6 @@ namespace Menro.Application.Features.Icons.Services
                 Url = _fileUrlService.BuildIconUrl(x.FileName)
             }).ToList();
         }
-
         public async Task<GetIconDto?> GetByIdAsync(int id)
         {
             var icon = await _repo.GetByIdAsync(id);
@@ -43,7 +43,6 @@ namespace Menro.Application.Features.Icons.Services
                 Url = _fileUrlService.BuildIconUrl(icon.FileName)
             };
         }
-
         public async Task<bool> AddAsync(AddIconDto dto)
         {
             // ✅ اعتبارسنجی ساده
