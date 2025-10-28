@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Menro.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class dbInit14040802 : Migration
+    public partial class SIInitializing : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -55,19 +55,17 @@ namespace Menro.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "GlobalFoodCategories",
+                name: "Icons",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    SvgIcon = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    DisplayOrder = table.Column<int>(type: "int", nullable: false)
+                    FileName = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: false),
+                    Label = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_GlobalFoodCategories", x => x.Id);
+                    table.PrimaryKey("PK_Icons", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -222,6 +220,28 @@ namespace Menro.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "GlobalFoodCategories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    IconId = table.Column<int>(type: "int", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GlobalFoodCategories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_GlobalFoodCategories_Icons_IconId",
+                        column: x => x.IconId,
+                        principalTable: "Icons",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Restaurants",
                 columns: table => new
                 {
@@ -270,9 +290,9 @@ namespace Menro.Infrastructure.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    SvgIcon = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    IconId = table.Column<int>(type: "int", nullable: true),
                     RestaurantId = table.Column<int>(type: "int", nullable: false),
                     GlobalCategoryId = table.Column<int>(type: "int", nullable: true)
                 },
@@ -283,7 +303,14 @@ namespace Menro.Infrastructure.Migrations
                         name: "FK_CustomFoodCategories_GlobalFoodCategories_GlobalCategoryId",
                         column: x => x.GlobalCategoryId,
                         principalTable: "GlobalFoodCategories",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_CustomFoodCategories_Icons_IconId",
+                        column: x => x.IconId,
+                        principalTable: "Icons",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                     table.ForeignKey(
                         name: "FK_CustomFoodCategories_Restaurants_RestaurantId",
                         column: x => x.RestaurantId,
@@ -631,6 +658,11 @@ namespace Menro.Infrastructure.Migrations
                 column: "GlobalCategoryId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_CustomFoodCategories_IconId",
+                table: "CustomFoodCategories",
+                column: "IconId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CustomFoodCategories_RestaurantId_Name",
                 table: "CustomFoodCategories",
                 columns: new[] { "RestaurantId", "Name" },
@@ -670,6 +702,11 @@ namespace Menro.Infrastructure.Migrations
                 name: "IX_FoodVariants_FoodId",
                 table: "FoodVariants",
                 column: "FoodId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GlobalFoodCategories_IconId",
+                table: "GlobalFoodCategories",
+                column: "IconId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_GlobalFoodCategories_Name",
@@ -826,6 +863,9 @@ namespace Menro.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Restaurants");
+
+            migrationBuilder.DropTable(
+                name: "Icons");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
