@@ -17,6 +17,7 @@ namespace Menro.Domain.Entities
         [ForeignKey(nameof(IconId))]
         public Icon? Icon { get; set; }
 
+        public bool IsDeleted { get; set; } = false;
         public bool IsActive { get; set; } = true;
         public int DisplayOrder { get; set; } = 0;
 
