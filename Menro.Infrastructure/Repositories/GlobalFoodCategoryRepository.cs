@@ -29,10 +29,9 @@ namespace Menro.Infrastructure.Repositories
         {
             return await _context.GlobalFoodCategories.Include(c => c.Icon).OrderBy(c => c.Name).ToListAsync();
         }
-
-        public async Task<GlobalFoodCategory> GetByIdAsync(int Id)
+        public async Task<GlobalFoodCategory> GetByIdAsync(int id)
         {
-            var cat = await _context.GlobalFoodCategories.Include(g => g.Icon).FirstOrDefaultAsync(g => g.Id == Id);
+            var cat = await _context.GlobalFoodCategories.Include(g => g.Icon).FirstOrDefaultAsync(g => g.Id == id && !g.IsDeleted);
 
             if (cat is null)
             {
@@ -41,8 +40,31 @@ namespace Menro.Infrastructure.Repositories
 
             return cat;
         }
-     
+        public async Task<bool> UpdateCategoryAsync(GlobalFoodCategory category)
+        {
+            if (category == null) return false;
 
-
+            _context.GlobalFoodCategories.Update(category);
+            var saved = await _context.SaveChangesAsync();
+            return saved > 0;
+        }
+        public async Task<bool> DeleteCategoryAsync(int id)
+        {
+            var cat = await _context.GlobalFoodCategories.Include(c => c.Foods).FirstOrDefaultAsync(c => c.Id == id);
+            if (cat is null)
+            {
+                return false;
+            }
+            if (cat.Foods.Count == 0)
+            {
+                _context.GlobalFoodCategories.Remove(cat);
+            }
+            else
+            {
+                cat.IsDeleted = true;
+            }
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

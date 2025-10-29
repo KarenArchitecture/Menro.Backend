@@ -1,10 +1,10 @@
-﻿namespace Menro.Application.Features.CustomFoodCategory.DTOs
+﻿namespace Menro.Application.Features.GlobalFoodCategories.DTOs
 {
-    public class UpdateCustomFoodCategoryDto
+    public class UpdateGlobalCategoryDto
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public int? IconId { get; set; } = null;
-    }
 
+    }
 }

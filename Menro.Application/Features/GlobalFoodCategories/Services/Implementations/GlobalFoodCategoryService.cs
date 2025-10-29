@@ -36,11 +36,11 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
             return false;
 
         }
-        public async Task<List<GlobalCategoryDTO>> GetAllGlobalCategoriesAsync()
+        public async Task<List<GetGlobalCategoryDTO>> GetAllGlobalCategoriesAsync()
         {
             var list = await _repository.GetAllAsync();
 
-            return list.Select(x => new GlobalCategoryDTO
+            return list.Select(x => new GetGlobalCategoryDTO
             {
                 Id = x.Id,
                 Name = x.Name,
@@ -53,11 +53,11 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
                 }
             }).ToList();
         }
-        public async Task<GlobalCategoryDTO> GetGlobalCategoryAsync(int id)
+        public async Task<GetGlobalCategoryDTO> GetGlobalCategoryAsync(int id)
         {
             var category = await _repository.GetByIdAsync(id);
 
-            return new GlobalCategoryDTO
+            return new GetGlobalCategoryDTO
             {
                 Id = category.Id,
                 Name = category.Name,
@@ -70,7 +70,21 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
                 }
             };
         }
+        public async Task<bool> UpdateGlobalCategoryAsync(UpdateGlobalCategoryDto dto)
+        {
+            var category = await _repository.GetByIdAsync(dto.Id);
 
+            if (category == null)
+                return false;
 
+            category.Name = dto.Name;
+            category.IconId = dto.IconId;
+
+            return await _repository.UpdateCategoryAsync(category);
+        }
+        public async Task<bool> DeleteGlobalCategoryAsync(int id)
+        {
+            return await _repository.DeleteCategoryAsync(id);
+        }
     }
 }

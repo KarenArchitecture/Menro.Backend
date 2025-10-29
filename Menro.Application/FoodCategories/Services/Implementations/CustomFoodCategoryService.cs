@@ -130,13 +130,11 @@ namespace Menro.Application.FoodCategories.Services.Implementations
         }
         public async Task<bool> UpdateCategoryAsync(UpdateCustomFoodCategoryDto dto)
         {
-            // دسته رو از دیتابیس بیار
-            var category = await _cCatRepository.GetByIdAsync(dto.Id); // فرض بر اینه که متد GetByIdAsync موجوده
+            var category = await _cCatRepository.GetByIdAsync(dto.Id);
 
-            if (category == null || category.IsDeleted)
-                return false; // دسته وجود ندارد یا soft deleted است
+            if (category == null)
+                return false;
 
-            // آپدیت فیلدها
             category.Name = dto.Name;
             category.IconId = dto.IconId;
 
@@ -144,8 +142,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
         }
         public async Task<bool> DeleteCustomCategoryAsync(int catId)
         {
-            bool result = await _cCatRepository.DeleteAsync(catId);
-            return result;
+            return await _cCatRepository.DeleteAsync(catId);
         }
     }
 }

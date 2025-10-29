@@ -52,9 +52,10 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(list);
         }
 
+        // ✅
         // read
         [HttpGet("read")]
-        [AllowAnonymous]
+        [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> GetAsync([FromQuery] int catId)
         {
             try
@@ -67,6 +68,36 @@ namespace Menro.Web.Controllers.AdminPanel
                 return NotFound(new { message = ex.Message });
             }
         }
+
+        // ✅
+        // update
+        [HttpPut("update")]
+        [Authorize(Roles = SD.Role_Admin)]
+        public async Task<IActionResult> UpdateAsync([FromBody] UpdateGlobalCategoryDto dto)
+        {
+            try
+            {
+                await _gCatService.UpdateGlobalCategoryAsync(dto);
+                return Ok(new { message = "Global category updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ✅
+        [HttpDelete("delete/{catId}")]
+        [Authorize(Roles = SD.Role_Admin)]
+        public async Task<IActionResult> DeleteAsync(int catId)
+        {
+            var result = await _gCatService.DeleteGlobalCategoryAsync(catId);
+            if (!result)
+                return BadRequest(new { message = "حذف دسته‌بندی موفق نبود." });
+
+            return Ok(new { message = "دسته‌بندی حذف شد." });
+        }
+
 
     }
 }
