@@ -30,7 +30,7 @@ namespace Menro.Web.Controllers.AdminPanel
         //✅
         [HttpPost("add")]
         [Authorize(Roles = SD.Role_Admin)]
-        public async Task<IActionResult> AddGlobalCategoryAsync([FromBody] CreateGlobalCategoryDTO dto)
+        public async Task<IActionResult> AddAsync([FromBody] CreateGlobalCategoryDTO dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
                 return BadRequest(new { message = "نام دسته‌بندی الزامی است." });
@@ -46,21 +46,20 @@ namespace Menro.Web.Controllers.AdminPanel
         // read-all
         [HttpGet("read-all")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAllGlobalCategories()
+        public async Task<IActionResult> GetAllAsync()
         {
             var list = await _gCatService.GetAllGlobalCategoriesAsync();
             return Ok(list);
         }
 
-
         // read
-        [HttpGet("{id:int}")]
+        [HttpGet("read")]
         [AllowAnonymous]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> GetAsync([FromQuery] int catId)
         {
             try
             {
-                var cat = await _gCatService.GetGlobalCategoryAsync(id);
+                var cat = await _gCatService.GetGlobalCategoryAsync(catId);
                 return Ok(cat);
             }
             catch (Exception ex)
