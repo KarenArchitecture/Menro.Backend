@@ -19,11 +19,12 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementatio
         }
 
         // modify for icon url/name
-        public async Task<bool> CreateGlobalCategoryAsync(CreateGlobalCategoryDTO dto)
+        public async Task<bool> AddGlobalCategoryAsync(CreateGlobalCategoryDTO dto)
         {
             var entity = new GlobalFoodCategory
             {
                 Name = dto.Name,
+                IconId = dto.IconId,
                 IsActive = true
             };
 

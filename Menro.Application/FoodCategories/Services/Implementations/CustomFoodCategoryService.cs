@@ -45,7 +45,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
                     sDeletedCat.IsDeleted = false;
                     sDeletedCat.IsAvailable = true;
                     sDeletedCat.IconId = dto.IconId ?? sDeletedCat.IconId;
-                    await _cCatRepository.UpdateAsync(sDeletedCat);
+                    await _cCatRepository.UpdateCategoryAsync(sDeletedCat);
                     return true;
                 }
                 return false; // duplicate

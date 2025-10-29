@@ -1,4 +1,6 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.SD;
+using Menro.Application.Features.GlobalFoodCategories.DTOs;
 using Menro.Application.Features.GlobalFoodCategories.Services.Interfaces;
 using Menro.Application.FoodCategories.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +27,20 @@ namespace Menro.Web.Controllers.AdminPanel
             _currentUserService = currentUserService;
         }
 
+        //✅
+        [HttpPost("add")]
+        [Authorize(Roles = SD.Role_Admin)]
+        public async Task<IActionResult> AddGlobalCategoryAsync([FromBody] CreateGlobalCategoryDTO dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
+                return BadRequest(new { message = "نام دسته‌بندی الزامی است." });
+
+            var result = await _gCatService.AddGlobalCategoryAsync(dto);
+            if (!result)
+                return BadRequest(new { message = "افزودن دسته‌بندی موفق نبود (ممکن است تکراری باشد)." });
+
+            return Ok(new { message = "دسته‌بندی با موفقیت اضافه شد." });
+        }
 
         // ✅
         // read-all

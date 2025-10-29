@@ -32,7 +32,7 @@ namespace Menro.Infrastructure.Repositories
 
         public async Task<GlobalFoodCategory> GetByIdAsync(int Id)
         {
-            var cat = await _context.GlobalFoodCategories.FirstOrDefaultAsync(u => u.Id == Id);
+            var cat = await _context.GlobalFoodCategories.Include(g => g.Icon).FirstOrDefaultAsync(g => g.Id == Id);
 
             if (cat is null)
             {
