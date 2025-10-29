@@ -1,10 +1,8 @@
-﻿
-
-using Menro.Application.Features.Icons.DTOs;
+﻿using Menro.Application.Features.Icons.DTOs;
 
 namespace Menro.Application.Features.GlobalFoodCategories.DTOs
 {
-    public class GlobalCategoryDTO
+    public class GetGlobalCategoryDTO
     {
         public int Id { get; set; }
         public string Name { get; set; }
