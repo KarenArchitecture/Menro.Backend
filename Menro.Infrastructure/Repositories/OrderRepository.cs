@@ -43,7 +43,7 @@ namespace Menro.Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<int> CountNewOrdersAsync(int? restaurantId, DateTime since)
+        public async Task<int> GetRecentOrdersCountAsync(int? restaurantId, DateTime since)
         {
             var query = _context.Orders.AsQueryable();
 
@@ -51,6 +51,16 @@ namespace Menro.Infrastructure.Repositories
                 query = query.Where(o => o.RestaurantId == restaurantId.Value);
 
             return await query.CountAsync(o => o.CreatedAt >= since);
+        }
+        public async Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since)
+        {
+            var query = _context.Orders.AsQueryable();
+
+            if (restaurantId.HasValue)
+                query = query.Where(o => o.RestaurantId == restaurantId.Value);
+
+            query = query.Where(o => o.CreatedAt >= since);
+            return await query.SumAsync(o => (decimal?)o.TotalAmount ?? 0);
         }
 
         /// <summary>

@@ -14,7 +14,8 @@ namespace Menro.Application.Features.Order.Services
     {
         Task<List<MonthlySalesDto>> GetMonthlySalesRawAsync(int? restaurantId = null);
         Task<decimal> GetTotalRevenueAsync(int? restaurantId = null);
-        Task<int> GetNewOrdersCountAsync(int? restaurantId = null, int daysBack = 30);
+        Task<int> GetRecentOrdersCountAsync(int? restaurantId = null, int daysBack = 30);
+        Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId = null, int daysBack = 0);
 
     }
 }

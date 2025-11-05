@@ -11,10 +11,11 @@ namespace Menro.Application.Features.AdminPanel.Services
 {
     public interface IDashboardService
     {
-        Task<AdminDto> GetAdminDetailsAsync(string userId);
+        Task<DashboardDto> GetDashboardDataAsync();
         Task<decimal> GetTotalRevenueAsync(int? restaurantId = null);
-        Task<int> GetNewOrdersCountAsync(int? restaurantId = null);
+        Task<int> GetThisMonthOrdersCountAsync(int? restaurantId = null);
+        Task<int> GetTodayOrdersCountAsync(int? restaurantId = null);
+        Task<decimal> GetTodayOrdersRevenueAsync(int? restaurantId = null);
         Task<List<SalesByMonthDto>> GetMonthlySalesAsync(int? restaurantId = null);
-        Task<int> GetRestaurantIdByUserIdAsync(string userId);
     }
 }

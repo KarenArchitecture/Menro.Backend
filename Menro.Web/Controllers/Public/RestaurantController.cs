@@ -23,7 +23,7 @@ namespace Menro.Web.Controllers.Public
     [Route("api/public/[controller]")]
     public class RestaurantController : ControllerBase
     {
-        #region Fields & Constructor
+        #region DI
 
         private readonly IRestaurantService _restaurantService;
         private readonly IFeaturedRestaurantService _featuredRestaurantService;
@@ -37,9 +37,6 @@ namespace Menro.Web.Controllers.Public
         private readonly IMenuListService _menuListService;
         private readonly IMenuItemService _menuItemService;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RestaurantController"/>.
-        /// </summary>
         public RestaurantController(
             IRestaurantService restaurantService,
             IFeaturedRestaurantService featuredRestaurantService,
@@ -134,14 +131,6 @@ namespace Menro.Web.Controllers.Public
 
         #region Registration & Categories
 
-        /// <summary>
-        /// Registers a new restaurant for the currently authenticated user.
-        /// </summary>
-        /// <param name="dto">The restaurant registration data.</param>
-        /// <returns>Status of the registration attempt.</returns>
-        /// <response code="200">Restaurant registered successfully.</response>
-        /// <response code="400">Invalid input or registration failed.</response>
-        /// <response code="401">User not authenticated.</response>
         [HttpPost("register")]
         [Authorize]
         public async Task<ActionResult> RestaurantRegister([FromBody] RegisterRestaurantDto dto)
@@ -163,14 +152,10 @@ namespace Menro.Web.Controllers.Public
             return Ok("رستوران با موفقیت ثبت شد.");
         }
 
-        /// <summary>
-        /// Retrieves all restaurant categories.
-        /// </summary>
-        /// <returns>A list of restaurant categories.</returns>
-        /// <response code="200">Successfully returned restaurant categories.</response>
         [HttpGet("categories")]
         public async Task<IActionResult> GetCategories()
         {
+            // Ro. => Ab. اینجا از category service استفاده و این متد در restaurant service رو کلا پاک کن، دوباره کاریه.
             var categories = await _restaurantService.GetRestaurantCategoriesAsync();
             return Ok(categories);
         }

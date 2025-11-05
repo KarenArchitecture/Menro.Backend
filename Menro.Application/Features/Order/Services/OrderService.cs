@@ -44,11 +44,38 @@ namespace Menro.Application.Features.Order.Services
                 .OrderBy(x => x.Month)
                 .ToList();
         }
-        public async Task<int> GetNewOrdersCountAsync(int? restaurantId = null, int daysBack = 30)
+        public async Task<int> GetRecentOrdersCountAsync(int? restaurantId = null, int daysBack = 0)
         {
-            var since = DateTime.UtcNow.AddDays(-daysBack);
-            return await _orderRepository.CountNewOrdersAsync(restaurantId, since);
+            DateTime since;
+
+            if (daysBack == 0)
+            {
+                since = DateTime.UtcNow.Date;
+            }
+            else
+            {
+                since = DateTime.UtcNow.AddDays(-daysBack);
+            }
+
+            return await _orderRepository.GetRecentOrdersCountAsync(restaurantId, since);
         }
+        public async Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId = null, int daysBack = 0)
+        {
+            DateTime since;
+
+            if (daysBack == 0)
+            {
+                since = DateTime.UtcNow.Date;
+            }
+            else
+            {
+                since = DateTime.UtcNow.AddDays(-daysBack);
+            }
+
+            return await _orderRepository.GetRecentOrdersRevenueAsync(restaurantId, since);
+        }
+
+
 
     }
 }
