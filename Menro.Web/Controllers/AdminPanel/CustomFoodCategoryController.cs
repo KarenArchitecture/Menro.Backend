@@ -31,12 +31,26 @@ namespace Menro.Web.Controllers.AdminPanel
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
                 return BadRequest(new { message = "نام دسته‌بندی الزامی است." });
-
-            var result = await _cCatService.AddCategoryAsync(dto);
+            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var result = await _cCatService.AddCategoryAsync(dto, restaurantId);
             if (!result)
                 return BadRequest(new { message = "افزودن دسته‌بندی موفق نبود (ممکن است تکراری باشد)." });
 
             return Ok(new { message = "دسته‌بندی با موفقیت اضافه شد." });
+        }
+
+        // ✅
+        [HttpPost("add-from-global")]
+        public async Task<IActionResult> AddFromGlobalsAsync([FromQuery] int globalCategoryId)
+        {
+            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            if (!await _cCatService.AddFromGlobalAsync(globalCategoryId, restaurantId))
+            {
+                return BadRequest(new { message = "خطا در افزودن دسته‌بندی از دسته‌بندی‌های عمومی." });
+            }
+
+            return Ok(new { message = "دسته‌بندی با موفقیت اضافه شد." });
+
         }
 
         // ✅
@@ -86,20 +100,6 @@ namespace Menro.Web.Controllers.AdminPanel
                 return BadRequest(new { message = "حذف دسته‌بندی موفق نبود." });
 
             return Ok(new { message = "دسته‌بندی حذف شد." });
-        }
-
-        // ✅
-        [HttpPost("add-from-global")]
-        public async Task<IActionResult> AddFromGlobalsAsync([FromQuery] int globalCategoryId)
-        {
-            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
-            if (!await _cCatService.AddFromGlobalAsync(globalCategoryId, restaurantId))
-            {
-                return BadRequest(new { message = "خطا در افزودن دسته‌بندی از دسته‌بندی‌های عمومی." });
-            }
-
-            return Ok(new { message = "دسته‌بندی با موفقیت اضافه شد." });
-
         }
 
 

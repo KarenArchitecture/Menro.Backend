@@ -14,27 +14,23 @@ namespace Menro.Application.FoodCategories.Services.Implementations
         private readonly ICustomFoodCategoryRepository _cCatRepository;
         private readonly IGlobalFoodCategoryRepository _gCatRepository;
         private readonly IFileUrlService _fileUrlService;
-        private readonly ICurrentUserService _currentUserService;
         public CustomFoodCategoryService(
             ICustomFoodCategoryRepository cCatRepository,
             IGlobalFoodCategoryRepository gCatRepository,
-            ICurrentUserService currentUserService,
             IFileUrlService fileUrlService
             )
         {
             _cCatRepository = cCatRepository;
             _gCatRepository = gCatRepository;
-            _currentUserService = currentUserService;
             _fileUrlService = fileUrlService;
         }
         #endregion
-        public async Task<bool> AddCategoryAsync (CreateCustomFoodCategoryDto dto)
+        public async Task<bool> AddCategoryAsync (CreateCustomFoodCategoryDto dto, int restaurantId)
         {
             if (dto is null) return false; // invalid model
 
             var name = (dto.Name ?? string.Empty).Trim();
 
-            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
             if (restaurantId == null || restaurantId == 0) return false; // invalid restaurantId
 
             if (await _cCatRepository.ExistsByNameAsync(restaurantId, name))
@@ -45,7 +41,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
                     sDeletedCat.IsDeleted = false;
                     sDeletedCat.IsAvailable = true;
                     sDeletedCat.IconId = dto.IconId ?? sDeletedCat.IconId;
-                    await _cCatRepository.UpdateCategoryAsync(sDeletedCat);
+                    await _cCatRepository.UpdateCategoryAsync(sDeletedCat); // return this
                     return true;
                 }
                 return false; // duplicate
@@ -58,29 +54,24 @@ namespace Menro.Application.FoodCategories.Services.Implementations
                 RestaurantId = restaurantId,
                 IsAvailable = true,
                 IsDeleted = false,
-                GlobalCategoryId = null
+                GlobalCategoryId = dto.GlobalCategoryId ?? null
             };
             return await _cCatRepository.CreateAsync(customCategory);
         }
         public async Task<bool> AddFromGlobalAsync(int globalCategoryId, int restaurantId)
         {
             var globalCat = await _gCatRepository.GetByIdAsync(globalCategoryId);
+
             if (globalCat == null)
                 throw new Exception("Global category not found");
-            var customCat = new CustomFoodCategory
+
+            var customCat = new CreateCustomFoodCategoryDto
             {
                 Name = globalCat.Name,
-                IconId = globalCat.IconId,
-                RestaurantId = restaurantId,
-                IsAvailable = true,
-                IsDeleted = false,
-
-                GlobalCategoryId = globalCategoryId,
-                GlobalCategory = globalCat,
+                IconId = globalCat.IconId ?? null,
+                GlobalCategoryId = globalCat.Id
             };
-            
-
-            return await _cCatRepository.CreateAsync(customCat);
+            return await AddCategoryAsync(customCat, restaurantId);
         }
         public async Task<List<GetCustomCategoryDto>> GetAllCustomFoodCategoriesAsync(int restaurantId)
         {

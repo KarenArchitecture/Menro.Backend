@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Menro.Application.Features.Identity.DTOs;
 using Menro.Application.Features.Identity.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -28,6 +30,7 @@ namespace Menro.Web.Controllers.Public
 
         }
         [HttpPost("verify-otp")]
+
         public async Task<IActionResult> LoginWithOtp([FromBody] VerifyOtpDto dto)
         {
             try
@@ -158,6 +161,7 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(new { message = "رمز عبور با موفقیت تغییر کرد." });
         }
+
         [HttpPost("logout")]
         public IActionResult Logout()
         {
@@ -167,6 +171,42 @@ namespace Menro.Web.Controllers.Public
             // اگه بخوایم در آینده logout tokens یا blacklist رو ثبت کنیم اینجا انجام میدیم
 
             return Ok(new { message = "Logged out successfully" });
+        }
+
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUser()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim))
+                    return Unauthorized(new { message = "شناسه کاربر در توکن یافت نشد." });
+
+                var user = await _userService.GetByIdAsync(userIdClaim);
+                if (user is null)
+                    return NotFound(new { message = "کاربر یافت نشد." });
+
+                var roles = await _userService.GetRolesAsync(user);
+
+                return Ok(new
+                {
+                    user.Id,
+                    user.FullName,
+                    user.Email,
+                    user.PhoneNumber,
+                    Roles = roles
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    message = "Server error",
+                    error = ex.Message
+                });
+            }
         }
 
     }
