@@ -5,7 +5,6 @@ using System.Security.Claims;
 
 namespace Menro.Web.Services
 {
-    // Menro.Web.Services
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;

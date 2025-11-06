@@ -14,7 +14,7 @@ namespace Menro.Domain.Interfaces
 
         Task<decimal> GetTotalRevenueAsync(int? restaurantId = null);
 
-        Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, int year);
+        Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, DateTime from, DateTime to);
 
         Task<int> GetRecentOrdersCountAsync(int? restaurantId, DateTime since);
         Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since);

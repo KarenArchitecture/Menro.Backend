@@ -1,6 +1,6 @@
 ﻿using Menro.Application.Common.Interfaces;
 
-namespace Menro.Infrastructure.Sms
+namespace Menro.Infrastructure.Services
 {
     public class FakeSmsSender : ISmsSender
     {

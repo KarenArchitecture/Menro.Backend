@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Menro.Domain.Interfaces;
-using Menro.Infrastructure.Sms;
+using Menro.Infrastructure.Services;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Repositories;
 using Menro.Domain.Entities;
@@ -18,6 +18,7 @@ namespace Menro.Infrastructure.Extensions
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ISmsSender, FakeSmsSender>();
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+            services.AddScoped<IDateTimeService, DateTimeService>();
             services.AddHttpContextAccessor();
 
             return services;

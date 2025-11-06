@@ -9,19 +9,13 @@ namespace Menro.Application.Features.AdminPanel.Services
 {
     public class DashboardService : IDashboardService
     {
-        private readonly IUserService _userService;
         private readonly IOrderService _orderService;
-        private readonly IRestaurantService _restaurantService;
         private readonly ICurrentUserService _currentUserService;
 
-        public DashboardService(IUserService userService, 
-            IOrderService orderService, 
-            IRestaurantService restaurantService,
+        public DashboardService(IOrderService orderService, 
             ICurrentUserService currentUserService)
         {
-            _userService = userService;
             _orderService = orderService;
-            _restaurantService = restaurantService;
             _currentUserService = currentUserService;
         }
 
@@ -33,7 +27,7 @@ namespace Menro.Application.Features.AdminPanel.Services
             {
                 restaurantId = 0;
             }
-            
+
             // 📍 1. restaurant name
             //var restaurant = await _restaurantService.GetRestaurantName(restaurantId.Value);
 
@@ -47,6 +41,7 @@ namespace Menro.Application.Features.AdminPanel.Services
             var monthlySales = monthlySalesRaw.Select(r => new SalesByMonthDto
             {
                 Month = r.Month,
+                MonthName = r.MonthName,
                 TotalSales = r.TotalAmount
             }).ToList();
 

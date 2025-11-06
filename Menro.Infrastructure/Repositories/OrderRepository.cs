@@ -30,12 +30,13 @@ namespace Menro.Infrastructure.Repositories
             return await query.SumAsync(o => o.TotalAmount);
         }
 
-        public async Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, int year)
+        public async Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, DateTime from, DateTime to)
         {
             var query = _context.Orders
                 .Where(o =>
                     o.Status == OrderStatus.Completed &&
-                    o.CreatedAt.Year == year);
+                    o.CreatedAt >= from &&
+                    o.CreatedAt < to);
 
             if (restaurantId.HasValue)
                 query = query.Where(o => o.RestaurantId == restaurantId.Value);

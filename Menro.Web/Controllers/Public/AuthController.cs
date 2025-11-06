@@ -29,8 +29,8 @@ namespace Menro.Web.Controllers.Public
             return Ok(new { message = "کد تأیید ارسال شد." });
 
         }
+        
         [HttpPost("verify-otp")]
-
         public async Task<IActionResult> LoginWithOtp([FromBody] VerifyOtpDto dto)
         {
             try
@@ -77,6 +77,7 @@ namespace Menro.Web.Controllers.Public
                 });
             }
         }
+        
         [HttpPost("login-password")]
         public async Task<IActionResult> LoginWithPassword([FromBody] LoginPasswordDto dto)
         {
@@ -105,7 +106,7 @@ namespace Menro.Web.Controllers.Public
                 return BadRequest(new { message = ex.Message });
             }
         }
-
+        
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -148,7 +149,7 @@ namespace Menro.Web.Controllers.Public
                 }
             });
         }
-
+        
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {
@@ -161,7 +162,7 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(new { message = "رمز عبور با موفقیت تغییر کرد." });
         }
-
+        
         [HttpPost("logout")]
         public IActionResult Logout()
         {
@@ -172,8 +173,7 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(new { message = "Logged out successfully" });
         }
-
-
+        
         [Authorize]
         [HttpGet("me")]
         public async Task<IActionResult> GetCurrentUser()
