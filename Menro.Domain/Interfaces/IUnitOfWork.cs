@@ -18,7 +18,7 @@ namespace Menro.Domain.Interfaces
         IOtpRepository Otp { get;}
         IOrderRepository Order { get;}
         IOrderItemRepository OrderItem { get;}
-
+        IRefreshTokenRepository RefreshToken { get;}
         Task<int> SaveChangesAsync();
     }
 }
