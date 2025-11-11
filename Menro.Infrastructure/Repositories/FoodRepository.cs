@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Menro.Infrastructure.Repositories
 {
+    /// <summary>
+    /// Repository implementation for managing Food entities,
+    /// including global category queries, restaurant menus, and admin CRUD.
+    /// </summary>
     public class FoodRepository : IFoodRepository
     {
         private readonly MenroDbContext _context;
@@ -14,10 +18,12 @@ namespace Menro.Infrastructure.Repositories
             _context = context;
         }
 
-        /* ===================== Home Page (Global categories) ===================== */
+        /* ============================================================
+           🔹 Home Page - Global Food Categories
+        ============================================================ */
 
         /// <summary>
-        /// Get all active global categories that have at least one available food
+        /// Gets all active global categories that have at least one available food.
         /// </summary>
         public async Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesAsync()
         {
@@ -26,7 +32,6 @@ namespace Menro.Infrastructure.Repositories
                 .Where(gc => gc.IsActive)
                 .ToListAsync();
 
-            // Only include global categories that have foods available
             var eligibleGlobalIds = await _context.Foods
                 .AsNoTracking()
                 .Include(f => f.Restaurant)
@@ -35,8 +40,7 @@ namespace Menro.Infrastructure.Repositories
                     !f.IsDeleted &&
                     f.Restaurant.IsActive &&
                     f.Restaurant.IsApproved &&
-                    f.GlobalFoodCategoryId != null
-                )
+                    f.GlobalFoodCategoryId != null)
                 .Select(f => f.GlobalFoodCategoryId!.Value)
                 .Distinct()
                 .ToListAsync();
@@ -49,7 +53,7 @@ namespace Menro.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Get all active global category IDs
+        /// Gets all active global category IDs.
         /// </summary>
         public async Task<List<int>> GetAllGlobalCategoryIdsAsync()
         {
@@ -61,7 +65,7 @@ namespace Menro.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Get all active global categories except the excluded titles
+        /// Gets all active global categories excluding specific titles.
         /// </summary>
         public async Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesExcludingAsync(List<string> excludeTitles)
         {
@@ -80,8 +84,7 @@ namespace Menro.Infrastructure.Repositories
                     !f.IsDeleted &&
                     f.Restaurant.IsActive &&
                     f.Restaurant.IsApproved &&
-                    f.GlobalFoodCategoryId != null
-                )
+                    f.GlobalFoodCategoryId != null)
                 .Select(f => f.GlobalFoodCategoryId!.Value)
                 .Distinct()
                 .ToListAsync();
@@ -94,74 +97,41 @@ namespace Menro.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Get popular foods for a specific global category, ordered by average rating
+        /// Returns most popular foods for a given global category.
         /// </summary>
-        //public async Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count)
-        //{
-        //    var topIds = await _context.Foods
-        //        .AsNoTracking()
-        //        .Where(f =>
-        //            f.GlobalFoodCategoryId == globalCategoryId &&
-        //            f.IsAvailable &&
-        //            !f.IsDeleted &&
-        //            f.Restaurant.IsActive &&
-        //            f.Restaurant.IsApproved
-        //        )
-        //        .Select(f => new
-        //        {
-        //            f.Id,
-        //            Avg = _context.FoodRatings
-        //                    .Where(r => r.FoodId == f.Id)
-        //                    .Select(r => (double?)r.Score)
-        //                    .Average() ?? 0.0,
-        //            Voters = _context.FoodRatings.Count(r => r.FoodId == f.Id)
-        //        })
-        //        .OrderByDescending(x => x.Avg)
-        //        .ThenByDescending(x => x.Voters)
-        //        .Take(count)
-        //        .Select(x => x.Id)
-        //        .ToListAsync();
-
-        //    return await _context.Foods
-        //        .AsNoTracking()
-        //        .Where(f => topIds.Contains(f.Id))
-        //        .Include(f => f.Restaurant)
-        //        .Include(f => f.Ratings)
-        //        .ToListAsync();
-        //}
-
         public async Task<List<Food>> GetPopularFoodsByGlobalCategoryIdOptimizedAsync(int globalCategoryId, int count = 8)
         {
             return await _context.Foods
                 .Where(f => f.GlobalFoodCategoryId == globalCategoryId && f.IsAvailable && !f.IsDeleted)
                 .Include(f => f.Ratings)
                 .Include(f => f.Restaurant)
-                .Include(f => f.OrderItems) // needed for number of orders
-                .OrderByDescending(f => f.OrderItems.Sum(oi => oi.Quantity))  // most ordered
-                .ThenByDescending(f => f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0)  // then rating
-                .ThenByDescending(f => f.Ratings.Count)  // then voters
+                .Include(f => f.OrderItems)
+                .OrderByDescending(f => f.OrderItems.Sum(oi => oi.Quantity))
+                .ThenByDescending(f => f.Ratings.Any() ? f.Ratings.Average(r => r.Score) : 0)
+                .ThenByDescending(f => f.Ratings.Count)
                 .Take(count)
                 .ToListAsync();
         }
 
-        /* ===================== Restaurant Page ===================== */
+        /* ============================================================
+           🔹 Restaurant Menu Queries
+        ============================================================ */
 
         /// <summary>
-        /// Get foods by a list of category IDs (custom or global)
+        /// Gets foods by custom or global category IDs.
         /// </summary>
         public async Task<List<Food>> GetByCategoryIdsAsync(List<int> categoryIds)
         {
             return await _context.Foods
                 .Where(f =>
                     (f.CustomFoodCategoryId != null && categoryIds.Contains(f.CustomFoodCategoryId.Value)) ||
-                    (f.GlobalFoodCategoryId != null && categoryIds.Contains(f.GlobalFoodCategoryId.Value))
-                )
+                    (f.GlobalFoodCategoryId != null && categoryIds.Contains(f.GlobalFoodCategoryId.Value)))
                 .Where(f => f.IsAvailable && !f.IsDeleted)
                 .ToListAsync();
         }
 
         /// <summary>
-        /// Get the menu for a restaurant by its slug
+        /// Gets restaurant menu by slug, optionally filtered by category IDs.
         /// </summary>
         public async Task<List<Food>> GetFoodsByRestaurantSlugAsync(
             string restaurantSlug,
@@ -176,24 +146,18 @@ namespace Menro.Infrastructure.Repositories
                 .AsQueryable();
 
             if (globalCategoryId.HasValue && customCategoryId.HasValue)
-            {
-                query = query.Where(f => f.GlobalFoodCategoryId == globalCategoryId
-                                      || f.CustomFoodCategoryId == customCategoryId);
-            }
+                query = query.Where(f => f.GlobalFoodCategoryId == globalCategoryId || f.CustomFoodCategoryId == customCategoryId);
             else if (globalCategoryId.HasValue)
-            {
                 query = query.Where(f => f.GlobalFoodCategoryId == globalCategoryId);
-            }
             else if (customCategoryId.HasValue)
-            {
                 query = query.Where(f => f.CustomFoodCategoryId == customCategoryId);
-            }
 
             return await query.ToListAsync();
         }
 
-
-
+        /// <summary>
+        /// Gets restaurant menu by restaurant ID.
+        /// </summary>
         public async Task<List<Food>> GetFoodsByRestaurantAsync(
             int restaurantId,
             int? globalCategoryId = null,
@@ -207,22 +171,18 @@ namespace Menro.Infrastructure.Repositories
                 .AsQueryable();
 
             if (globalCategoryId.HasValue && customCategoryId.HasValue)
-            {
-                query = query.Where(f => f.GlobalFoodCategoryId == globalCategoryId
-                                      || f.CustomFoodCategoryId == customCategoryId);
-            }
+                query = query.Where(f => f.GlobalFoodCategoryId == globalCategoryId || f.CustomFoodCategoryId == customCategoryId);
             else if (globalCategoryId.HasValue)
-            {
                 query = query.Where(f => f.GlobalFoodCategoryId == globalCategoryId);
-            }
             else if (customCategoryId.HasValue)
-            {
                 query = query.Where(f => f.CustomFoodCategoryId == customCategoryId);
-            }
 
             return await query.ToListAsync();
         }
 
+        /// <summary>
+        /// Gets a food along with its variants and addons.
+        /// </summary>
         public async Task<Food?> GetFoodWithVariantsAsync(int foodId)
         {
             return await _context.Foods
@@ -235,19 +195,13 @@ namespace Menro.Infrastructure.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        public Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count)
-        {
-            throw new NotImplementedException();
-        }
+        /* ============================================================
+           ⚙️ Admin / CRUD Operations
+        ============================================================ */
 
-        public Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug)
-        {
-            throw new NotImplementedException();
-        }
-
-
-        /* ===================== Admin / CRUD ===================== */
-
+        /// <summary>
+        /// Returns list of foods for admin panel.
+        /// </summary>
         public async Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId)
         {
             return await _context.Foods
@@ -257,6 +211,9 @@ namespace Menro.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Adds a new food record.
+        /// </summary>
         public async Task<bool> AddFoodAsync(Food food)
         {
             try
@@ -271,6 +228,9 @@ namespace Menro.Infrastructure.Repositories
             }
         }
 
+        /// <summary>
+        /// Returns full food details including variants and addons.
+        /// </summary>
         public async Task<Food> GetFoodDetailsAsync(int foodId)
         {
             var food = await _context.Foods
@@ -283,6 +243,10 @@ namespace Menro.Infrastructure.Repositories
 
             return food;
         }
+
+        /// <summary>
+        /// Updates a food record.
+        /// </summary>
         public async Task<bool> UpdateFoodAsync(Food food)
         {
             try
@@ -297,6 +261,9 @@ namespace Menro.Infrastructure.Repositories
             }
         }
 
+        /// <summary>
+        /// Deletes a food record permanently.
+        /// </summary>
         public async Task<bool> DeleteFoodAsync(int foodId)
         {
             var food = await _context.Foods.FindAsync(foodId);
@@ -307,5 +274,14 @@ namespace Menro.Infrastructure.Repositories
             return true;
         }
 
+        public Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

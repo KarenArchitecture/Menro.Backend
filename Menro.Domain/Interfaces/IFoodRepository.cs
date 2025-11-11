@@ -1,56 +1,105 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Menro.Domain.Entities;
+﻿using Menro.Domain.Entities;
 
 namespace Menro.Domain.Interfaces
 {
+    /// <summary>
+    /// Repository interface for managing Food entities,
+    /// including popular listings, category queries, and CRUD operations.
+    /// </summary>
     public interface IFoodRepository
     {
-        /* Home Page (Popular Foods from random GLOBAL categories) */
+        /* ============================================================
+           🔹 Home Page - Popular Foods by Global Category
+        ============================================================ */
 
-        // ?? Get top-rated or most popular foods in a given Global Category
+        /// <summary>
+        /// Returns most popular foods for a specific global category,
+        /// ordered by sales volume, rating, and voters.
+        /// </summary>
         Task<List<Food>> GetPopularFoodsByGlobalCategoryIdOptimizedAsync(int globalCategoryId, int count = 8);
 
-        // ?? Get all global categories (for picking random)
-        /* Home Page (Popular Foods from random GLOBAL categories) */
+        /// <summary>
+        /// Returns all active global categories that contain at least one available food.
+        /// </summary>
         Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesAsync();
 
-        // ?? Get all category IDs
+        /// <summary>
+        /// Returns IDs of all active global categories.
+        /// </summary>
         Task<List<int>> GetAllGlobalCategoryIdsAsync();
 
-        // ?? Get all categories except given names
+        /// <summary>
+        /// Returns all active global categories except those with excluded titles.
+        /// </summary>
         Task<List<GlobalFoodCategory>> GetAllGlobalCategoriesExcludingAsync(List<string> excludeCategoryTitles);
 
-                                            // -- Restaurant Page -- //
+        /* ============================================================
+           🔹 Restaurant Page Queries
+        ============================================================ */
+
+        /// <summary>
+        /// Returns foods by a list of custom or global category IDs.
+        /// </summary>
         Task<List<Food>> GetByCategoryIdsAsync(List<int> categoryIds);
+
+        /// <summary>
+        /// Returns menu items for a restaurant by slug, optionally filtered by global/custom categories.
+        /// </summary>
         Task<List<Food>> GetFoodsByRestaurantSlugAsync(
             string restaurantSlug,
             int? globalCategoryId = null,
             int? customCategoryId = null);
 
         /// <summary>
-        /// Get all foods of a restaurant, optionally filtered by global or custom category.
-        /// Returns Food entities directly (no DTOs).
+        /// Returns menu items for a restaurant by ID, optionally filtered by category.
         /// </summary>
         Task<List<Food>> GetFoodsByRestaurantAsync(
             int restaurantId,
             int? globalCategoryId = null,
             int? customCategoryId = null);
+
+        /// <summary>
+        /// Returns a list of popular foods by global category (non-optimized legacy version).
+        /// </summary>
         Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count);
 
         /// <summary>
-        /// Get a single food with its variants and addons for a restaurant.
-        /// Returns Food entity directly.
+        /// Returns a single food entity with its variants and addons.
         /// </summary>
         Task<Food?> GetFoodWithVariantsAsync(int foodId);
-        /* Restaurant Page */
+
+        /// <summary>
+        /// Returns a restaurant’s full menu list by slug.
+        /// </summary>
         Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug);
 
-        // Admin/Owner Panel
+        /* ============================================================
+           ⚙️ Admin / CRUD Operations
+        ============================================================ */
+
+        /// <summary>
+        /// Adds a new food entity.
+        /// </summary>
         Task<bool> AddFoodAsync(Food food);
+
+        /// <summary>
+        /// Returns all available foods for a restaurant (for admin panel).
+        /// </summary>
         Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId);
+
+        /// <summary>
+        /// Returns detailed information of a food item including variants.
+        /// </summary>
         Task<Food> GetFoodDetailsAsync(int foodId);
+
+        /// <summary>
+        /// Updates an existing food record.
+        /// </summary>
         Task<bool> UpdateFoodAsync(Food food);
+
+        /// <summary>
+        /// Deletes a food record permanently.
+        /// </summary>
         Task<bool> DeleteFoodAsync(int foodId);
     }
 }
