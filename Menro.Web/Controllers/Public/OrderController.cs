@@ -1,5 +1,4 @@
-﻿// Menro.Web/Controllers/User/OrderController.cs
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Menro.Application.Orders.DTOs;
@@ -7,9 +6,13 @@ using Menro.Application.Orders.Services.Interfaces;
 
 namespace Menro.Web.Controllers.User
 {
+    /// <summary>
+    /// Provides authenticated user endpoints related to orders,
+    /// such as viewing recently ordered foods.
+    /// </summary>
     [ApiController]
     [Route("api/user/orders")]
-    [Authorize] // JWT required
+    [Authorize]
     public class OrderController : ControllerBase
     {
         private readonly IUserRecentOrderCardService _recentService;
@@ -20,9 +23,10 @@ namespace Menro.Web.Controllers.User
         }
 
         /// <summary>
-        /// Recent foods the current user has ordered (most-recent first, unique by food).
+        /// Gets a list of recent foods ordered by the authenticated user.
         /// </summary>
-        /// <param name="count">Max items (1..32). Defaults to 8.</param>
+        /// <param name="count">Maximum number of recent items (default 8, max 32).</param>
+        /// <returns>Recent foods ordered by the user.</returns>
         [HttpGet("recent-foods")]
         [ProducesResponseType(typeof(List<RecentOrdersFoodCardDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -32,10 +36,7 @@ namespace Menro.Web.Controllers.User
             if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
 
-            // safety clamp
-            if (count <= 0) count = 8;
-            if (count > 32) count = 32;
-
+            count = Math.Clamp(count, 1, 32);
             var items = await _recentService.GetUserRecentOrderedFoodsAsync(userId, count);
             return Ok(items ?? new List<RecentOrdersFoodCardDto>());
         }
