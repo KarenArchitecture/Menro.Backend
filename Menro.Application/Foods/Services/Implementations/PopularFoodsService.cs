@@ -1,32 +1,27 @@
-﻿// Menro.Application/Foods/Services/Implementations/PopularFoodsService.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Menro.Application.Foods.DTOs;
+﻿using Menro.Application.Foods.DTOs;
 using Menro.Application.Foods.Services.Interfaces;
 using Menro.Application.Orders.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
-using Microsoft.Extensions.Caching.Memory;
 
-namespace Menro.Application.Foods.Services.Implementations
+namespace Menro.Application.Foods.Services
 {
+    /// <summary>
+    /// High-performance service that provides "Popular Foods"
+    /// data for the public home page — built on repository-level caching.
+    /// </summary>
     public class PopularFoodsService : IPopularFoodsService
     {
-        private readonly IFoodRepository _foodRepository;
-        private readonly IMemoryCache _cache;
+        private readonly IGlobalFoodCategoryRepository _globalCatRepo;
 
-        // Cache configuration
-        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(10);
-        private const string CacheKeyPrefix = "popular_foods_";
-
-        public PopularFoodsService(IFoodRepository foodRepository, IMemoryCache cache)
+        public PopularFoodsService(IGlobalFoodCategoryRepository globalCatRepo)
         {
-            _foodRepository = foodRepository;
-            _cache = cache;
+            _globalCatRepo = globalCatRepo;
         }
 
+        /* ============================================================
+           🧭 Helper: Map Food entity → HomeFoodCardDto
+        ============================================================ */
         private static HomeFoodCardDto MapToHomeFoodCardDto(Food f)
         {
             var avg = f.Ratings?.Any() == true ? f.Ratings.Average(r => r.Score) : 0.0;
@@ -41,97 +36,65 @@ namespace Menro.Application.Foods.Services.Implementations
             };
         }
 
-        public async Task<PopularFoodsDto?> GetPopularFoodsFromRandomCategoryAsync(int count = 8)
+        /* ============================================================
+           🥇 Main: Get random global categories with popular foods
+        ============================================================ */
+        public async Task<List<PopularFoodsDto>> GetPopularFoodsGroupsAsync(int groupsCount = 2, int foodsPerGroup = 8)
         {
-            const string cacheKey = $"{CacheKeyPrefix}random_category";
+            var result = new List<PopularFoodsDto>();
+            var excludeTitles = new List<string>();
 
-            if (_cache.TryGetValue(cacheKey, out PopularFoodsDto cached))
-                return cached;
+            // 1️⃣ Fetch all eligible global categories (active + has foods via custom/global)
+            var eligibleGlobals = await _globalCatRepo.GetEligibleGlobalCategoriesAsync();
+            if (eligibleGlobals == null || eligibleGlobals.Count == 0)
+                return result;
 
-            var globals = await _foodRepository.GetAllGlobalCategoriesAsync();
-            if (globals == null || globals.Count == 0)
-                return null;
+            // 2️⃣ Shuffle them to get random order
+            var random = new Random();
+            var shuffled = eligibleGlobals.OrderBy(_ => random.Next()).ToList();
 
-            var randomGlobal = globals.OrderBy(_ => Guid.NewGuid()).First();
-            var foods = await _foodRepository.GetPopularFoodsByGlobalCategoryIdOptimizedAsync(randomGlobal.Id, count);
-
-            var result = new PopularFoodsDto
+            // 3️⃣ Pick random categories until we fill required groups
+            foreach (var category in shuffled)
             {
-                CategoryTitle = randomGlobal.Name,
-                IconId = randomGlobal.IconId,
-                Foods = (foods ?? new List<Food>()).Select(MapToHomeFoodCardDto).ToList()
-            };
+                if (excludeTitles.Contains(category.Name))
+                    continue;
 
-            _cache.Set(cacheKey, result, new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = CacheDuration,
-                Priority = CacheItemPriority.High
-            });
+                // 4️⃣ Get most popular foods (via CustomFoodCategory → Foods)
+                var foods = await _globalCatRepo.GetMostPopularFoodsByGlobalCategoryAsync(category.Id, foodsPerGroup);
+                if (foods == null || foods.Count == 0)
+                    continue;
+
+                result.Add(new PopularFoodsDto
+                {
+                    CategoryTitle = category.Name,
+                    IconId = category.IconId,
+                    Foods = foods.Select(MapToHomeFoodCardDto).ToList()
+                });
+
+                excludeTitles.Add(category.Name);
+                if (result.Count >= groupsCount)
+                    break;
+            }
 
             return result;
         }
 
+        /* ============================================================
+           🎯 Get popular foods for a specific Global Category
+        ============================================================ */
         public async Task<List<HomeFoodCardDto>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
         {
-            var cacheKey = $"{CacheKeyPrefix}category_{categoryId}";
-
-            if (_cache.TryGetValue(cacheKey, out List<HomeFoodCardDto> cachedFoods))
-                return cachedFoods;
-
-            var foods = await _foodRepository.GetPopularFoodsByGlobalCategoryIdOptimizedAsync(categoryId, count);
-            var result = foods.Select(MapToHomeFoodCardDto).ToList();
-
-            _cache.Set(cacheKey, result, new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = CacheDuration,
-                Priority = CacheItemPriority.High
-            });
-
-            return result;
+            var foods = await _globalCatRepo.GetMostPopularFoodsByGlobalCategoryAsync(categoryId, count);
+            return foods.Select(MapToHomeFoodCardDto).ToList();
         }
 
-        public Task<List<int>> GetAllCategoryIdsAsync()
-            => _foodRepository.GetAllGlobalCategoryIdsAsync();
-
-        public async Task<PopularFoodsDto?> GetPopularFoodsFromRandomCategoryExcludingAsync(List<string> excludeCategoryTitles)
+        /* ============================================================
+           🧾 Get all global category IDs (helper)
+        ============================================================ */
+        public async Task<List<int>> GetAllCategoryIdsAsync()
         {
-            var key = $"{CacheKeyPrefix}exclude_{string.Join('_', excludeCategoryTitles ?? new())}";
-
-            if (_cache.TryGetValue(key, out PopularFoodsDto cached))
-                return cached;
-
-            var remaining = await _foodRepository.GetAllGlobalCategoriesExcludingAsync(excludeCategoryTitles ?? new());
-            if (remaining == null || remaining.Count == 0)
-                return null;
-
-            var randomGlobal = remaining.OrderBy(_ => Guid.NewGuid()).First();
-            var foods = await _foodRepository.GetPopularFoodsByGlobalCategoryIdOptimizedAsync(randomGlobal.Id, 8);
-
-            var result = new PopularFoodsDto
-            {
-                CategoryTitle = randomGlobal.Name,
-                IconId = randomGlobal.IconId,
-                Foods = (foods ?? new List<Food>()).Select(MapToHomeFoodCardDto).ToList()
-            };
-
-            _cache.Set(key, result, new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = CacheDuration,
-                Priority = CacheItemPriority.High
-            });
-
-            return result;
-        }
-
-        // 🔄 Cache Invalidation
-        // Call this method whenever foods or their ratings are updated in the system
-        public void InvalidatePopularFoodsCache()
-        {
-            if (_cache is MemoryCache memoryCache)
-            {
-                // Compact(1.0) clears all entries; use sparingly
-                memoryCache.Compact(1.0);
-            }
+            var all = await _globalCatRepo.GetEligibleGlobalCategoriesAsync();
+            return all?.Select(x => x.Id).ToList() ?? new List<int>();
         }
     }
 }

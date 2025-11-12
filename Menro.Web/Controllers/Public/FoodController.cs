@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Public
 {
+    /// <summary>
+    /// Public-facing food endpoints — used for the homepage sections
+    /// such as "Popular Foods" and category-based food listings.
+    /// </summary>
     [ApiController]
     [Route("api/public/[controller]")]
     public class FoodController : ControllerBase
@@ -16,47 +20,78 @@ namespace Menro.Web.Controllers.Public
             _popularFoodsService = popularFoodsService;
         }
 
-        #region Home Page
-        [HttpGet("popular-foods")]
-        public async Task<ActionResult<PopularFoodsDto>> GetPopularFoods()
+        /* ============================================================
+           🏠 Home Page - Popular Foods (Lazy-Loaded Rows)
+        ============================================================ */
+
+        /// <summary>
+        /// Returns a single random Global Food Category (and its top foods)
+        /// for the homepage "Popular Foods" lazy-loading section.
+        /// </summary>
+        /// <param name="foodsPerGroup">Number of foods per category (default 8).</param>
+        /// <response code="200">Returns a PopularFoodsDto object containing category and foods.</response>
+        [HttpGet("popular")]
+        [ProducesResponseType(typeof(PopularFoodsDto), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetPopularFoods([FromQuery] int foodsPerGroup = 8)
         {
-            var result = await _popularFoodsService.GetPopularFoodsFromRandomCategoryAsync();
+            var groups = await _popularFoodsService.GetPopularFoodsGroupsAsync(1, foodsPerGroup);
+            var singleGroup = groups.FirstOrDefault();
+            if (singleGroup == null)
+                return NoContent();
 
-            // If no popular foods exist, return an empty DTO instead of null
-            if (result == null)
-            {
-                return Ok(new PopularFoodsDto
-                {
-                    CategoryTitle = string.Empty,
-                    IconId = null,
-                    Foods = new List<HomeFoodCardDto>()
-                });
-            }
-
-            return Ok(result);
+            return Ok(singleGroup);
         }
 
         /// <summary>
-        /// Gets popular foods from a random category, excluding already-used category titles.
-        /// POST: api/public/food/popular-foods
-        /// Body: ["Category A", "Category B", ...]
+        /// Returns another random Global Food Category (and its top foods)
+        /// excluding those already shown on the homepage.
         /// </summary>
+        /// <param name="excludeTitles">List of category titles to exclude.</param>
+        /// <response code="200">Returns a PopularFoodsDto object containing category and foods.</response>
         [HttpPost("popular-foods-excluding")]
-        public async Task<ActionResult<PopularFoodsDto>> GetPopularFoodsFromRandomCategoryExcluding([FromBody] List<string> usedCategories)
+        [ProducesResponseType(typeof(PopularFoodsDto), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetPopularFoodsExcluding([FromBody] List<string> excludeTitles)
         {
-            var result = await _popularFoodsService.GetPopularFoodsFromRandomCategoryExcludingAsync(usedCategories);
+            var groups = await _popularFoodsService.GetPopularFoodsGroupsAsync(2, 8); // fetch 2 and pick one new
+            var filtered = groups
+                .Where(g => !excludeTitles.Contains(g.CategoryTitle))
+                .FirstOrDefault();
 
-            if (result == null)
-                return Ok(null);
+            if (filtered == null)
+                return NoContent();
 
-            return Ok(result);
+            return Ok(filtered);
         }
-        #endregion
 
+        /* ============================================================
+           📂 Utility Endpoints (used by analytics or filters)
+        ============================================================ */
 
-        #region Restaurant Page
+        /// <summary>
+        /// Returns all available Global Category IDs.
+        /// Useful for analytics or client-side preselection.
+        /// </summary>
+        [HttpGet("categories/ids")]
+        [ProducesResponseType(typeof(List<int>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAllCategoryIds()
+        {
+            var ids = await _popularFoodsService.GetAllCategoryIdsAsync();
+            return Ok(ids ?? new List<int>());
+        }
 
-        #endregion
-
+        /// <summary>
+        /// Returns popular foods for a specific Global Food Category.
+        /// Used when the frontend requests "See more" from one category.
+        /// </summary>
+        /// <param name="categoryId">Global category ID.</param>
+        /// <param name="count">Number of foods to return (default 8).</param>
+        /// <response code="200">List of HomeFoodCardDto objects.</response>
+        [HttpGet("popular/{categoryId:int}")]
+        [ProducesResponseType(typeof(List<HomeFoodCardDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetPopularFoodsByCategory([FromRoute] int categoryId, [FromQuery] int count = 8)
+        {
+            var data = await _popularFoodsService.GetPopularFoodsByCategoryAsync(categoryId, count);
+            return Ok(data ?? new List<HomeFoodCardDto>());
+        }
     }
 }
