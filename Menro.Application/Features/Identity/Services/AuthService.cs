@@ -46,7 +46,7 @@ namespace Menro.Application.Features.Identity.Services
         // send otp
         public async Task SendOtpAsync(string phoneNumber)
         {
-            var code = RandomNumberGenerator.GetInt32(1000, 9999).ToString();
+            var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
             //await _smsSender.SendAsync(phoneNumber, $"کد تایید شما: {code}");
             var otp = new Otp
             {

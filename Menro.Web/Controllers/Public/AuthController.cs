@@ -210,6 +210,7 @@ namespace Menro.Web.Controllers.Public
         }
 
         // reset password
+        [Authorize]
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
         {
