@@ -1,5 +1,6 @@
 ﻿using Menro.Application.Services.Interfaces;
 using Menro.Domain.Entities;
+using Menro.Domain.Entities.Identity;
 using Menro.Domain.Enums;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<Otp> Otps { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
         {

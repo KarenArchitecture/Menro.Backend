@@ -8,9 +8,7 @@ using Menro.Application.Common.SD;
 using Menro.Application.Features.Identity.Services;
 using Menro.Application.Foods.Services.Interfaces;
 using Menro.Application.Orders.Services.Interfaces;
-using Menro.Application.Restaurants.Services.Implementations;
 using Menro.Application.Foods.DTOs;
-using Menro.Application.Foods.Services.Implementations;
 
 namespace Menro.Web.Controllers.Public
 {
