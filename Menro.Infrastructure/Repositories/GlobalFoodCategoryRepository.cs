@@ -47,7 +47,6 @@ namespace Menro.Infrastructure.Repositories
 
             return cat;
         }
-
         public async Task<bool> CreateAsync(GlobalFoodCategory category)
         {
             try
@@ -61,19 +60,6 @@ namespace Menro.Infrastructure.Repositories
                 return false;
             }
         }
-        public async Task<List<GlobalFoodCategory>> GetAllAsync()
-        {
-            return await _context.GlobalFoodCategories.Include(c => c.Icon).Where(c => !c.IsDeleted).OrderBy(c => c.Name).ToListAsync();
-        }
-        public async Task<GlobalFoodCategory> GetByIdAsync(int id)
-        {
-            var cat = await _context.GlobalFoodCategories.Include(g => g.Icon).FirstOrDefaultAsync(g => g.Id == id && !g.IsDeleted);
-
-            if (cat is null)
-            {
-                throw new Exception("food category does not exist");
-            }
-
         public async Task<bool> UpdateCategoryAsync(GlobalFoodCategory category)
         {
             if (category == null) return false;
