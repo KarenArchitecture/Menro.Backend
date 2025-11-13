@@ -30,7 +30,7 @@ namespace Menro.Web.Controllers.Public
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
         private readonly IRestaurantBannerService _restaurantBannerService;
         private readonly IRestaurantMenuService _restaurantMenuService;
-        private readonly IAuthService _authService;
+        private readonly IUserService _userService;
         private readonly IRestaurantBannerService _bannerService;
         private readonly IMenuListService _menuListService;
         private readonly IMenuItemService _menuItemService;
@@ -43,7 +43,7 @@ namespace Menro.Web.Controllers.Public
             IRestaurantAdBannerService restaurantAdBannerService,
             IRestaurantBannerService restaurantBannerService,
             IRestaurantMenuService restaurantMenuService,
-            IAuthService authService,
+            IUserService userService,
             IMenuListService menuListService,
             IMenuItemService menuItemService)
         {
@@ -54,7 +54,7 @@ namespace Menro.Web.Controllers.Public
             _restaurantAdBannerService = restaurantAdBannerService;
             _restaurantBannerService = restaurantBannerService;
             _restaurantMenuService = restaurantMenuService;
-            _authService = authService;
+            _userService = userService;
             _menuListService = menuListService;
             _menuItemService = menuItemService;
         }
@@ -146,7 +146,7 @@ namespace Menro.Web.Controllers.Public
             if (!success)
                 return BadRequest("ثبت رستوران با خطا مواجه شد.");
 
-            await _authService.AddRoleToUserAsync(ownerUserId, SD.Role_Owner);
+            await _userService.AddRoleToUserAsync(ownerUserId, SD.Role_Owner);
             return Ok("رستوران با موفقیت ثبت شد.");
         }
 

@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Models;
+using Menro.Application.Features.Identity.DTOs;
 using Menro.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using System;
@@ -20,6 +21,10 @@ namespace Menro.Application.Features.Identity.Services
         Task<bool> CheckPasswordAsync(User user, string password);
         Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword, string confirmPassword);
         Task<bool> AddRoleToUserAsync(string userId, string roleName);
+
+        /*--- user details ---*/
+        Task<UserProfileDto> GetProfileAsync(string userId);
+        Task<bool> UpdateProfileAsync(string userId, UpdateUserProfileDto dto);
 
     }
 }

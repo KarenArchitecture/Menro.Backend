@@ -92,6 +92,7 @@ var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
 builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUrlService, FileUrlService>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
 
 

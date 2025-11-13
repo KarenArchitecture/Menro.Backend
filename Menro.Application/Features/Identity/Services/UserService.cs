@@ -1,10 +1,12 @@
-﻿using Menro.Application.Common.Models;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Models;
+using Menro.Application.Features.Identity.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using static Menro.Application.Common.SD.SD;
+
+
 
 
 namespace Menro.Application.Features.Identity.Services
@@ -20,22 +22,15 @@ namespace Menro.Application.Features.Identity.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly UserManager<User> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IPasswordHasher<User> _passwordHasher;
-
+        private readonly IFileStorageService _fileStorage;
 
         public UserService(IUnitOfWork uow,
             UserManager<User> userManager,
-            RoleManager<IdentityRole> roleManager,
-            IHttpContextAccessor httpContextAccessor,
-            IPasswordHasher<User> passwordHasher)
+            IFileStorageService fileStorage)
         {
             _uow = uow;
             _userManager = userManager;
-            _roleManager = roleManager;
-            _httpContextAccessor = httpContextAccessor;
-            _passwordHasher = passwordHasher;
+            _fileStorage = fileStorage;
         }
         public async Task<User> GetByIdAsync(string userId)
         {
@@ -143,6 +138,45 @@ namespace Menro.Application.Features.Identity.Services
             {
                 return false;
             }
+        }
+
+        /*--- user details ---*/
+        public async Task<UserProfileDto> GetProfileAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId)
+                ?? throw new Exception("کاربر یافت نشد");
+
+            return new UserProfileDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber ?? "",
+                ProfileImageUrl = user.ProfileImageUrl // just file name
+            };
+        }
+
+        public async Task<bool> UpdateProfileAsync(string userId, UpdateUserProfileDto dto)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId) ?? throw new Exception("کاربر یافت نشد");
+
+                user.FullName = dto.FullName;
+
+                if (dto.ProfileImage != null)
+                    user.ProfileImageUrl = await _fileStorage.SaveProfileImageAsync(
+                        dto.ProfileImage,
+                        user.ProfileImageUrl 
+                    );
+
+                await _userManager.UpdateAsync(user);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
         }
     }
 }

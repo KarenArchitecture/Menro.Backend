@@ -17,7 +17,6 @@ namespace Menro.Application.Features.Identity.Services
         (string RawToken, RefreshToken Entity) IssueRefreshToken(string userId, string ip, string? userAgent);
         Task<(string NewAccessToken, string NewRefreshToken)> RefreshAccessTokenAsync(string rawRefreshToken, string ip, string? userAgent);
         Task<bool> LogoutAsync(string rawRefreshToken);
-        Task<bool> AddRoleToUserAsync(string userId, string roleName);
 
 
     }

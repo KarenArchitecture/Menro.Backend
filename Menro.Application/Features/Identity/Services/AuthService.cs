@@ -213,16 +213,6 @@ namespace Menro.Application.Features.Identity.Services
 
         /*--- misc. ---*/
 
-        // assign new roles to user
-        public async Task<bool> AddRoleToUserAsync(string userId, string roleName)
-        {
-            if (await _userService.AddRoleToUserAsync(userId, roleName))
-            {
-                return true;
-            }
-            return false;
-        }
-        
         // hash token for save in db
         public static string ComputeHash(string input)
         {
