@@ -114,6 +114,25 @@ namespace Menro.Application.Features.Identity.Services
             return result;
         }
 
+        // change phone
+        public async Task<Result> ChangePhoneAsync(string userId, string newPhone)
+        {
+            if (string.IsNullOrWhiteSpace(newPhone))
+                return Result.Failure("شماره جدید وارد نشده است.");
+
+            var exists = await _userService.UserExistsByPhoneAsync(newPhone);
+            if (exists)
+                return Result.Failure("این شماره تلفن قبلاً در سیستم ثبت شده است.");
+
+            var updated = await _userService.UpdatePhoneNumberAsync(userId, newPhone);
+            if (!updated)
+                return Result.Failure("خطا در تغییر شماره.");
+
+            await _uow.SaveChangesAsync();
+
+            return Result.Success();
+        }
+
         // logout
         public async Task<bool> LogoutAsync(string rawRefreshToken)
         {

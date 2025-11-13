@@ -15,6 +15,9 @@ namespace Menro.Application.Features.Identity.Services
         Task<User> GetByIdAsync(string id);
         Task<User> GetByEmailAsync(string email);
         Task<User?> GetByPhoneNumberAsync(string phoneNumber);
+        Task<bool> UserExistsByPhoneAsync(string phoneNumber);
+        Task<bool> UpdatePhoneNumberAsync(string userId, string newPhone);
+
         Task<(bool IsSuccess, IdentityResult? Result, User? User)> RegisterUserAsync(string fullName, string email, string phoneNumber, string? password);
         //public Task<User?> LoginUserAsync(string email, string password);
         Task<List<string>> GetRolesAsync(User user);

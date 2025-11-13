@@ -3,6 +3,7 @@ using Menro.Application.Features.Identity.DTOs;
 using Menro.Application.Features.Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -12,14 +13,17 @@ namespace Menro.Web.Controllers.Public
     {
         private readonly IAuthService _authService;
         private readonly IUserService _userService;
+        private readonly ICurrentUserService _currentUserService;
 
         public AuthController(
             IAuthService authService,
-            IUserService userService
+            IUserService userService,
+            ICurrentUserService currentUserService
             )
         {
             _authService = authService;
             _userService = userService;
+            _currentUserService = currentUserService;
         }
 
         // ✅
@@ -69,45 +73,43 @@ namespace Menro.Web.Controllers.Public
         [HttpPost("verify")]
         public async Task<IActionResult> Verify([FromBody] VerifyDto dto)
         {
-            try
+            var method = dto.Method?.ToLower();
+            bool isValid = false;
+
+            switch (method)
             {
-                var method = dto.Method?.ToLower();
+                case "otp":
+                    isValid = await _authService.VerifyOtpAsync(dto.PhoneNumber, dto.CodeOrPassword);
+                    break;
 
-                //Menro.Domain.Entities.User? user = null;
-                bool isValid = false;
+                case "password":
+                    isValid = await _authService.VerifyPasswordAsync(dto.PhoneNumber, dto.CodeOrPassword);
+                    break;
 
-                switch (method)
-                {
-                    case "otp":
-                        isValid = await _authService.VerifyOtpAsync(dto.PhoneNumber, dto.CodeOrPassword);
-                        break;
-
-                    case "password":
-                        isValid = await _authService.VerifyPasswordAsync(dto.PhoneNumber, dto.CodeOrPassword);
-                        break;
-
-                    default:
-                        return BadRequest(new { message = "method باید یکی از otp یا password باشد." });
-                }
-
-                if (!isValid)
-                    return BadRequest(new { message = "اعتبارسنجی ناموفق بود." });
-
-                var user = await _userService.GetByPhoneNumberAsync(dto.PhoneNumber);
-
-                if (user is null)
-                    return Ok(new { needsRegister = true });
-
-                return Ok(new
-                {
-                    verified = true,
-                    userId = user.Id,
-                });
+                default:
+                    return BadRequest(new { message = "method باید یکی از otp یا password باشد." });
             }
-            catch (Exception ex)
+
+            if (!isValid)
+                return BadRequest(new { message = "اعتبارسنجی ناموفق بود." });
+
+            // change phone
+            if (dto.Operation == "change-phone")
             {
-                return StatusCode(500, new { message = "Server error", error = ex.Message });
+                return Ok(new { verified = true });
             }
+
+            // authentication
+            var user = await _userService.GetByPhoneNumberAsync(dto.PhoneNumber);
+
+            if (user is null)
+                return Ok(new { needsRegister = true });
+
+            return Ok(new
+            {
+                verified = true,
+                userId = user.Id,
+            });
         }
 
         // ✅
@@ -225,7 +227,21 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(new { message = "رمز عبور با موفقیت تغییر کرد." });
         }
+     
+        
+        [Authorize]
+        [HttpPut("change-phone")]
+        public async Task<IActionResult> ChangePhone([FromBody] ChangePhoneDto dto)
+        {
+            var userId = _currentUserService.GetUserId();
 
+            var result = await _authService.ChangePhoneAsync(userId!, dto.NewPhone);
+
+            if (!result.IsSuccess)
+                return BadRequest(new { message = result.Error });
+
+            return Ok(new { message = "شماره تلفن با موفقیت تغییر کرد." });
+        }
         // ✅
         // checks authentication
         [Authorize]

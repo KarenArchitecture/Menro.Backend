@@ -4,6 +4,7 @@ using Menro.Application.Features.Identity.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using static Menro.Application.Common.SD.SD;
 
 
@@ -51,6 +52,24 @@ namespace Menro.Application.Features.Identity.Services
         {
             var user = await _uow.User.GetByPhoneNumberAsync(phoneNumber);
             return user;
+        }
+        public async Task<bool> UserExistsByPhoneAsync(string phoneNumber)
+        {
+            return await _userManager.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
+        }
+
+
+        public async Task<bool> UpdatePhoneNumberAsync(string userId, string newPhone)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return false;
+
+            user.PhoneNumber = newPhone;
+            user.UserName = newPhone; // اگر لاگین با شماره است
+
+            var identityResult = await _userManager.UpdateAsync(user);
+
+            return identityResult.Succeeded;
         }
 
         public async Task<(bool IsSuccess, IdentityResult? Result, User? User)> RegisterUserAsync(string fullName, string email, string phoneNumber, string? password)
