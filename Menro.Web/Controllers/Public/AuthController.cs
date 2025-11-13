@@ -165,6 +165,7 @@ namespace Menro.Web.Controllers.Public
 
         /*--- helpers ----*/
 
+        // ✅
         // calls otp generation
         [HttpPost("send-otp")]
         public async Task<IActionResult> SendOtp([FromBody] SendOtpDto dto)
@@ -174,6 +175,7 @@ namespace Menro.Web.Controllers.Public
 
         }
 
+        // ✅
         // refresh user access token
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh()

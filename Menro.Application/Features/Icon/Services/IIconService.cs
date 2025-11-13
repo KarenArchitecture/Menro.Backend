@@ -7,7 +7,7 @@ namespace Menro.Application.Features.Icons.Interfaces
     {
         Task<List<GetIconDto>> GetAllAsync();
         Task<GetIconDto?> GetByIdAsync(int id);
-        Task<bool> AddAsync(AddIconDto dto);
+        Task<bool> AddAsync(string label, string fileName);
         Task<bool> DeleteAsync(int id);
     }
 }

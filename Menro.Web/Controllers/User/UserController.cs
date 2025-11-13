@@ -30,13 +30,8 @@ namespace Menro.Web.Controllers.User
 
             // mount profile image
             if (!string.IsNullOrEmpty(profile.ProfileImageUrl))
-            {
                 profile.ProfileImageUrl = _fileUrlService.BuildProfileImageUrl(profile.ProfileImageUrl);
-            }
-            else
-            {
-                profile.ProfileImageUrl = _fileUrlService.BuildProfileImageUrl("profile-default.jpg");
-            }
+
             return Ok(profile);
         }
 

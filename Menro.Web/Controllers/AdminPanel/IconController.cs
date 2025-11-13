@@ -3,6 +3,7 @@ using Menro.Application.Features.Icons.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Menro.Application.Common.SD;
+using System.Transactions;
 
 namespace Menro.Web.Controllers
 {
@@ -11,10 +12,11 @@ namespace Menro.Web.Controllers
     public class IconController : ControllerBase
     {
         private readonly IIconService _iconService;
-
-        public IconController(IIconService iconService)
+        private readonly IFileService _fileService;
+        public IconController(IIconService iconService, IFileService fileService)
         {
             _iconService = iconService;
+            _fileService = fileService;
         }
 
         // ✅
@@ -29,33 +31,28 @@ namespace Menro.Web.Controllers
         // ✅
         [HttpPost("add")]
         [Authorize(Roles = SD.Role_Admin)]
-        public async Task<IActionResult> Add([FromBody] AddIconDto dto)
+        public async Task<IActionResult> Add([FromForm] AddIconDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            // validation
+            if (dto.Icon == null || dto.Icon.Length == 0)
+                return BadRequest(new { message = "File is required." });
 
+            if (!dto.Icon.FileName.ToLower().EndsWith(".svg"))
+                return BadRequest(new { message = "Only .svg files are allowed." });
+
+            // operation
             try
             {
-                var success = await _iconService.AddAsync(dto);
+                string fileName = await _fileService.UploadSvgAsync(dto.Icon);
+                var success = await _iconService.AddAsync(dto.Label, fileName);
 
                 if (!success)
                     return StatusCode(500, new { message = "Failed to add icon record." });
 
-                return Ok(new { message = "Icon added successfully.", fileName = dto.FileName });
-            }
-            catch (InvalidOperationException ex)
-            {
-                // در صورت تکراری بودن فایل
-                return Conflict(new { message = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                // در صورت نامعتبر بودن داده‌ها
-                return BadRequest(new { message = ex.Message });
+                return Ok(new { message = "Icon added successfully.", fileName });
             }
             catch (Exception ex)
             {
-                // خطاهای غیرمنتظره
                 return StatusCode(500, new { message = "Unexpected error occurred.", error = ex.Message });
             }
         }
@@ -69,11 +66,22 @@ namespace Menro.Web.Controllers
             if (existing == null)
                 return NotFound(new { message = "Icon not found" });
 
-            var result = await _iconService.DeleteAsync(id);
-            if (!result)
+            // 1. Remove database record
+            var dbResult = await _iconService.DeleteAsync(id);
+
+            if (!dbResult)
                 return StatusCode(500, new { message = "Failed to delete icon record" });
 
-            return Ok(new { message = "Icon record deleted successfully", id });
+            // 2. Remove physical file
+            var fileRemoved = _fileService.DeleteIcon(existing.FileName);
+
+            return Ok(new
+            {
+                message = "Icon deleted successfully",
+                deletedFromDb = true,
+                deletedFile = fileRemoved,
+                id
+            });
         }
 
     }

@@ -1,10 +1,9 @@
-﻿using System.ComponentModel.DataAnnotations;
-
+﻿using Microsoft.AspNetCore.Http;
 namespace Menro.Application.Features.Icons.DTOs
 {
     public class AddIconDto
     {
-        public string FileName { get; set; } = string.Empty;
+        public IFormFile Icon { get; set; }
         public string Label { get; set; } = string.Empty;
     }
 }
