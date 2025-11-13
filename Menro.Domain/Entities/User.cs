@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
 namespace Menro.Domain.Entities
@@ -16,7 +11,7 @@ namespace Menro.Domain.Entities
         public required string FullName { get; set; }
 
         [Display(Name = "آدرس عکس")]
-        public string? ProfileImageUrl { get; set; } = string.Empty;
+        public string? ProfileImage { get; set; } = string.Empty;
         // تاریخ عضویت
         public ICollection<Restaurant>? Restaurants { get; set; } = new List<Restaurant>();
         // ارتباط با سفارشات مربوط به کاربر

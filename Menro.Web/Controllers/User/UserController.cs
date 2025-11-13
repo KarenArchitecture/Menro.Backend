@@ -28,9 +28,15 @@ namespace Menro.Web.Controllers.User
             var userId = _currentUserService.GetUserId()!;
             var profile = await _userService.GetProfileAsync(userId);
 
+            // mount profile image
             if (!string.IsNullOrEmpty(profile.ProfileImageUrl))
+            {
                 profile.ProfileImageUrl = _fileUrlService.BuildProfileImageUrl(profile.ProfileImageUrl);
-
+            }
+            else
+            {
+                profile.ProfileImageUrl = _fileUrlService.BuildProfileImageUrl("profile-default.jpg");
+            }
             return Ok(profile);
         }
 

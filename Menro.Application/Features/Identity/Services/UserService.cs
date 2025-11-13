@@ -22,11 +22,11 @@ namespace Menro.Application.Features.Identity.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly UserManager<User> _userManager;
-        private readonly IFileStorageService _fileStorage;
+        private readonly IFileService _fileStorage;
 
         public UserService(IUnitOfWork uow,
             UserManager<User> userManager,
-            IFileStorageService fileStorage)
+            IFileService fileStorage)
         {
             _uow = uow;
             _userManager = userManager;
@@ -151,7 +151,7 @@ namespace Menro.Application.Features.Identity.Services
                 Id = user.Id,
                 FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber ?? "",
-                ProfileImageUrl = user.ProfileImageUrl // just file name
+                ProfileImageUrl = user.ProfileImage // just file name
             };
         }
 
@@ -164,9 +164,9 @@ namespace Menro.Application.Features.Identity.Services
                 user.FullName = dto.FullName;
 
                 if (dto.ProfileImage != null)
-                    user.ProfileImageUrl = await _fileStorage.SaveProfileImageAsync(
+                    user.ProfileImage = await _fileStorage.SaveProfileImageAsync(
                         dto.ProfileImage,
-                        user.ProfileImageUrl 
+                        user.ProfileImage
                     );
 
                 await _userManager.UpdateAsync(user);

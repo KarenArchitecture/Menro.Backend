@@ -1,8 +1,8 @@
-﻿public class FileStorageService : IFileStorageService
+﻿public class FileService : IFileService
 {
     private readonly IWebHostEnvironment _env;
 
-    public FileStorageService(IWebHostEnvironment env)
+    public FileService(IWebHostEnvironment env)
     {
         _env = env;
     }
