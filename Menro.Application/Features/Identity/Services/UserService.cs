@@ -117,19 +117,34 @@ namespace Menro.Application.Features.Identity.Services
             bool isCorrect = await _userManager.CheckPasswordAsync(user, password);
             return isCorrect;
         }
-        public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword, string confirmPassword)
+        // for forgot-password
+        public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword)
         {
-            if (newPassword != confirmPassword)
-                return Result.Failure("رمز جدید و تکرار آن برابر نیست.");
 
             // از متد موجود برای یافتن کاربر استفاده کن تا منطق جستجو یکجا باشه
             var user = await GetByPhoneNumberAsync(phoneNumber);
             if (user == null)
-                return Result.Failure("کاربری با این شماره یافت نشد.");
+                return Result.Failure("کاربری یافت نشد.");
 
             // تولید توکن ریست (سرور-side) و استفاده از ResetPasswordAsync تا ولیدیشن‌ها اجرا شوند
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var identityResult = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (!identityResult.Succeeded)
+            {
+                var errors = string.Join(" | ", identityResult.Errors.Select(e => e.Description));
+                return Result.Failure(errors);
+            }
+
+            return Result.Success();
+        }
+        public async Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        {
+            var user = await GetByIdAsync(userId);
+            if (user == null)
+                return Result.Failure("کاربر یافت نشد.");
+
+            var identityResult = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
 
             if (!identityResult.Succeeded)
             {

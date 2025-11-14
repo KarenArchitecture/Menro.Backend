@@ -107,12 +107,20 @@ namespace Menro.Application.Features.Identity.Services
             return (accessToken, rawRt, user, roles.ToList());
         }
 
-        // reset password
-        public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword, string confirmPassword)
+        /*--- change password ---*/
+        // for forgot-password
+        public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword)
         {
-            var result = await _userService.ResetPasswordAsync(phoneNumber, newPassword, confirmPassword);
+            var result = await _userService.ResetPasswordAsync(phoneNumber, newPassword);
             return result;
         }
+        // for change-password
+        public async Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        {
+            var result = await _userService.ChangePasswordAsync(userId, currentPassword, newPassword);
+            return result;
+        }
+        /*------*/
 
         // change phone
         public async Task<Result> ChangePhoneAsync(string userId, string newPhone)

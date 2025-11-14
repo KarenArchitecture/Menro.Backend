@@ -4,6 +4,8 @@ using Menro.Application.Features.Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Menro.Application.Common.Interfaces;
+using System.Transactions;
+using Humanizer;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -168,7 +170,7 @@ namespace Menro.Web.Controllers.Public
         /*--- helpers ----*/
 
         // ✅
-        // calls otp generation
+        // call otp generation
         [HttpPost("send-otp")]
         public async Task<IActionResult> SendOtp([FromBody] SendOtpDto dto)
         {
@@ -213,22 +215,47 @@ namespace Menro.Web.Controllers.Public
             }
         }
 
+        // ✅
         // reset password
         [Authorize]
         [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        public async Task<IActionResult> ResetPassword([FromBody] ForgotPasswordDto dto)
         {
             if (dto == null) return BadRequest();
-
-            var result = await _authService.ResetPasswordAsync(dto.PhoneNumber, dto.NewPassword, dto.NewPasswordConfirm);
+            if (dto.NewPassword != dto.NewPasswordConfirm)
+                return BadRequest(new { message = "رمز جدید و تکرار آن برابر نیست" });
+            var result = await _authService.ResetPasswordAsync(dto.PhoneNumber, dto.NewPassword);
 
             if (!result.IsSuccess)
                 return BadRequest(new { message = "عملیات ناموفق" });
 
             return Ok(new { message = "رمز عبور با موفقیت تغییر کرد." });
         }
-     
-        
+
+        // change password
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            string? userId = _currentUserService.GetUserId();
+
+            // validations
+            if (dto == null) return BadRequest();
+            if (dto.NewPassword != dto.ConfirmNewPassword)
+                return BadRequest(new { message = "رمز جدید و تکرار آن برابر نیست" });
+            if(userId is null)
+                return BadRequest(new { message = "کاربر یافت نشد" });
+
+            var result = await _authService.ChangePasswordAsync(userId, dto.CurrentPassword, dto.NewPassword);
+
+            if (!result.IsSuccess)
+                return BadRequest(new { message = result.Error });
+
+            return Ok(new { message = "رمز عبور با موفقیت تغییر کرد." });
+        }
+
+        // ✅
+        // change phone number
         [Authorize]
         [HttpPut("change-phone")]
         public async Task<IActionResult> ChangePhone([FromBody] ChangePhoneDto dto)
@@ -242,8 +269,9 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(new { message = "شماره تلفن با موفقیت تغییر کرد." });
         }
+
         // ✅
-        // checks authentication
+        // check authentication
         [Authorize]
         [HttpGet("me")]
         public async Task<IActionResult> GetCurrentUser()
