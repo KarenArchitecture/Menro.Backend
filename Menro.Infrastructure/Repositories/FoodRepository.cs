@@ -1,4 +1,5 @@
-﻿using Menro.Domain.Entities;
+﻿using Menro.Application.Foods.DTOs;
+using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -205,12 +206,14 @@ namespace Menro.Infrastructure.Repositories
         public async Task<List<Food>> GetFoodsListForAdminAsync(int restaurantId)
         {
             return await _context.Foods
+                .Where(f => f.RestaurantId == restaurantId
+                         && !f.IsDeleted
+                         && f.IsAvailable)
                 .Include(f => f.CustomFoodCategory)
-                .Where(f => f.RestaurantId == restaurantId && !f.IsDeleted && f.IsAvailable)
+                .Include(f => f.Variants)   // لازم داریم فقط برای قیمت پیش‌فرض
                 .OrderByDescending(f => f.CreatedAt)
                 .ToListAsync();
         }
-
         /// <summary>
         /// Adds a new food record.
         /// </summary>

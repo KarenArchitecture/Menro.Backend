@@ -56,17 +56,35 @@ namespace Menro.Application.Services.Implementations
         {
             var foods = await _repository.GetFoodsListForAdminAsync(restaurantId);
 
-            return foods.Select(f => new FoodsListItemDto
+            return foods.Select(f =>
             {
-                Id = f.Id,
-                Name = f.Name,
-                Price = f.Variants.Any() ? 0 : f.Price,
-                IsAvailable = f.IsAvailable,
-                FoodCategoryName = f.CustomFoodCategory!.Name
+                // قیمت نمایش داده شده
+                int displayPrice;
+
+                if (!f.Variants.Any())
+                {
+                    displayPrice = f.Price;
+                }
+                else
+                {
+                    var defaultVariant = f.Variants
+                        .FirstOrDefault(v => v.IsDefault == true);
+
+                    displayPrice = defaultVariant?.Price
+                        ?? f.Variants.First().Price; // fallback
+                }
+
+                return new FoodsListItemDto
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    Price = displayPrice,
+                    FoodCategoryName = f.CustomFoodCategory!.Name,
+                    IsAvailable = f.IsAvailable,
+                };
+
             }).ToList();
         }
-
-        // Get food details by id
         public async Task<FoodDetailsDto?> GetFoodAsync(int foodId, int restaurantId)
         {
             var food = await _repository.GetFoodDetailsAsync(foodId);
