@@ -23,6 +23,7 @@ namespace Menro.Application.Foods.Mappers
                 Id = v.Id,
                 Name = v.Name,
                 Price = v.Price,
+                IsDefault = v.IsDefault,
                 Addons = (v.Addons ?? Enumerable.Empty<FoodAddon>())
                     .Select(a => new FoodAddonDetailsDto
                     {

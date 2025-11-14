@@ -232,6 +232,7 @@ namespace Menro.Web.Controllers.Public
             return Ok(new { message = "رمز عبور با موفقیت تغییر کرد." });
         }
 
+        // ✅
         // change password
         [Authorize]
         [HttpPost("change-password")]

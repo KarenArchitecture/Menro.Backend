@@ -38,6 +38,7 @@ namespace Menro.Application.Services.Implementations
                     {
                         Name = v.Name.Trim(),
                         Price = v.Price,
+                        IsDefault = v.IsDefault,
 
                         Addons = v.Addons?.Select(a => new FoodAddon
                         {
