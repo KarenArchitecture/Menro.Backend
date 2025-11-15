@@ -46,7 +46,7 @@ namespace Menro.Application.Features.Identity.Services
         // send otp
         public async Task SendOtpAsync(string phoneNumber)
         {
-            var code = RandomNumberGenerator.GetInt32(1000, 9999).ToString();
+            var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
             //await _smsSender.SendAsync(phoneNumber, $"کد تایید شما: {code}");
             var otp = new Otp
             {
@@ -107,11 +107,38 @@ namespace Menro.Application.Features.Identity.Services
             return (accessToken, rawRt, user, roles.ToList());
         }
 
-        // reset password
-        public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword, string confirmPassword)
+        /*--- change password ---*/
+        // for forgot-password
+        public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword)
         {
-            var result = await _userService.ResetPasswordAsync(phoneNumber, newPassword, confirmPassword);
+            var result = await _userService.ResetPasswordAsync(phoneNumber, newPassword);
             return result;
+        }
+        // for change-password
+        public async Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        {
+            var result = await _userService.ChangePasswordAsync(userId, currentPassword, newPassword);
+            return result;
+        }
+        /*------*/
+
+        // change phone
+        public async Task<Result> ChangePhoneAsync(string userId, string newPhone)
+        {
+            if (string.IsNullOrWhiteSpace(newPhone))
+                return Result.Failure("شماره جدید وارد نشده است.");
+
+            var exists = await _userService.UserExistsByPhoneAsync(newPhone);
+            if (exists)
+                return Result.Failure("این شماره تلفن قبلاً در سیستم ثبت شده است.");
+
+            var updated = await _userService.UpdatePhoneNumberAsync(userId, newPhone);
+            if (!updated)
+                return Result.Failure("خطا در تغییر شماره.");
+
+            await _uow.SaveChangesAsync();
+
+            return Result.Success();
         }
 
         // logout
@@ -213,16 +240,6 @@ namespace Menro.Application.Features.Identity.Services
 
         /*--- misc. ---*/
 
-        // assign new roles to user
-        public async Task<bool> AddRoleToUserAsync(string userId, string roleName)
-        {
-            if (await _userService.AddRoleToUserAsync(userId, roleName))
-            {
-                return true;
-            }
-            return false;
-        }
-        
         // hash token for save in db
         public static string ComputeHash(string input)
         {

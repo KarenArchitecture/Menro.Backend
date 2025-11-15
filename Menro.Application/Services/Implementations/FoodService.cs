@@ -38,6 +38,7 @@ namespace Menro.Application.Services.Implementations
                     {
                         Name = v.Name.Trim(),
                         Price = v.Price,
+                        IsDefault = v.IsDefault,
 
                         Addons = v.Addons?.Select(a => new FoodAddon
                         {
@@ -55,17 +56,35 @@ namespace Menro.Application.Services.Implementations
         {
             var foods = await _repository.GetFoodsListForAdminAsync(restaurantId);
 
-            return foods.Select(f => new FoodsListItemDto
+            return foods.Select(f =>
             {
-                Id = f.Id,
-                Name = f.Name,
-                Price = f.Variants.Any() ? 0 : f.Price,
-                IsAvailable = f.IsAvailable,
-                FoodCategoryName = f.CustomFoodCategory!.Name
+                // قیمت نمایش داده شده
+                int displayPrice;
+
+                if (!f.Variants.Any())
+                {
+                    displayPrice = f.Price;
+                }
+                else
+                {
+                    var defaultVariant = f.Variants
+                        .FirstOrDefault(v => v.IsDefault == true);
+
+                    displayPrice = defaultVariant?.Price
+                        ?? f.Variants.First().Price; // fallback
+                }
+
+                return new FoodsListItemDto
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    Price = displayPrice,
+                    FoodCategoryName = f.CustomFoodCategory!.Name,
+                    IsAvailable = f.IsAvailable,
+                };
+
             }).ToList();
         }
-
-        // Get food details by id
         public async Task<FoodDetailsDto?> GetFoodAsync(int foodId, int restaurantId)
         {
             var food = await _repository.GetFoodDetailsAsync(foodId);
@@ -75,53 +94,108 @@ namespace Menro.Application.Services.Implementations
         {
             if (dto is null)
                 throw new ArgumentNullException(nameof(dto));
+
             var food = await _repository.GetFoodDetailsAsync(dto.Id);
             if (food == null)
                 throw new KeyNotFoundException("غذا یافت نشد.");
 
-            // update main fields
+            // -----------------------------
+            // Update main food fields
+            // -----------------------------
             food.Name = dto.Name.Trim();
-            food.Ingredients = string.IsNullOrWhiteSpace(dto.Ingredients) ? null : dto.Ingredients.Trim();
+            food.Ingredients = string.IsNullOrWhiteSpace(dto.Ingredients)
+                ? null
+                : dto.Ingredients.Trim();
             food.ImageUrl = dto.ImageUrl ?? string.Empty;
             food.CustomFoodCategoryId = dto.FoodCategoryId;
-            //food.HasVariants = dto.HasVariants;
             food.Price = dto.HasVariants ? 0 : dto.Price;
 
-            // edit or delete variants and addons
-            if (dto.HasVariants && dto.Variants != null && dto.Variants.Any())
+            // -----------------------------
+            // Handle Variants
+            // -----------------------------
+            if (!dto.HasVariants)
             {
-                // delete removed data
-                var variantIds = dto.Variants.Where(v => v.Id != null).Select(v => v.Id!.Value).ToList();
-                var variantsToRemove = food.Variants.Where(v => !variantIds.Contains(v.Id)).ToList();
-                foreach (var v in variantsToRemove)
-                    food.Variants.Remove(v);
+                // اگر قبلاً variant داشت → همه را پاک کن
+                food.Variants.Clear();
+                return await _repository.UpdateFoodAsync(food);
+            }
 
-                // add or update
-                foreach (var vDto in dto.Variants)
+            if (dto.Variants is null || !dto.Variants.Any())
+                throw new Exception("حداقل یک نوع غذا باید مشخص شود.");
+
+
+            // --- Step 1: حذف Variant هایی که در dto نیستند
+            var dtoVariantIds = dto.Variants
+                .Where(v => v.Id.HasValue)
+                .Select(v => v.Id!.Value)
+                .ToHashSet();
+
+            var variantsToRemove = food.Variants
+                .Where(v => !dtoVariantIds.Contains(v.Id))
+                .ToList(); // ToList برای safe remove
+
+            foreach (var v in variantsToRemove)
+                food.Variants.Remove(v);
+
+
+            // --- Step 2: Add/Update Variants
+            foreach (var vDto in dto.Variants)
+            {
+                var existing = food.Variants.FirstOrDefault(v => v.Id == vDto.Id);
+
+                // add new variants
+                if (existing == null)
                 {
-                    var existing = food.Variants.FirstOrDefault(v => v.Id == vDto.Id);
-                    if (existing == null)
+                    // --- Add new Variant ---
+                    var newVariant = new FoodVariant
                     {
-                        // add
-                        food.Variants.Add(new FoodVariant
+                        Name = vDto.Name.Trim(),
+                        Price = vDto.Price,
+                        IsDefault = vDto.IsDefault,
+                        Addons = new List<FoodAddon>()
+                    };
+
+                    // Add Addons
+                    foreach (var aDto in vDto.Addons ?? Enumerable.Empty<FoodAddonDto>())
+                    {
+                        newVariant.Addons.Add(new FoodAddon
                         {
-                            Name = vDto.Name.Trim(),
-                            Price = vDto.Price,
-                            Addons = vDto.Addons?.Select(a => new FoodAddon
-                            {
-                                Name = a.Name.Trim(),
-                                ExtraPrice = a.ExtraPrice
-                            }).ToList() ?? new List<FoodAddon>()
+                            Name = aDto.Name.Trim(),
+                            ExtraPrice = aDto.ExtraPrice
                         });
                     }
-                    else
-                    {
-                        // update
-                        existing.Name = vDto.Name.Trim();
-                        existing.Price = vDto.Price;
 
-                        existing.Addons.Clear();
-                        foreach (var aDto in vDto.Addons ?? new List<FoodAddonDto>())
+                    food.Variants.Add(newVariant);
+                }
+                // update existing variants
+                else
+                {
+                    existing.Name = vDto.Name.Trim();
+                    existing.Price = vDto.Price;
+                    existing.IsDefault = vDto.IsDefault;
+
+                    // -----------------------------
+                    // Sync Addons (Add/Update/Delete)
+                    // -----------------------------
+
+                    var dtoAddonIds = (vDto.Addons ?? new List<FoodAddonDto>())
+                        .Where(a => a.Id.HasValue)
+                        .Select(a => a.Id!.Value)
+                        .ToHashSet();
+
+                    // Delete removed addons
+                    var addonsToRemove = existing.Addons
+                        .Where(a => !dtoAddonIds.Contains(a.Id))
+                        .ToList();
+                    foreach (var a in addonsToRemove)
+                        existing.Addons.Remove(a);
+
+                    // Add or update addons
+                    foreach (var aDto in vDto.Addons ?? Enumerable.Empty<FoodAddonDto>())
+                    {
+                        var existingAddon = existing.Addons.FirstOrDefault(a => a.Id == aDto.Id);
+                        // add new addons
+                        if (existingAddon == null)
                         {
                             existing.Addons.Add(new FoodAddon
                             {
@@ -129,15 +203,17 @@ namespace Menro.Application.Services.Implementations
                                 ExtraPrice = aDto.ExtraPrice
                             });
                         }
+                        // update existing addons
+                        else
+                        {
+                            existingAddon.Name = aDto.Name.Trim();
+                            existingAddon.ExtraPrice = aDto.ExtraPrice;
+                        }
                     }
                 }
             }
-            else
-            {
-                food.Variants.Clear();
-            }
-            return await _repository.UpdateFoodAsync(food);
 
+            return await _repository.UpdateFoodAsync(food);
         }
 
         public async Task<bool> DeleteFoodAsync(int foodId)

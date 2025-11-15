@@ -11,22 +11,18 @@
     <Compile Remove="Controllers\Admin\**" />
     <Compile Remove="Controllers\OwnerPanel\**" />
     <Compile Remove="Controllers\Owner\**" />
-    <Compile Remove="Controllers\User\**" />
     <Content Remove="Areas\**" />
     <Content Remove="Controllers\Admin\**" />
     <Content Remove="Controllers\OwnerPanel\**" />
     <Content Remove="Controllers\Owner\**" />
-    <Content Remove="Controllers\User\**" />
     <EmbeddedResource Remove="Areas\**" />
     <EmbeddedResource Remove="Controllers\Admin\**" />
     <EmbeddedResource Remove="Controllers\OwnerPanel\**" />
     <EmbeddedResource Remove="Controllers\Owner\**" />
-    <EmbeddedResource Remove="Controllers\User\**" />
     <None Remove="Areas\**" />
     <None Remove="Controllers\Admin\**" />
     <None Remove="Controllers\OwnerPanel\**" />
     <None Remove="Controllers\Owner\**" />
-    <None Remove="Controllers\User\**" />
   </ItemGroup>
 
   <ItemGroup>

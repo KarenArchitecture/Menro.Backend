@@ -960,7 +960,7 @@ namespace Menro.Infrastructure.Data
                     if (discountedFoods.Any())
                     {
                         int maxDiscount = discountedFoods.Max();
-                        r.Description += $" 🌟 بیشترین تخفیف: {maxDiscount}%";
+                        r.Description += $"{maxDiscount}%";
                     }
                 }
                 await _db.SaveChangesAsync();

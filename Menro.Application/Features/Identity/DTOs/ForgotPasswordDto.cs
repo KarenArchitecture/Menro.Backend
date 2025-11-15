@@ -1,6 +1,6 @@
 ﻿namespace Menro.Application.Features.Identity.DTOs
 {
-    public class ResetPasswordDto
+    public class ForgotPasswordDto
     {
         public string PhoneNumber { get; set; }
         public string NewPassword { get; set; }

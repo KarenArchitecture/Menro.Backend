@@ -15,17 +15,21 @@ namespace Menro.Web.Services.Implementations
         {
             return $"{_baseUrl}/{relativePath.TrimStart('/')}";
         }
-
+        // icons
         public string BuildIconUrl(string fileName)
         {
             return BuildFileUrl($"icons/{fileName}");
         }
-
+        // images
         public string BuildImageUrl(string fileName)
         {
-            return BuildFileUrl($"images/{fileName}");
+            return BuildFileUrl($"img/{fileName}");
         }
-
+        public string BuildProfileImageUrl(string fileName)
+        {
+            return BuildFileUrl($"img/profile/{fileName}");
+        }
+        // audios
         public string BuildAudioUrl(string fileName)
         {
             return BuildFileUrl($"audio/{fileName}");

@@ -13,18 +13,10 @@ namespace Menro.Web.Controllers.AdminPanel
     [Authorize]
     public class GlobalFoodCategoryController : ControllerBase
     {
-        private readonly ICustomFoodCategoryService _cCatService;
         private readonly IGlobalFoodCategoryService _gCatService;
-        private readonly ICurrentUserService _currentUserService;
-        public GlobalFoodCategoryController(
-            ICustomFoodCategoryService cCatService, 
-            IGlobalFoodCategoryService gCatService, 
-            ICurrentUserService currentUserService
-            )
+        public GlobalFoodCategoryController(IGlobalFoodCategoryService gCatService)
         {
-            _cCatService = cCatService;
             _gCatService = gCatService;
-            _currentUserService = currentUserService;
         }
 
         //✅

@@ -11,7 +11,7 @@ namespace Menro.Web.Controllers.User
     /// Replaced by <see cref="OrderController.GetRecentFoods"/>.
     /// </summary>
     [ApiController]
-    [Route("api/user/restaurant")]
+    [Route("api/user/[controller]")]
     [Authorize]
     [ApiExplorerSettings(IgnoreApi = true)]
     public class RestaurantController : ControllerBase

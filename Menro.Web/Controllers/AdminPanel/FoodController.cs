@@ -27,8 +27,21 @@ namespace Menro.Web.Controllers.AdminPanel
         [HttpPost("add")]
         public async Task<IActionResult> AddAsync([FromBody] CreateFoodDto dto)
         {
+            // validations
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+            if (dto.HasVariants)
+            {
+                if (dto.Variants == null || dto.Variants.Count == 0)
+                    return BadRequest(new { message = "حداقل یک نوع غذا باید تعریف شود" });
+                
+                var defaults = dto.Variants.Count(v => v.IsDefault);
+                if (defaults == 0)
+                    return BadRequest(new { message = "حداقل یک نوع باید پیش فرض باشد" });
+                    
+                if (defaults > 1)
+                    return BadRequest(new { message = "فقط یک نوع می‌تواند پیش فرض باشد" });
+            }
 
             // گرفتن رستوران کاربر از سرویس کاربر جاری
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
@@ -67,12 +80,26 @@ namespace Menro.Web.Controllers.AdminPanel
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            var res = await _foodService.UpdateFoodAsync(dto);
-            if (!res)
+
+            if (dto.HasVariants)
             {
-                return BadRequest("ویرایش غذا ناموفق بود");
+                if (dto.Variants == null || dto.Variants.Count == 0)
+                    return BadRequest(new { message = "حداقل یک نوع غذا باید تعریف شود" });
+
+                var defaults = dto.Variants.Count(v => v.IsDefault);
+                if (defaults == 0)
+                    return BadRequest(new { message = "حداقل یک نوع باید پیش فرض باشد" });
+
+                if (defaults > 1)
+                    return BadRequest(new { message = "فقط یک نوع می‌تواند پیش فرض باشد" });
             }
-            return Ok(res);
+
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
+            var ok = await _foodService.UpdateFoodAsync(dto);
+            if(!ok) return BadRequest(new { message = "خطای ناشناخته‌ای رخ داده" });
+
+            return Ok(new { success = true });
         }
 
         // ✅

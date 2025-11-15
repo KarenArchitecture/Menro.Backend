@@ -43,59 +43,33 @@ namespace Menro.Application.Features.Icons.Services
                 Url = _fileUrlService.BuildIconUrl(icon.FileName)
             };
         }
-        public async Task<bool> AddAsync(AddIconDto dto)
+        public async Task<bool> AddAsync(string label, string fileName)
         {
-            // ✅ اعتبارسنجی ساده
-            if (string.IsNullOrWhiteSpace(dto.FileName))
+            if (string.IsNullOrWhiteSpace(fileName))
                 throw new ArgumentException("File name is required.");
 
-            // بررسی تکراری بودن فایل
+            // duplicate file?
             var existingIcons = await _repo.GetAllAsync();
-            if (existingIcons.Any(i => i.FileName.ToLower() == dto.FileName.ToLower()))
+            if (existingIcons.Any(i => i.FileName.ToLower() == fileName.ToLower()))
                 throw new InvalidOperationException("An icon with the same file name already exists.");
+            
+            label = label?.Trim() ?? "";
 
-            // ✅ ساخت entity
             var entity = new Icon
             {
-                FileName = dto.FileName,
-                Label = dto.Label
+                FileName = fileName,
+                Label = label
             };
 
-            // ✅ ذخیره در دیتابیس
             return await _repo.AddAsync(entity);
             
         }
         public async Task<bool> DeleteAsync(int id)
         {
-            // ۱. آیکن رو از دیتابیس پیدا کن
             var icon = await _repo.GetByIdAsync(id);
             if (icon == null)
-                throw new InvalidOperationException($"Icon with ID {id} not found.");
+                throw new InvalidOperationException("Icon not found");
 
-            // ۲. مسیر فیزیکی فایل واقعی آیکن (بر اساس منطق FileUrlService)
-            // چون BuildIconUrl از "icons/{fileName}" استفاده می‌کند، مسیر فیزیکی هم باید همان باشد
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "icons", icon.FileName);
-
-            // ۳. حذف فایل اگر وجود دارد
-            if (File.Exists(filePath))
-            {
-                try
-                {
-                    File.Delete(filePath);
-                    Console.WriteLine($"🗑 Icon file deleted successfully: {filePath}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"⚠️ Failed to delete icon file '{filePath}': {ex.Message}");
-                    // حذف دیتابیس را ادامه بده چون ممکن است فایل قبلاً حذف شده باشد
-                }
-            }
-            else
-            {
-                Console.WriteLine($"⚠️ Icon file not found on disk: {filePath}");
-            }
-
-            // ۴. حذف رکورد از دیتابیس
             return await _repo.DeleteAsync(id);
         }
     }
