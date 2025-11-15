@@ -633,6 +633,7 @@ namespace Menro.Infrastructure.Data
         private static readonly string[] BannerImages = { "/img/top-banner.png", "/img/optcropban.jpg", "/img/res-slider.jpg" };
         private static readonly string[] CarouselImages = { "/img/res-slider.jpg", "/img/optcropban.jpg" };
         private static readonly string[] CardImages = { "/img/res-card-1.png", "/img/res-card-2.png" };
+        private static readonly string[] ShopBannerImages = { "/img/ad-banner-1.jpg", "/img/ad-banner-2.png" };
         private static readonly string[] Logos = { "/img/logo-orange.png", "/img/logo-green.png" };
         private static readonly string FoodFallbackImage = "/img/drink.png";
 
@@ -775,6 +776,7 @@ namespace Menro.Infrastructure.Data
                         RestaurantCategoryId = (i % 8) + 1,
                         CarouselImageUrl = CarouselImages[(i - 1) % CarouselImages.Length],
                         BannerImageUrl = CardImages[(i - 1) % CardImages.Length],
+                        ShopBannerImageUrl = ShopBannerImages[(i - 1) % CardImages.Length],
                         LogoImageUrl = Logos[(i - 1) % Logos.Length],
                         IsFeatured = (i % 3 == 0),
                         IsActive = true,

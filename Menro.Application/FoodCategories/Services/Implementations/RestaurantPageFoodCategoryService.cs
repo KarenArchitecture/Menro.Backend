@@ -1,63 +1,58 @@
-﻿using Menro.Application.FoodCategories.DTOs;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.FoodCategories.DTOs;
 using Menro.Application.FoodCategories.Services.Interfaces;
-using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
-using Microsoft.Extensions.Caching.Memory;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Menro.Application.FoodCategories.Services.Implementations
 {
+    /// <summary>
+    /// Service for providing the food category filter section (Shop Page - Section 2).
+    /// Retrieves and maps CustomFoodCategory + GlobalFoodCategory data into DTOs.
+    /// </summary>
     public class RestaurantPageFoodCategoryService : IRestaurantPageFoodCategoryService
     {
-        private readonly ICustomFoodCategoryRepository _foodCategoryRepository;
-        private readonly IRestaurantRepository _restaurantRepository;
+        private readonly ICustomFoodCategoryRepository _customCategoryRepo;
+        private readonly IFileUrlService _fileUrlService;
 
         public RestaurantPageFoodCategoryService(
-            ICustomFoodCategoryRepository foodCategoryRepository,
-            IRestaurantRepository restaurantRepository)
+            ICustomFoodCategoryRepository customCategoryRepo,
+            IFileUrlService fileUrlService)
         {
-            _foodCategoryRepository = foodCategoryRepository;
-            _restaurantRepository = restaurantRepository;
+            _customCategoryRepo = customCategoryRepo;
+            _fileUrlService = fileUrlService;
         }
 
-        /*public async Task<List<RestaurantFoodCategoryDto>> GetCategoriesByRestaurantSlugAsync(string restaurantSlug)
+        /// <summary>
+        /// Retrieves and maps all visible categories (custom + global) for a given restaurant.
+        /// </summary>
+        public async Task<List<RestaurantFoodCategoryDto>> GetRestaurantCategoriesAsync(string restaurantSlug, CancellationToken ct = default)
         {
-            // 1️⃣ Get restaurant by slug (reuse existing method)
-            var restaurant = await _restaurantRepository.GetRestaurantBannerBySlugAsync(restaurantSlug);
-            if (restaurant == null)
-                return new List<RestaurantFoodCategoryDto>();
+            var categories = await _customCategoryRepo.GetActiveByRestaurantSlug_WithIconsAsync(restaurantSlug, ct);
 
-            // 2️⃣ Get global categories
-            var globalCategories = await _foodCategoryRepository.GetActiveGlobalCategoriesAsync();
-
-            // 3️⃣ Get restaurant-specific categories
-            var customCategories = await _foodCategoryRepository
-                .GetAvailableCustomCategoriesForRestaurantAsync(restaurant.Id);
-
-            // 4️⃣ Map both to DTO
-            var result = globalCategories.Select(gc => new RestaurantFoodCategoryDto
+            var list = categories.Select(c =>
             {
-                Id = $"g-{gc.Id}",               // ✅ prefixed unique ID
-                Name = gc.Name,
-                SvgIcon = gc.SvgIcon,
-                IsGlobal = true
+                var iconFileName =
+                    c.Icon?.FileName ??
+                    c.GlobalCategory?.Icon?.FileName ?? string.Empty;
+
+                var svgIcon = string.IsNullOrEmpty(iconFileName)
+                    ? string.Empty
+                    : _fileUrlService.BuildIconUrl(iconFileName);
+
+                return new RestaurantFoodCategoryDto
+                {
+                    Id = c.Id.ToString(),
+                    Name = !string.IsNullOrWhiteSpace(c.Name)
+                        ? c.Name
+                        : (c.GlobalCategory?.Name ?? "دسته‌بندی"),
+                    SvgIcon = svgIcon,
+                    IsGlobal = c.GlobalCategoryId.HasValue
+                };
             })
-            .Concat(customCategories.Select(cc => new RestaurantFoodCategoryDto
-            {
-                Id = $"c-{cc.Id}",               // ✅ prefixed unique ID
-                Name = cc.Name,
-                SvgIcon = cc.SvgIcon,
-                IsGlobal = false
-            }))
+            .OrderBy(x => x.Name)
             .ToList();
 
-            return result;
-        }*/
-
-
+            return list;
+        }
     }
 }

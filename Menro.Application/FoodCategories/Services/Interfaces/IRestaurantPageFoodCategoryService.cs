@@ -1,18 +1,16 @@
 ﻿using Menro.Application.FoodCategories.DTOs;
-using Menro.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Menro.Application.FoodCategories.Services.Interfaces
 {
+    /// <summary>
+    /// Provides restaurant-specific food categories for the public shop page.
+    /// Combines both custom and global categories into a unified list.
+    /// </summary>
     public interface IRestaurantPageFoodCategoryService
     {
         /// <summary>
-        /// Returns all food categories (global + custom) for a restaurant identified by its slug.
+        /// Retrieves all active food categories for a restaurant (for the filter row).
         /// </summary>
-        //Task<List<RestaurantFoodCategoryDto>> GetCategoriesByRestaurantSlugAsync(string restaurantSlug);
+        Task<List<RestaurantFoodCategoryDto>> GetRestaurantCategoriesAsync(string restaurantSlug, CancellationToken ct = default);
     }
 }

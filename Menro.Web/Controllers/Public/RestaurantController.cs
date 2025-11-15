@@ -11,19 +11,21 @@ using Menro.Application.Orders.Services.Interfaces;
 using Menro.Application.Restaurants.Services.Implementations;
 using Menro.Application.Foods.DTOs;
 using Menro.Application.Foods.Services.Implementations;
+using Menro.Application.FoodCategories.Services.Interfaces;
+using Menro.Application.FoodCategories.DTOs;
 
 namespace Menro.Web.Controllers.Public
 {
     /// <summary>
     /// Provides public-facing endpoints for restaurants, including featured lists,
-    /// random selections, ad banners, registration, categories, and detailed
-    /// restaurant pages (banner + menu).
+    /// random selections, advertisement banners, registration, categories, and
+    /// restaurant details (banner, menu, etc.).
     /// </summary>
     [ApiController]
     [Route("api/public/[controller]")]
     public class RestaurantController : ControllerBase
     {
-        #region DI
+        #region Dependency Injection
 
         private readonly IRestaurantService _restaurantService;
         private readonly IFeaturedRestaurantService _featuredRestaurantService;
@@ -33,9 +35,9 @@ namespace Menro.Web.Controllers.Public
         private readonly IRestaurantBannerService _restaurantBannerService;
         private readonly IRestaurantMenuService _restaurantMenuService;
         private readonly IAuthService _authService;
-        private readonly IRestaurantBannerService _bannerService;
         private readonly IMenuListService _menuListService;
         private readonly IMenuItemService _menuItemService;
+        private readonly IRestaurantPageFoodCategoryService _restaurantPageFoodCategoryService;
 
         public RestaurantController(
             IRestaurantService restaurantService,
@@ -47,7 +49,8 @@ namespace Menro.Web.Controllers.Public
             IRestaurantMenuService restaurantMenuService,
             IAuthService authService,
             IMenuListService menuListService,
-            IMenuItemService menuItemService)
+            IMenuItemService menuItemService,
+            IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService)
         {
             _restaurantService = restaurantService;
             _featuredRestaurantService = featuredRestaurantService;
@@ -59,17 +62,14 @@ namespace Menro.Web.Controllers.Public
             _authService = authService;
             _menuListService = menuListService;
             _menuItemService = menuItemService;
+            _restaurantPageFoodCategoryService = restaurantPageFoodCategoryService;
         }
 
         #endregion
 
+
         #region Home Page Endpoints
 
-        /// <summary>
-        /// Retrieves the list of featured restaurants (highlighted on the home page).
-        /// </summary>
-        /// <returns>A list of featured restaurants.</returns>
-        /// <response code="200">Successfully returned featured restaurants.</response>
         [HttpGet("featured")]
         public async Task<IActionResult> GetFeaturedRestaurants()
         {
@@ -77,11 +77,6 @@ namespace Menro.Web.Controllers.Public
             return Ok(featuredRestaurants);
         }
 
-        /// <summary>
-        /// Retrieves a random set of restaurants for variety on the home page.
-        /// </summary>
-        /// <returns>A random collection of restaurant cards.</returns>
-        /// <response code="200">Successfully returned random restaurants.</response>
         [HttpGet("random")]
         public async Task<ActionResult<IEnumerable<RestaurantCardDto>>> GetRandomRestaurants()
         {
@@ -89,13 +84,6 @@ namespace Menro.Web.Controllers.Public
             return Ok(result);
         }
 
-        /// <summary>
-        /// Retrieves a random restaurant advertisement banner, optionally excluding some IDs.
-        /// </summary>
-        /// <param name="exclude">Comma-separated list of ad IDs to exclude.</param>
-        /// <returns>A random ad banner, or 204 if none are available.</returns>
-        /// <response code="200">Random ad banner found.</response>
-        /// <response code="204">No ad banners available after exclusions.</response>
         [HttpGet("ad-banner/random")]
         public async Task<ActionResult<RestaurantAdBannerDto>> GetRandomAdBanner([FromQuery] string? exclude)
         {
@@ -113,13 +101,6 @@ namespace Menro.Web.Controllers.Public
             return Ok(dto);
         }
 
-        /// <summary>
-        /// Tracks an impression (view) for a specific advertisement banner.
-        /// </summary>
-        /// <param name="id">The ad banner ID.</param>
-        /// <returns>No content on success, 404 if banner not found.</returns>
-        /// <response code="204">Impression successfully tracked.</response>
-        /// <response code="404">Ad banner not found.</response>
         [HttpPost("ad-banner/{id}/impression")]
         public async Task<IActionResult> TrackAdImpression(int id)
         {
@@ -129,7 +110,8 @@ namespace Menro.Web.Controllers.Public
 
         #endregion
 
-        #region Registration & Categories
+
+        #region Registration & Global Categories
 
         [HttpPost("register")]
         [Authorize]
@@ -139,12 +121,10 @@ namespace Menro.Web.Controllers.Public
                 return BadRequest(ModelState);
 
             string? ownerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (string.IsNullOrEmpty(ownerUserId))
                 return Unauthorized("کاربر شناسایی نشد.");
 
             var success = await _restaurantService.AddRestaurantAsync(dto, ownerUserId);
-
             if (!success)
                 return BadRequest("ثبت رستوران با خطا مواجه شد.");
 
@@ -155,15 +135,18 @@ namespace Menro.Web.Controllers.Public
         [HttpGet("categories")]
         public async Task<IActionResult> GetCategories()
         {
-            // Ro. => Ab. اینجا از category service استفاده و این متد در restaurant service رو کلا پاک کن، دوباره کاریه.
             var categories = await _restaurantService.GetRestaurantCategoriesAsync();
             return Ok(categories);
         }
 
         #endregion
 
+
         #region Restaurant Page Endpoints
-        // ===== BANNER =====
+
+        /// <summary>
+        /// Retrieves the restaurant banner (cover image, name, rating, etc.) by slug.
+        /// </summary>
         [HttpGet("banner/{slug}")]
         public async Task<ActionResult<RestaurantBannerDto?>> GetBanner(string slug)
         {
@@ -175,8 +158,24 @@ namespace Menro.Web.Controllers.Public
         }
 
         /// <summary>
-        /// Get full menu list of a restaurant (optional category filter)
-        /// GET: /api/public/restaurant/menu/{restaurantId}?globalCategoryId=1&customCategoryId=2
+        /// Retrieves all food categories (custom + global) visible in a restaurant page (Shop Page).
+        /// GET: /api/public/restaurant/{slug}/categories
+        /// </summary>
+        [HttpGet("{slug}/categories")]
+        public async Task<ActionResult<List<RestaurantFoodCategoryDto>>> GetRestaurantCategoriesBySlug(string slug, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(slug))
+                return BadRequest("Slug cannot be empty.");
+
+            var categories = await _restaurantPageFoodCategoryService.GetRestaurantCategoriesAsync(slug, ct);
+            if (categories == null || categories.Count == 0)
+                return NotFound("هیچ دسته‌ای برای این رستوران یافت نشد.");
+
+            return Ok(categories);
+        }
+
+        /// <summary>
+        /// Retrieves the full menu list of a restaurant (optionally filtered by category).
         /// </summary>
         [HttpGet("menu/{slug}")]
         public async Task<ActionResult<List<MenuListFoodDto>>> GetRestaurantMenuBySlug(
@@ -189,8 +188,7 @@ namespace Menro.Web.Controllers.Public
         }
 
         /// <summary>
-        /// Get detailed info of a single food item (with variants & addons)
-        /// GET: /api/public/restaurant/{foodId}/details
+        /// Retrieves detailed info of a single food item (with variants & addons).
         /// </summary>
         [HttpGet("{foodId}/details")]
         public async Task<ActionResult<MenuFoodDetailDto>> GetRestaurantFoodDetail(int foodId)
@@ -199,9 +197,7 @@ namespace Menro.Web.Controllers.Public
             if (foodDetail == null) return NotFound();
             return Ok(foodDetail);
         }
+
         #endregion
-
-
-
     }
 }

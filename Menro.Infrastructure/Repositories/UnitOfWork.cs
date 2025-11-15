@@ -32,7 +32,7 @@ namespace Menro.Infrastructure.Repositories
         // public properties with lazy instantiation
         public IUserRepository User => _user ??= new UserRepository(_context);
         public IFoodRepository Food => _food ??= new FoodRepository(_context);
-        public ICustomFoodCategoryRepository FoodCategory => _foodCategory ??= new CustomFoodCategoryRepository(_context);
+        public ICustomFoodCategoryRepository FoodCategory => _foodCategory ??= new CustomFoodCategoryRepository(_context, _cache);
         public IRestaurantRepository Restaurant => _restaurant ??= new RestaurantRepository(_context, _cache);
         public IRestaurantCategoryRepository RestaurantCategory => _restaurantCategory ??= new RestaurantCategoryRepository(_context);
         public ISubscriptionRepository Subscription => _subscription ??= new SubscriptionRepository(_context);

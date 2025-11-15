@@ -24,8 +24,11 @@ namespace Menro.Domain.Entities
         [Required(ErrorMessage = "اسلاگ الزامی است")]
         public string Slug { get; set; } = string.Empty;
 
-        [Display(Name = "آدرس عکس")]
+        [Display(Name = "آدرس تصویر بنر صفحه خانه")]
         public string? BannerImageUrl { get; set; }
+
+        [Display(Name = "آدرس تصویر بنر صفحه فروشگاه")]
+        public string? ShopBannerImageUrl { get; set; }
 
         [Display(Name = "آدرس عکس بنر تبلیغاتی ")]
         public string? CarouselImageUrl { get; set; }
