@@ -123,14 +123,28 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowReactDevClient", policy =>
+//        {
+//        policy.WithOrigins("https://localhost:5173")
+//                  .AllowAnyHeader()
+//                  .AllowAnyMethod()
+//                  .AllowCredentials();
+//    });
+//});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactDevClient", policy =>
-        {
-        policy.WithOrigins("https://localhost:5173")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+    {
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "https://localhost:5173"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
     });
 });
 
@@ -152,11 +166,13 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
 
-app.UseCors("AllowReactDevClient");
+app.UseCors("AllowReactDevClient");  
+
+app.UseStaticFiles();                 
 
 app.UseErrorHandlingMiddleware();
+
 
 app.UseRouting();
 

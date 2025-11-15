@@ -10,7 +10,6 @@ namespace Menro.Application.Restaurants.Services.Implementations
         private readonly IRestaurantRepository _restaurantRepository;
         private readonly IMemoryCache _cache;
 
-        // cache duration: short because banners may change
         private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
 
         public RestaurantBannerService(IRestaurantRepository restaurantRepository, IMemoryCache cache)
@@ -24,9 +23,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
             string cacheKey = $"restaurant_banner_{slug}";
 
             if (_cache.TryGetValue(cacheKey, out RestaurantBannerDto cached))
-            {
                 return cached;
-            }
 
             var restaurant = await _restaurantRepository.GetRestaurantBannerBySlugAsync(slug);
             if (restaurant == null) return null;
@@ -34,18 +31,17 @@ namespace Menro.Application.Restaurants.Services.Implementations
             var dto = new RestaurantBannerDto
             {
                 Name = restaurant.Name,
-                BannerImageUrl = string.IsNullOrWhiteSpace(restaurant.BannerImageUrl)
-                    ? "/img/res-slider.png"
-                    : restaurant.BannerImageUrl,
+                // ✅ now use new field for shop page banner
+                BannerImageUrl = string.IsNullOrWhiteSpace(restaurant.ShopBannerImageUrl)
+                    ? "/img/ad-banner-2.png"
+                    : restaurant.ShopBannerImageUrl,
                 AverageRating = restaurant.Ratings?.Any() == true
                     ? Math.Round(restaurant.Ratings.Average(r => r.Score), 1)
                     : 0.0,
                 VotersCount = restaurant.Ratings?.Count ?? 0
             };
 
-            // store in cache
             _cache.Set(cacheKey, dto, CacheDuration);
-
             return dto;
         }
 

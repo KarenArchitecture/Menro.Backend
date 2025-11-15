@@ -9,7 +9,7 @@ namespace Menro.Domain.Interfaces
     public interface ICustomFoodCategoryRepository
     {
         /* ============================================================
-           🔹 Retrieval Methods
+           🔹 Retrieval Methods (Admin / Internal)
         ============================================================ */
 
         /// <summary>
@@ -31,6 +31,15 @@ namespace Menro.Domain.Interfaces
         /// Retrieves a custom category by its name.
         /// </summary>
         Task<CustomFoodCategory?> GetByNameAsync(int restaurantId, string catName);
+
+        /* ============================================================
+           🟢 Public Query for Shop (Section 2: filter row)
+           NOTE: Entities only. Includes the icon navigation needed to map in Application.
+        ============================================================ */
+        Task<List<CustomFoodCategory>> GetActiveByRestaurantSlug_WithIconsAsync(
+            string restaurantSlug,
+            CancellationToken ct = default
+        );
 
         /* ============================================================
            ⚙️ CRUD Operations
@@ -64,5 +73,13 @@ namespace Menro.Domain.Interfaces
         /// Checks whether a category with the same name was previously soft-deleted.
         /// </summary>
         Task<bool> IsSoftDeleted(int restaurantId, string catName);
+
+        /* ============================================================
+           🧠 Cache invalidation (for internal use)
+        ============================================================ */
+        void InvalidateRestaurantCategories(string slug);
+
     }
+
+
 }

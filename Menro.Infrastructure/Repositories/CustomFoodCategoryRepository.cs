@@ -2,6 +2,8 @@
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Infrastructure.Repositories
 {
@@ -11,10 +13,12 @@ namespace Menro.Infrastructure.Repositories
     public class CustomFoodCategoryRepository : Repository<CustomFoodCategory>, ICustomFoodCategoryRepository
     {
         private readonly MenroDbContext _context;
+        private readonly IMemoryCache _cache;
 
-        public CustomFoodCategoryRepository(MenroDbContext context) : base(context)
+        public CustomFoodCategoryRepository(MenroDbContext context, IMemoryCache cache) : base(context)
         {
             _context = context;
+            _cache = cache;
         }
 
         /* ============================================================
@@ -43,9 +47,11 @@ namespace Menro.Infrastructure.Repositories
         /// </summary>
         public async Task<IEnumerable<CustomFoodCategory>> GetAllAsync(int restaurantId)
         {
-            return await _context.CustomFoodCategories.Include(u => u.Icon)
-                .Where(u => u.RestaurantId == restaurantId && !u.IsDeleted && u.IsAvailable)
-                .OrderBy(u => u.Name)
+            return await _context.CustomFoodCategories
+                .AsNoTracking()
+                .Include(c => c.Icon)
+                .Where(c => c.RestaurantId == restaurantId && !c.IsDeleted && c.IsAvailable)
+                .OrderBy(c => c.Name)
                 .ToListAsync();
         }
 
@@ -55,6 +61,7 @@ namespace Menro.Infrastructure.Repositories
         public async Task<CustomFoodCategory> GetByIdAsync(int catId)
         {
             var category = await _context.CustomFoodCategories
+                .AsNoTracking()
                 .Include(c => c.Icon)
                 .FirstOrDefaultAsync(c => c.Id == catId && !c.IsDeleted);
 
@@ -70,7 +77,11 @@ namespace Menro.Infrastructure.Repositories
         public async Task<CustomFoodCategory?> GetByNameAsync(int restaurantId, string catName)
         {
             return await _context.CustomFoodCategories
-                .FirstOrDefaultAsync(c => c.RestaurantId == restaurantId && c.Name == catName);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c =>
+                    c.RestaurantId == restaurantId &&
+                    c.Name == catName &&
+                    !c.IsDeleted);
         }
 
         /// <summary>
@@ -79,12 +90,45 @@ namespace Menro.Infrastructure.Repositories
         public async Task<IEnumerable<CustomFoodCategory>> GetByRestaurantSlugAsync(string restaurantSlug)
         {
             return await _context.CustomFoodCategories
+                .AsNoTracking()
                 .Where(fc => fc.Restaurant.Slug == restaurantSlug)
                 .ToListAsync();
         }
 
         /* ============================================================
-           ⚙️ Validation Helpers
+           🟢 Public Query for Shop (Section 2: Filter Row)
+           - Entities only (no DTOs in Domain)
+           - Visible categories for a given restaurant slug
+           - Includes Icon and GlobalCategory.Icon (for Application mapping)
+           - AsNoTracking + single round-trip
+           - Small per-slug cache (5 minutes)
+        ============================================================ */
+
+        public async Task<List<CustomFoodCategory>> GetActiveByRestaurantSlug_WithIconsAsync(
+    string restaurantSlug,
+    CancellationToken ct = default)
+        {
+            const int cacheDurationMinutes = 5;
+            var cacheKey = $"RestaurantCategories_{restaurantSlug}"; // 🔹 same pattern as other repos
+
+            if (_cache.TryGetValue(cacheKey, out List<CustomFoodCategory>? cached))
+                return cached;
+
+            var data = await _context.CustomFoodCategories
+                .AsNoTracking()
+                .Include(c => c.Icon)
+                .Include(c => c.GlobalCategory).ThenInclude(g => g.Icon)
+                .Where(c => c.Restaurant.Slug == restaurantSlug && !c.IsDeleted && c.IsAvailable)
+                .OrderBy(c => c.GlobalCategory != null ? c.GlobalCategory.DisplayOrder : int.MaxValue)
+                .ThenBy(c => c.Name ?? c.GlobalCategory!.Name)
+                .ToListAsync(ct);
+
+            _cache.Set(cacheKey, data, TimeSpan.FromMinutes(cacheDurationMinutes));
+            return data;
+        }
+
+        /* ============================================================
+           🔎 Validation Helpers
         ============================================================ */
 
         /// <summary>
@@ -92,7 +136,8 @@ namespace Menro.Infrastructure.Repositories
         /// </summary>
         public async Task<bool> ExistsByNameAsync(int restaurantId, string catName)
         {
-            return await _context.CustomFoodCategories.AnyAsync(u => u.RestaurantId == restaurantId && u.Name == catName);
+            return await _context.CustomFoodCategories
+                .AnyAsync(c => c.RestaurantId == restaurantId && c.Name == catName && !c.IsDeleted);
         }
 
         /// <summary>
@@ -100,11 +145,8 @@ namespace Menro.Infrastructure.Repositories
         /// </summary>
         public async Task<bool> IsSoftDeleted(int restaurantId, string catName)
         {
-            var cat = await _context.CustomFoodCategories
-                .Where(c => c.IsDeleted && c.RestaurantId == restaurantId)
-                .FirstOrDefaultAsync(x => x.Name == catName);
-
-            return cat != null;
+            return await _context.CustomFoodCategories
+                .AnyAsync(c => c.RestaurantId == restaurantId && c.Name == catName && c.IsDeleted);
         }
 
         /* ============================================================
@@ -143,5 +185,11 @@ namespace Menro.Infrastructure.Repositories
             var saved = await _context.SaveChangesAsync();
             return saved > 0;
         }
+
+        /* ============================================================
+           🔄 Cache invalidation methods (consistent with other repos)
+        ============================================================ */
+        public void InvalidateRestaurantCategories(string slug)
+            => _cache.Remove($"RestaurantCategories_{slug}");
     }
 }
