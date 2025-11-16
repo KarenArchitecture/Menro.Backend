@@ -1,0 +1,11 @@
+﻿using Menro.Application.Features.Ads.DTOs;
+
+namespace Menro.Application.Features.Ads.Services
+{
+    public interface IRestaurantAdService
+    {
+        Task<bool> CreateAsync(CreateRestaurantAdDto dto);
+        Task<List<RestaurantAdListItemDto>> GetByRestaurantAsync(int restaurantId);
+        Task IncrementConsumptionAsync(int adId, int amount = 1);
+    }
+}

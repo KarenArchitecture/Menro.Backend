@@ -1,12 +1,11 @@
 ﻿using Menro.Domain.Interfaces;
 using Menro.Domain.Entities;
-using Menro.Application.Features.GlobalFoodCategories.Services.Interfaces;
 using Menro.Application.Features.GlobalFoodCategories.DTOs;
 using Menro.Application.Features.Icons.DTOs;
 using Menro.Application.Common.Interfaces;
 
 
-namespace Menro.Application.Features.GlobalFoodCategories.Services.Implementations
+namespace Menro.Application.Features.GlobalFoodCategories.Services
 {
     public class GlobalFoodCategoryService : IGlobalFoodCategoryService
     {

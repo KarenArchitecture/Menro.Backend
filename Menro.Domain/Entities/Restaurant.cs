@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Menro.Domain.Entities
 {
@@ -53,13 +48,6 @@ namespace Menro.Domain.Entities
         [Display(Name = "تأیید شده")]
         public bool IsApproved { get; set; } = false;  // New: to indicate admin approval status
 
-        // --- Computed (NotMapped) ---
-        [NotMapped]
-        public double AverageRating => Ratings.Any() ? Ratings.Average(r => r.Score) : 0;
-
-        [NotMapped]
-        public int VotersCount => Ratings.Count;
-
         // مشخصات صاحب رستوران
         [Display(Name = "کد ملی")]
         [MaxLength(10)]
@@ -74,33 +62,45 @@ namespace Menro.Domain.Entities
         [Display(Name = "شماره شبا")]
         [MaxLength(30)]
         public string? ShebaNumber { get; set; }
+        public bool IsFeatured { get; set; } = false;
 
-        // اتصال رستوران به صاحب رستوران
+        // FKs and relations
+
+        // Owner
         public string OwnerUserId { get; set; } = string.Empty;
 
         public User OwnerUser { get; set; } = null!;
 
-        // اشتراک
+        // Subscription
         public Subscription? Subscription { get; set; }
 
-        public bool IsFeatured { get; set; } = false;
 
-        // دسته بندی رستوران (Navigation property + FK)
         public int RestaurantCategoryId { get; set; }
-
         public RestaurantCategory RestaurantCategory { get; set; } = null!;
 
-        // غذاها
+        // Foods
         public ICollection<Food> Foods { get; set; } = new List<Food>();
 
+        // Categories
         public ICollection<CustomFoodCategory> FoodCategories { get; set; } = new List<CustomFoodCategory>();
 
+        // Ads
+        public ICollection<RestaurantAd> Advertisements { get; set; } = new List<RestaurantAd>();
+
+        public RestaurantAdBanner? AdBanner { get; set; }
+
+        // Ratings
         public ICollection<RestaurantRating> Ratings { get; set; } = new List<RestaurantRating>();
+        [NotMapped]
+        public double AverageRating => Ratings.Any() ? Ratings.Average(r => r.Score) : 0;
+
+        [NotMapped]
+        public int VotersCount => Ratings.Count;
 
         public ICollection<RestaurantDiscount> Discounts { get; set; } = new List<RestaurantDiscount>();
         // connection to Orders from specific restaurant
         public ICollection<Order> Orders { get; set; } = new List<Order>();
-        public RestaurantAdBanner? AdBanner { get; set; }
+        
 
     }
 }

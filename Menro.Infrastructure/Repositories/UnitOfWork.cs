@@ -22,6 +22,8 @@ namespace Menro.Infrastructure.Repositories
         private ICustomFoodCategoryRepository _foodCategory;
         private IRestaurantRepository _restaurant;
         private IRestaurantCategoryRepository _restaurantCategory;
+        private IAdPricingSettingRepository _adPricingSetting;
+        private IRestaurantAdRepository _restaurantAd;
         private ISubscriptionRepository _subscription;
         private ISubscriptionPlanRepository _subscriptionPlan;
         private IOtpRepository _otp;
@@ -36,6 +38,8 @@ namespace Menro.Infrastructure.Repositories
         public ICustomFoodCategoryRepository FoodCategory => _foodCategory ??= new CustomFoodCategoryRepository(_context, _cache);
         public IRestaurantRepository Restaurant => _restaurant ??= new RestaurantRepository(_context, _cache);
         public IRestaurantCategoryRepository RestaurantCategory => _restaurantCategory ??= new RestaurantCategoryRepository(_context);
+        public IAdPricingSettingRepository AdPricingSetting => _adPricingSetting ??= new AdPricingSettingRepository(_context);
+        public IRestaurantAdRepository RestaurantAd => _restaurantAd ??= new RestaurantAdRepository(_context);
         public ISubscriptionRepository Subscription => _subscription ??= new SubscriptionRepository(_context);
         public ISubscriptionPlanRepository SubscriptionPlan => _subscriptionPlan ??= new SubscriptionPlanRepository(_context);
         public IOtpRepository Otp => _otp ??= new OtpRepository(_context);

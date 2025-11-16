@@ -3,19 +3,18 @@ using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Menro.Application.Common.Interfaces;
 
 namespace Menro.Infrastructure.Repositories
 {
     /// <summary>
     /// Repository for managing custom food categories belonging to restaurants.
     /// </summary>
-    public class CustomFoodCategoryRepository : Repository<CustomFoodCategory>, ICustomFoodCategoryRepository
+    public class CustomFoodCategoryRepository : ICustomFoodCategoryRepository
     {
         private readonly MenroDbContext _context;
         private readonly IMemoryCache _cache;
 
-        public CustomFoodCategoryRepository(MenroDbContext context, IMemoryCache cache) : base(context)
+        public CustomFoodCategoryRepository(MenroDbContext context, IMemoryCache cache)
         {
             _context = context;
             _cache = cache;

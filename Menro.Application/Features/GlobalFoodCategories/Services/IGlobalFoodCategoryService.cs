@@ -1,6 +1,6 @@
 ﻿using Menro.Application.Features.GlobalFoodCategories.DTOs;
 
-namespace Menro.Application.Features.GlobalFoodCategories.Services.Interfaces
+namespace Menro.Application.Features.GlobalFoodCategories.Services
 {
     public interface IGlobalFoodCategoryService
     {
