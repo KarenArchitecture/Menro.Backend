@@ -7,8 +7,8 @@
         _env = env;
     }
 
-    // images/profile
-    public async Task<string> SaveProfileImageAsync(IFormFile file, string? oldFileName = null)
+    // img/profile
+    public async Task<string> UploadProfileImageAsync(IFormFile file, string? oldFileName = null)
     {
         var uploadDir = Path.Combine(_env.WebRootPath, "img", "profile");
         Directory.CreateDirectory(uploadDir);
@@ -30,17 +30,34 @@
         return fileName;
     }
 
+    // img/adBanner
+    public async Task<string> UploadAdImageAsync(IFormFile file)
+    {
+        var uploadDir = Path.Combine(_env.WebRootPath, "img", "adBanner");
+        Directory.CreateDirectory(uploadDir);
+
+        var ext = Path.GetExtension(file.FileName);
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        var filePath = Path.Combine(uploadDir, fileName);
+
+        using var stream = new FileStream(filePath, FileMode.Create);
+        await file.CopyToAsync(stream);
+
+        return fileName;
+    }
+
+
     // icons
     public async Task<string> UploadSvgAsync(IFormFile file)
     {
-        var uploadsFolder = Path.Combine(_env.WebRootPath ?? string.Empty, "icons");
+        var uploadDir = Path.Combine(_env.WebRootPath ?? string.Empty, "icons");
 
-        if (!Directory.Exists(uploadsFolder))
-            Directory.CreateDirectory(uploadsFolder);
+        if (!Directory.Exists(uploadDir))
+            Directory.CreateDirectory(uploadDir);
 
         var fileName = Path.GetFileName(file.FileName);
 
-        var filePath = Path.Combine(uploadsFolder, fileName);
+        var filePath = Path.Combine(uploadDir, fileName);
         if (File.Exists(filePath))
             throw new InvalidOperationException("File already exists.");
 

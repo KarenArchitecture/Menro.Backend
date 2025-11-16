@@ -29,6 +29,7 @@ namespace Menro.Web.Services.Implementations
         {
             return BuildFileUrl($"img/profile/{fileName}");
         }
+        
         // audios
         public string BuildAudioUrl(string fileName)
         {

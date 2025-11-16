@@ -15,17 +15,23 @@ namespace Menro.Web.Controllers.AdminPanel
     {
         private readonly IRestaurantAdService _service;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IFileService _fileService;
         public RestaurantAdsController(IRestaurantAdService service,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IFileService fileService)
         {
             _service = service;
             _currentUserService = currentUserService;
+            _fileService = fileService;
         }
 
 
         [HttpPost("addAd")]
         public async Task<IActionResult> Create([FromBody] CreateRestaurantAdDto dto)
         {
+            if(dto.ImageFileName == null)
+                return BadRequest(new { message = "تصویر تبلیغ نباید خالی باشد" });
+
             int restaurantId = await _currentUserService.GetRestaurantIdAsync();
             if (restaurantId == null)
                 return BadRequest(new { message = "مشخصات رستوران متقاضی یافت نشد" });
@@ -38,19 +44,13 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok();
         }
 
-        [HttpGet("{restaurantId}")]
-        public async Task<IActionResult> GetList(int restaurantId)
-        {
-            var result = await _service.GetByRestaurantAsync(restaurantId);
-            return Ok(result);
-        }
-
-        [HttpPost("ad-banner")]
+        [HttpPost("upload-ad-image")]
         [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> UploadAdBanner([FromForm] IFormFile file)
+        public async Task<IActionResult> UploadAdImage([FromForm] IFormFile file)
         {
+            string fileName = await _fileService.UploadAdImageAsync(file);
 
-            return Ok();
+            return Ok(fileName);
         }
     }
 

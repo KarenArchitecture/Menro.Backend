@@ -2,7 +2,8 @@
 
 public interface IFileService
 {
-    Task<string> SaveProfileImageAsync(IFormFile file, string? oldFileName = null);
+    Task<string> UploadProfileImageAsync(IFormFile file, string? oldFileName = null);
     Task<string> UploadSvgAsync(IFormFile file);
+    Task<string> UploadAdImageAsync(IFormFile file);
     bool DeleteIcon(string fileName);
 }

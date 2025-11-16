@@ -8,7 +8,7 @@ namespace Menro.Application.Features.Ads.DTOs
         public AdBillingType BillingType { get; set; }
         public int Cost { get; set; }
 
-        public string ImageUrl { get; set; } = string.Empty;
+        public string ImageFileName { get; set; } = string.Empty;
         public string? TargetUrl { get; set; }
 
         public int PurchasedUnits { get; set; }
