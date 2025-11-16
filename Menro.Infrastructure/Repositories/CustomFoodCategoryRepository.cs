@@ -80,8 +80,7 @@ namespace Menro.Infrastructure.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c =>
                     c.RestaurantId == restaurantId &&
-                    c.Name == catName &&
-                    !c.IsDeleted);
+                    c.Name == catName);
         }
 
         /// <summary>
@@ -137,7 +136,7 @@ namespace Menro.Infrastructure.Repositories
         public async Task<bool> ExistsByNameAsync(int restaurantId, string catName)
         {
             return await _context.CustomFoodCategories
-                .AnyAsync(c => c.RestaurantId == restaurantId && c.Name == catName && !c.IsDeleted);
+                .AnyAsync(c => c.RestaurantId == restaurantId && c.Name == catName);
         }
 
         /// <summary>

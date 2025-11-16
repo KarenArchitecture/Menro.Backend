@@ -33,6 +33,7 @@ namespace Menro.Infrastructure.Repositories
         public async Task<List<GlobalFoodCategory>> GetAllAsync()
             => await _context.GlobalFoodCategories
                 .Include(c => c.Icon)
+                .Where(g => !g.IsDeleted)
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
