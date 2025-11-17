@@ -3,6 +3,7 @@ using Menro.Application.Foods.DTOs;
 using Menro.Domain.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Application.Foods.Mappers;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Application.Services.Implementations
 {
@@ -10,11 +11,18 @@ namespace Menro.Application.Services.Implementations
     {
         private readonly IFoodRepository _repository;
         private readonly ICustomFoodCategoryRepository _cCategoryRepository;
+        private readonly IFileUrlService _fileUrlService;
+        private readonly IFileService _fileService;
 
-        public FoodService(IFoodRepository repository, ICustomFoodCategoryRepository cCategoryRepository)
+        public FoodService(IFoodRepository repository, 
+            ICustomFoodCategoryRepository cCategoryRepository,
+            IFileUrlService fileUrlService,
+            IFileService fileService)
         {
             _repository = repository;
             _cCategoryRepository = cCategoryRepository;
+            _fileUrlService = fileUrlService;
+            _fileService = fileService;
         }
 
         public async Task<bool> AddFoodAsync(CreateFoodDto dto, int restaurantId)
@@ -27,7 +35,7 @@ namespace Menro.Application.Services.Implementations
                 Name = dto.Name.Trim(),
                 Ingredients = string.IsNullOrWhiteSpace(dto.Ingredients) ? null : dto.Ingredients.Trim(),
                 Price = dto.HasVariants ? 0 : dto.Price,
-                ImageUrl = dto.ImageUrl ?? string.Empty,
+                ImageUrl = dto.ImageName ?? string.Empty,
                 CustomFoodCategoryId = dto.FoodCategoryId,
                 GlobalFoodCategoryId = gCat,
                 RestaurantId = restaurantId,
@@ -85,17 +93,48 @@ namespace Menro.Application.Services.Implementations
 
             }).ToList();
         }
-        public async Task<FoodDetailsDto?> GetFoodAsync(int foodId, int restaurantId)
+        public async Task<FoodDetailsDto?> GetFoodDetailsAsync(int foodId, int restaurantId)
         {
-            var food = await _repository.GetFoodDetailsAsync(foodId);
-            return food is null ? null : FoodMapper.MapToDetailsDto(food);
+            var food = await _repository.GetFoodAsync(foodId);
+            if (food == null) return null;
+
+            var dto = new FoodDetailsDto
+            {
+                Id = food.Id,
+                Name = food.Name,
+                Ingredients = food.Ingredients,
+                Price = food.Price,
+                ImageName = food.ImageUrl,
+                ImageUrl = _fileUrlService.BuildFoodImageUrl(food.ImageUrl),
+                FoodCategoryId = food.CustomFoodCategoryId!.Value,
+                HasVariants = food.Variants.Any(),
+                Variants = (food.Variants ?? Enumerable.Empty<FoodVariant>())
+                .Select(v => new FoodVariantDetailsDto
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    Price = v.Price,
+                    IsDefault = v.IsDefault,
+                    Addons = (v.Addons ?? Enumerable.Empty<FoodAddon>())
+                        .Select(a => new FoodAddonDetailsDto
+                        {
+                            Id = a.Id,
+                            Name = a.Name,
+                            ExtraPrice = a.ExtraPrice
+                        })
+                        .ToList()
+                })
+                .ToList()
+            };
+
+            return dto;
         }
         public async Task<bool> UpdateFoodAsync(UpdateFoodDto dto)
         {
             if (dto is null)
                 throw new ArgumentNullException(nameof(dto));
 
-            var food = await _repository.GetFoodDetailsAsync(dto.Id);
+            var food = await _repository.GetFoodAsync(dto.Id);
             if (food == null)
                 throw new KeyNotFoundException("غذا یافت نشد.");
 
@@ -106,7 +145,16 @@ namespace Menro.Application.Services.Implementations
             food.Ingredients = string.IsNullOrWhiteSpace(dto.Ingredients)
                 ? null
                 : dto.Ingredients.Trim();
-            food.ImageUrl = dto.ImageUrl ?? string.Empty;
+
+
+            // new image ?? replace
+            if (dto.ImageName != null && food.ImageUrl != dto.ImageName)
+            {
+                // if there was already an image in food => delete and replace
+                if (!string.IsNullOrEmpty(food.ImageUrl))
+                    _fileService.DeleteFoodImage(food.ImageUrl);
+                food.ImageUrl = dto.ImageName;
+            }
             food.CustomFoodCategoryId = dto.FoodCategoryId;
             food.Price = dto.HasVariants ? 0 : dto.Price;
 

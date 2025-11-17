@@ -11,6 +11,7 @@ namespace Menro.Web.Controllers.AdminPanel
     [ApiController]
     [Route("api/adminpanel/[controller]")]
     [Authorize]
+    [Authorize(Roles = SD.Role_Admin)]
     public class GlobalFoodCategoryController : ControllerBase
     {
         private readonly IGlobalFoodCategoryService _gCatService;
@@ -21,7 +22,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         //✅
         [HttpPost("add")]
-        [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> AddAsync([FromBody] CreateGlobalCategoryDTO dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
@@ -47,7 +47,6 @@ namespace Menro.Web.Controllers.AdminPanel
         // ✅
         // read
         [HttpGet("read")]
-        [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> GetAsync([FromQuery] int catId)
         {
             try
@@ -64,7 +63,6 @@ namespace Menro.Web.Controllers.AdminPanel
         // ✅
         // update
         [HttpPut("update")]
-        [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateGlobalCategoryDto dto)
         {
             try
@@ -80,7 +78,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpDelete("delete/{catId}")]
-        [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> DeleteAsync(int catId)
         {
             var result = await _gCatService.DeleteGlobalCategoryAsync(catId);

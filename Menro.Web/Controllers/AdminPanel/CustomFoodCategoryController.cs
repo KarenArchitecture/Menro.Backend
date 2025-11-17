@@ -78,16 +78,17 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateAsync(UpdateCustomFoodCategoryDto dto)
+        public async Task<IActionResult> UpdateAsync([FromBody] UpdateCustomFoodCategoryDto dto)
         {
-            if (dto == null || dto.Id <= 0 || string.IsNullOrWhiteSpace(dto.Name))
-                return BadRequest(new { message = "داده‌های ارسالی معتبر نیستند." });
-
-            var success = await _cCatService.UpdateCategoryAsync(dto);
-            if (!success)
-                return BadRequest(new { message = "به‌روزرسانی ناموفق بود یا دسته‌بندی وجود ندارد." });
-
-            return Ok(new { message = "دسته‌بندی با موفقیت ویرایش شد." });
+            try
+            {
+                await _cCatService.UpdateCategoryAsync(dto);
+                return Ok(new { message = "Global category updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         // ✅

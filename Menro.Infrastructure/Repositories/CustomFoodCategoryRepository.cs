@@ -180,8 +180,7 @@ namespace Menro.Infrastructure.Repositories
             if (category == null) return false;
 
             _context.CustomFoodCategories.Update(category);
-            var saved = await _context.SaveChangesAsync();
-            return saved > 0;
+            return await _context.SaveChangesAsync() > 0;
         }
 
         /* ============================================================

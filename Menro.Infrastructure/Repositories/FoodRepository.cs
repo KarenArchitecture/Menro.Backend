@@ -234,7 +234,7 @@ namespace Menro.Infrastructure.Repositories
         /// <summary>
         /// Returns full food details including variants and addons.
         /// </summary>
-        public async Task<Food> GetFoodDetailsAsync(int foodId)
+        public async Task<Food> GetFoodAsync(int foodId)
         {
             var food = await _context.Foods
                 .Include(f => f.Variants)

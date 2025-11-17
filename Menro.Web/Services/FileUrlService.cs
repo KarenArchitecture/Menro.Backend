@@ -20,16 +20,34 @@ namespace Menro.Web.Services.Implementations
         {
             return BuildFileUrl($"icons/{fileName}");
         }
-        // images
+
+        /*--------------*/
+        /*--- images ---*/
+        /*--------------*/
+        // general
         public string BuildImageUrl(string fileName)
         {
             return BuildFileUrl($"img/{fileName}");
         }
+        
+        // profile
         public string BuildProfileImageUrl(string fileName)
         {
             return BuildFileUrl($"img/profile/{fileName}");
         }
         
+        // ad
+        public string BuildAdImageUrl(string fileName)
+        {
+            return BuildFileUrl($"img/adBanner/{fileName}");
+        }
+        // food
+        public string BuildFoodImageUrl(string fileName)
+        {
+            return BuildFileUrl($"img/food/{fileName}");
+        }
+
+
         // audios
         public string BuildAudioUrl(string fileName)
         {

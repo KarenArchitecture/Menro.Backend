@@ -14,7 +14,7 @@ namespace Menro.Domain.Entities
         public AdBillingType BillingType { get; set; }       // بر اساس روز یا کلیک
         public int Cost { get; set; }  // مبلغ نهایی پرداخت شده
 
-        public string ImageUrl { get; set; } = string.Empty;
+        public string ImageFileName { get; set; } = string.Empty;
         public string? TargetUrl { get; set; }
 
         public DateTime StartDate { get; set; }

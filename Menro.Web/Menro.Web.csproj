@@ -49,4 +49,9 @@
     <ProjectReference Include="..\Menro.Infrastructure\Menro.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\img\adBanner\" />
+    <Folder Include="wwwroot\img\food\" />
+  </ItemGroup>
+
 </Project>

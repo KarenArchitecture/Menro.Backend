@@ -16,14 +16,18 @@ namespace Menro.Web.Controllers.AdminPanel
         private readonly IFoodService _foodService;
         private readonly ICustomFoodCategoryService _cCatService;
         private readonly ICurrentUserService _currentUserService;
-        public FoodController(IFoodService foodService, ICustomFoodCategoryService cCatService, ICurrentUserService currentUserService)
+        private readonly IFileService _fileService;
+        public FoodController(IFoodService foodService, 
+            ICustomFoodCategoryService cCatService, 
+            ICurrentUserService currentUserService,
+            IFileService fileService)
         {
             _foodService = foodService;
             _cCatService = cCatService;
             _currentUserService = currentUserService;
+            _fileService = fileService;
         }
 
-        // ✅
         [HttpPost("add")]
         public async Task<IActionResult> AddAsync([FromBody] CreateFoodDto dto)
         {
@@ -45,10 +49,12 @@ namespace Menro.Web.Controllers.AdminPanel
 
             // گرفتن رستوران کاربر از سرویس کاربر جاری
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-            var createdFood = await _foodService.AddFoodAsync(dto, restaurantId);
-
-            return Ok(createdFood);
+            bool result = await _foodService.AddFoodAsync(dto, restaurantId);
+            if(!result)
+                return BadRequest(new { message = "خطای ناشناخته‌ای رخ داده است" });
+            return Ok();
         }
+
 
         // ✅
         [HttpGet("read-all")]
@@ -63,18 +69,16 @@ namespace Menro.Web.Controllers.AdminPanel
             return BadRequest("User is not a restaurant owner.");
         }
 
-        // ✅
         [HttpGet("{foodId:int}")]
         public async Task<IActionResult> GetAsync(int foodId)
         {
             int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
-            var food = await _foodService.GetFoodAsync(foodId, restaurantId.Value);
+            var food = await _foodService.GetFoodDetailsAsync(foodId, restaurantId.Value);
             if (food == null)
                 return NotFound();
             return Ok(food);
         }
 
-        // ✅
         [HttpPut("update")]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateFoodDto dto)
         {
@@ -102,7 +106,6 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(new { success = true });
         }
 
-        // ✅
         [HttpDelete("{foodId:int}")] // change it to "read" later
         public async Task<IActionResult> DeleteAsync(int foodId)
         {
@@ -125,6 +128,35 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(categories);
         }
 
+        // ✅
+        [Authorize(Roles = SD.Role_Owner)]
+        [HttpPost("upload-food-image")]
+        public async Task<IActionResult> UploadFoodImage([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("هیچ فایلی ارسال نشده است.");
 
+            // Allowed extensions
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (!allowedExtensions.Contains(ext))
+                return BadRequest("فرمت فایل مجاز نیست. فقط jpg, jpeg, png, webp");
+
+            // Max size (مثلاً 2MB)
+            if (file.Length > 2 * 1024 * 1024)
+                return BadRequest("حجم فایل نباید بیش از 2 مگابایت باشد.");
+
+            try
+            {
+                var fileName = await _fileService.UploadFoodImageAsync(file);
+                return Ok(fileName);
+            }
+            catch (Exception ex)
+            {
+                // می‌تونی Log هم بزنی
+                return StatusCode(500, new { message = "خطا در ذخیره‌سازی فایل", error = ex.Message });
+            }
+        }
     }
 }
