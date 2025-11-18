@@ -1,5 +1,4 @@
-﻿using Menro.Application.Services.Interfaces;
-using Menro.Domain.Entities;
+﻿using Menro.Domain.Entities;
 using Menro.Domain.Entities.Identity;
 using Menro.Domain.Enums;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;

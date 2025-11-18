@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    [Migration("20251106155421_addedRefreshTokenTable")]
-    partial class addedRefreshTokenTable
+    [Migration("20251117170725_dbInit68531")]
+    partial class dbInit68531
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,34 @@ namespace Menro.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("AdPricingSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BasePrice")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BillingType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PlacementType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UnitPrice")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AdPricingSettings");
+                });
 
             modelBuilder.Entity("Menro.Domain.Entities.CustomFoodCategory", b =>
                 {
@@ -186,6 +214,9 @@ namespace Menro.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("IsDefault")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
@@ -466,6 +497,9 @@ namespace Menro.Infrastructure.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
+                    b.Property<string>("ShopBannerImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -484,6 +518,59 @@ namespace Menro.Infrastructure.Migrations
                     b.HasIndex("IsActive", "IsApproved");
 
                     b.ToTable("Restaurants");
+                });
+
+            modelBuilder.Entity("Menro.Domain.Entities.RestaurantAd", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BillingType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CommercialText")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("ConsumedUnits")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Cost")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ImageFileName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsPaused")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PlacementType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PurchasedUnits")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TargetUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.ToTable("RestaurantAds");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.RestaurantAdBanner", b =>
@@ -755,7 +842,7 @@ namespace Menro.Infrastructure.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("ProfileImageUrl")
+                    b.Property<string>("ProfileImage")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
@@ -1072,6 +1159,17 @@ namespace Menro.Infrastructure.Migrations
                     b.Navigation("RestaurantCategory");
                 });
 
+            modelBuilder.Entity("Menro.Domain.Entities.RestaurantAd", b =>
+                {
+                    b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
+                        .WithMany("Advertisements")
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Restaurant");
+                });
+
             modelBuilder.Entity("Menro.Domain.Entities.RestaurantAdBanner", b =>
                 {
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
@@ -1222,6 +1320,8 @@ namespace Menro.Infrastructure.Migrations
             modelBuilder.Entity("Menro.Domain.Entities.Restaurant", b =>
                 {
                     b.Navigation("AdBanner");
+
+                    b.Navigation("Advertisements");
 
                     b.Navigation("Discounts");
 
