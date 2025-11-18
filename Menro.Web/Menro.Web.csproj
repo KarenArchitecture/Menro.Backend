@@ -52,6 +52,7 @@
   <ItemGroup>
     <Folder Include="wwwroot\img\adBanner\" />
     <Folder Include="wwwroot\img\food\" />
+    <Folder Include="wwwroot\img\profile\" />
   </ItemGroup>
 
 </Project>
