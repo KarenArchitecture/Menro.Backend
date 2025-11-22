@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+
+[build.nixpacks]
+buildCommand = "dotnet restore && dotnet publish Menro.Web/Menro.Web.csproj -c Release -o out"
+
+[deploy]
+startCommand = "dotnet out/Menro.Web.dll"
