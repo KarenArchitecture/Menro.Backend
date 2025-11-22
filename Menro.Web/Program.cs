@@ -7,7 +7,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Menro.Application.Common.Settings;
 using Menro.Domain.Entities;
-using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Menro.Web.Middleware;
 using Menro.Infrastructure.Extensions;
@@ -22,8 +21,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 #region DbContext & Identity
 
-builder.Services.AddDbContext<MenroDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// choosing db based on enviroment
+if (builder.Environment.IsProduction())
+{
+    // using InMemory on Render (first sprint)
+    builder.Services.AddDbContext<MenroDbContext>(options =>
+        options.UseInMemoryDatabase("MenroDemoDb"));
+}
+else
+{
+    // local SQL Server
+    builder.Services.AddDbContext<MenroDbContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
@@ -84,20 +94,20 @@ builder.Services.ConfigureApplicationCookie(options =>
 #endregion
 
 
-// DI via Extensions
+#region DI Services
 builder.Services.AddInfrastructureServices();
 var applicationAssembly = Assembly.Load("Menro.Application");
 builder.Services.AddAutoRegisteredServices(applicationAssembly);
 var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
 builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
+// menro.api services
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUrlService, FileUrlService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
-
-
-//Caching Setup
 builder.Services.AddMemoryCache();
+#endregion
+
 
 
 #region API & MVC
@@ -123,33 +133,20 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowReactDevClient", policy =>
-//        {
-//        policy.WithOrigins("https://localhost:5173")
-//                  .AllowAnyHeader()
-//                  .AllowAnyMethod()
-//                  .AllowCredentials();
-//    });
-//});
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactDevClient", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:5173",
-            "https://localhost:5173"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
 #endregion
-
 var app = builder.Build();
 
 #region Middleware
@@ -167,7 +164,8 @@ else
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowReactDevClient");  
+//app.UseCors("AllowReactDevClient");
+app.UseCors("AllowFrontend");
 
 app.UseStaticFiles();                 
 
@@ -193,11 +191,38 @@ app.MapControllerRoute(
 
 #region DB Initialization
 
+//using (var scope = app.Services.CreateScope())
+//{
+//    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+//    await dbInitializer.InitializeAsync();
+//}
+
+
+// for InMemory db (on render.com)
 using (var scope = app.Services.CreateScope())
 {
-    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-    await dbInitializer.InitializeAsync();
+    var db = scope.ServiceProvider.GetRequiredService<MenroDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    if (!roleManager.Roles.Any())
+    {
+        await roleManager.CreateAsync(new IdentityRole("Admin"));
+    }
+
+    if (!userManager.Users.Any())
+    {
+        var admin = new Menro.Domain.Entities.User
+        {
+            FullName = "admin",
+            Email = "admin@example.com"
+        };
+
+        await userManager.CreateAsync(admin, "1234");
+        await userManager.AddToRoleAsync(admin, "Admin");
+    }
 }
+
 
 #endregion
 
