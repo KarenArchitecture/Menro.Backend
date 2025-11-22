@@ -1,10 +1,14 @@
 ﻿[build]
 builder = "nixpacks"
 
+[env]
+DOTNET_VERSION = "8.0"
+
 [build.nixpacks]
+runtime = "dotnet"
 packages = ["dotnet-sdk_8"]
 
-buildCommand = "dotnet restore && dotnet publish Menro.Web/Menro.Web.csproj -c Release -o out"
+buildCommand = "cd Menro.Web && dotnet restore && dotnet publish -c Release -o ../out"
 
 [deploy]
 startCommand = "dotnet out/Menro.Web.dll"
