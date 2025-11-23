@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    [Migration("20251106155421_addedRefreshTokenTable")]
-    partial class addedRefreshTokenTable
+    [Migration("20251116025945_ABIsDefaultAddedToVariant")]
+    partial class ABIsDefaultAddedToVariant
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -186,6 +186,9 @@ namespace Menro.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("IsDefault")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
@@ -465,6 +468,9 @@ namespace Menro.Infrastructure.Migrations
                     b.Property<string>("ShebaNumber")
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("ShopBannerImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -755,7 +761,7 @@ namespace Menro.Infrastructure.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<string>("ProfileImageUrl")
+                    b.Property<string>("ProfileImage")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
