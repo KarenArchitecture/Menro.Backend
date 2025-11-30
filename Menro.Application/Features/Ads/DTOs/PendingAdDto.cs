@@ -10,4 +10,5 @@
     public string ImageUrl { get; set; } = "";
     public string CommercialText { get; set; } = "";
     public DateTime CreatedAt { get; set; }
+    public string CreatedAtShamsi { get; set; } = "";
 }

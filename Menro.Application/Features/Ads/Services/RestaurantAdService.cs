@@ -1,16 +1,20 @@
 ﻿using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Application.Features.Ads.DTOs;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Application.Features.Ads.Services
 {
     public class RestaurantAdService : IRestaurantAdService
     {
         private readonly IRestaurantAdRepository _repository;
+        private readonly IGlobalDateTimeService _globalDateTimeService;
 
-        public RestaurantAdService(IRestaurantAdRepository repository)
+        public RestaurantAdService(IRestaurantAdRepository repository,
+            IGlobalDateTimeService globalDateTimeService)
         {
             _repository = repository;
+            _globalDateTimeService = globalDateTimeService;
         }
 
         public async Task<bool> CreateAsync(ReserveRestaurantAdDto dto)
@@ -82,9 +86,10 @@ namespace Menro.Application.Features.Ads.Services
                 Cost = ad.Cost,
                 PurchasedUnits = ad.PurchasedUnits,
                 TargetUrl = ad.TargetUrl ?? "--no link--",
-                ImageUrl = ad.ImageFileName, // فقط اسم فایل، نه URL
+                ImageUrl = ad.ImageFileName,
                 CommercialText = ad.CommercialText ?? "--no commercial text--",
-                CreatedAt = ad.StartDate
+                CreatedAt = ad.StartDate,
+                CreatedAtShamsi = _globalDateTimeService.ToPersianDateTimeString(ad.CreatedAt)
             }).ToList();
         }
 

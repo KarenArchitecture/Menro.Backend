@@ -17,6 +17,7 @@ namespace Menro.Domain.Entities
         public string TargetUrl { get; set; } = string.Empty;
         public string CommercialText { get; set; } = string.Empty;
 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 

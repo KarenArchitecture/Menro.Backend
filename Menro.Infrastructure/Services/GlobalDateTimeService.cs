@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace Menro.Infrastructure.Services
 {
-    public class DateTimeService : IDateTimeService
+    public class GlobalDateTimeService : IGlobalDateTimeService
     {
         private readonly PersianCalendar _persianCalendar = new();
 
@@ -44,5 +44,25 @@ namespace Menro.Infrastructure.Services
                 _ => "-"
             };
         }
+
+        public string ToPersianDateTimeString(DateTime utcDateTime)
+        {
+            // UTC => Tehran
+            var tehranTime = TimeZoneInfo.ConvertTimeFromUtc(
+                utcDateTime,
+                TimeZoneInfo.FindSystemTimeZoneById("Iran Standard Time")
+            );
+
+            // Persian DateTime
+            var year = _persianCalendar.GetYear(tehranTime);
+            var month = _persianCalendar.GetMonth(tehranTime);
+            var day = _persianCalendar.GetDayOfMonth(tehranTime);
+
+            string date = $"{year}/{month:00}/{day:00}";
+            string time = tehranTime.ToString("HH:mm");
+
+            return $"{date} - {time}";
+        }
+
     }
 }
