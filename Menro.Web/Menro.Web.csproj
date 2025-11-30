@@ -53,6 +53,8 @@
     <Folder Include="wwwroot\img\adBanner\" />
     <Folder Include="wwwroot\img\food\" />
     <Folder Include="wwwroot\img\profile\" />
+    <Folder Include="wwwroot\img\restaurants\home\" />
+    <Folder Include="wwwroot\img\restaurants\shop\" />
   </ItemGroup>
 
 </Project>

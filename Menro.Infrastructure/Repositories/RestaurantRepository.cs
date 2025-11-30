@@ -21,6 +21,22 @@ namespace Menro.Infrastructure.Repositories
             _cache = cache;
         }
 
+
+
+        /* ============================================================
+                                    CRUDS
+        ============================================================ */
+        public async Task<Restaurant?> GetByIdAsync(int id)
+        {
+            return await _context.Restaurants.Include(r => r.OwnerUser).FirstOrDefaultAsync(r => r.Id == id);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+
+
         /* ============================================================
            🔹 Basic name lookup
         ============================================================ */
@@ -224,19 +240,6 @@ namespace Menro.Infrastructure.Repositories
         public void InvalidateRestaurantIdByUser(string userId) => _cache.Remove($"RestaurantIdByUser:{userId}");
         public void InvalidateBannerIds() => _cache.Remove("LiveBannerIds");
 
-
-        // CRUD
-        public async Task<Restaurant?> GetByIdAsync(int id)
-        {
-            return await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == id);
-        }
-
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
-
-
         // admin panel => restaurant management tab
         public async Task<List<Restaurant>> GetRestaurantsListForAdminAsync(bool? approvedStatus = null)
         {
@@ -253,11 +256,27 @@ namespace Menro.Infrastructure.Repositories
         }
         public async Task<Restaurant?> GetRestaurantDetailsForAdminAsync(int id)
         {
-            return await _context.Restaurants
+            var restaurant = await _context.Restaurants
                 .Include(r => r.OwnerUser)
                 .Include(r => r.RestaurantCategory)
                 .FirstOrDefaultAsync(r => r.Id == id);
+            return restaurant;
         }
+
+        
+        // restaurant profile
+        public async Task<Restaurant?> GetRestaurantProfileAsync(int restaurantId)
+        {
+            var restaurant = await _context.Restaurants
+                .Include(r => r.OwnerUser)
+                .Include(r => r.RestaurantCategory)
+                .Include(r => r.Subscription)
+                .ThenInclude(s => s.SubscriptionPlan)
+                .FirstOrDefaultAsync(r => r.Id == restaurantId);
+            return restaurant;
+
+        }
+
 
 
     }

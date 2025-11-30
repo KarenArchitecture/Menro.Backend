@@ -67,9 +67,9 @@ namespace Menro.Domain.Entities
         // FKs and relations
 
         // Owner
-        public string OwnerUserId { get; set; } = string.Empty;
+        public string OwnerUserId { get; set; }
 
-        public User OwnerUser { get; set; } = null!;
+        public User OwnerUser { get; set; }
 
         // Subscription
         public Subscription? Subscription { get; set; }

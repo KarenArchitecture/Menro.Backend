@@ -15,7 +15,9 @@ namespace Menro.Web.Services.Implementations
         {
             return $"{_baseUrl}/{relativePath.TrimStart('/')}";
         }
-        // icons
+        /*--------------*/
+        /*--- icons  ---*/
+        /*--------------*/
         public string BuildIconUrl(string fileName)
         {
             return BuildFileUrl($"icons/{fileName}");
@@ -41,14 +43,30 @@ namespace Menro.Web.Services.Implementations
         {
             return BuildFileUrl($"img/adBanner/{fileName}");
         }
+
         // food
         public string BuildFoodImageUrl(string fileName)
         {
             return BuildFileUrl($"img/food/{fileName}");
         }
+        
+        // restaurant
+        public string BuildRestaurantHomeBannerUrl(string fileName)
+        {
+            return BuildFileUrl($"img/restaurants/home/{fileName}");
+        }
+        public string BuildRestaurantShopBannerUrl(string fileName)
+        {
+            return BuildFileUrl($"img/restaurants/shop/{fileName}");
+        }
+        public string BuildRestaurantLogoUrl(string fileName)
+        {
+            return BuildFileUrl($"img/restaurants/logo/{fileName}");
+        }
 
-
-        // audios
+        /*--------------*/
+        /*--- audio  ---*/
+        /*--------------*/
         public string BuildAudioUrl(string fileName)
         {
             return BuildFileUrl($"audio/{fileName}");

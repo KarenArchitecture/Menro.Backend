@@ -1,4 +1,5 @@
-﻿using Menro.Application.Common.SD;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.SD;
 using Menro.Application.Restaurants.DTOs;
 using Menro.Application.Restaurants.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -8,6 +9,7 @@ namespace Menro.Web.Controllers.AdminPanel
 {
     [ApiController]
     [Route("api/admin/restaurants")]
+    [Authorize(Roles = SD.Role_Admin)]
     public class AdminRestaurantController : ControllerBase
     {
         private readonly IRestaurantService _service;
@@ -18,7 +20,6 @@ namespace Menro.Web.Controllers.AdminPanel
         }
 
         [HttpGet]
-        [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> GetRestaurantsListForAdminAsync([FromQuery] bool? approved)
         {
             var result = await _service.GetRestaurantsListForAdminAsync(approved);
@@ -27,7 +28,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
 
         [HttpGet("{id}")]
-        [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> GetRestaurantDetailsForAdmin(int id)
         {
             var result = await _service.GetRestaurantDetailsForAdminAsync(id);
@@ -44,6 +44,8 @@ namespace Menro.Web.Controllers.AdminPanel
 
             return Ok(new { message = "Updated successfully" });
         }
+
+
 
 
     }

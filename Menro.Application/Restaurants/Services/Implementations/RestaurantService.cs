@@ -71,6 +71,11 @@ namespace Menro.Application.Restaurants.Services.Implementations
             return categoryDtos;
 
         }
+        public async Task<Restaurant?> GetRestaurantByIdAsync(int id)
+        {
+            var restaurant = await _uow.Restaurant.GetByIdAsync(id);
+            return restaurant;
+        }
 
         public async Task<string> GenerateUniqueSlugAsync(string name)
         {
@@ -151,11 +156,91 @@ namespace Menro.Application.Restaurants.Services.Implementations
         {
             var restaurant = await _uow.Restaurant.GetByIdAsync(restaurantId);
             if (restaurant == null) return false;
-
+            //adminNote ?? restaurant.AdminNote = adminNote;
             restaurant.IsApproved = approve;
             await _uow.Restaurant.SaveChangesAsync();
             return true;
         }
+
+
+        // restaurant profile
+
+        public async Task<RestaurantProfileDto?> GetRestaurantProfileAsync(int id)
+        {
+            var r = await _uow.Restaurant.GetRestaurantProfileAsync(id);
+            if (r == null) return null;
+
+            return new RestaurantProfileDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                RestaurantCategoryId = r.RestaurantCategoryId,
+                Address = r.Address,
+                Description = r.Description,
+                PhoneNumber = r.OwnerUser.PhoneNumber,
+                BankAccountNumber = r.BankAccountNumber,
+
+                OpenTime = r.OpenTime.ToString(@"hh\:mm"),
+                CloseTime = r.CloseTime.ToString(@"hh\:mm"),
+
+                BannerImageUrl = r.BannerImageUrl,
+                ShopBannerImageUrl = r.ShopBannerImageUrl,
+                LogoImageUrl = r.LogoImageUrl,
+
+                SubscriptionType = r.Subscription?.SubscriptionPlan.Name,
+                SubscriptionDaysLeft = r.Subscription != null
+                    ? (r.Subscription.EndDate - DateTime.UtcNow).Days
+                    : 0
+            };
+        }
+
+        public async Task UpdateRestaurantProfileAsync(UpdateRestaurantProfileDto dto)
+        {
+            // دریافت رستوران + اطلاعات صاحب رستوران
+            var restaurant = await _uow.Restaurant.GetByIdAsync(dto.Id);
+            if (restaurant == null)
+                throw new Exception("Restaurant not found");
+
+            /*----------------------------------------------
+             *      Update simple fields
+             *----------------------------------------------*/
+            restaurant.Name = dto.Name;
+            restaurant.RestaurantCategoryId = dto.RestaurantCategoryId;
+            restaurant.Address = dto.Address;
+            restaurant.Description = dto.Description;
+            restaurant.BankAccountNumber = dto.BankAccountNumber;
+
+            /*----------------------------------------------
+             *      Update Restaurant Contact Number
+             *----------------------------------------------*/
+            //if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
+            //    restaurant.OwnerUser.PhoneNumber = dto.PhoneNumber;
+
+            /*----------------------------------------------
+             *      Working hours (convert string → TimeSpan)
+             *----------------------------------------------*/
+            // dto.OpenTime => "09:00"
+            restaurant.OpenTime = TimeSpan.Parse(dto.OpenTime);
+            restaurant.CloseTime = TimeSpan.Parse(dto.CloseTime);
+
+            /*----------------------------------------------
+             *      Update images only if new one was uploaded
+             *----------------------------------------------*/
+            if (!string.IsNullOrEmpty(dto.HomeBannerFileName))
+                restaurant.BannerImageUrl = dto.HomeBannerFileName;
+
+            if (!string.IsNullOrEmpty(dto.ShopBannerFileName))
+                restaurant.ShopBannerImageUrl = dto.ShopBannerFileName;
+
+            if (!string.IsNullOrEmpty(dto.LogoFileName))
+                restaurant.LogoImageUrl = dto.LogoFileName;
+
+            /*----------------------------------------------
+             *      Save changes
+             *----------------------------------------------*/
+            await _uow.SaveChangesAsync();
+        }
+
 
     }
 }
