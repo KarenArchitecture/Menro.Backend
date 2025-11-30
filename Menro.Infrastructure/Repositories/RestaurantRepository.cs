@@ -39,6 +39,8 @@ namespace Menro.Infrastructure.Repositories
             return name;
         }
 
+
+
         /* ============================================================
            🔹 Featured restaurants (carousel)
         ============================================================ */
@@ -221,5 +223,42 @@ namespace Menro.Infrastructure.Repositories
         public void InvalidateRestaurantBanner(string slug) => _cache.Remove($"RestaurantBanner:{slug}");
         public void InvalidateRestaurantIdByUser(string userId) => _cache.Remove($"RestaurantIdByUser:{userId}");
         public void InvalidateBannerIds() => _cache.Remove("LiveBannerIds");
+
+
+        // CRUD
+        public async Task<Restaurant?> GetByIdAsync(int id)
+        {
+            return await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == id);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+
+
+        // admin panel => restaurant management tab
+        public async Task<List<Restaurant>> GetRestaurantsListForAdminAsync(bool? approvedStatus = null)
+        {
+            var query = _context.Restaurants
+                .Include(r => r.OwnerUser)
+                .AsQueryable();
+
+            if (approvedStatus != null)
+                query = query.Where(r => r.IsApproved == approvedStatus);
+
+            return await query
+                .OrderByDescending(r => r.Id)
+                .ToListAsync();
+        }
+        public async Task<Restaurant?> GetRestaurantDetailsForAdminAsync(int id)
+        {
+            return await _context.Restaurants
+                .Include(r => r.OwnerUser)
+                .Include(r => r.RestaurantCategory)
+                .FirstOrDefaultAsync(r => r.Id == id);
+        }
+
+
     }
 }

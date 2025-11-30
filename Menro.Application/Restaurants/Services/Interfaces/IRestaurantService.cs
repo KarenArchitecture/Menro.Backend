@@ -1,11 +1,5 @@
 ﻿using Menro.Application.DTO;
 using Menro.Application.Restaurants.DTOs;
-using Menro.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Menro.Application.Restaurants.Services.Interfaces
 {
@@ -17,5 +11,11 @@ namespace Menro.Application.Restaurants.Services.Interfaces
         Task<int> GetRestaurantIdByUserIdAsync(string userId);
         Task<string> GetRestaurantName(int restaurantId);
 
+
+        // admin panel => restaurant management tab
+        Task<List<RestaurantListForAdminDto>> GetRestaurantsListForAdminAsync(bool? approved);
+        Task<RestaurantDetailsForAdminDto?> GetRestaurantDetailsForAdminAsync(int id);
+
+        Task<bool> ApproveRestaurantAsync(int restaurantId, bool approve);
     }
 }

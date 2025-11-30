@@ -43,10 +43,10 @@ namespace Menro.Domain.Entities
         public string Description { get; set; } = string.Empty;
 
         [Display(Name = "فعال")]
-        public bool IsActive { get; set; } = true;  // New: to mark if restaurant is active or logically deleted
+        public bool IsActive { get; set; } = true;
 
         [Display(Name = "تأیید شده")]
-        public bool IsApproved { get; set; } = false;  // New: to indicate admin approval status
+        public bool IsApproved { get; set; } = false;
 
         // مشخصات صاحب رستوران
         [Display(Name = "کد ملی")]

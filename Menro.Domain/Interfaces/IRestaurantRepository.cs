@@ -111,5 +111,14 @@ namespace Menro.Domain.Interfaces
         /// Removes cached live advertisement banner IDs.
         /// </summary>
         void InvalidateBannerIds();
+
+        // CRUD
+        Task<Restaurant?> GetByIdAsync(int id);
+        Task SaveChangesAsync();
+
+
+        // admin panel => restaurant management tab
+        Task<List<Restaurant>> GetRestaurantsListForAdminAsync(bool? approvedStatus = null);
+        Task<Restaurant?> GetRestaurantDetailsForAdminAsync(int id);
     }
 }
