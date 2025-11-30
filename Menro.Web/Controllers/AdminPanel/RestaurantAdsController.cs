@@ -77,6 +77,21 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(list);
         }
 
+        [HttpGet("history")]
+        [Authorize(Roles = SD.Role_Admin)]
+        public async Task<IActionResult> GetHistory()
+        {
+            var list = await _service.GetHistoryAsync();
+
+            list.ForEach(ad =>
+            {
+                ad.ImageUrl = _fileUrlService.BuildAdImageUrl(ad.ImageUrl);
+            });
+
+            return Ok(list);
+        }
+
+
         [HttpPost("{id}/approve")]
         [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> Approve(int id)

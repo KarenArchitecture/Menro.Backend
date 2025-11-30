@@ -2,6 +2,7 @@
 using Menro.Domain.Interfaces;
 using Menro.Application.Features.Ads.DTOs;
 using Menro.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Menro.Application.Features.Ads.Services
 {
@@ -116,5 +117,29 @@ namespace Menro.Application.Features.Ads.Services
             await _repository.UpdateAsync(ad);
             return true;
         }
+        public async Task<List<HistoryAdDto>> GetHistoryAsync()
+        {
+            var ads = await _repository.GetHistoryAsync();
+
+            return ads.Select(ad => new HistoryAdDto
+            {
+                Id = ad.Id,
+                RestaurantName = ad.Restaurant.Name,
+                Placement = ad.PlacementType.ToString(),
+                Billing = ad.BillingType.ToString(),
+                Cost = ad.Cost,
+                PurchasedUnits = ad.PurchasedUnits,
+                TargetUrl = ad.TargetUrl,
+                ImageUrl = ad.ImageFileName,
+                CommercialText = ad.CommercialText,
+                CreatedAt = ad.CreatedAt,
+                CreatedAtShamsi = _globalDateTimeService.ConvertToPersian(ad.CreatedAt),
+                Status = ad.Status.ToString(),
+                AdminNotes = ad.AdminNotes ?? ""
+            }).ToList();
+        }
+
+
+
     }
 }

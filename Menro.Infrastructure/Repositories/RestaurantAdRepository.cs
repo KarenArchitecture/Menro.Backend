@@ -66,10 +66,17 @@ namespace Menro.Infrastructure.Repositories
             return await _context.RestaurantAds
                 .Include(x => x.Restaurant)
                 .Where(x => x.Status == AdStatus.Pending)
-                .OrderByDescending(x => x.Id)
+                .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
         }
-
+        public async Task<List<RestaurantAd>> GetHistoryAsync()
+        {
+            return await _context.RestaurantAds
+                .Include(x => x.Restaurant)
+                .Where(x => x.Status == AdStatus.Approved || x.Status == AdStatus.Rejected)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+        }
         public async Task<bool> UpdateAsync(RestaurantAd ad)
         {
             if (ad == null) return false;
@@ -84,6 +91,5 @@ namespace Menro.Infrastructure.Repositories
                 return false;
             }
         }
-
     }
 }
