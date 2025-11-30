@@ -13,21 +13,31 @@ namespace Menro.Web.Controllers.AdminPanel
     [Authorize(Roles = SD.Role_Owner)]
     public class FoodController : ControllerBase
     {
+        #region DI
         private readonly IFoodService _foodService;
         private readonly ICustomFoodCategoryService _cCatService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileService _fileService;
-        public FoodController(IFoodService foodService, 
-            ICustomFoodCategoryService cCatService, 
+        private readonly IFileUrlService _fileUrlService;
+        public FoodController(IFoodService foodService,
+            ICustomFoodCategoryService cCatService,
             ICurrentUserService currentUserService,
-            IFileService fileService)
+            IFileService fileService,
+            IFileUrlService fileUrlService)
         {
             _foodService = foodService;
             _cCatService = cCatService;
             _currentUserService = currentUserService;
             _fileService = fileService;
+            _fileUrlService = fileUrlService;
         }
 
+
+        #endregion
+
+
+
+        // ✅
         [HttpPost("add")]
         public async Task<IActionResult> AddAsync([FromBody] CreateFoodDto dto)
         {
@@ -69,6 +79,7 @@ namespace Menro.Web.Controllers.AdminPanel
             return BadRequest("User is not a restaurant owner.");
         }
 
+        // ✅
         [HttpGet("{foodId:int}")]
         public async Task<IActionResult> GetAsync(int foodId)
         {
@@ -76,9 +87,11 @@ namespace Menro.Web.Controllers.AdminPanel
             var food = await _foodService.GetFoodDetailsAsync(foodId, restaurantId.Value);
             if (food == null)
                 return NotFound();
+            if(food.ImageUrl is not null) food.ImageUrl = _fileUrlService.BuildFoodImageUrl(food.ImageUrl);
             return Ok(food);
         }
 
+        // ✅
         [HttpPut("update")]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateFoodDto dto)
         {
@@ -106,7 +119,8 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(new { success = true });
         }
 
-        [HttpDelete("{foodId:int}")] // change it to "read" later
+        // ✅
+        [HttpDelete("{foodId:int}")]
         public async Task<IActionResult> DeleteAsync(int foodId)
         {
             var success = await _foodService.DeleteFoodAsync(foodId);
@@ -129,8 +143,8 @@ namespace Menro.Web.Controllers.AdminPanel
         }
 
         // ✅
-        [Authorize(Roles = SD.Role_Owner)]
         [HttpPost("upload-food-image")]
+        [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> UploadFoodImage([FromForm] IFormFile file)
         {
             if (file == null || file.Length == 0)

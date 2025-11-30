@@ -13,15 +13,21 @@ namespace Menro.Web.Controllers.AdminPanel
     [Authorize(Roles = SD.Role_Owner)]
     public class CustomFoodCategoryController : ControllerBase
     {
+        #region DI
         private readonly ICustomFoodCategoryService _cCatService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IFileUrlService _fileUrlService;
+
         public CustomFoodCategoryController(
-            ICustomFoodCategoryService cCatService, 
-            ICurrentUserService currentUserService)
+            ICustomFoodCategoryService cCatService,
+            ICurrentUserService currentUserService,
+            IFileUrlService fileUrlService)
         {
             _cCatService = cCatService;
             _currentUserService = currentUserService;
+            _fileUrlService = fileUrlService;
         }
+        #endregion
 
 
         // ✅
@@ -60,6 +66,10 @@ namespace Menro.Web.Controllers.AdminPanel
             if (restaurantId is not null)
             {
                 var catList = await _cCatService.GetAllCustomFoodCategoriesAsync(restaurantId.Value);
+                catList.ForEach(cat =>
+                {
+                    cat.Icon!.Url = _fileUrlService.BuildIconUrl(cat.Icon!.Url);
+                });
                 return Ok(catList);
             }
             return BadRequest(new { message = "بارگیری دسته بندی ها ناموفق بود" });
@@ -72,7 +82,7 @@ namespace Menro.Web.Controllers.AdminPanel
             var category = await _cCatService.GetCategoryAsync(catId);
             if (category == null)
                 return NotFound(new { message = "دسته‌بندی یافت نشد." });
-
+            category.Icon!.Url = _fileUrlService.BuildIconUrl(category.Icon!.Url);
             return Ok(category);
         }
 

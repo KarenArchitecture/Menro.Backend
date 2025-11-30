@@ -35,9 +35,13 @@ namespace Menro.Application.FoodCategories.Services.Implementations
                     c.Icon?.FileName ??
                     c.GlobalCategory?.Icon?.FileName ?? string.Empty;
 
+                //var svgIcon = string.IsNullOrEmpty(iconFileName)
+                //    ? string.Empty
+                //    : _fileUrlService.BuildIconUrl(iconFileName);
                 var svgIcon = string.IsNullOrEmpty(iconFileName)
-                    ? string.Empty
-                    : _fileUrlService.BuildIconUrl(iconFileName);
+                      ? string.Empty
+                      : iconFileName; // RO => AB: building url is Menro.Web layer's concern
+
 
                 return new RestaurantFoodCategoryDto
                 {

@@ -10,11 +10,9 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services
     public class GlobalFoodCategoryService : IGlobalFoodCategoryService
     {
         private readonly IGlobalFoodCategoryRepository _repository;
-        private readonly IFileUrlService _fileUrlService;
-        public GlobalFoodCategoryService(IGlobalFoodCategoryRepository repository, IFileUrlService fileUrlService)
+        public GlobalFoodCategoryService(IGlobalFoodCategoryRepository repository)
         {
             _repository = repository;
-            _fileUrlService = fileUrlService;
         }
 
         // modify for icon url/name
@@ -48,7 +46,7 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services
                     Id = x.Icon.Id,
                     FileName = x.Icon.FileName,
                     Label = x.Icon.Label,
-                    Url = _fileUrlService.BuildIconUrl(x.Icon.FileName)
+                    Url = x.Icon.FileName
                 }
             }).ToList();
         }
@@ -65,7 +63,7 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services
                     Id = category.Icon.Id,
                     FileName = category.Icon.FileName,
                     Label = category.Icon.Label,
-                    Url = _fileUrlService.BuildIconUrl(category.Icon.FileName)
+                    Url = category.Icon.FileName
                 }
             };
         }

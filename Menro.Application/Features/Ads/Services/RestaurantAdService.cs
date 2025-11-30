@@ -13,11 +13,10 @@ namespace Menro.Application.Features.Ads.Services
             _repository = repository;
         }
 
-        public async Task<bool> CreateAsync(CreateRestaurantAdDto dto)
+        public async Task<bool> CreateAsync(ReserveRestaurantAdDto dto)
         {
             try
             {
-                // 1. ایجاد مدل اولیه
                 var ad = new RestaurantAd
                 {
                     RestaurantId = dto.RestaurantId,
@@ -25,30 +24,23 @@ namespace Menro.Application.Features.Ads.Services
                     BillingType = dto.BillingType,
                     ImageFileName = dto.ImageFileName,
                     TargetUrl = dto.TargetUrl,
-                    PurchasedUnits = dto.PurchasedUnits,
                     CommercialText = dto.CommercialText,
-
-                    // مبلغ نهایی پرداخت‌شده (از درگاه/فرانت آمده)
-                    Cost = dto.Cost
+                    PurchasedUnits = dto.PurchasedUnits,
+                    Cost = dto.Cost,
+                    Status = AdStatus.Pending,
                 };
 
-                // 2. تعیین تاریخ شروع (همیشه لحظهٔ پرداخت)
                 ad.StartDate = DateTime.UtcNow;
 
-                // 3. تعیین تاریخ پایان بر اساس نوع پرداخت
                 if (dto.BillingType == AdBillingType.PerDay)
                 {
-                    // نوع زمانی → پایان = تعداد روز
                     ad.EndDate = ad.StartDate.AddDays(dto.PurchasedUnits);
                 }
                 else
                 {
-                    // نوع کلیکی → معمولاً بدون محدودیت زمانی
-                    // اما بهتر است حداکثر زمان داشته باشد (مثلاً ۶ ماه)
                     ad.EndDate = ad.StartDate.AddMonths(6);
                 }
 
-                // 4. ذخیره در دیتابیس
                 await _repository.AddAdAsync(ad);
                 return true;
             }
@@ -71,12 +63,53 @@ namespace Menro.Application.Features.Ads.Services
                 ConsumedUnits = a.ConsumedUnits,
                 StartDate = a.StartDate,
                 EndDate = a.EndDate,
-                IsActive = a.IsActive
             }).ToList();
         }
         public async Task IncrementConsumptionAsync(int adId, int amount = 1)
         {
             await _repository.UpdateConsumedUnitsAsync(adId, amount);
+        }
+        public async Task<List<PendingAdDto>> GetPendingAdsAsync()
+        {
+            var ads = await _repository.GetPendingAdsAsync();
+
+            return ads.Select(ad => new PendingAdDto
+            {
+                Id = ad.Id,
+                RestaurantName = ad.Restaurant.Name,
+                Placement = ad.PlacementType.ToString(),
+                Billing = ad.BillingType.ToString(),
+                Cost = ad.Cost,
+                PurchasedUnits = ad.PurchasedUnits,
+                TargetUrl = ad.TargetUrl ?? "--no link--",
+                ImageUrl = ad.ImageFileName, // فقط اسم فایل، نه URL
+                CommercialText = ad.CommercialText ?? "--no commercial text--",
+                CreatedAt = ad.StartDate
+            }).ToList();
+        }
+
+        public async Task<bool> ApproveAdAsync(int adId)
+        {
+            var ad = await _repository.GetByIdAsync(adId);
+            if (ad == null) return false;
+
+            ad.Status = AdStatus.Approved;
+            ad.AdminNotes = null;
+
+            await _repository.UpdateAsync(ad);
+            return true;
+        }
+
+        public async Task<bool> RejectAdAsync(RejectAdDto dto)
+        {
+            var ad = await _repository.GetByIdAsync(dto.Id);
+            if (ad == null) return false;
+
+            ad.Status = AdStatus.Rejected;
+            ad.AdminNotes = dto.AdminNote;
+
+            await _repository.UpdateAsync(ad);
+            return true;
         }
     }
 }

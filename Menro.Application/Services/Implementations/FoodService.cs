@@ -11,17 +11,14 @@ namespace Menro.Application.Services.Implementations
     {
         private readonly IFoodRepository _repository;
         private readonly ICustomFoodCategoryRepository _cCategoryRepository;
-        private readonly IFileUrlService _fileUrlService;
         private readonly IFileService _fileService;
 
         public FoodService(IFoodRepository repository, 
             ICustomFoodCategoryRepository cCategoryRepository,
-            IFileUrlService fileUrlService,
             IFileService fileService)
         {
             _repository = repository;
             _cCategoryRepository = cCategoryRepository;
-            _fileUrlService = fileUrlService;
             _fileService = fileService;
         }
 
@@ -105,7 +102,7 @@ namespace Menro.Application.Services.Implementations
                 Ingredients = food.Ingredients,
                 Price = food.Price,
                 ImageName = food.ImageUrl,
-                ImageUrl = _fileUrlService.BuildFoodImageUrl(food.ImageUrl),
+                ImageUrl = food.ImageUrl,
                 FoodCategoryId = food.CustomFoodCategoryId!.Value,
                 HasVariants = food.Variants.Any(),
                 Variants = (food.Variants ?? Enumerable.Empty<FoodVariant>())

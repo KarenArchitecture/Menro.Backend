@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Menro.Domain.Entities
 {
@@ -10,29 +9,23 @@ namespace Menro.Domain.Entities
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; } = null!;
 
-        public AdPlacementType PlacementType { get; set; }   // اسلایدر یا بنر تمام صفحه
-        public AdBillingType BillingType { get; set; }       // بر اساس روز یا کلیک
-        public int Cost { get; set; }  // مبلغ نهایی پرداخت شده
+        public AdPlacementType PlacementType { get; set; }
+        public AdBillingType BillingType { get; set; }
+        public int Cost { get; set; } 
 
         public string ImageFileName { get; set; } = string.Empty;
-        public string? TargetUrl { get; set; }
+        public string TargetUrl { get; set; } = string.Empty;
+        public string CommercialText { get; set; } = string.Empty;
 
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
-        public int PurchasedUnits { get; set; } // تعداد روز یا تعداد کلیک
-        public int ConsumedUnits { get; set; }  // روز مصرف‌شده یا کلیک‌های انجام‌شده
+        public int PurchasedUnits { get; set; }
+        public int ConsumedUnits { get; set; } 
 
-        [MaxLength(200)]
-        public string? CommercialText { get; set; }
+        [MaxLength(400)]
+        public string? AdminNotes{ get; set; }
+        public AdStatus Status { get; set; } = AdStatus.Pending;
 
-        public bool IsPaused { get; set; } = false;
-
-        [NotMapped]
-        public bool IsActive =>
-            !IsPaused &&
-            DateTime.UtcNow >= StartDate &&
-            DateTime.UtcNow <= EndDate &&
-            (BillingType == AdBillingType.PerDay || ConsumedUnits < PurchasedUnits);
     }
 }

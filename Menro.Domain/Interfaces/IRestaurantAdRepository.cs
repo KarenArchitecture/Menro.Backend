@@ -9,5 +9,7 @@ namespace Menro.Domain.Interfaces
         Task<List<RestaurantAd>> GetActiveAdsAsync();
         Task<RestaurantAd?> GetByIdAsync(int id);
         Task UpdateConsumedUnitsAsync(int adId, int amount);
+        Task<List<RestaurantAd>> GetPendingAdsAsync();
+        Task<bool> UpdateAsync(RestaurantAd ad);
     }
 }

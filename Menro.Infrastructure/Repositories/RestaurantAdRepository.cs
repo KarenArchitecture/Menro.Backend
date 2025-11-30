@@ -40,7 +40,6 @@ namespace Menro.Infrastructure.Repositories
 
             return await _context.RestaurantAds
                 .Where(a =>
-                    !a.IsPaused &&
                     a.StartDate <= now &&
                     a.EndDate >= now &&
                     (a.BillingType == AdBillingType.PerDay
@@ -62,5 +61,29 @@ namespace Menro.Infrastructure.Repositories
             ad.ConsumedUnits += amount;
             await _context.SaveChangesAsync();
         }
+        public async Task<List<RestaurantAd>> GetPendingAdsAsync()
+        {
+            return await _context.RestaurantAds
+                .Include(x => x.Restaurant)
+                .Where(x => x.Status == AdStatus.Pending)
+                .OrderByDescending(x => x.Id)
+                .ToListAsync();
+        }
+
+        public async Task<bool> UpdateAsync(RestaurantAd ad)
+        {
+            if (ad == null) return false;
+            try
+            {
+                _context.RestaurantAds.Update(ad);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
     }
 }

@@ -10,12 +10,10 @@ namespace Menro.Application.Features.Icons.Services
     {
         #region DI
         private readonly IIconRepository _repo;
-        private readonly IFileUrlService _fileUrlService;
 
-        public IconService(IIconRepository repo, IFileUrlService fileUrlService)
+        public IconService(IIconRepository repo)
         {
             _repo = repo;
-            _fileUrlService = fileUrlService;
         }
         #endregion
         public async Task<List<GetIconDto>> GetAllAsync()
@@ -27,7 +25,7 @@ namespace Menro.Application.Features.Icons.Services
                 Id = x.Id,
                 FileName = x.FileName,
                 Label = x.Label,
-                Url = _fileUrlService.BuildIconUrl(x.FileName)
+                Url = x.FileName
             }).ToList();
         }
         public async Task<GetIconDto?> GetByIdAsync(int id)
@@ -40,7 +38,7 @@ namespace Menro.Application.Features.Icons.Services
                 Id = icon.Id,
                 FileName = icon.FileName,
                 Label = icon.Label,
-                Url = _fileUrlService.BuildIconUrl(icon.FileName)
+                Url = icon.FileName
             };
         }
         public async Task<bool> AddAsync(string label, string fileName)

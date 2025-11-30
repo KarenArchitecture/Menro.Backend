@@ -9,25 +9,34 @@ using Microsoft.AspNetCore.Mvc;
 namespace Menro.Web.Controllers.AdminPanel
 {
     [ApiController]
-    [Authorize(Roles = SD.Role_Owner)]
+    [Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Owner}")]
     [Route("api/admin/ads")]
     public class RestaurantAdsController : ControllerBase
     {
+        #region DI
+
         private readonly IRestaurantAdService _service;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileService _fileService;
+        private readonly IFileUrlService _fileUrlService;
+
         public RestaurantAdsController(IRestaurantAdService service,
             ICurrentUserService currentUserService,
-            IFileService fileService)
+            IFileService fileService,
+            IFileUrlService fileUrlService)
         {
             _service = service;
             _currentUserService = currentUserService;
             _fileService = fileService;
+            _fileUrlService = fileUrlService;
         }
 
+        #endregion
 
+        /* ad reservation by OWNER */
         [HttpPost("addAd")]
-        public async Task<IActionResult> Create([FromBody] CreateRestaurantAdDto dto)
+        [Authorize(Roles = SD.Role_Owner)]
+        public async Task<IActionResult> Create([FromBody] ReserveRestaurantAdDto dto)
         {
             if(dto.ImageFileName == null)
                 return BadRequest(new { message = "تصویر تبلیغ نباید خالی باشد" });
@@ -51,6 +60,39 @@ namespace Menro.Web.Controllers.AdminPanel
             string fileName = await _fileService.UploadAdImageAsync(file);
 
             return Ok(fileName);
+        }
+
+
+        /* ad Management by ADMIN */
+        [HttpGet("pending")]
+        [Authorize(Roles = SD.Role_Admin)]
+        public async Task<IActionResult> GetPendingAds()
+        {
+            var list = await _service.GetPendingAdsAsync();
+            list.ForEach(ad =>
+            {
+                ad.ImageUrl = _fileUrlService.BuildAdImageUrl(ad.ImageUrl);
+            });
+
+            return Ok(list);
+        }
+
+        [HttpPost("{id}/approve")]
+        [Authorize(Roles = SD.Role_Admin)]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var success = await _service.ApproveAdAsync(id);
+            if (!success) return NotFound();
+            return Ok(new { message = "تبلیغ تایید شد." });
+        }
+
+        [HttpPost("{id}/reject")]
+        [Authorize(Roles = SD.Role_Admin)]
+        public async Task<IActionResult> Reject([FromBody] RejectAdDto dto)
+        {
+            var success = await _service.RejectAdAsync(dto);
+            if (!success) return NotFound();
+            return Ok(new { message = "تبلیغ رد شد." });
         }
     }
 

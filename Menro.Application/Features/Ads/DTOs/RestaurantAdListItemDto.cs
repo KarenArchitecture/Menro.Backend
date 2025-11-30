@@ -15,7 +15,6 @@ namespace Menro.Application.Features.Ads.DTOs
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
 
-        public bool IsActive { get; set; }
     }
 
 }

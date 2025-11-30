@@ -3,10 +3,15 @@
     public int Id { get; set; }
 
     public AdPlacementType PlacementType { get; set; }
+
     public AdBillingType BillingType { get; set; }
 
-    public int BasePrice { get; set; }     // قیمت پایه
-    public int UnitPrice { get; set; }     // قیمت هر روز / هر کلیک
 
-    public DateTime ModifiedAt { get; set; } = DateTime.UtcNow;
+    public int UnitPrice { get; set; }
+
+    public int MinUnits { get; set; }
+    public int MaxUnits { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
 }
