@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Foods.DTOs;
+using Menro.Application.Foods.Services.Implementations;
 using Menro.Application.Foods.Services.Interfaces;
 using Menro.Application.Orders.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +15,12 @@ namespace Menro.Web.Controllers.Public
     public class FoodController : ControllerBase
     {
         private readonly IPopularFoodsService _popularFoodsService;
+        private readonly IPublicFoodDetailsService _publicFoodDetailsService;
 
-        public FoodController(IPopularFoodsService popularFoodsService)
+        public FoodController(IPopularFoodsService popularFoodsService, IPublicFoodDetailsService publicFoodDetailsService)
         {
             _popularFoodsService = popularFoodsService;
+            _publicFoodDetailsService = publicFoodDetailsService;
         }
 
         /* ============================================================
@@ -62,6 +65,26 @@ namespace Menro.Web.Controllers.Public
 
             return Ok(filtered);
         }
+
+        /* ============================================================
+           🏠 Restaurant Page
+        ============================================================ */
+        /// <summary>
+        /// Returns full food details including variants and addons
+        /// for the public restaurant page modal.
+        /// </summary>
+        [HttpGet("{foodId:int}/details")]
+        [ProducesResponseType(typeof(PublicFoodDetailDto), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetFoodDetails(int foodId)
+        {
+            var dto = await _publicFoodDetailsService.GetFoodDetailsAsync(foodId);
+
+            if (dto == null)
+                return NotFound("Food not found.");
+
+            return Ok(dto);
+        }
+
 
         /* ============================================================
            📂 Utility Endpoints (used by analytics or filters)

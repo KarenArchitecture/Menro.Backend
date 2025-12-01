@@ -18,19 +18,5 @@ namespace Menro.Application.Foods.Services.Implementations
             _foodRepository = foodRepository;
         }
 
-        //public async Task<List<ShopFoodDto>> GetByCategoryIdsAsync(List<int> categoryIds)
-        //{
-        //    var foods = await _foodRepository.GetByCategoryIdsAsync(categoryIds);
-        //    return foods.Select(f => new ShopFoodDto
-        //    {
-        //        Id = f.Id,
-        //        Name = f.Name,
-        //        Description = f.Description,
-        //        Price = f.Price,
-        //        Image = f.Image,
-        //        Rating = f.Rating,
-        //        CategoryId = f.CategoryId
-        //    }).ToList();
-        //}
     }
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    [Migration("20251116025945_ABIsDefaultAddedToVariant")]
-    partial class ABIsDefaultAddedToVariant
+    [Migration("20251201072012_IsDefaultAddedToVariantSeeding")]
+    partial class IsDefaultAddedToVariantSeeding
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
