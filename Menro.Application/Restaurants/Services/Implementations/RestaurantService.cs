@@ -36,6 +36,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
                     Name = dto.RestaurantName,
                     Description = dto.RestaurantDescription,
                     Address = dto.RestaurantAddress,
+                    //ContactNumber = dto.ContactNumber,
                     OpenTime = dto.RestaurantOpenTime,
                     CloseTime = dto.RestaurantCloseTime,
                     RestaurantCategoryId = dto.RestaurantCategoryId,
@@ -177,7 +178,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
                 RestaurantCategoryId = r.RestaurantCategoryId,
                 Address = r.Address,
                 Description = r.Description,
-                PhoneNumber = r.OwnerUser.PhoneNumber,
+                //PhoneNumber = r.ContactNumber,
                 BankAccountNumber = r.BankAccountNumber,
 
                 OpenTime = r.OpenTime.ToString(@"hh\:mm"),
