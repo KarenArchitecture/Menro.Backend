@@ -7,9 +7,9 @@ namespace Menro.Application.Features.Order.Services
     public class OrderService : IOrderService
     {
         private readonly IOrderRepository _orderRepository;
-        private readonly IDateTimeService _dateTimeService;
+        private readonly IGlobalDateTimeService _dateTimeService;
         public OrderService(IOrderRepository orderRepository,
-            IDateTimeService dateTimeService)
+            IGlobalDateTimeService dateTimeService)
         {
             _orderRepository = orderRepository;
             _dateTimeService = dateTimeService;
