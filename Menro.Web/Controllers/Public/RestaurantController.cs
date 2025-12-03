@@ -6,12 +6,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Menro.Application.Common.SD;
 using Menro.Application.Features.Identity.Services;
-using Menro.Application.Foods.Services.Interfaces;
-using Menro.Application.Orders.Services.Interfaces;
-using Menro.Application.Foods.DTOs;
-using Menro.Application.Foods.Services.Implementations;
 using Menro.Application.FoodCategories.Services.Interfaces;
 using Menro.Application.FoodCategories.DTOs;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -29,41 +26,34 @@ namespace Menro.Web.Controllers.Public
         private readonly IRestaurantService _restaurantService;
         private readonly IFeaturedRestaurantService _featuredRestaurantService;
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
-        private readonly IUserRecentOrderCardService _userRecentOrderCardService;
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
         private readonly IRestaurantBannerService _restaurantBannerService;
-        private readonly IRestaurantMenuService _restaurantMenuService;
-        private readonly IAuthService _authService;
         private readonly IUserService _userService;
         private readonly IRestaurantBannerService _bannerService;
-        private readonly IMenuListService _menuListService;
-        private readonly IMenuItemService _menuItemService;
+        private readonly IRestaurantMenuService _menuService;
         private readonly IRestaurantPageFoodCategoryService _restaurantPageFoodCategoryService;
+        private readonly IFileUrlService _fileUrlService;
 
         public RestaurantController(
             IRestaurantService restaurantService,
             IFeaturedRestaurantService featuredRestaurantService,
             IRandomRestaurantCardService randomRestaurantCardService,
-            IUserRecentOrderCardService userRecentOrderCardService,
             IRestaurantAdBannerService restaurantAdBannerService,
             IRestaurantBannerService restaurantBannerService,
-            IRestaurantMenuService restaurantMenuService,
             IUserService userService,
-            IMenuListService menuListService,
-            IMenuItemService menuItemService,
-            IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService)
+            IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService,
+            IRestaurantMenuService menuService,
+            IFileUrlService fileUrlService)
         {
             _restaurantService = restaurantService;
             _featuredRestaurantService = featuredRestaurantService;
             _randomRestaurantCardService = randomRestaurantCardService;
-            _userRecentOrderCardService = userRecentOrderCardService;
             _restaurantAdBannerService = restaurantAdBannerService;
             _restaurantBannerService = restaurantBannerService;
-            _restaurantMenuService = restaurantMenuService;
             _userService = userService;
-            _menuListService = menuListService;
-            _menuItemService = menuItemService;
+            _menuService = menuService;
             _restaurantPageFoodCategoryService = restaurantPageFoodCategoryService;
+            _fileUrlService = fileUrlService;
         }
 
         #endregion
@@ -148,7 +138,7 @@ namespace Menro.Web.Controllers.Public
         /// <summary>
         /// Retrieves the restaurant banner (cover image, name, rating, etc.) by slug.
         /// </summary>
-        [HttpGet("banner/{slug}")]
+        [HttpGet("{slug}/banner")]
         public async Task<ActionResult<RestaurantBannerDto?>> GetBanner(string slug)
         {
             var banner = await _restaurantBannerService.GetBannerBySlugAsync(slug);
@@ -167,8 +157,14 @@ namespace Menro.Web.Controllers.Public
         {
             if (string.IsNullOrWhiteSpace(slug))
                 return BadRequest("Slug cannot be empty.");
-
+            
             var categories = await _restaurantPageFoodCategoryService.GetRestaurantCategoriesAsync(slug, ct);
+            
+            // + //
+            categories.ForEach(cat =>
+            {
+                cat.SvgIcon = _fileUrlService.BuildIconUrl(cat.SvgIcon);
+            });
             if (categories == null || categories.Count == 0)
                 return NotFound("هیچ دسته‌ای برای این رستوران یافت نشد.");
 
@@ -176,28 +172,34 @@ namespace Menro.Web.Controllers.Public
         }
 
         /// <summary>
-        /// Retrieves the full menu list of a restaurant (optionally filtered by category).
+        /// Retrieves the full restaurant menu (grouped by food categories).
         /// </summary>
-        [HttpGet("menu/{slug}")]
-        public async Task<ActionResult<List<MenuListFoodDto>>> GetRestaurantMenuBySlug(
-            string slug,
-            [FromQuery] int? globalCategoryId = null,
-            [FromQuery] int? customCategoryId = null)
+        /// <remarks>
+        /// Returns an array of RestaurantMenuDto:
+        /// [
+        ///   {
+        ///     "categoryId": 12,
+        ///     "categoryKey": "pizza",
+        ///     "categoryTitle": "پیتزا",
+        ///     "svgIcon": "/icons/pizza.svg",
+        ///     "foods": [ ... ]
+        ///   }
+        /// ]
+        /// </remarks>
+        [HttpGet("{slug}/menu")]
+        public async Task<ActionResult<List<RestaurantMenuDto>>> GetRestaurantMenuBySlug(string slug)
         {
-            var foods = await _menuListService.GetMenuListBySlugAsync(slug, globalCategoryId, customCategoryId);
-            return Ok(foods);
+            if (string.IsNullOrWhiteSpace(slug))
+                return BadRequest("Slug cannot be empty.");
+
+            var menu = await _menuService.GetMenuBySlugAsync(slug);
+
+            if (menu == null || menu.Count == 0)
+                return NotFound("منوی این رستوران یافت نشد.");
+
+            return Ok(menu);
         }
 
-        /// <summary>
-        /// Retrieves detailed info of a single food item (with variants & addons).
-        /// </summary>
-        [HttpGet("{foodId}/details")]
-        public async Task<ActionResult<MenuFoodDetailDto>> GetRestaurantFoodDetail(int foodId)
-        {
-            var foodDetail = await _menuItemService.GetMenuItemDetailAsync(foodId);
-            if (foodDetail == null) return NotFound();
-            return Ok(foodDetail);
-        }
 
         #endregion
     }

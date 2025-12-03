@@ -21,19 +21,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 #region DbContext & Identity
 
-// choosing db based on enviroment
-if (builder.Environment.IsProduction())
-{
-    // using InMemory on Render (first sprint)
-    builder.Services.AddDbContext<MenroDbContext>(options =>
-        options.UseInMemoryDatabase("MenroDemoDb"));
-}
-else
-{
-    // local SQL Server
-    builder.Services.AddDbContext<MenroDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-}
+builder.Services.AddDbContext<MenroDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
@@ -133,16 +122,28 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowReactDevClient", policy =>
+//        {
+//        policy.WithOrigins("https://localhost:5173")
+//                  .AllowAnyHeader()
+//                  .AllowAnyMethod()
+//                  .AllowCredentials();
+//    });
+//});
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowReactDevClient", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "https://localhost:5173"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
     });
 });
 
@@ -164,8 +165,7 @@ else
 
 app.UseHttpsRedirection();
 
-//app.UseCors("AllowReactDevClient");
-app.UseCors("AllowFrontend");
+app.UseCors("AllowReactDevClient");  
 
 app.UseStaticFiles();                 
 
@@ -196,32 +196,6 @@ app.MapControllerRoute(
 //    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
 //    await dbInitializer.InitializeAsync();
 //}
-
-
-// for InMemory db (on render.com)
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<MenroDbContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-    if (!roleManager.Roles.Any())
-    {
-        await roleManager.CreateAsync(new IdentityRole("Admin"));
-    }
-
-    if (!userManager.Users.Any())
-    {
-        var admin = new Menro.Domain.Entities.User
-        {
-            FullName = "admin",
-            Email = "admin@example.com"
-        };
-
-        await userManager.CreateAsync(admin, "1234");
-        await userManager.AddToRoleAsync(admin, "Admin");
-    }
-}
 
 
 #endregion

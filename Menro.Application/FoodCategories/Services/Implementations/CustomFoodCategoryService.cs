@@ -13,16 +13,13 @@ namespace Menro.Application.FoodCategories.Services.Implementations
         #region DI
         private readonly ICustomFoodCategoryRepository _cCatRepository;
         private readonly IGlobalFoodCategoryRepository _gCatRepository;
-        private readonly IFileUrlService _fileUrlService;
         public CustomFoodCategoryService(
             ICustomFoodCategoryRepository cCatRepository,
-            IGlobalFoodCategoryRepository gCatRepository,
-            IFileUrlService fileUrlService
+            IGlobalFoodCategoryRepository gCatRepository
             )
         {
             _cCatRepository = cCatRepository;
             _gCatRepository = gCatRepository;
-            _fileUrlService = fileUrlService;
         }
         #endregion
         public async Task<bool> AddCategoryAsync (CreateCustomFoodCategoryDto dto, int restaurantId)
@@ -86,7 +83,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
                     Id = category.Icon.Id,
                     FileName = category.Icon.FileName,
                     Label = category.Icon.Label,
-                    Url = _fileUrlService.BuildIconUrl(category.Icon.FileName)
+                    Url = category.Icon.FileName
                 }
 
             }).ToList();
@@ -114,7 +111,7 @@ namespace Menro.Application.FoodCategories.Services.Implementations
                     Id = category.Icon.Id,
                     FileName = category.Icon.FileName,
                     Label = category.Icon.Label,
-                    Url = _fileUrlService.BuildIconUrl(category.Icon.FileName)
+                    Url = category.Icon.FileName
                 }
             };
             return catDto;

@@ -3,28 +3,40 @@ using Menro.Application.Features.Icons.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Menro.Application.Common.SD;
-using System.Transactions;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Web.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = $"{SD.Role_Owner},{SD.Role_Admin}")]
     public class IconController : ControllerBase
     {
+        #region DI
         private readonly IIconService _iconService;
         private readonly IFileService _fileService;
-        public IconController(IIconService iconService, IFileService fileService)
+        private readonly IFileUrlService _fileUrlService;
+        public IconController(IIconService iconService, IFileService fileService, IFileUrlService fileUrlService)
         {
             _iconService = iconService;
             _fileService = fileService;
+            _fileUrlService = fileUrlService;
         }
+
+        #endregion
+
 
         // ✅
         [HttpGet("read-all")]
         [Authorize(Roles = $"{SD.Role_Owner},{SD.Role_Admin}")]
         public async Task<IActionResult> GetAll()
         {
+
             var icons = await _iconService.GetAllAsync();
+            icons.ForEach(item =>
+            {
+                item.Url = _fileUrlService.BuildIconUrl(item.Url);
+            });
             return Ok(icons);
         }
 
@@ -65,7 +77,7 @@ namespace Menro.Web.Controllers
             var existing = await _iconService.GetByIdAsync(id);
             if (existing == null)
                 return NotFound(new { message = "Icon not found" });
-
+            existing.Url = _fileUrlService.BuildIconUrl(existing.Url);
             // 1. Remove database record
             var dbResult = await _iconService.DeleteAsync(id);
 

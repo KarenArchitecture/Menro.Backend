@@ -117,6 +117,26 @@ namespace Menro.Infrastructure.Repositories
         /* ============================================================
            🔹 Restaurant Menu Queries
         ============================================================ */
+        public async Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug)
+        {
+            return await _context.Foods
+                .AsNoTracking()
+                .Where(f =>
+                    f.Restaurant.Slug == slug &&
+                    f.IsAvailable &&
+                    !f.IsDeleted &&
+                    f.Restaurant.IsActive &&
+                    f.Restaurant.IsApproved)
+                .Include(f => f.CustomFoodCategory)
+                    .ThenInclude(c => c.Icon)
+                .Include(f => f.GlobalFoodCategory)
+                    .ThenInclude(gc => gc.Icon)
+                .Include(f => f.Ratings)
+                .Include(f => f.Restaurant)
+                .ToListAsync();
+        }
+
+
 
         /// <summary>
         /// Gets foods by custom or global category IDs.
@@ -234,7 +254,7 @@ namespace Menro.Infrastructure.Repositories
         /// <summary>
         /// Returns full food details including variants and addons.
         /// </summary>
-        public async Task<Food> GetFoodDetailsAsync(int foodId)
+        public async Task<Food> GetFoodAsync(int foodId)
         {
             var food = await _context.Foods
                 .Include(f => f.Variants)
@@ -282,9 +302,6 @@ namespace Menro.Infrastructure.Repositories
             throw new NotImplementedException();
         }
 
-        public Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug)
-        {
-            throw new NotImplementedException();
-        }
+        
     }
 }
