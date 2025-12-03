@@ -21,6 +21,22 @@ namespace Menro.Infrastructure.Repositories
             _cache = cache;
         }
 
+
+
+        /* ============================================================
+                                    CRUDS
+        ============================================================ */
+        public async Task<Restaurant?> GetByIdAsync(int id)
+        {
+            return await _context.Restaurants.Include(r => r.OwnerUser).FirstOrDefaultAsync(r => r.Id == id);
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+
+
         /* ============================================================
            🔹 Basic name lookup
         ============================================================ */
@@ -38,6 +54,8 @@ namespace Menro.Infrastructure.Repositories
             _cache.Set(cacheKey, name, TimeSpan.FromMinutes(30));
             return name;
         }
+
+
 
         /* ============================================================
            🔹 Featured restaurants (carousel)
@@ -221,5 +239,45 @@ namespace Menro.Infrastructure.Repositories
         public void InvalidateRestaurantBanner(string slug) => _cache.Remove($"RestaurantBanner:{slug}");
         public void InvalidateRestaurantIdByUser(string userId) => _cache.Remove($"RestaurantIdByUser:{userId}");
         public void InvalidateBannerIds() => _cache.Remove("LiveBannerIds");
+
+        // admin panel => restaurant management tab
+        public async Task<List<Restaurant>> GetRestaurantsListForAdminAsync(bool? approvedStatus = null)
+        {
+            var query = _context.Restaurants
+                .Include(r => r.OwnerUser)
+                .AsQueryable();
+
+            if (approvedStatus != null)
+                query = query.Where(r => r.IsApproved == approvedStatus);
+
+            return await query
+                .OrderByDescending(r => r.Id)
+                .ToListAsync();
+        }
+        public async Task<Restaurant?> GetRestaurantDetailsForAdminAsync(int id)
+        {
+            var restaurant = await _context.Restaurants
+                .Include(r => r.OwnerUser)
+                .Include(r => r.RestaurantCategory)
+                .FirstOrDefaultAsync(r => r.Id == id);
+            return restaurant;
+        }
+
+        
+        // restaurant profile
+        public async Task<Restaurant?> GetRestaurantProfileAsync(int restaurantId)
+        {
+            var restaurant = await _context.Restaurants
+                .Include(r => r.OwnerUser)
+                .Include(r => r.RestaurantCategory)
+                .Include(r => r.Subscription)
+                .ThenInclude(s => s.SubscriptionPlan)
+                .FirstOrDefaultAsync(r => r.Id == restaurantId);
+            return restaurant;
+
+        }
+
+
+
     }
 }

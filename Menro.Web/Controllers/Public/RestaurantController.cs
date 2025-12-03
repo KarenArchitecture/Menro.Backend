@@ -12,6 +12,7 @@ using Menro.Application.Foods.DTOs;
 using Menro.Application.Foods.Services.Implementations;
 using Menro.Application.FoodCategories.Services.Interfaces;
 using Menro.Application.FoodCategories.DTOs;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -29,35 +30,38 @@ namespace Menro.Web.Controllers.Public
         private readonly IRestaurantService _restaurantService;
         private readonly IFeaturedRestaurantService _featuredRestaurantService;
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
-        private readonly IUserRecentOrderCardService _userRecentOrderCardService;
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
         private readonly IRestaurantBannerService _restaurantBannerService;
-        private readonly IRestaurantMenuService _restaurantMenuService;
-        private readonly IAuthService _authService;
         private readonly IUserService _userService;
         private readonly IRestaurantBannerService _bannerService;
+        private readonly IMenuListService _menuListService;
+        private readonly IMenuItemService _menuItemService;
         private readonly IRestaurantPageFoodCategoryService _restaurantPageFoodCategoryService;
+        private readonly IFileUrlService _fileUrlService;
 
         public RestaurantController(
             IRestaurantService restaurantService,
             IFeaturedRestaurantService featuredRestaurantService,
             IRandomRestaurantCardService randomRestaurantCardService,
-            IUserRecentOrderCardService userRecentOrderCardService,
             IRestaurantAdBannerService restaurantAdBannerService,
             IRestaurantBannerService restaurantBannerService,
-            IRestaurantMenuService restaurantMenuService,
             IUserService userService,
             IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService)
+            IMenuListService menuListService,
+            IMenuItemService menuItemService,
+            IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService,
+            IFileUrlService fileUrlService)
         {
             _restaurantService = restaurantService;
             _featuredRestaurantService = featuredRestaurantService;
             _randomRestaurantCardService = randomRestaurantCardService;
-            _userRecentOrderCardService = userRecentOrderCardService;
             _restaurantAdBannerService = restaurantAdBannerService;
             _restaurantBannerService = restaurantBannerService;
-            _restaurantMenuService = restaurantMenuService;
             _userService = userService;
+            _menuListService = menuListService;
+            _menuItemService = menuItemService;
             _restaurantPageFoodCategoryService = restaurantPageFoodCategoryService;
+            _fileUrlService = fileUrlService;
         }
 
         #endregion
@@ -161,8 +165,14 @@ namespace Menro.Web.Controllers.Public
         {
             if (string.IsNullOrWhiteSpace(slug))
                 return BadRequest("Slug cannot be empty.");
-
+            
             var categories = await _restaurantPageFoodCategoryService.GetRestaurantCategoriesAsync(slug, ct);
+            
+            // + //
+            categories.ForEach(cat =>
+            {
+                cat.SvgIcon = _fileUrlService.BuildIconUrl(cat.SvgIcon);
+            });
             if (categories == null || categories.Count == 0)
                 return NotFound("هیچ دسته‌ای برای این رستوران یافت نشد.");
 

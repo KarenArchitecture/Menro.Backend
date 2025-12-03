@@ -198,7 +198,7 @@ namespace Menro.Application.Features.Identity.Services
                 user.FullName = dto.FullName;
 
                 if (dto.ProfileImage != null)
-                    user.ProfileImage = await _fileStorage.SaveProfileImageAsync(
+                    user.ProfileImage = await _fileStorage.UploadProfileImageAsync(
                         dto.ProfileImage,
                         user.ProfileImage
                     );

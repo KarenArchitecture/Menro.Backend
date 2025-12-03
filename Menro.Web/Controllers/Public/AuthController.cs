@@ -4,8 +4,6 @@ using Menro.Application.Features.Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Menro.Application.Common.Interfaces;
-using System.Transactions;
-using Humanizer;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -13,6 +11,7 @@ namespace Menro.Web.Controllers.Public
     [Route("api/auth")]
     public class AuthController : ControllerBase
     {
+        #region DI
         private readonly IAuthService _authService;
         private readonly IUserService _userService;
         private readonly ICurrentUserService _currentUserService;
@@ -27,6 +26,8 @@ namespace Menro.Web.Controllers.Public
             _userService = userService;
             _currentUserService = currentUserService;
         }
+
+        #endregion
 
         // ✅
         [HttpPost("register")]

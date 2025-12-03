@@ -1,4 +1,5 @@
-﻿using Menro.Application.Features.AdminPanel.Services;
+﻿using Menro.Application.Common.SD;
+using Menro.Application.Features.AdminPanel.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +7,7 @@ namespace Menro.Web.Controllers.AdminPanel
 {
     [ApiController]
     [Route("api/adminpanel/[controller]")]
-    [Authorize]
+    [Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Owner}")]
     public class DashboardController : ControllerBase
     {
         private readonly IDashboardService _dashboardService;
@@ -16,8 +17,8 @@ namespace Menro.Web.Controllers.AdminPanel
             _dashboardService = dashboardService;
         }
 
+        // ✅
         [HttpGet("dashboard")]
-        [Authorize]
         public async Task<IActionResult> GetAdminDetails()
         {
             var adminDetails = await _dashboardService.GetDashboardDataAsync();

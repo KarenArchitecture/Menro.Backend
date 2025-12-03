@@ -18,7 +18,7 @@ namespace Menro.Infrastructure.Extensions
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ISmsSender, FakeSmsSender>();
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-            services.AddScoped<IDateTimeService, DateTimeService>();
+            services.AddScoped<IGlobalDateTimeService, GlobalDateTimeService>();
             services.AddHttpContextAccessor();
 
             return services;
