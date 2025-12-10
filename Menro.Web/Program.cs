@@ -16,13 +16,21 @@ using Menro.Application.Common.Interfaces;
 using Menro.Web.Services.Implementations;
 using Menro.Infrastructure.Services;
 using System.Security.Claims;
+using Menro.Domain.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 #region DbContext & Identity
 
 builder.Services.AddDbContext<MenroDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var conn = builder.Configuration.GetConnectionString("DefaultConnection");
+
+    if (builder.Environment.IsDevelopment())
+        options.UseSqlServer(conn);
+    else
+        options.UseNpgsql(conn);
+});
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
@@ -43,15 +51,14 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtSettings>>().Value);
 
-builder.Services.AddAuthentication(options =>
+builder.Services.AddAuthentication(opt =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-.AddJwtBearer(options =>
+.AddJwtBearer(opt =>
 {
-    //var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]);
-    options.TokenValidationParameters = new TokenValidationParameters
+    opt.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
@@ -59,55 +66,41 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"])),
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"])
+        ),
         ClockSkew = TimeSpan.Zero,
         NameClaimType = ClaimTypes.NameIdentifier,
         RoleClaimType = ClaimTypes.Role
     };
 });
 
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
-});
-
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.LoginPath = "/Account/Login";
-    options.LogoutPath = "/Account/Logout";
-    options.AccessDeniedPath = "/Account/AccessDenied";
-});
-
 #endregion
 
-
 #region DI Services
+
 builder.Services.AddInfrastructureServices();
-var applicationAssembly = Assembly.Load("Menro.Application");
-builder.Services.AddAutoRegisteredServices(applicationAssembly);
-var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
-builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
-// menro.api services
+
+var appAssembly = Assembly.Load("Menro.Application");
+builder.Services.AddAutoRegisteredServices(appAssembly);
+
+var infraAssembly = Assembly.Load("Menro.Infrastructure");
+builder.Services.AddAutoRegisteredRepositories(infraAssembly);
+
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUrlService, FileUrlService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
 builder.Services.AddMemoryCache();
+
 #endregion
 
-
-
 #region API & MVC
-builder.Services.AddControllersWithViews();
-//builder.Services.AddControllers();
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-    });
 
+builder.Services.AddControllersWithViews();
+
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.PropertyNameCaseInsensitive = true);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -122,24 +115,14 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowReactDevClient", policy =>
-//        {
-//        policy.WithOrigins("https://localhost:5173")
-//                  .AllowAnyHeader()
-//                  .AllowAnyMethod()
-//                  .AllowCredentials();
-//    });
-//});
-
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactDevClient", policy =>
+    options.AddPolicy("AllowReactDevClient", p =>
     {
-        policy.WithOrigins(
+        p.WithOrigins(
             "http://localhost:5173",
-            "https://localhost:5173"
+            "https://localhost:5173",
+            "http://89.33.129.91"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
@@ -148,6 +131,7 @@ builder.Services.AddCors(options =>
 });
 
 #endregion
+
 var app = builder.Build();
 
 #region Middleware
@@ -164,16 +148,11 @@ else
 }
 
 app.UseHttpsRedirection();
-
-app.UseCors("AllowReactDevClient");  
-
-app.UseStaticFiles();                 
-
+app.UseCors("AllowReactDevClient");
+app.UseStaticFiles();
 app.UseErrorHandlingMiddleware();
 
-
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -189,14 +168,14 @@ app.MapControllerRoute(
 
 #endregion
 
-#region DB Initialization
+#region DB Initialization (Production Only)
 
-//using (var scope = app.Services.CreateScope())
-//{
-//    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-//    await dbInitializer.InitializeAsync();
-//}
-
+if (app.Environment.IsProduction())
+{
+    using var scope = app.Services.CreateScope();
+    var init = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+    await init.InitializeAsync();  // Includes: Migrate + Seed
+}
 
 #endregion
 
