@@ -3,19 +3,18 @@ using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Menro.Application.Common.Interfaces;
 
 namespace Menro.Infrastructure.Repositories
 {
     /// <summary>
     /// Repository for managing custom food categories belonging to restaurants.
     /// </summary>
-    public class CustomFoodCategoryRepository : Repository<CustomFoodCategory>, ICustomFoodCategoryRepository
+    public class CustomFoodCategoryRepository : ICustomFoodCategoryRepository
     {
         private readonly MenroDbContext _context;
         private readonly IMemoryCache _cache;
 
-        public CustomFoodCategoryRepository(MenroDbContext context, IMemoryCache cache) : base(context)
+        public CustomFoodCategoryRepository(MenroDbContext context, IMemoryCache cache)
         {
             _context = context;
             _cache = cache;
@@ -80,8 +79,7 @@ namespace Menro.Infrastructure.Repositories
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c =>
                     c.RestaurantId == restaurantId &&
-                    c.Name == catName &&
-                    !c.IsDeleted);
+                    c.Name == catName);
         }
 
         /// <summary>
@@ -137,7 +135,7 @@ namespace Menro.Infrastructure.Repositories
         public async Task<bool> ExistsByNameAsync(int restaurantId, string catName)
         {
             return await _context.CustomFoodCategories
-                .AnyAsync(c => c.RestaurantId == restaurantId && c.Name == catName && !c.IsDeleted);
+                .AnyAsync(c => c.RestaurantId == restaurantId && c.Name == catName);
         }
 
         /// <summary>
@@ -182,8 +180,7 @@ namespace Menro.Infrastructure.Repositories
             if (category == null) return false;
 
             _context.CustomFoodCategories.Update(category);
-            var saved = await _context.SaveChangesAsync();
-            return saved > 0;
+            return await _context.SaveChangesAsync() > 0;
         }
 
         /* ============================================================

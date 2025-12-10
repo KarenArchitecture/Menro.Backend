@@ -1,5 +1,4 @@
-﻿using Menro.Application.Features.GlobalFoodCategories.Services.Interfaces;
-using Menro.Application.Features.CustomFoodCategory.DTOs;
+﻿using Menro.Application.Features.CustomFoodCategory.DTOs;
 using Menro.Application.FoodCategories.Services.Interfaces;
 using Menro.Application.Common.SD;
 using Microsoft.AspNetCore.Authorization;
@@ -14,15 +13,21 @@ namespace Menro.Web.Controllers.AdminPanel
     [Authorize(Roles = SD.Role_Owner)]
     public class CustomFoodCategoryController : ControllerBase
     {
+        #region DI
         private readonly ICustomFoodCategoryService _cCatService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IFileUrlService _fileUrlService;
+
         public CustomFoodCategoryController(
-            ICustomFoodCategoryService cCatService, 
-            ICurrentUserService currentUserService)
+            ICustomFoodCategoryService cCatService,
+            ICurrentUserService currentUserService,
+            IFileUrlService fileUrlService)
         {
             _cCatService = cCatService;
             _currentUserService = currentUserService;
+            _fileUrlService = fileUrlService;
         }
+        #endregion
 
 
         // ✅
@@ -61,6 +66,10 @@ namespace Menro.Web.Controllers.AdminPanel
             if (restaurantId is not null)
             {
                 var catList = await _cCatService.GetAllCustomFoodCategoriesAsync(restaurantId.Value);
+                catList.ForEach(cat =>
+                {
+                    cat.Icon!.Url = _fileUrlService.BuildIconUrl(cat.Icon!.Url);
+                });
                 return Ok(catList);
             }
             return BadRequest(new { message = "بارگیری دسته بندی ها ناموفق بود" });
@@ -73,22 +82,23 @@ namespace Menro.Web.Controllers.AdminPanel
             var category = await _cCatService.GetCategoryAsync(catId);
             if (category == null)
                 return NotFound(new { message = "دسته‌بندی یافت نشد." });
-
+            category.Icon!.Url = _fileUrlService.BuildIconUrl(category.Icon!.Url);
             return Ok(category);
         }
 
         // ✅
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateAsync(UpdateCustomFoodCategoryDto dto)
+        public async Task<IActionResult> UpdateAsync([FromBody] UpdateCustomFoodCategoryDto dto)
         {
-            if (dto == null || dto.Id <= 0 || string.IsNullOrWhiteSpace(dto.Name))
-                return BadRequest(new { message = "داده‌های ارسالی معتبر نیستند." });
-
-            var success = await _cCatService.UpdateCategoryAsync(dto);
-            if (!success)
-                return BadRequest(new { message = "به‌روزرسانی ناموفق بود یا دسته‌بندی وجود ندارد." });
-
-            return Ok(new { message = "دسته‌بندی با موفقیت ویرایش شد." });
+            try
+            {
+                await _cCatService.UpdateCategoryAsync(dto);
+                return Ok(new { message = "Global category updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         // ✅

@@ -1,5 +1,4 @@
-﻿using Menro.Application.Services.Interfaces;
-using Menro.Domain.Entities;
+﻿using Menro.Domain.Entities;
 using Menro.Domain.Entities.Identity;
 using Menro.Domain.Enums;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -26,7 +25,9 @@ namespace Menro.Infrastructure.Data
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<RestaurantDiscount> RestaurantDiscounts { get; set; }
         public DbSet<RestaurantRating> RestaurantRatings { get; set; }
+        public DbSet<AdPricingSetting> AdPricingSettings { get; set; }
         public DbSet<RestaurantAdBanner> RestaurantAdBanners { get; set; }
+        public DbSet<RestaurantAd> RestaurantAds { get; set; }
         public DbSet<Otp> Otps { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
@@ -137,6 +138,14 @@ namespace Menro.Infrastructure.Data
                 .HasForeignKey<RestaurantAdBanner>(b => b.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Restaurant <-> RestaurantAd (One-to-Many)
+            modelBuilder.Entity<RestaurantAd>()
+                .HasOne(ad => ad.Restaurant)
+                .WithMany(r => r.Advertisements)
+                .HasForeignKey(ad => ad.RestaurantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
             // Subscription -> SubscriptionPlan (Many-to-One)
             modelBuilder.Entity<Subscription>()
                 .HasOne(s => s.SubscriptionPlan)
@@ -234,7 +243,7 @@ namespace Menro.Infrastructure.Data
             /* -------------------- Indexes for Home Page Features -------------------- */
 
             // ---- Carousel & Ad Banners ----
-            modelBuilder.Entity<RestaurantAdBanner>()
+            modelBuilder.Entity<RestaurantAd>()
                 .HasIndex(b => b.RestaurantId);
 
             modelBuilder.Entity<Restaurant>()

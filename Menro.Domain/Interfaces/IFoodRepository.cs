@@ -90,7 +90,7 @@ namespace Menro.Domain.Interfaces
         /// <summary>
         /// Returns detailed information of a food item including variants.
         /// </summary>
-        Task<Food> GetFoodDetailsAsync(int foodId);
+        Task<Food> GetFoodAsync(int foodId);
 
         /// <summary>
         /// Updates an existing food record.

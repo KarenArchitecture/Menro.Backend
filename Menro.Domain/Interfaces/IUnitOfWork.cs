@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Menro.Domain.Interfaces
+﻿namespace Menro.Domain.Interfaces
 {
     public interface IUnitOfWork
     {
@@ -13,6 +7,8 @@ namespace Menro.Domain.Interfaces
         ICustomFoodCategoryRepository FoodCategory { get;}
         IRestaurantRepository Restaurant { get;}
         IRestaurantCategoryRepository RestaurantCategory { get;}
+        IAdPricingSettingRepository AdPricingSetting { get;}
+        IRestaurantAdRepository RestaurantAd { get;}
         ISubscriptionRepository Subscription { get;}
         ISubscriptionPlanRepository SubscriptionPlan { get;}
         IOtpRepository Otp { get;}
