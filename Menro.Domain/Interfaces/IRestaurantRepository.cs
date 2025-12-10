@@ -116,7 +116,6 @@ namespace Menro.Domain.Interfaces
         void InvalidateBannerIds();
 
         // CRUD
-        Task<Restaurant?> GetByIdAsync(int id);
         Task SaveChangesAsync();
 
 
@@ -126,6 +125,5 @@ namespace Menro.Domain.Interfaces
 
         // restaurant profile
         Task<Restaurant?> GetRestaurantProfileAsync(int restaurantId);
-
     }
 }

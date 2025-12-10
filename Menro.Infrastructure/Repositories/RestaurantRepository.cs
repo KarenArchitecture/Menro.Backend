@@ -44,12 +44,11 @@ namespace Menro.Infrastructure.Repositories
         /// <summary>
         /// Retrieves a restaurant by ID.
         /// </summary>
-        public async Task<Restaurant?> GetByIdAsync(int id)
-        {
-            return await _context.Restaurants
-                .FirstOrDefaultAsync(r => r.Id == id);
-        }
-
+        //public async Task<Restaurant?> GetByIdAsync(int id)
+        //{
+        //    return await _context.Restaurants
+        //        .FirstOrDefaultAsync(r => r.Id == id);
+        //}
 
         public async Task<string> GetRestaurantName(int restaurantId)
         {

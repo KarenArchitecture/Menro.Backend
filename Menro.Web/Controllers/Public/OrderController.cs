@@ -100,36 +100,7 @@ namespace Menro.Web.Controllers.Public
             _creationService = creationService;
         }
 
-        /// <summary>
-        /// Creates a new order (guest or authenticated).
-        /// If the user is authenticated, their userId is attached,
-        /// otherwise the order is stored as a guest order.
-        /// </summary>
-        /// <returns>The created Order Id.</returns>
-        [HttpPost("create")]
-        [AllowAnonymous] // important: guests can order
-        [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<int>> CreateOrder([FromBody] CreateOrderDto dto)
-        {
-            if (dto == null)
-                return BadRequest(new { error = "Payload is required." });
-
-            // Will be null for guests (no JWT), non-null for logged-in users
-            string? userId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            try
-            {
-                // IMPORTANT: IOrderCreationService.CreateOrderAsync must accept string? userId
-                var orderId = await _creationService.CreateOrderAsync(userId, dto);
-                return Ok(orderId);
-            }
-            catch (Exception ex)
-            {
-                // TODO: log the exception with your logging system
-                return BadRequest(new { error = ex.Message });
-            }
-        }
+        
     }
 }
 
