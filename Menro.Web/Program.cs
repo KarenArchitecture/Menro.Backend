@@ -12,8 +12,11 @@ using Menro.Infrastructure.Data;
 using Menro.Web.Middleware;
 using Menro.Infrastructure.Extensions;
 using Menro.Application.Extensions;
-using Menro.Application.Features.Identity.Services;
 using Menro.Web.Services;
+using Menro.Application.Common.Interfaces;
+using Menro.Web.Services.Implementations;
+using Menro.Infrastructure.Services;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,7 +51,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]);
+    //var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]);
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -57,8 +60,18 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"])),
+        ClockSkew = TimeSpan.Zero,
+        NameClaimType = ClaimTypes.NameIdentifier,
+        RoleClaimType = ClaimTypes.Role
     };
+});
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -78,14 +91,24 @@ builder.Services.AddAutoRegisteredServices(applicationAssembly);
 var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
 builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IFileUrlService, FileUrlService>();
+builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
 
 
-
+//Caching Setup
+builder.Services.AddMemoryCache();
 
 
 #region API & MVC
 builder.Services.AddControllersWithViews();
-builder.Services.AddControllers();
+//builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    });
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -100,15 +123,28 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowReactDevClient", policy =>
+//        {
+//        policy.WithOrigins("https://localhost:5173")
+//                  .AllowAnyHeader()
+//                  .AllowAnyMethod()
+//                  .AllowCredentials();
+//    });
+//});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactDevClient", policy =>
     {
-        //policy.WithOrigins("http://localhost:5175")
-        policy.WithOrigins("https://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "https://localhost:5173"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials();
     });
 });
 
@@ -130,11 +166,13 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
 
-app.UseCors("AllowReactDevClient");
+app.UseCors("AllowReactDevClient");  
+
+app.UseStaticFiles();                 
 
 app.UseErrorHandlingMiddleware();
+
 
 app.UseRouting();
 
@@ -155,11 +193,11 @@ app.MapControllerRoute(
 
 #region DB Initialization
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-    await dbInitializer.InitializeAsync();
-}
+//using (var scope = app.Services.CreateScope())
+//{
+//    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+//    await dbInitializer.InitializeAsync();
+//}
 
 #endregion
 

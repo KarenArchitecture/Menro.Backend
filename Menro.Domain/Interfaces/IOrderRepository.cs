@@ -1,5 +1,4 @@
-﻿// Menro.Domain/Interfaces/IOrderRepository.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Menro.Domain.Entities;
@@ -7,29 +6,74 @@ using Menro.Domain.Entities;
 namespace Menro.Domain.Interfaces
 {
     /// <summary>
-    /// Order aggregate read operations (revenue, counts, recent items, etc.)
+    /// Repository interface for managing Order entities:
+    ///  • Creating orders
+    ///  • Revenue and analytics
+    ///  • User-specific “recent foods”
+    ///  • Retrieving full order graphs for summaries
     /// </summary>
     public interface IOrderRepository : IRepository<Order>
     {
+        /* ============================================================
+           ▶️  ORDER CREATION & RETRIEVAL
+        ============================================================ */
+
         /// <summary>
-        /// Total revenue from completed/paid orders (optionally scoped to a restaurant).
+        /// Adds a new Order (with items and extras) to the DbContext.
+        /// Note: SaveChangesAsync is NOT called here; use IUnitOfWork for that.
+        /// </summary>
+        Task AddOrderAsync(Order order);
+
+        /// <summary>
+        /// Retrieves an Order with full navigation properties:
+        /// OrderItems, Extras (with FoodAddon), Food, and FoodVariant.
+        /// Intended for detailed order summaries.
+        /// </summary>
+        Task<Order?> GetOrderWithDetailsAsync(int orderId);
+
+
+        /* ============================================================
+           💰 REVENUE & ANALYTICS
+        ============================================================ */
+
+        /// <summary>
+        /// Returns the total revenue of completed orders.
+        /// If restaurantId is null, returns global revenue across all restaurants.
         /// </summary>
         Task<decimal> GetTotalRevenueAsync(int? restaurantId = null);
 
         /// <summary>
-        /// Completed orders for a given year (optionally scoped to a restaurant).
+        /// Returns all completed orders inside a given time window.
         /// </summary>
-        Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, int year);
+        Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, DateTime from, DateTime to);
 
         /// <summary>
-        /// Count new orders since a given moment (optionally scoped to a restaurant).
+        /// Returns count of orders placed since a given date.
+        /// Optionally filtered by restaurant.
         /// </summary>
-        Task<int> CountNewOrdersAsync(int? restaurantId, DateTime since);
+        Task<int> GetRecentOrdersCountAsync(int? restaurantId, DateTime since);
 
         /// <summary>
-        /// For a given user, returns their most recently ordered foods across all restaurants,
-        /// deduped by Food and ordered by last time they were ordered (desc).
+        /// Returns total revenue of orders placed since a given date.
+        /// Optionally filtered by restaurant.
+        /// </summary>
+        Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since);
+
+
+        /* ============================================================
+           👤 USER-SPECIFIC RECENT FOODS (CACHED)
+        ============================================================ */
+
+        /// <summary>
+        /// Returns the most recently ordered foods for a user,
+        /// deduplicated by food and sorted by last order time.
+        /// Uses in-memory caching for fast repeat access.
         /// </summary>
         Task<List<Food>> GetUserRecentlyOrderedFoodsAsync(string userId, int count);
+
+        /// <summary>
+        /// Invalidates cached recent foods for the given user.
+        /// </summary>
+        void InvalidateUserRecentOrders(string userId);
     }
 }

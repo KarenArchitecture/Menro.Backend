@@ -1,5 +1,6 @@
 ﻿using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Menro.Infrastructure.Repositories
 {
@@ -18,31 +19,38 @@ namespace Menro.Infrastructure.Repositories
         // private fields for lazy initialization
         private IUserRepository _user;
         private IFoodRepository _food;
-        private IFoodCategoryRepository _foodCategory;
+        private ICustomFoodCategoryRepository _foodCategory;
         private IRestaurantRepository _restaurant;
         private IRestaurantCategoryRepository _restaurantCategory;
+        private IAdPricingSettingRepository _adPricingSetting;
+        private IRestaurantAdRepository _restaurantAd;
         private ISubscriptionRepository _subscription;
         private ISubscriptionPlanRepository _subscriptionPlan;
         private IOtpRepository _otp;
         private IOrderRepository _order;
         private IOrderItemRepository _orderItem;
+        private IRefreshTokenRepository _refreshToken;
+        private readonly IMemoryCache _cache;
 
         // public properties with lazy instantiation
         public IUserRepository User => _user ??= new UserRepository(_context);
         public IFoodRepository Food => _food ??= new FoodRepository(_context);
-        public IFoodCategoryRepository FoodCategory => _foodCategory ??= new FoodCategoryRepository(_context);
-        public IRestaurantRepository Restaurant => _restaurant ??= new RestaurantRepository(_context);
+        public ICustomFoodCategoryRepository FoodCategory => _foodCategory ??= new CustomFoodCategoryRepository(_context, _cache);
+        public IRestaurantRepository Restaurant => _restaurant ??= new RestaurantRepository(_context, _cache);
         public IRestaurantCategoryRepository RestaurantCategory => _restaurantCategory ??= new RestaurantCategoryRepository(_context);
+        public IAdPricingSettingRepository AdPricingSetting => _adPricingSetting ??= new AdPricingSettingRepository(_context);
+        public IRestaurantAdRepository RestaurantAd => _restaurantAd ??= new RestaurantAdRepository(_context);
         public ISubscriptionRepository Subscription => _subscription ??= new SubscriptionRepository(_context);
         public ISubscriptionPlanRepository SubscriptionPlan => _subscriptionPlan ??= new SubscriptionPlanRepository(_context);
         public IOtpRepository Otp => _otp ??= new OtpRepository(_context);
-        public IOrderRepository Order => _order ??= new OrderRepository(_context);
+        public IOrderRepository Order => _order ??= new OrderRepository(_context, _cache);
         public IOrderItemRepository OrderItem => _orderItem ??= new OrderItemRepository(_context);
-
+        public IRefreshTokenRepository RefreshToken => _refreshToken ??= new RefreshTokenRepository(_context);
         // constructor
-        public UnitOfWork(MenroDbContext context)
+        public UnitOfWork(MenroDbContext context, IMemoryCache cache)
         {
             _context = context;
+            _cache = cache;
         }
 
         public async Task<int> SaveChangesAsync()

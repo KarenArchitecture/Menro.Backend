@@ -16,10 +16,15 @@ namespace Menro.Domain.Entities
         public int FoodId { get; set; }
         public Food Food { get; set; }
 
-        // تعداد سفارش‌شده
-        public int Quantity { get; set; }
+        public int? FoodVariantId { get; set; }
+        public FoodVariant? FoodVariant { get; set; }
 
-        // قیمت در لحظه سفارش (برای جلوگیری از تغییر با تغییر قیمت Food)
+        public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
+
+        public string TitleSnapshot { get; set; } = string.Empty;
+
+        public ICollection<OrderItemExtra> Extras { get; set; } = new List<OrderItemExtra>();
     }
+
 }

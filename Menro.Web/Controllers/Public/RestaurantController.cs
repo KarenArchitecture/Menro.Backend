@@ -6,45 +6,60 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Menro.Application.Common.SD;
 using Menro.Application.Features.Identity.Services;
-using Menro.Application.Foods.Services.Interfaces;
-using Menro.Application.Orders.Services.Interfaces;
+using Menro.Application.FoodCategories.Services.Interfaces;
+using Menro.Application.FoodCategories.DTOs;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Web.Controllers.Public
 {
+    /// <summary>
+    /// Provides public-facing endpoints for restaurants, including featured lists,
+    /// random selections, advertisement banners, registration, categories, and
+    /// restaurant details (banner, menu, etc.).
+    /// </summary>
     [ApiController]
     [Route("api/public/[controller]")]
     public class RestaurantController : ControllerBase
     {
-        #region
+        #region Dependency Injection
+
         private readonly IRestaurantService _restaurantService;
         private readonly IFeaturedRestaurantService _featuredRestaurantService;
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
-        private readonly IUserRecentOrderCardService _userRecentOrderCardService;
         private readonly IRestaurantAdBannerService _restaurantAdBannerService;
-        private readonly IRestaurantShopBannerService _restaurantShopBannerService;
-        private readonly IRestaurantMenuService _restaurantMenuService;
-        private readonly IAuthService _authService;
+        private readonly IRestaurantBannerService _restaurantBannerService;
+        private readonly IUserService _userService;
+        private readonly IRestaurantBannerService _bannerService;
+        private readonly IRestaurantMenuService _menuService;
+        private readonly IRestaurantPageFoodCategoryService _restaurantPageFoodCategoryService;
+        private readonly IFileUrlService _fileUrlService;
 
         public RestaurantController(
             IRestaurantService restaurantService,
             IFeaturedRestaurantService featuredRestaurantService,
             IRandomRestaurantCardService randomRestaurantCardService,
-            IUserRecentOrderCardService userRecentOrderCardService,
             IRestaurantAdBannerService restaurantAdBannerService,
-            IRestaurantShopBannerService restaurantShopBannerService,
-            IRestaurantMenuService restaurantMenuService,
-            IAuthService authService)
+            IRestaurantBannerService restaurantBannerService,
+            IUserService userService,
+            IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService,
+            IRestaurantMenuService menuService,
+            IFileUrlService fileUrlService)
         {
             _restaurantService = restaurantService;
             _featuredRestaurantService = featuredRestaurantService;
             _randomRestaurantCardService = randomRestaurantCardService;
-            _userRecentOrderCardService = userRecentOrderCardService;
             _restaurantAdBannerService = restaurantAdBannerService;
-            _restaurantShopBannerService = restaurantShopBannerService;
-            _restaurantMenuService = restaurantMenuService;
-            _authService = authService;
+            _restaurantBannerService = restaurantBannerService;
+            _userService = userService;
+            _menuService = menuService;
+            _restaurantPageFoodCategoryService = restaurantPageFoodCategoryService;
+            _fileUrlService = fileUrlService;
         }
+
         #endregion
+
+
+        #region Home Page Endpoints
 
         [HttpGet("featured")]
         public async Task<IActionResult> GetFeaturedRestaurants()
@@ -60,25 +75,23 @@ namespace Menro.Web.Controllers.Public
             return Ok(result);
         }
 
-        // GET api/public/restaurant/ad-banner/random?exclude=1,3,5
         [HttpGet("ad-banner/random")]
         public async Task<ActionResult<RestaurantAdBannerDto>> GetRandomAdBanner([FromQuery] string? exclude)
         {
             var excludeIds = string.IsNullOrWhiteSpace(exclude)
-            ? new List<int>()
-            : exclude.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                     .Select(s => int.TryParse(s, out var x) ? (int?)x : null)
-                     .Where(x => x.HasValue)
-                     .Select(x => x.Value)
-                     .Distinct()
-                     .ToList();
+                ? new List<int>()
+                : exclude.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                        .Select(s => int.TryParse(s, out var x) ? (int?)x : null)
+                        .Where(x => x.HasValue)
+                        .Select(x => x.Value)
+                        .Distinct()
+                        .ToList();
 
             var dto = await _restaurantAdBannerService.GetRandomAdBannerAsync(excludeIds);
             if (dto == null) return NoContent();
             return Ok(dto);
         }
 
-        // POST api/public/restaurant/ad-banner/{id}/impression
         [HttpPost("ad-banner/{id}/impression")]
         public async Task<IActionResult> TrackAdImpression(int id)
         {
@@ -86,7 +99,10 @@ namespace Menro.Web.Controllers.Public
             return ok ? NoContent() : NotFound();
         }
 
+        #endregion
 
+
+        #region Registration & Global Categories
 
         [HttpPost("register")]
         [Authorize]
@@ -94,19 +110,16 @@ namespace Menro.Web.Controllers.Public
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            
-            // گرفتن شناسه کاربر از توکن (claims) مناسب برای کلاس ها و سرویس هایی که کنترلر نیستن و User رو در دسترس ندارن
-            //var ownerUserId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            string? ownerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            string? ownerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(ownerUserId))
                 return Unauthorized("کاربر شناسایی نشد.");
 
             var success = await _restaurantService.AddRestaurantAsync(dto, ownerUserId);
-
             if (!success)
                 return BadRequest("ثبت رستوران با خطا مواجه شد.");
-            await _authService.AddRoleToUserAsync(ownerUserId, SD.Role_Owner);
+
+            await _userService.AddRoleToUserAsync(ownerUserId, SD.Role_Owner);
             return Ok("رستوران با موفقیت ثبت شد.");
         }
 
@@ -114,32 +127,80 @@ namespace Menro.Web.Controllers.Public
         public async Task<IActionResult> GetCategories()
         {
             var categories = await _restaurantService.GetRestaurantCategoriesAsync();
-            return Ok(categories); // JSON اتوماتیک ارسال میشه
+            return Ok(categories);
         }
 
-        // New Shop Page - Get restaurant info for banner by slug
+        #endregion
+
+
+        #region Restaurant Page Endpoints
+
+        /// <summary>
+        /// Retrieves the restaurant banner (cover image, name, rating, etc.) by slug.
+        /// </summary>
         [HttpGet("{slug}/banner")]
-        public async Task<ActionResult<RestaurantShopBannerDto>> GetBannerBySlug(string slug)
+        public async Task<ActionResult<RestaurantBannerDto?>> GetBanner(string slug)
         {
-            var dto = await _restaurantShopBannerService.GetShopBannerAsync(slug);
-            if (dto == null)
+            var banner = await _restaurantBannerService.GetBannerBySlugAsync(slug);
+            if (banner == null)
                 return NotFound();
 
-            return Ok(dto);
+            return Ok(banner);
         }
-        /* Restaurant Public Page
-        Returns the full menu of a restaurant, grouped by category.
-        GET: api/public/restaurant/{slug}/menu
-        */
-        [HttpGet("{slug}/menu")]
-        public async Task<ActionResult<List<RestaurantMenuDto>>> GetMenu(string slug)
+
+        /// <summary>
+        /// Retrieves all food categories (custom + global) visible in a restaurant page (Shop Page).
+        /// GET: /api/public/restaurant/{slug}/categories
+        /// </summary>
+        [HttpGet("{slug}/categories")]
+        public async Task<ActionResult<List<RestaurantFoodCategoryDto>>> GetRestaurantCategoriesBySlug(string slug, CancellationToken ct)
         {
-            var sections = await _restaurantMenuService.GetRestaurantMenuBySlugAsync(slug);
+            if (string.IsNullOrWhiteSpace(slug))
+                return BadRequest("Slug cannot be empty.");
+            
+            var categories = await _restaurantPageFoodCategoryService.GetRestaurantCategoriesAsync(slug, ct);
+            
+            // + //
+            categories.ForEach(cat =>
+            {
+                cat.SvgIcon = _fileUrlService.BuildIconUrl(cat.SvgIcon);
+            });
+            if (categories == null || categories.Count == 0)
+                return NotFound("هیچ دسته‌ای برای این رستوران یافت نشد.");
 
-            if (sections == null || sections.Count == 0)
-                return NotFound(); // 404 if restaurant not found / no foods
-
-            return Ok(sections); // 200 + JSON payload
+            return Ok(categories);
         }
+
+        /// <summary>
+        /// Retrieves the full restaurant menu (grouped by food categories).
+        /// </summary>
+        /// <remarks>
+        /// Returns an array of RestaurantMenuDto:
+        /// [
+        ///   {
+        ///     "categoryId": 12,
+        ///     "categoryKey": "pizza",
+        ///     "categoryTitle": "پیتزا",
+        ///     "svgIcon": "/icons/pizza.svg",
+        ///     "foods": [ ... ]
+        ///   }
+        /// ]
+        /// </remarks>
+        [HttpGet("{slug}/menu")]
+        public async Task<ActionResult<List<RestaurantMenuDto>>> GetRestaurantMenuBySlug(string slug)
+        {
+            if (string.IsNullOrWhiteSpace(slug))
+                return BadRequest("Slug cannot be empty.");
+
+            var menu = await _menuService.GetMenuBySlugAsync(slug);
+
+            if (menu == null || menu.Count == 0)
+                return NotFound("منوی این رستوران یافت نشد.");
+
+            return Ok(menu);
+        }
+
+
+        #endregion
     }
 }

@@ -1,20 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Menro.Domain.Entities
 {
     public class GlobalFoodCategory
     {
+        [Key]
         public int Id { get; set; }
-        [Required, MaxLength(200)] public string Name { get; set; } = string.Empty;
-        public string SvgIcon { get; set; } = string.Empty;
+
+        [Required, MaxLength(200)]
+        public string Name { get; set; } = string.Empty;
+
+        // to Icons
+        public int? IconId { get; set; }
+
+        [ForeignKey(nameof(IconId))]
+        public Icon? Icon { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
         public bool IsActive { get; set; } = true;
         public int DisplayOrder { get; set; } = 0;
 
-        public ICollection<FoodCategory> RestaurantCategories { get; set; } = new List<FoodCategory>();
+        public ICollection<Food> Foods { get; set; } = new List<Food>();
     }
 }

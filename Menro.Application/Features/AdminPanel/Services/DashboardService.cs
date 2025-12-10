@@ -1,49 +1,79 @@
-﻿using Menro.Application.Features.AdminPanel.DTOs;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.AdminPanel.DTOs;
 using Menro.Application.Features.Identity.Services;
 using Menro.Application.Features.Order.Services;
 using Menro.Application.Restaurants.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Menro.Application.Features.AdminPanel.Services
 {
     public class DashboardService : IDashboardService
     {
-        private readonly IUserService _userService;
         private readonly IOrderService _orderService;
-        private readonly IRestaurantService _restaurantService;
+        private readonly ICurrentUserService _currentUserService;
 
-        public DashboardService(IUserService userService, IOrderService orderService, IRestaurantService restaurantService)
+        public DashboardService(IOrderService orderService, 
+            ICurrentUserService currentUserService)
         {
-            _userService = userService;
             _orderService = orderService;
-            _restaurantService = restaurantService;
+            _currentUserService = currentUserService;
         }
-        public async Task<AdminDto> GetAdminDetailsAsync(string userId)
+
+        // all dashboard data for the current user (Owner/Admin)
+        public async Task<DashboardDto> GetDashboardDataAsync()
         {
-            var user = await _userService.GetByIdAsync(userId);
-
-            int? restaurantId = await _restaurantService.GetRestaurantIdByUserIdAsync(userId);
-
-            string restaurantName = "منرو"; // fallback
-            if (restaurantId is not null)
+            int? restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            if (restaurantId is null)
             {
-                restaurantName = await _restaurantService.GetRestaurantName(restaurantId!.Value);
+                restaurantId = 0;
             }
 
-            return new AdminDto
+            // 📍 1. restaurant name
+            //var restaurant = await _restaurantService.GetRestaurantName(restaurantId.Value);
+
+            // 📍 2. finance numbers
+            int todayOrdersCount = await _orderService.GetRecentOrdersCountAsync(restaurantId, 0);
+            decimal todayRevenue = await _orderService.GetRecentOrdersRevenueAsync(restaurantId, 0);
+            decimal totalRevenue = await _orderService.GetTotalRevenueAsync(restaurantId);
+
+            // 📍 3. monthly sales
+            var monthlySalesRaw = await _orderService.GetMonthlySalesRawAsync(restaurantId);
+            var monthlySales = monthlySalesRaw.Select(r => new SalesByMonthDto
             {
-                UserFullName = user?.FullName?? user?.UserName!,
-                RestaurantName = restaurantName
+                Month = r.Month,
+                MonthName = r.MonthName,
+                TotalSales = r.TotalAmount
+            }).ToList();
+
+            var dto = new DashboardDto
+            {
+                //RestaurantName = restaurant ?? string.Empty,
+                TodayOrdersCount = todayOrdersCount,
+                TodayRevenue = todayRevenue,
+                TotalRevenue = totalRevenue,
+                MonthlySales = monthlySales
             };
+
+            return dto;
         }
 
+
+        // financial statistics
         public async Task<decimal> GetTotalRevenueAsync(int? restaurantId = null)
         {
             return await _orderService.GetTotalRevenueAsync(restaurantId);
         }
-        public async Task<int> GetNewOrdersCountAsync(int? restaurantId = null)
+        public async Task<int> GetThisMonthOrdersCountAsync(int? restaurantId = null)
         {
-            // می‌تونه default daysBack خودش رو هم override کنه یا ثابت بذاره
-            return await _orderService.GetNewOrdersCountAsync(restaurantId, 23);
+            return await _orderService.GetRecentOrdersCountAsync(restaurantId, 30);
+        }
+        public async Task<int> GetTodayOrdersCountAsync(int? restaurantId = null)
+        {
+            return await _orderService.GetRecentOrdersCountAsync(restaurantId, 0); // daysBack=0 یعنی فقط امروز
+        }
+        public async Task<decimal> GetTodayOrdersRevenueAsync(int? restaurantId = null)
+        {
+            return await _orderService.GetRecentOrdersRevenueAsync(restaurantId, 0);
         }
         public async Task<List<SalesByMonthDto>> GetMonthlySalesAsync(int? restaurantId)
         {
@@ -53,11 +83,6 @@ namespace Menro.Application.Features.AdminPanel.Services
                 Month = r.Month,
                 TotalSales = r.TotalAmount
             }).ToList();
-        }
-        public async Task<int?> GetRestaurantIdByUserIdAsync(string userId)
-        {
-            int? restaurantId = await _restaurantService.GetRestaurantIdByUserIdAsync(userId);
-            return restaurantId;
         }
 
     }

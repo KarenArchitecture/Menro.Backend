@@ -1,10 +1,13 @@
-﻿using Menro.Application.Common.Models;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Models;
+using Menro.Application.Features.Identity.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using static Menro.Application.Common.SD.SD;
+
+
 
 
 namespace Menro.Application.Features.Identity.Services
@@ -20,22 +23,15 @@ namespace Menro.Application.Features.Identity.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly UserManager<User> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IPasswordHasher<User> _passwordHasher;
-
+        private readonly IFileService _fileStorage;
 
         public UserService(IUnitOfWork uow,
             UserManager<User> userManager,
-            RoleManager<IdentityRole> roleManager,
-            IHttpContextAccessor httpContextAccessor,
-            IPasswordHasher<User> passwordHasher)
+            IFileService fileStorage)
         {
             _uow = uow;
             _userManager = userManager;
-            _roleManager = roleManager;
-            _httpContextAccessor = httpContextAccessor;
-            _passwordHasher = passwordHasher;
+            _fileStorage = fileStorage;
         }
         public async Task<User> GetByIdAsync(string userId)
         {
@@ -56,6 +52,24 @@ namespace Menro.Application.Features.Identity.Services
         {
             var user = await _uow.User.GetByPhoneNumberAsync(phoneNumber);
             return user;
+        }
+        public async Task<bool> UserExistsByPhoneAsync(string phoneNumber)
+        {
+            return await _userManager.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
+        }
+
+
+        public async Task<bool> UpdatePhoneNumberAsync(string userId, string newPhone)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return false;
+
+            user.PhoneNumber = newPhone;
+            user.UserName = newPhone; // اگر لاگین با شماره است
+
+            var identityResult = await _userManager.UpdateAsync(user);
+
+            return identityResult.Succeeded;
         }
 
         public async Task<(bool IsSuccess, IdentityResult? Result, User? User)> RegisterUserAsync(string fullName, string email, string phoneNumber, string? password)
@@ -103,19 +117,34 @@ namespace Menro.Application.Features.Identity.Services
             bool isCorrect = await _userManager.CheckPasswordAsync(user, password);
             return isCorrect;
         }
-        public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword, string confirmPassword)
+        // for forgot-password
+        public async Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword)
         {
-            if (newPassword != confirmPassword)
-                return Result.Failure("رمز جدید و تکرار آن برابر نیست.");
 
             // از متد موجود برای یافتن کاربر استفاده کن تا منطق جستجو یکجا باشه
             var user = await GetByPhoneNumberAsync(phoneNumber);
             if (user == null)
-                return Result.Failure("کاربری با این شماره یافت نشد.");
+                return Result.Failure("کاربری یافت نشد.");
 
             // تولید توکن ریست (سرور-side) و استفاده از ResetPasswordAsync تا ولیدیشن‌ها اجرا شوند
             var token = await _userManager.GeneratePasswordResetTokenAsync(user);
             var identityResult = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (!identityResult.Succeeded)
+            {
+                var errors = string.Join(" | ", identityResult.Errors.Select(e => e.Description));
+                return Result.Failure(errors);
+            }
+
+            return Result.Success();
+        }
+        public async Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        {
+            var user = await GetByIdAsync(userId);
+            if (user == null)
+                return Result.Failure("کاربر یافت نشد.");
+
+            var identityResult = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
 
             if (!identityResult.Succeeded)
             {
@@ -143,6 +172,45 @@ namespace Menro.Application.Features.Identity.Services
             {
                 return false;
             }
+        }
+
+        /*--- user details ---*/
+        public async Task<UserProfileDto> GetProfileAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId)
+                ?? throw new Exception("کاربر یافت نشد");
+
+            return new UserProfileDto
+            {
+                Id = user.Id,
+                FullName = user.FullName,
+                PhoneNumber = user.PhoneNumber ?? "",
+                ProfileImageUrl = user.ProfileImage // just file name
+            };
+        }
+
+        public async Task<bool> UpdateProfileAsync(string userId, UpdateUserProfileDto dto)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId) ?? throw new Exception("کاربر یافت نشد");
+
+                user.FullName = dto.FullName;
+
+                if (dto.ProfileImage != null)
+                    user.ProfileImage = await _fileStorage.UploadProfileImageAsync(
+                        dto.ProfileImage,
+                        user.ProfileImage
+                    );
+
+                await _userManager.UpdateAsync(user);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
         }
     }
 }

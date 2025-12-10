@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Features\CustomFoodCategory\Services\" />
     <Folder Include="Restaurants\Validators\" />
   </ItemGroup>
 

@@ -9,20 +9,20 @@
   <ItemGroup>
     <Compile Remove="Areas\**" />
     <Compile Remove="Controllers\Admin\**" />
+    <Compile Remove="Controllers\OwnerPanel\**" />
     <Compile Remove="Controllers\Owner\**" />
-    <Compile Remove="Controllers\User\**" />
     <Content Remove="Areas\**" />
     <Content Remove="Controllers\Admin\**" />
+    <Content Remove="Controllers\OwnerPanel\**" />
     <Content Remove="Controllers\Owner\**" />
-    <Content Remove="Controllers\User\**" />
     <EmbeddedResource Remove="Areas\**" />
     <EmbeddedResource Remove="Controllers\Admin\**" />
+    <EmbeddedResource Remove="Controllers\OwnerPanel\**" />
     <EmbeddedResource Remove="Controllers\Owner\**" />
-    <EmbeddedResource Remove="Controllers\User\**" />
     <None Remove="Areas\**" />
     <None Remove="Controllers\Admin\**" />
+    <None Remove="Controllers\OwnerPanel\**" />
     <None Remove="Controllers\Owner\**" />
-    <None Remove="Controllers\User\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,7 +39,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.4" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
@@ -51,7 +50,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\OwnerPanel\" />
+    <Folder Include="wwwroot\img\adBanner\" />
+    <Folder Include="wwwroot\img\food\" />
+    <Folder Include="wwwroot\img\profile\" />
+    <Folder Include="wwwroot\img\restaurants\home\" />
+    <Folder Include="wwwroot\img\restaurants\shop\" />
   </ItemGroup>
 
 </Project>

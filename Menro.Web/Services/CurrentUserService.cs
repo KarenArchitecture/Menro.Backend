@@ -1,20 +1,19 @@
-﻿using Menro.Application.Features.AdminPanel.Services;
-using Menro.Application.Features.Identity.Services;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Restaurants.Services.Interfaces;
 using System.Security.Claims;
 
 namespace Menro.Web.Services
 {
-    // Menro.Web.Services
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IDashboardService _dashboardService;
+        private readonly IRestaurantService _restaurantService;
 
         public CurrentUserService(IHttpContextAccessor httpContextAccessor,
-                                  IDashboardService dashboardService)
+                                  IRestaurantService restaurantService)
         {
             _httpContextAccessor = httpContextAccessor;
-            _dashboardService = dashboardService;
+            _restaurantService = restaurantService;
         }
 
         public string? GetUserId()
@@ -22,12 +21,10 @@ namespace Menro.Web.Services
             return _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
 
-        public async Task<int?> GetRestaurantIdAsync()
+        public async Task<int> GetRestaurantIdAsync()
         {
             var userId = GetUserId();
-            if (userId == null) return null;
-
-            return await _dashboardService.GetRestaurantIdByUserIdAsync(userId);
+            return await _restaurantService.GetRestaurantIdByUserIdAsync(userId);
         }
     }
 

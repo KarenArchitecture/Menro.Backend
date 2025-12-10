@@ -14,6 +14,11 @@ namespace Menro.Domain.Entities
         [Required]
         public int Price { get; set; }
 
+        public bool IsAvailable { get; set; } = true;
+
+        // !! make non-null prop after removing data seeding !!
+        public bool? IsDefault { get; set; } = false;
+
         // مخلفات (Addons) - مثلا پنیر اضافه، نوشابه
         public ICollection<FoodAddon> Addons { get; set; } = new List<FoodAddon>();
         // FK

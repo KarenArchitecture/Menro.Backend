@@ -1,5 +1,5 @@
-﻿using Menro.Application.Services.Interfaces;
-using Menro.Domain.Entities;
+﻿using Menro.Domain.Entities;
+using Menro.Domain.Entities.Identity;
 using Menro.Domain.Enums;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -13,19 +13,26 @@ namespace Menro.Infrastructure.Data
         // DbSets
         public DbSet<User> Users { get; set; }
         public DbSet<Food> Foods { get; set; }
-        public DbSet<FoodCategory> FoodCategories { get; set; }
+        public DbSet<CustomFoodCategory> CustomFoodCategories { get; set; }
         public DbSet<GlobalFoodCategory> GlobalFoodCategories { get; set; }
+        public DbSet<Icon> Icons { get; set; }
         public DbSet<FoodRating> FoodRatings { get; set; }
+        public DbSet<FoodVariant> FoodVariants { get; set; }
+        public DbSet<FoodAddon> FoodAddons { get; set; }
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<RestaurantCategory> RestaurantCategories { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<RestaurantDiscount> RestaurantDiscounts { get; set; }
         public DbSet<RestaurantRating> RestaurantRatings { get; set; }
+        public DbSet<AdPricingSetting> AdPricingSettings { get; set; }
         public DbSet<RestaurantAdBanner> RestaurantAdBanners { get; set; }
+        public DbSet<RestaurantAd> RestaurantAds { get; set; }
         public DbSet<Otp> Otps { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<OrderItemExtra> OrderItemExtras { get; set; }   // 🔹 NEW
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
         {
@@ -38,20 +45,50 @@ namespace Menro.Infrastructure.Data
 
             /* ---------------------------- Fluent API ---------------------------- */
 
-            // Food <-> FoodCategory (Many-to-One)
+            // Food -> CustomFoodCategory (optional)
             modelBuilder.Entity<Food>()
-                .HasOne(f => f.FoodCategory)
-                .WithMany(c => c.Foods)
-                .HasForeignKey(f => f.FoodCategoryId)
+                .HasOne(f => f.CustomFoodCategory)
+                .WithMany(c => c.Foods) // make sure CustomFoodCategory has ICollection<Food> Foods
+                .HasForeignKey(f => f.CustomFoodCategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Food -> GlobalFoodCategory (optional)
+            modelBuilder.Entity<Food>()
+                .HasOne(f => f.GlobalFoodCategory)
+                .WithMany(g => g.Foods) // make sure GlobalFoodCategory has ICollection<Food> Foods
+                .HasForeignKey(f => f.GlobalFoodCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // CustomFoodCategory -> GlobalFoodCategory
+            modelBuilder.Entity<CustomFoodCategory>()
+                .HasOne(c => c.GlobalCategory)
+                .WithMany()
+                .HasForeignKey(c => c.GlobalCategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // CustomFoodCategory -> Icon
+            modelBuilder.Entity<CustomFoodCategory>()
+                .HasOne(c => c.Icon)
+                .WithMany() // بدون ICollection در Icon
+                .HasForeignKey(c => c.IconId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // GlobalFoodCategory -> Icon
+            modelBuilder.Entity<GlobalFoodCategory>()
+                .HasOne(g => g.Icon)
+                .WithMany() // بدون ICollection در Icon
+                .HasForeignKey(g => g.IconId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // FoodCategory -> Restaurant (Many-to-One)
-            modelBuilder.Entity<FoodCategory>()
+            modelBuilder.Entity<CustomFoodCategory>()
                 .HasOne(fc => fc.Restaurant)
                 .WithMany(r => r.FoodCategories)
                 .HasForeignKey(fc => fc.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
+            /*---*/
+
             // Food <-> FoodVariant (One-to-Many)
             modelBuilder.Entity<FoodVariant>()
                 .HasOne(v => v.Food)
@@ -70,15 +107,15 @@ namespace Menro.Infrastructure.Data
                 .HasIndex(gc => gc.Name)
                 .IsUnique();
 
-            modelBuilder.Entity<FoodCategory>()
+            modelBuilder.Entity<CustomFoodCategory>()
                 .HasIndex(fc => new { fc.RestaurantId, fc.Name })
                 .IsUnique();
 
-            modelBuilder.Entity<FoodCategory>()
-                .HasOne(fc => fc.GlobalFoodCategory)
-                .WithMany(gc => gc.RestaurantCategories)
-                .HasForeignKey(fc => fc.GlobalFoodCategoryId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<CustomFoodCategory>()
+                .HasOne(fc => fc.Restaurant)
+                .WithMany(r => r.FoodCategories)
+                .HasForeignKey(fc => fc.RestaurantId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Restaurant <-> RestaurantCategory (Many-to-One)
             modelBuilder.Entity<Restaurant>()
@@ -100,6 +137,14 @@ namespace Menro.Infrastructure.Data
                 .WithOne(b => b.Restaurant)
                 .HasForeignKey<RestaurantAdBanner>(b => b.RestaurantId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Restaurant <-> RestaurantAd (One-to-Many)
+            modelBuilder.Entity<RestaurantAd>()
+                .HasOne(ad => ad.Restaurant)
+                .WithMany(r => r.Advertisements)
+                .HasForeignKey(ad => ad.RestaurantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
 
             // Subscription -> SubscriptionPlan (Many-to-One)
             modelBuilder.Entity<Subscription>()
@@ -127,21 +172,21 @@ namespace Menro.Infrastructure.Data
                 .HasForeignKey(d => d.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            /* for order module */
+            /* ---------------------- Order module mappings ---------------------- */
+
             // User → Order (One-to-Many)
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.User)
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
-            // Order
+
+            // Order defaults
             modelBuilder.Entity<Order>(entity =>
             {
-                // مقدار پیش‌فرض برای Status
                 entity.Property(o => o.Status)
                       .HasDefaultValue(OrderStatus.Pending);
 
-                // مقدار پیش‌فرض برای CreatedAt
                 entity.Property(o => o.CreatedAt)
                       .HasDefaultValueSql("GETUTCDATE()"); // برای SQL Server
             });
@@ -167,6 +212,25 @@ namespace Menro.Infrastructure.Data
                 .HasForeignKey(oi => oi.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // 🔹 OrderItemExtra mapping (NEW)
+            modelBuilder.Entity<OrderItemExtra>(builder =>
+            {
+                builder.HasKey(e => e.Id);
+
+                builder.HasOne(e => e.OrderItem)
+                       .WithMany(oi => oi.Extras)
+                       .HasForeignKey(e => e.OrderItemId)
+                       .OnDelete(DeleteBehavior.Cascade);   // OK: Order → OrderItem → Extras
+
+                builder.HasOne(e => e.FoodAddon)
+                       .WithMany()
+                       .HasForeignKey(e => e.FoodAddonId)
+                       .OnDelete(DeleteBehavior.Restrict);  // break multiple cascade path
+
+                builder.Property(e => e.ExtraPrice)
+                       .HasColumnType("decimal(18,2)");
+            });
+
             // مقدار دقیق decimal برای قیمت
             modelBuilder.Entity<Order>()
                 .Property(o => o.TotalAmount)
@@ -175,6 +239,43 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<OrderItem>()
                 .Property(oi => oi.UnitPrice)
                 .HasColumnType("decimal(18,2)");
+
+            /* -------------------- Indexes for Home Page Features -------------------- */
+
+            // ---- Carousel & Ad Banners ----
+            modelBuilder.Entity<RestaurantAd>()
+                .HasIndex(b => b.RestaurantId);
+
+            modelBuilder.Entity<Restaurant>()
+                .HasIndex(r => r.IsActive);
+            modelBuilder.Entity<Restaurant>()
+                .HasIndex(r => r.IsApproved);
+
+            // ---- Random Restaurant Cards ----
+            modelBuilder.Entity<Restaurant>()
+                .HasIndex(r => new { r.IsActive, r.IsApproved });
+
+            // ---- Popular Foods / Home Food Cards ----
+            modelBuilder.Entity<Food>()
+                .HasIndex(f => f.GlobalFoodCategoryId);
+            modelBuilder.Entity<Food>()
+                .HasIndex(f => f.RestaurantId);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasIndex(oi => oi.FoodId);
+
+            modelBuilder.Entity<FoodRating>()
+                .HasIndex(fr => fr.FoodId);
+
+            // ---- Recent Orders ----
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => o.UserId);
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => o.RestaurantId);
+
+            modelBuilder.Entity<OrderItem>()
+                .HasIndex(oi => oi.OrderId);
+
             /* ---------------------------- Seed Data ---------------------------- */
             modelBuilder.Entity<RestaurantCategory>().HasData(
                 new RestaurantCategory { Id = 1, Name = "رستوران سنتی" },

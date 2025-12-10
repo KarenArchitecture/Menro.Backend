@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 
 namespace Menro.Domain.Entities
@@ -13,10 +14,6 @@ namespace Menro.Domain.Entities
         [Required(ErrorMessage = "نام آیتم الزامی است")]
         public string Name { get; set; } = string.Empty;
 
-        //[Display(Name = "توضیحات مختصر")]
-        //[MaxLength(300)]
-        //public string? Description { get; set; }
-
         [Display(Name = "ترکیبات")]
         [MaxLength(500)]
         public string? Ingredients { get; set; }
@@ -28,25 +25,33 @@ namespace Menro.Domain.Entities
         public string ImageUrl { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        //public bool HasVariant { get; set; }
+        
         public bool IsAvailable { get; set; } = true;  // Shows if food can be ordered
         public bool IsDeleted { get; set; } = false;   // Soft delete flag
 
-        // FK به رستوران
+
+        // FK: Restaurant
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; } = null!;
 
-        // FK به دسته‌بندی
-        public int FoodCategoryId { get; set; }
-        public FoodCategory FoodCategory { get; set; } = null!;
+        // FK: CustomFoodCategory
+        public int? CustomFoodCategoryId { get; set; }
+        public CustomFoodCategory? CustomFoodCategory { get; set; } = null!;
 
+        // FK: GlobalFoodCategory
+        public int? GlobalFoodCategoryId { get; set; }
+        public GlobalFoodCategory? GlobalFoodCategory { get; set; }
 
         // ارتباط‌ها
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public ICollection<FoodRating> Ratings { get; set; } = new List<FoodRating>();
-
-        // انواع (Variants) - مثلا سایز کوچک/بزرگ یا زعفرانی/دارچینی و غیره
         public ICollection<FoodVariant> Variants { get; set; } = new List<FoodVariant>();
 
+        // --- Computed (NotMapped) ---
+        [NotMapped]
+        public double AverageRating => Ratings.Any() ? Ratings.Average(r => r.Score) : 0;
+
+        [NotMapped]
+        public int VotersCount => Ratings.Count;
     }
 }
