@@ -53,7 +53,5 @@ namespace Menro.Domain.Entities
 
         [NotMapped]
         public int VotersCount => Ratings.Count;
-
-
     }
 }

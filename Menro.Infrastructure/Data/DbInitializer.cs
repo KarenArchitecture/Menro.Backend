@@ -531,7 +531,7 @@ namespace Menro.Infrastructure.Data
                 }
 
                 /* ============================================================
-                   Demo Customer + Orders
+                   Demo Customer + Orders (with variants + addons + table code)
                 ============================================================ */
                 var demoPhone = "09121112233";
                 var demoCustomer = await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == demoPhone);
@@ -548,8 +548,14 @@ namespace Menro.Infrastructure.Data
                     await _userManager.AddToRoleAsync(demoCustomer, SD.Role_Customer);
                 }
 
+                // only seed demo orders once per demo customer
                 if (!await _db.Orders.AnyAsync(o => o.UserId == demoCustomer.Id))
                 {
+                    // preload all variants + addons so we don't keep hitting DB in loops
+                    var allVariants = await _db.FoodVariants
+                        .Include(v => v.Addons)
+                        .ToListAsync();
+
                     var restaurantIds = await _db.Restaurants
                         .Where(r => r.IsActive && r.IsApproved)
                         .OrderBy(_ => Guid.NewGuid())
@@ -572,24 +578,93 @@ namespace Menro.Infrastructure.Data
                         decimal totalAmount = 0m;
                         var orderItems = new List<OrderItem>();
 
+                        // choose a random table code / takeout for this order
+                        string tableCode;
+                        if (rand.NextDouble() < 0.3)
+                        {
+                            // ~30% of demo orders are takeout
+                            tableCode = "takeout";
+                        }
+                        else
+                        {
+                            // otherwise pick a table between t1..t6
+                            var tblNum = rand.Next(1, 7); // 1–6
+                            tableCode = $"t{tblNum}";
+                        }
+
                         foreach (var food in foods)
                         {
-                            var quantity = rand.Next(1, 3);
-                            var unitPrice = food.Price;
-                            totalAmount += unitPrice * quantity;
+                            int quantity = rand.Next(1, 3);
 
-                            orderItems.Add(new OrderItem
+                            // gather variants for this food
+                            var variantsForFood = allVariants
+                                .Where(v => v.FoodId == food.Id)
+                                .ToList();
+
+                            // no variants → simple item without extras
+                            if (variantsForFood.Count == 0)
+                            {
+                                decimal unitPrice = food.Price;
+                                totalAmount += unitPrice * quantity;
+
+                                var simpleItem = new OrderItem
+                                {
+                                    FoodId = food.Id,
+                                    Quantity = quantity,
+                                    UnitPrice = unitPrice,
+                                    TitleSnapshot = food.Name
+                                };
+
+                                orderItems.Add(simpleItem);
+                                continue;
+                            }
+
+                            // choose default variant if exists (IsDefault == true), otherwise random
+                            var chosenVariant = variantsForFood
+                                .FirstOrDefault(v => v.IsDefault == true)   // ✅ bool? → bool
+                                ?? variantsForFood.OrderBy(_ => Guid.NewGuid()).First();
+
+                            var variantAddons = chosenVariant.Addons?.ToList() ?? new List<FoodAddon>();
+                            var selectedAddons = new List<FoodAddon>();
+
+                            // randomly pick some addons for this variant
+                            foreach (var addon in variantAddons)
+                            {
+                                // ~45% chance to include each addon
+                                if (rand.NextDouble() < 0.45)
+                                {
+                                    selectedAddons.Add(addon);
+                                }
+                            }
+
+                            // calculate unit price = variant price + sum of selected addons
+                            int addonsSum = selectedAddons.Sum(a => a.ExtraPrice);
+                            decimal finalUnitPrice = chosenVariant.Price + addonsSum; // int → decimal
+
+                            totalAmount += finalUnitPrice * quantity;
+
+                            var orderItem = new OrderItem
                             {
                                 FoodId = food.Id,
+                                FoodVariantId = chosenVariant.Id,
                                 Quantity = quantity,
-                                UnitPrice = unitPrice
-                            });
+                                UnitPrice = finalUnitPrice,
+                                TitleSnapshot = $"{food.Name} - {chosenVariant.Name}",
+                                Extras = selectedAddons.Select(a => new OrderItemExtra
+                                {
+                                    FoodAddonId = a.Id,
+                                    ExtraPrice = a.ExtraPrice
+                                }).ToList()
+                            };
+
+                            orderItems.Add(orderItem);
                         }
 
                         var order = new Order
                         {
                             UserId = demoCustomer.Id,
                             RestaurantId = rid,
+                            TableCode = tableCode, // uses your string? TableCode prop
                             Status = OrderStatus.Completed,
                             CreatedAt = DateTime.UtcNow.AddDays(-dayOffset++),
                             TotalAmount = totalAmount,
@@ -598,8 +673,11 @@ namespace Menro.Infrastructure.Data
 
                         _db.Orders.Add(order);
                     }
+
                     await _db.SaveChangesAsync();
                 }
+
+
             }
             catch (Exception ex)
             {

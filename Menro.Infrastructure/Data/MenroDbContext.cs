@@ -30,6 +30,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<Otp> Otps { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<OrderItemExtra> OrderItemExtras { get; set; }   // 🔹 NEW
         public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
@@ -162,21 +163,21 @@ namespace Menro.Infrastructure.Data
                 .HasForeignKey(d => d.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            /* for order module */
+            /* ---------------------- Order module mappings ---------------------- */
+
             // User → Order (One-to-Many)
             modelBuilder.Entity<Order>()
                 .HasOne(o => o.User)
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
-            // Order
+
+            // Order defaults
             modelBuilder.Entity<Order>(entity =>
             {
-                // مقدار پیش‌فرض برای Status
                 entity.Property(o => o.Status)
                       .HasDefaultValue(OrderStatus.Pending);
 
-                // مقدار پیش‌فرض برای CreatedAt
                 entity.Property(o => o.CreatedAt)
                       .HasDefaultValueSql("GETUTCDATE()"); // برای SQL Server
             });
@@ -201,6 +202,25 @@ namespace Menro.Infrastructure.Data
                 .WithMany(f => f.OrderItems)
                 .HasForeignKey(oi => oi.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // 🔹 OrderItemExtra mapping (NEW)
+            modelBuilder.Entity<OrderItemExtra>(builder =>
+            {
+                builder.HasKey(e => e.Id);
+
+                builder.HasOne(e => e.OrderItem)
+                       .WithMany(oi => oi.Extras)
+                       .HasForeignKey(e => e.OrderItemId)
+                       .OnDelete(DeleteBehavior.Cascade);   // OK: Order → OrderItem → Extras
+
+                builder.HasOne(e => e.FoodAddon)
+                       .WithMany()
+                       .HasForeignKey(e => e.FoodAddonId)
+                       .OnDelete(DeleteBehavior.Restrict);  // break multiple cascade path
+
+                builder.Property(e => e.ExtraPrice)
+                       .HasColumnType("decimal(18,2)");
+            });
 
             // مقدار دقیق decimal برای قیمت
             modelBuilder.Entity<Order>()
@@ -246,6 +266,7 @@ namespace Menro.Infrastructure.Data
 
             modelBuilder.Entity<OrderItem>()
                 .HasIndex(oi => oi.OrderId);
+
             /* ---------------------------- Seed Data ---------------------------- */
             modelBuilder.Entity<RestaurantCategory>().HasData(
                 new RestaurantCategory { Id = 1, Name = "رستوران سنتی" },

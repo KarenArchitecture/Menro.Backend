@@ -1,9 +1,4 @@
-﻿// Menro.Application/Orders/Services/Implementations/UserRecentOrderCardService.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Menro.Application.Orders.DTOs;
+﻿using Menro.Application.Orders.DTOs;
 using Menro.Application.Orders.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;

@@ -14,6 +14,8 @@ namespace Menro.Domain.Interfaces
            🔹 Basic Lookups
         ============================================================ */
 
+        Task<Restaurant?> GetByIdAsync(int id);
+
         /// <summary>
         /// Gets the restaurant name by its ID (with caching).
         /// </summary>

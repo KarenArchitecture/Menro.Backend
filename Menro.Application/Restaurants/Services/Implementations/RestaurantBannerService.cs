@@ -30,6 +30,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
 
             var dto = new RestaurantBannerDto
             {
+                Id = restaurant.Id,
                 Name = restaurant.Name,
                 // ✅ now use new field for shop page banner
                 BannerImageUrl = string.IsNullOrWhiteSpace(restaurant.ShopBannerImageUrl)
