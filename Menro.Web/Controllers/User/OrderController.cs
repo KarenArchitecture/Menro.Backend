@@ -69,6 +69,10 @@ namespace Menro.Web.Controllers.User
             {
                 userId = _currentUserService.GetUserId();
             }
+            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            if (restaurantId == null) return BadRequest(new { error = "Payload is required." });
+            dto.RestaurantId = restaurantId;
+
 
             try
             {

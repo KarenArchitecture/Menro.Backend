@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Menro.Application.Orders.DTOs;
 using Menro.Application.Orders.Services.Interfaces;
+using Menro.Application.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
@@ -19,10 +20,14 @@ namespace Menro.Application.Orders.Services.Implementations
     public class OrderCreationService : IOrderCreationService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IFoodService _foodService;
 
-        public OrderCreationService(IUnitOfWork unitOfWork)
+        public OrderCreationService(IUnitOfWork unitOfWork,
+            IFoodService foodService)
         {
             _unitOfWork = unitOfWork;
+            _foodService = foodService;
+
         }
 
         /* ============================================================
@@ -64,16 +69,6 @@ namespace Menro.Application.Orders.Services.Implementations
             // If userId is null => guest order.
 
             /* -------------------------------
-               Validate restaurant
-            --------------------------------*/
-            var restaurant = await _unitOfWork.Restaurant.GetByIdAsync(dto.RestaurantId);
-            if (restaurant == null)
-                throw new Exception("Restaurant not found.");
-
-            if (!restaurant.IsActive || !restaurant.IsApproved)
-                throw new Exception("Restaurant is not available for ordering.");
-
-            /* -------------------------------
                Create root Order entity
             --------------------------------*/
             var order = new Order
@@ -106,7 +101,8 @@ namespace Menro.Application.Orders.Services.Implementations
                 if (!item.FoodId.HasValue)
                     throw new Exception("FoodId is required for each order item.");
 
-                var food = await _unitOfWork.Food.GetFoodDetailsAsync(item.FoodId.Value);
+                //var food = await _unitOfWork.Food.GetFoodDetailsAsync(item.FoodId.Value);
+                var food = _foodService.GetFoodDetailsAsync(item.FoodId.Value, dto.RestaurantId);
                 if (food == null)
                     throw new Exception("Food not found.");
 
