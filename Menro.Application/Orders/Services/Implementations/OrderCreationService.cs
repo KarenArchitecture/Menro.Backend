@@ -101,10 +101,10 @@ namespace Menro.Application.Orders.Services.Implementations
                 if (!item.FoodId.HasValue)
                     throw new Exception("FoodId is required for each order item.");
 
-                //var food = await _unitOfWork.Food.GetFoodDetailsAsync(item.FoodId.Value);
-                var food = _foodService.GetFoodDetailsAsync(item.FoodId.Value, dto.RestaurantId);
+                var food = await _unitOfWork.Food.GetFoodWithVariantsAsync(item.FoodId.Value);
                 if (food == null)
                     throw new Exception("Food not found.");
+
 
                 /* ---------------- Variant ---------------- */
                 FoodVariant? variant = null;
@@ -143,22 +143,18 @@ namespace Menro.Application.Orders.Services.Implementations
                 var orderItem = new OrderItem
                 {
                     FoodId = food.Id,
-                    Food = food,
                     FoodVariantId = variant?.Id,
-                    FoodVariant = variant,
                     Quantity = item.Quantity,
                     UnitPrice = serverUnitPrice,
                     TitleSnapshot = BuildTitleSnapshot(food, variant, selectedAddons),
                     Extras = new List<OrderItemExtra>()
                 };
 
-                // Map selected addons → OrderItemExtra
                 foreach (var addon in selectedAddons)
                 {
                     orderItem.Extras.Add(new OrderItemExtra
                     {
                         FoodAddonId = addon.Id,
-                        FoodAddon = addon,
                         ExtraPrice = addon.ExtraPrice
                     });
                 }
