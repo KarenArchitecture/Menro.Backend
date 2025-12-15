@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Menro.Application.Orders.DTOs;
 using Menro.Application.Orders.Services.Interfaces;
+using Menro.Application.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
@@ -13,10 +14,14 @@ namespace Menro.Application.Orders.Services.Implementations
     public class OrderCreationService : IOrderCreationService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IFoodService _foodService;
 
-        public OrderCreationService(IUnitOfWork unitOfWork)
+        public OrderCreationService(IUnitOfWork unitOfWork,
+            IFoodService foodService)
         {
             _unitOfWork = unitOfWork;
+            _foodService = foodService;
+
         }
 
         /* ============================================================
@@ -56,16 +61,6 @@ namespace Menro.Application.Orders.Services.Implementations
             // 🔹 IMPORTANT CHANGE:
             // We NO LONGER require userId here.
             // If userId is null => guest order.
-
-            /* -------------------------------
-               Validate restaurant
-            --------------------------------*/
-            var restaurant = await _unitOfWork.Restaurant.GetByIdAsync(dto.RestaurantId);
-            if (restaurant == null)
-                throw new Exception("Restaurant not found.");
-
-            if (!restaurant.IsActive || !restaurant.IsApproved)
-                throw new Exception("Restaurant is not available for ordering.");
 
             /* -------------------------------
                Create root Order entity
