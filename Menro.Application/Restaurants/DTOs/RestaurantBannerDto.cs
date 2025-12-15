@@ -13,6 +13,8 @@ namespace Menro.Application.Restaurants.DTOs
         public string BannerImageUrl { get; set; } = "/img/res-slider.png"; // fallback
         public double AverageRating { get; set; }
         public int VotersCount { get; set; }
+        public int TableCount { get; set; } = 0;
+
     }
 }
 

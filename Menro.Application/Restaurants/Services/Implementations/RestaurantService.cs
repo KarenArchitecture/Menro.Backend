@@ -44,7 +44,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
                     BankAccountNumber = dto.RestaurantAccountNumber,
                     OwnerUserId = ownerUserId,
                     IsActive = true,
-                    IsApproved = false, // تا زمانی که توسط ادمین تأیید نشه
+                    IsDeleted = false, // تا زمانی که توسط ادمین تأیید نشه
                     CreatedAt = DateTime.UtcNow
                 };
 

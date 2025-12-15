@@ -8,7 +8,6 @@ namespace Menro.Domain.Entities
         [Key]
         public int Id { get; set; }
 
-
         [Display(Name = "نام کامل")]
         [MaxLength(50)]
         [Required(ErrorMessage = "نام رستوران الزامی است")]
@@ -34,9 +33,13 @@ namespace Menro.Domain.Entities
         [Required(ErrorMessage = "افزودن آدرس رستوران الزامی است")]
         public string Address { get; set; } = string.Empty;
 
+        public string ContactNumber { get; set; } = string.Empty;
+
         public TimeSpan OpenTime { get; set; }
         public TimeSpan CloseTime { get; set; }
         public DateTime CreatedAt { get; set; }
+
+        public int TableCount { get; set; } = 0;
 
         [Display(Name = "توضیحات")]
         [MaxLength(500)]
@@ -44,9 +47,8 @@ namespace Menro.Domain.Entities
 
         [Display(Name = "فعال")]
         public bool IsActive { get; set; } = true;
-
-        [Display(Name = "تأیید شده")]
         public bool IsApproved { get; set; } = false;
+        public bool IsDeleted { get; set; } = false;
 
         // مشخصات صاحب رستوران
         [Display(Name = "کد ملی")]
@@ -62,7 +64,6 @@ namespace Menro.Domain.Entities
         [Display(Name = "شماره شبا")]
         [MaxLength(30)]
         public string? ShebaNumber { get; set; }
-        public bool IsFeatured { get; set; } = false;
 
         // FKs and relations
 
@@ -86,8 +87,6 @@ namespace Menro.Domain.Entities
 
         // Ads
         public ICollection<RestaurantAd> Advertisements { get; set; } = new List<RestaurantAd>();
-
-        public RestaurantAdBanner? AdBanner { get; set; }
 
         // Ratings
         public ICollection<RestaurantRating> Ratings { get; set; } = new List<RestaurantRating>();

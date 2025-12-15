@@ -207,7 +207,7 @@ namespace Menro.Infrastructure.Repositories
             var restaurant = await _context.Restaurants
                 .AsNoTracking()
                 .Include(r => r.Ratings)
-                .FirstOrDefaultAsync(r => r.Slug == slug && r.IsActive && r.IsApproved);
+                .FirstOrDefaultAsync(r => r.Slug == slug && r.IsActive && !r.IsDeleted && r.IsApproved);
 
             if (restaurant != null)
                 _cache.Set(cacheKey, restaurant, TimeSpan.FromMinutes(10));

@@ -11,14 +11,6 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Menro.Infrastructure.Repositories
 {
-    /// <summary>
-    /// Repository implementation for managing Order entities.
-    /// Provides:
-    ///  • Order creation (with items & extras)
-    ///  • Revenue analytics
-    ///  • User-specific recent-food queries (cached)
-    ///  • Full-order retrieval for detail/summary views
-    /// </summary>
     public class OrderRepository : Repository<Order>, IOrderRepository
     {
         private readonly MenroDbContext _context;
@@ -35,6 +27,18 @@ namespace Menro.Infrastructure.Repositories
         /* ============================================================
            ▶️  ORDER CREATION & RETRIEVAL
         ============================================================ */
+
+        public async Task<int> GetNextRestaurantOrderNumberAsync(int restaurantId)
+        {
+            var last = await _context.Orders
+                .Where(o => o.RestaurantId == restaurantId)
+                .OrderByDescending(o => o.RestaurantOrderNumber)
+                .Select(o => (int?)o.RestaurantOrderNumber)
+                .FirstOrDefaultAsync();
+
+            return (last ?? 0) + 1;
+        }
+
 
         public async Task AddOrderAsync(Order order)
         {

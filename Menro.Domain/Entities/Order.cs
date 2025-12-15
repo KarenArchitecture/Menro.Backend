@@ -11,6 +11,7 @@ namespace Menro.Domain.Entities
     public class Order
     {
         public int Id { get; set; }
+        public int RestaurantOrderNumber { get; set; }
 
         // 🔹 Nullable: guest orders = null
         public string? UserId { get; set; }

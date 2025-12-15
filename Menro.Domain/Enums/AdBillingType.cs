@@ -1,5 +1,8 @@
-﻿public enum AdBillingType
+﻿namespace Menro.Domain.Enums
 {
-    PerDay = 1,
-    PerClick = 2
+    public enum AdBillingType
+    {
+        PerDay = 1,
+        PerClick = 2
+    }
 }
