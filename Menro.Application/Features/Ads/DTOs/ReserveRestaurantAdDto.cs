@@ -1,4 +1,6 @@
 ﻿
+using Menro.Domain.Enums;
+
 namespace Menro.Application.Features.Ads.DTOs
 {
     public class ReserveRestaurantAdDto

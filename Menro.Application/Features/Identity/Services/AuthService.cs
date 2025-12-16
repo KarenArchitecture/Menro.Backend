@@ -58,8 +58,6 @@ namespace Menro.Application.Features.Identity.Services
 
             await _uow.Otp.AddAsync(otp);
             await _uow.SaveChangesAsync();
-
-
         }
 
         // verification

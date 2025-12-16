@@ -5,6 +5,7 @@ using Menro.Application.Restaurants.DTOs;
 using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Application.Extensions;
 using Menro.Application.Common.Interfaces;
+using Menro.Domain.Enums;
 
 namespace Menro.Application.Restaurants.Services.Implementations
 {
@@ -104,9 +105,9 @@ namespace Menro.Application.Restaurants.Services.Implementations
 
 
         // admin panel => restaurant management tab
-        public async Task<List<RestaurantListForAdminDto>> GetRestaurantsListForAdminAsync(bool? approved)
+        public async Task<List<RestaurantListForAdminDto>> GetRestaurantsListForAdminAsync()
         {
-            var restaurants = await _uow.Restaurant.GetRestaurantsListForAdminAsync(approved);
+            var restaurants = await _uow.Restaurant.GetRestaurantsListForAdminAsync();
 
             var list = restaurants.Select(r => new RestaurantListForAdminDto
             {
@@ -114,7 +115,6 @@ namespace Menro.Application.Restaurants.Services.Implementations
                 Name = r.Name,
                 PhoneNumber = r.OwnerUser.PhoneNumber ?? "",
                 OwnerName = r.OwnerUser.FullName ?? "",
-                IsApproved = r.IsApproved,
                 CreatedAt = _globalDateTimeService.ToPersianDateTimeString(r.CreatedAt),
             }).ToList();
 
@@ -147,7 +147,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
                 OwnerNationalId = r.NationalCode ?? "",
                 OwnerBankAccount = r.BankAccountNumber ?? "",
 
-                IsApproved = r.IsApproved,
+                Status = r.Status,
                 CreatedAt = _globalDateTimeService.ToPersianDateTimeString(r.CreatedAt)
             };
         }
@@ -158,7 +158,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
             var restaurant = await _uow.Restaurant.GetByIdAsync(restaurantId);
             if (restaurant == null) return false;
             //adminNote ?? restaurant.AdminNote = adminNote;
-            restaurant.IsApproved = approve;
+            restaurant.Status = RestaurantStatus.Approved;
             await _uow.Restaurant.SaveChangesAsync();
             return true;
         }

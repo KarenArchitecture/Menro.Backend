@@ -1,4 +1,5 @@
 ﻿using Menro.Domain.Entities;
+using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -66,21 +67,7 @@ namespace Menro.Infrastructure.Repositories
         /* ============================================================
            🔹 Featured restaurants (carousel)
         ============================================================ */
-        public async Task<IEnumerable<Restaurant>> GetFeaturedRestaurantsAsync()
-        {
-            const string cacheKey = "FeaturedRestaurants";
-            if (_cache.TryGetValue(cacheKey, out List<Restaurant> cached))
-                return cached;
-
-            var result = await _context.Restaurants
-                .Where(r => r.IsFeatured && r.IsActive && r.IsApproved && !string.IsNullOrEmpty(r.CarouselImageUrl))
-                .OrderByDescending(r => r.CreatedAt)
-                .AsNoTracking()
-                .ToListAsync();
-
-            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
-            return result;
-        }
+        
 
         /* ============================================================
            🔹 Home Page - Random Restaurant Cards
@@ -94,7 +81,7 @@ namespace Menro.Infrastructure.Repositories
             }
 
             var restaurants = await _context.Restaurants
-                .Where(r => r.IsActive && r.IsApproved)
+                .Where(r => r.IsActive && !r.IsDeleted && r.Status == RestaurantStatus.Approved)
                 .OrderBy(r => EF.Functions.Random())
                 .Take(count * 2)
                 .Include(r => r.Ratings)
@@ -110,38 +97,6 @@ namespace Menro.Infrastructure.Repositories
         /* ============================================================
            🔹 Home Page - Advertisement Banners
         ============================================================ */
-        public async Task<RestaurantAdBanner?> GetRandomLiveAdBannerAsync(IEnumerable<int> excludeIds)
-        {
-            var now = DateTime.UtcNow;
-            var excludes = excludeIds?.ToList() ?? new();
-
-            const string cacheKey = "LiveBannerIds";
-            if (!_cache.TryGetValue(cacheKey, out List<int> bannerIds))
-            {
-                bannerIds = await _context.RestaurantAdBanners
-                    .Where(b =>
-                        b.StartDate <= now &&
-                        b.EndDate >= now &&
-                        !b.IsPaused &&
-                        (b.PurchasedViews == 0 || b.ConsumedViews < b.PurchasedViews) &&
-                        b.Restaurant.IsActive &&
-                        b.Restaurant.IsApproved)
-                    .Select(b => b.Id)
-                    .ToListAsync();
-
-                _cache.Set(cacheKey, bannerIds, TimeSpan.FromSeconds(5));
-            }
-
-            var availableIds = bannerIds.Except(excludes).ToList();
-            if (!availableIds.Any()) return null;
-
-            var random = new Random();
-            var selectedId = availableIds[random.Next(availableIds.Count)];
-
-            return await _context.RestaurantAdBanners
-                .Include(b => b.Restaurant)
-                .FirstOrDefaultAsync(b => b.Id == selectedId);
-        }
 
         /* ============================================================
            🔹 Atomic impression counter
@@ -203,7 +158,7 @@ namespace Menro.Infrastructure.Repositories
             var restaurant = await _context.Restaurants
                 .AsNoTracking()
                 .Include(r => r.Ratings)
-                .FirstOrDefaultAsync(r => r.Slug == slug && r.IsActive && !r.IsDeleted && r.IsApproved);
+                .FirstOrDefaultAsync(r => r.Slug == slug && r.IsActive && !r.IsDeleted && r.Status == RestaurantStatus.Approved);
 
             if (restaurant != null)
                 _cache.Set(cacheKey, restaurant, TimeSpan.FromMinutes(10));
@@ -247,14 +202,11 @@ namespace Menro.Infrastructure.Repositories
         public void InvalidateBannerIds() => _cache.Remove("LiveBannerIds");
 
         // admin panel => restaurant management tab
-        public async Task<List<Restaurant>> GetRestaurantsListForAdminAsync(bool? approvedStatus = null)
+        public async Task<List<Restaurant>> GetRestaurantsListForAdminAsync()
         {
             var query = _context.Restaurants
                 .Include(r => r.OwnerUser)
                 .AsQueryable();
-
-            if (approvedStatus != null)
-                query = query.Where(r => r.IsApproved == approvedStatus);
 
             return await query
                 .OrderByDescending(r => r.Id)

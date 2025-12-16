@@ -12,11 +12,6 @@ using Menro.Application.Common.Interfaces;
 
 namespace Menro.Web.Controllers.Public
 {
-    /// <summary>
-    /// Provides public-facing endpoints for restaurants, including featured lists,
-    /// random selections, advertisement banners, registration, categories, and
-    /// restaurant details (banner, menu, etc.).
-    /// </summary>
     [ApiController]
     [Route("api/public/[controller]")]
     public class RestaurantController : ControllerBase
@@ -24,9 +19,7 @@ namespace Menro.Web.Controllers.Public
         #region Dependency Injection
 
         private readonly IRestaurantService _restaurantService;
-        private readonly IFeaturedRestaurantService _featuredRestaurantService;
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
-        private readonly IRestaurantAdBannerService _restaurantAdBannerService;
         private readonly IRestaurantBannerService _restaurantBannerService;
         private readonly IUserService _userService;
         private readonly IRestaurantBannerService _bannerService;
@@ -36,9 +29,7 @@ namespace Menro.Web.Controllers.Public
 
         public RestaurantController(
             IRestaurantService restaurantService,
-            IFeaturedRestaurantService featuredRestaurantService,
             IRandomRestaurantCardService randomRestaurantCardService,
-            IRestaurantAdBannerService restaurantAdBannerService,
             IRestaurantBannerService restaurantBannerService,
             IUserService userService,
             IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService,
@@ -46,9 +37,7 @@ namespace Menro.Web.Controllers.Public
             IFileUrlService fileUrlService)
         {
             _restaurantService = restaurantService;
-            _featuredRestaurantService = featuredRestaurantService;
             _randomRestaurantCardService = randomRestaurantCardService;
-            _restaurantAdBannerService = restaurantAdBannerService;
             _restaurantBannerService = restaurantBannerService;
             _userService = userService;
             _menuService = menuService;
@@ -60,45 +49,12 @@ namespace Menro.Web.Controllers.Public
 
 
         #region Home Page Endpoints
-
-        [HttpGet("featured")]
-        public async Task<IActionResult> GetFeaturedRestaurants()
-        {
-            var featuredRestaurants = await _featuredRestaurantService.GetFeaturedRestaurantsAsync();
-            return Ok(featuredRestaurants);
-        }
-
         [HttpGet("random")]
         public async Task<ActionResult<IEnumerable<RestaurantCardDto>>> GetRandomRestaurants()
         {
             var result = await _randomRestaurantCardService.GetRandomRestaurantCardsAsync();
             return Ok(result);
         }
-
-        [HttpGet("ad-banner/random")]
-        public async Task<ActionResult<RestaurantAdBannerDto>> GetRandomAdBanner([FromQuery] string? exclude)
-        {
-            var excludeIds = string.IsNullOrWhiteSpace(exclude)
-                ? new List<int>()
-                : exclude.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                        .Select(s => int.TryParse(s, out var x) ? (int?)x : null)
-                        .Where(x => x.HasValue)
-                        .Select(x => x.Value)
-                        .Distinct()
-                        .ToList();
-
-            var dto = await _restaurantAdBannerService.GetRandomAdBannerAsync(excludeIds);
-            if (dto == null) return NoContent();
-            return Ok(dto);
-        }
-
-        [HttpPost("ad-banner/{id}/impression")]
-        public async Task<IActionResult> TrackAdImpression(int id)
-        {
-            var ok = await _restaurantAdBannerService.AddImpressionAsync(id);
-            return ok ? NoContent() : NotFound();
-        }
-
         #endregion
 
 

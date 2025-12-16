@@ -24,7 +24,7 @@ public class OrdersController : ControllerBase
     /// Create an order (guest or logged-in).
     /// </summary>
     [HttpPost("create")]
-    [AllowAnonymous] // guests allowed
+    [Authorize] // guests allowed
     public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
     {
         if (!ModelState.IsValid)

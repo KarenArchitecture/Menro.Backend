@@ -193,11 +193,11 @@ app.MapControllerRoute(
 
 #region DB Initialization
 
-//using (var scope = app.Services.CreateScope())
-//{
-//    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-//    await dbInitializer.InitializeAsync();
-//}
+using (var scope = app.Services.CreateScope())
+{
+    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+    await dbInitializer.InitializeAsync();
+}
 
 #endregion
 

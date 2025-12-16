@@ -1,5 +1,6 @@
 ﻿using Menro.Application.Foods.DTOs;
 using Menro.Domain.Entities;
+using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -40,7 +41,7 @@ namespace Menro.Infrastructure.Repositories
                     f.IsAvailable &&
                     !f.IsDeleted &&
                     f.Restaurant.IsActive &&
-                    f.Restaurant.IsApproved &&
+                    f.Restaurant.Status == RestaurantStatus.Approved &&
                     f.GlobalFoodCategoryId != null)
                 .Select(f => f.GlobalFoodCategoryId!.Value)
                 .Distinct()
@@ -84,7 +85,7 @@ namespace Menro.Infrastructure.Repositories
                     f.IsAvailable &&
                     !f.IsDeleted &&
                     f.Restaurant.IsActive &&
-                    f.Restaurant.IsApproved &&
+                    f.Restaurant.Status == RestaurantStatus.Approved &&
                     f.GlobalFoodCategoryId != null)
                 .Select(f => f.GlobalFoodCategoryId!.Value)
                 .Distinct()
@@ -126,7 +127,7 @@ namespace Menro.Infrastructure.Repositories
                     f.IsAvailable &&
                     !f.IsDeleted &&
                     f.Restaurant.IsActive &&
-                    f.Restaurant.IsApproved)
+                    f.Restaurant.Status == RestaurantStatus.Approved)
                 .Include(f => f.CustomFoodCategory)
                     .ThenInclude(c => c.Icon)
                 .Include(f => f.GlobalFoodCategory)
