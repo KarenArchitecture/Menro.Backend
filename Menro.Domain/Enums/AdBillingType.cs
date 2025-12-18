@@ -3,6 +3,7 @@
     public enum AdBillingType
     {
         PerDay = 1,
-        PerClick = 2
+        PerClick = 2,
+        PerView = 3
     }
 }

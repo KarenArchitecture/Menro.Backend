@@ -17,6 +17,7 @@ using Menro.Application.Common.Interfaces;
 using Menro.Web.Services.Implementations;
 using Menro.Infrastructure.Services;
 using System.Security.Claims;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -101,14 +102,17 @@ builder.Services.AddMemoryCache();
 
 
 #region API & MVC
-builder.Services.AddControllersWithViews();
-//builder.Services.AddControllers();
-builder.Services.AddControllers()
+builder.Services
+    .AddControllersWithViews()
     .AddJsonOptions(options =>
     {
+        // ✅ Frontend expects camelCase: imageUrl, restaurantName, carouselImageUrl, ...
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+
+        // Optional but fine to keep
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
     });
-
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -123,17 +127,6 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowReactDevClient", policy =>
-//        {
-//        policy.WithOrigins("https://localhost:5173")
-//                  .AllowAnyHeader()
-//                  .AllowAnyMethod()
-//                  .AllowCredentials();
-//    });
-//});
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactDevClient", policy =>
@@ -147,6 +140,7 @@ builder.Services.AddCors(options =>
         .AllowCredentials();
     });
 });
+
 
 #endregion
 

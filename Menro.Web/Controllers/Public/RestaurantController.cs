@@ -90,10 +90,6 @@ namespace Menro.Web.Controllers.Public
 
 
         #region Restaurant Page Endpoints
-
-        /// <summary>
-        /// Retrieves the restaurant banner (cover image, name, rating, etc.) by slug.
-        /// </summary>
         [HttpGet("{slug}/banner")]
         public async Task<ActionResult<RestaurantBannerDto?>> GetBanner(string slug)
         {
@@ -104,10 +100,6 @@ namespace Menro.Web.Controllers.Public
             return Ok(banner);
         }
 
-        /// <summary>
-        /// Retrieves all food categories (custom + global) visible in a restaurant page (Shop Page).
-        /// GET: /api/public/restaurant/{slug}/categories
-        /// </summary>
         [HttpGet("{slug}/categories")]
         public async Task<ActionResult<List<RestaurantFoodCategoryDto>>> GetRestaurantCategoriesBySlug(string slug, CancellationToken ct)
         {
@@ -127,21 +119,7 @@ namespace Menro.Web.Controllers.Public
             return Ok(categories);
         }
 
-        /// <summary>
-        /// Retrieves the full restaurant menu (grouped by food categories).
-        /// </summary>
-        /// <remarks>
-        /// Returns an array of RestaurantMenuDto:
-        /// [
-        ///   {
-        ///     "categoryId": 12,
-        ///     "categoryKey": "pizza",
-        ///     "categoryTitle": "پیتزا",
-        ///     "svgIcon": "/icons/pizza.svg",
-        ///     "foods": [ ... ]
-        ///   }
-        /// ]
-        /// </remarks>
+        
         [HttpGet("{slug}/menu")]
         public async Task<ActionResult<List<RestaurantMenuDto>>> GetRestaurantMenuBySlug(string slug)
         {
