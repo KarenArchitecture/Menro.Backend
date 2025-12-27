@@ -1,6 +1,7 @@
 ﻿using Menro.Domain.Interfaces;
 using Menro.Application.Features.Ads.DTOs;
 using Menro.Domain.Enums;
+using Menro.Domain.Rules;
 
 namespace Menro.Application.Features.Ads.Services
 {
@@ -15,24 +16,31 @@ namespace Menro.Application.Features.Ads.Services
         {
             var list = await _repository.GetActiveSettingsAsync(placement);
 
-            var dto = list.Select(x => new AdPricingSettingDto
+            list = list
+                .Where(x => AdPricingRules.IsAllowed(x.PlacementType, x.BillingType))
+                .ToList();
+
+            return list.Select(x => new AdPricingSettingDto
             {
                 Id = x.Id,
                 PlacementType = x.PlacementType,
                 BillingType = x.BillingType,
-
                 MinUnits = x.MinUnits,
                 MaxUnits = x.MaxUnits,
                 UnitPrice = x.UnitPrice,
-
                 IsActive = x.IsActive
             }).ToList();
-            
-            return dto;
         }
 
         public async Task<bool> SaveSettingsAsync(List<AdPricingSettingDto> dtos)
         {
+            foreach (var dto in dtos)
+            {
+                if (!AdPricingRules.IsAllowed(dto.PlacementType, dto.BillingType))
+                    throw new ArgumentException(
+                        $"Invalid billing type '{dto.BillingType}' for placement '{dto.PlacementType}'.");
+            }
+
             var entities = dtos.Select(dto => new AdPricingSetting
             {
                 Id = dto.Id ?? 0,
