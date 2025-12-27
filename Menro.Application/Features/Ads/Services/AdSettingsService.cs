@@ -1,5 +1,6 @@
 ﻿using Menro.Domain.Interfaces;
 using Menro.Application.Features.Ads.DTOs;
+using Menro.Domain.Enums;
 
 namespace Menro.Application.Features.Ads.Services
 {

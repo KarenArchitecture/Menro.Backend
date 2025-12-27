@@ -15,7 +15,7 @@ namespace Menro.Application.Restaurants.Services.Interfaces
 
 
         // admin panel => restaurant management tab
-        Task<List<RestaurantListForAdminDto>> GetRestaurantsListForAdminAsync(bool? approved);
+        Task<List<RestaurantListForAdminDto>> GetRestaurantsListForAdminAsync();
         Task<RestaurantDetailsForAdminDto?> GetRestaurantDetailsForAdminAsync(int id);
 
         Task<bool> ApproveRestaurantAsync(int restaurantId, bool approve);

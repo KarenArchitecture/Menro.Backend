@@ -1,4 +1,5 @@
 ﻿using Menro.Domain.Entities;
+using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -108,7 +109,7 @@ namespace Menro.Infrastructure.Repositories
                         f.IsAvailable &&
                         !f.IsDeleted &&
                         f.Restaurant.IsActive &&
-                        f.Restaurant.IsApproved))
+                        f.Restaurant.Status == RestaurantStatus.Approved))
                 .Select(cc => cc.GlobalCategoryId!.Value)
                 .Distinct()
                 .ToListAsync();
@@ -169,7 +170,7 @@ namespace Menro.Infrastructure.Repositories
                     f.IsAvailable &&
                     !f.IsDeleted &&
                     f.Restaurant.IsActive &&
-                    f.Restaurant.IsApproved)
+                    f.Restaurant.Status == RestaurantStatus.Approved)
                 .ToListAsync();
 
             var scored = foods

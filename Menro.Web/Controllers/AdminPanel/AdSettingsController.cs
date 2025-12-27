@@ -1,6 +1,7 @@
 ﻿using Menro.Application.Common.SD;
 using Menro.Application.Features.Ads.DTOs;
 using Menro.Application.Features.Ads.Services;
+using Menro.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

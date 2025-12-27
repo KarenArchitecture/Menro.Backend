@@ -3,6 +3,7 @@ using Menro.Domain.Interfaces;
 using Menro.Application.Features.Ads.DTOs;
 using Menro.Application.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Menro.Domain.Enums;
 
 namespace Menro.Application.Features.Ads.Services
 {

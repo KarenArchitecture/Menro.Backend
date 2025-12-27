@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Menro.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Menro.Domain.Entities
 {

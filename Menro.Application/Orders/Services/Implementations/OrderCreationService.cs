@@ -11,12 +11,6 @@ using Menro.Domain.Interfaces;
 
 namespace Menro.Application.Orders.Services.Implementations
 {
-    /// <summary>
-    /// Implements the main checkout order creation flow.
-    /// Maps CreateOrderDto → Order + OrderItems + OrderItemExtras.
-    /// Supports both logged-in users (userId != null)
-    /// and guest users (userId == null).
-    /// </summary>
     public class OrderCreationService : IOrderCreationService
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -79,6 +73,9 @@ namespace Menro.Application.Orders.Services.Implementations
                 Status = OrderStatus.Pending,
                 OrderItems = new List<OrderItem>()
             };
+
+            order.RestaurantOrderNumber =
+                await _unitOfWork.Order.GetNextRestaurantOrderNumberAsync(dto.RestaurantId);
 
             // 🔹 Attach user only if logged-in
             if (!string.IsNullOrWhiteSpace(userId))
