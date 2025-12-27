@@ -33,8 +33,16 @@ namespace Menro.Web.Controllers.AdminPanel
         [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> Save([FromBody] List<AdPricingSettingDto> dtos)
         {
-            var result = await _service.SaveSettingsAsync(dtos);
-            return Ok(new { success = result });
+            try
+            {
+                var result = await _service.SaveSettingsAsync(dtos);
+                return Ok(new { success = result });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { success = false, error = ex.Message });
+            }
         }
+
     }
 }
