@@ -1,10 +1,10 @@
-﻿using Menro.Application.Orders.DTOs;
-using Menro.Application.Orders.Services.Interfaces;
+﻿using Menro.Application.Features.Orders.DTOs;
+using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Menro.Application.Orders.Services.Implementations
+namespace Menro.Application.Features.Order.Services.Implementations
 {
     public class UserRecentOrderCardService : IUserRecentOrderCardService
     {

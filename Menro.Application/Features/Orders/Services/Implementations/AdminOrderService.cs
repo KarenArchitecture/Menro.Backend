@@ -1,25 +1,27 @@
-﻿using Menro.Application.Features.Order.DTOs;
+﻿using Menro.Application.Features.Orders.DTOs;
 using Menro.Domain.Interfaces;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Orders.Services.Interfaces;
 
-namespace Menro.Application.Features.Order.Services
+namespace Menro.Application.Features.Orders.Services.Implementations
 {
-    public class OrderService : IOrderService
+    public class AdminOrderService : IAdminOrderService
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IGlobalDateTimeService _dateTimeService;
-        public OrderService(IOrderRepository orderRepository,
+        public AdminOrderService(IOrderRepository orderRepository,
             IGlobalDateTimeService dateTimeService)
         {
             _orderRepository = orderRepository;
             _dateTimeService = dateTimeService;
         }
-        // ✅
+
+        /* dashboard stats */
+
         public async Task<decimal> GetTotalRevenueAsync(int? restaurantId = null)
         {
             return await _orderRepository.GetTotalRevenueAsync(restaurantId);
         }
-        // ✅
         public async Task<List<MonthlySalesDto>> GetMonthlySalesRawAsync(int? restaurantId = null)
         {
             var persianYear = _dateTimeService.GetPersianYear(DateTime.UtcNow);
@@ -37,7 +39,7 @@ namespace Menro.Application.Features.Order.Services
                 {
                     Month = g.Key,
                     MonthName = _dateTimeService.GetPersianMonthName(g.First().CreatedAt),
-                    TotalAmount = g.Sum(x => x.TotalAmount)
+                    TotalAmount = g.Sum(x => x.TotalPrice)
                 })
                 .ToList();
 
@@ -87,7 +89,35 @@ namespace Menro.Application.Features.Order.Services
             return await _orderRepository.GetRecentOrdersRevenueAsync(restaurantId, since);
         }
 
+        /* order management */
+        public async Task<List<AdminOrderListItemDto>> GetActiveOrdersAsync(int restaurantId)
+        {
+            var orders = await _orderRepository.GetActiveOrdersAsync(restaurantId);
 
+            return orders.Select(o => new AdminOrderListItemDto
+            {
+                Id = o.Id,
+                RestaurantOrderNumber = o.RestaurantOrderNumber,
+                TableNumber = o.TableNumber,
+                TotalPrice = o.TotalPrice,
+                Status = o.Status,
+                CreatedAt = o.CreatedAt
+            }).ToList();
+        }
 
+        public async Task<List<AdminOrderListItemDto>> GetOrderHistoryAsync(int restaurantId)
+        {
+            var orders = await _orderRepository.GetOrderHistoryAsync(restaurantId);
+
+            return orders.Select(o => new AdminOrderListItemDto
+            {
+                Id = o.Id,
+                RestaurantOrderNumber = o.RestaurantOrderNumber,
+                TableNumber = o.TableNumber,
+                TotalPrice = o.TotalPrice,
+                Status = o.Status,
+                CreatedAt = o.CreatedAt
+            }).ToList();
+        }
     }
 }

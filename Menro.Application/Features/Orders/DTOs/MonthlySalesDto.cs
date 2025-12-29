@@ -1,4 +1,4 @@
-﻿namespace Menro.Application.Features.Order.DTOs
+﻿namespace Menro.Application.Features.Orders.DTOs
 {
     public class MonthlySalesDto
     {

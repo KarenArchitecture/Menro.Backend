@@ -1,21 +1,18 @@
-﻿using Menro.Application.Features.Order.DTOs;
-using Menro.Domain.Entities;
-using Menro.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Menro.Application.Features.Orders.DTOs;
 
-namespace Menro.Application.Features.Order.Services
+namespace Menro.Application.Features.Orders.Services.Interfaces
 {
-    public interface IOrderService
+    public interface IAdminOrderService
     {
         Task<List<MonthlySalesDto>> GetMonthlySalesRawAsync(int? restaurantId = null);
         Task<decimal> GetTotalRevenueAsync(int? restaurantId = null);
         Task<int> GetRecentOrdersCountAsync(int? restaurantId = null, int daysBack = 30);
         Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId = null, int daysBack = 0);
+
+
+        /* order management */
+        Task<List<AdminOrderListItemDto>> GetActiveOrdersAsync(int restaurantId);
+        Task<List<AdminOrderListItemDto>> GetOrderHistoryAsync(int restaurantId);
 
     }
 }

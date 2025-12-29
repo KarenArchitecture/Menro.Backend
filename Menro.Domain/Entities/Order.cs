@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Menro.Domain.Enums;
+﻿using Menro.Domain.Enums;
 
 
 namespace Menro.Domain.Entities
@@ -20,12 +15,12 @@ namespace Menro.Domain.Entities
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; }
 
-        public decimal TotalAmount { get; set; }
+        public decimal TotalPrice { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public string? TableCode { get; set; }
+        public int? TableNumber { get; set; }
 
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }

@@ -1,7 +1,6 @@
-﻿// Menro.Web.Controllers.Public
-using Menro.Application.Common.Interfaces;
-using Menro.Application.Orders.DTOs;
-using Menro.Application.Orders.Services.Interfaces;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Orders.DTOs;
+using Menro.Application.Features.Orders.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,11 +19,8 @@ public class OrdersController : ControllerBase
         _currentUserService = currentUserService;
     }
 
-    /// <summary>
-    /// Create an order (guest or logged-in).
-    /// </summary>
+
     [HttpPost("create")]
-    //[Authorize] // guests allowed
     [AllowAnonymous]
     public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
     {
@@ -40,7 +36,6 @@ public class OrdersController : ControllerBase
         }
         catch (Exception ex)
         {
-            // you can refine this later (map domain exceptions to nicer payloads)
             return BadRequest(new { message = ex.Message });
         }
     }
