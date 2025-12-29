@@ -532,15 +532,19 @@ namespace Menro.Infrastructure.Data
                         var orderItems = new List<OrderItem>();
 
                         // ✅ TableCode: "1".."N" OR "takeout" (NO 't' prefix)
-                        string tableCode;
+
+                        //string tableCode;
+                        int? tableNumber;
                         if (rand.NextDouble() < 0.30 || info.TableCount <= 0)
                         {
-                            tableCode = "takeout";
+                            //tableCode = "takeout";
+                            tableNumber = null;
                         }
                         else
                         {
-                            var tblNum = rand.Next(1, info.TableCount + 1);
-                            tableCode = tblNum.ToString();
+                            //var tblNum = rand.Next(1, info.TableCount + 1);
+                            //tableCode = tblNum.ToString();
+                            tableNumber = rand.Next(1, info.TableCount + 1);
                         }
 
                         foreach (var food in foods)
@@ -618,10 +622,10 @@ namespace Menro.Infrastructure.Data
 
                             RestaurantOrderNumber = lastNumber + 1,
 
-                            TableCode = tableCode,
+                            TableNumber = tableNumber,
                             Status = OrderStatus.Completed,
                             CreatedAt = DateTime.UtcNow.AddDays(-dayOffset++),
-                            TotalAmount = totalAmount,
+                            TotalPrice = totalAmount,
                             OrderItems = orderItems
                         };
 
