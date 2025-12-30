@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Features.Orders.DTOs;
+using Menro.Domain.Enums;
 
 namespace Menro.Application.Features.Orders.Services.Interfaces
 {
@@ -13,6 +14,11 @@ namespace Menro.Application.Features.Orders.Services.Interfaces
         /* order management */
         Task<List<AdminOrderListItemDto>> GetActiveOrdersAsync(int restaurantId);
         Task<List<AdminOrderListItemDto>> GetOrderHistoryAsync(int restaurantId);
+        Task<AdminOrderDetailsDto?> GetOrderDetailsAsync(int restaurantId, int orderId);
+
+        // manage order status
+        Task<OrderStatus?> AdvanceStatusAsync(int restaurantId, int orderId);
+        Task<OrderStatus?> CancelOrderAsync(int restaurantId, int orderId);
 
     }
 }
