@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Menro.Application.Orders.DTOs;
-using Menro.Application.Orders.Services.Interfaces;
+﻿using Menro.Application.Features.Orders.DTOs;
+using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Application.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 
-namespace Menro.Application.Orders.Services.Implementations
+namespace Menro.Application.Features.Orders.Services.Implementations
 {
     public class OrderCreationService : IOrderCreationService
     {
@@ -58,17 +54,13 @@ namespace Menro.Application.Orders.Services.Implementations
             if (dto.Items == null || dto.Items.Count == 0)
                 throw new Exception("Order must contain at least one item.");
 
-            // 🔹 IMPORTANT CHANGE:
-            // We NO LONGER require userId here.
-            // If userId is null => guest order.
-
             /* -------------------------------
                Create root Order entity
-            --------------------------------*/
-            var order = new Order
+            -------------------------------- */
+            var order = new Domain.Entities.Order
             {
                 RestaurantId = dto.RestaurantId,
-                TableCode = dto.TableCode,
+                TableNumber = dto.TableNumber,
                 CreatedAt = DateTime.UtcNow,
                 Status = OrderStatus.Pending,
                 OrderItems = new List<OrderItem>()
@@ -83,7 +75,7 @@ namespace Menro.Application.Orders.Services.Implementations
                 order.UserId = userId;
             }
 
-            decimal totalAmount = 0;
+            decimal totalPrice = 0;
 
             /* -------------------------------
                Process each order item
@@ -134,7 +126,7 @@ namespace Menro.Application.Orders.Services.Implementations
                     throw new Exception("Price mismatch detected. Please refresh and try again.");
 
                 decimal lineTotal = serverUnitPrice * item.Quantity;
-                totalAmount += lineTotal;
+                totalPrice += lineTotal;
 
                 /* ---------------- Build OrderItem ---------------- */
                 var orderItem = new OrderItem
@@ -160,7 +152,7 @@ namespace Menro.Application.Orders.Services.Implementations
             }
 
             /* ---------------- Finalize total ---------------- */
-            order.TotalAmount = totalAmount;
+            order.TotalPrice = totalPrice;
 
             /* ---------------- Save Order ---------------- */
             await _unitOfWork.Order.AddOrderAsync(order);

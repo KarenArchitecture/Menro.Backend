@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Menro.Domain.Entities;
+﻿using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
@@ -64,8 +60,10 @@ namespace Menro.Infrastructure.Repositories
 
 
         /* ============================================================
-           💰 REVENUE & ANALYTICS
+           💰 AdminPanel
         ============================================================ */
+        
+        /* dashboard stats */
 
         public async Task<decimal> GetTotalRevenueAsync(int? restaurantId = null)
         {
@@ -78,7 +76,7 @@ namespace Menro.Infrastructure.Repositories
                 query = query.Where(o => o.RestaurantId == id);
             }
 
-            return await query.SumAsync(o => o.TotalAmount);
+            return await query.SumAsync(o => o.TotalPrice);
         }
 
         public async Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, DateTime from, DateTime to)
@@ -124,10 +122,62 @@ namespace Menro.Infrastructure.Repositories
             }
 
             return await query
-                .Where(o => o.CreatedAt >= since)
-                .SumAsync(o => (decimal?)o.TotalAmount ?? 0m);
+                .Where(o => o.CreatedAt >= since && o.Status == OrderStatus.Completed)
+                .SumAsync(o => (decimal?)o.TotalPrice ?? 0m);
         }
 
+        /* order management */
+
+        public async Task<List<Order>> GetActiveOrdersAsync(int restaurantId)
+        {
+            var activeStatuses = new[]
+            {
+            OrderStatus.Pending,
+            OrderStatus.Confirmed,
+            OrderStatus.Delivered,
+            OrderStatus.Paid
+        };
+
+            return await _context.Orders
+                .AsNoTracking()
+                .Where(o => o.RestaurantId == restaurantId && activeStatuses.Contains(o.Status))
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<List<Order>> GetOrderHistoryAsync(int restaurantId)
+        {
+            var historyStatuses = new[]
+            {
+            OrderStatus.Cancelled,
+            OrderStatus.Completed
+        };
+
+            return await _context.Orders
+                .AsNoTracking()
+                .Where(o => o.RestaurantId == restaurantId && historyStatuses.Contains(o.Status))
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+        }
+        public async Task<Order?> GetOrderDetailsAsync(int restaurantId, int orderId)
+        {
+            return await _context.Orders
+                .AsNoTracking()
+                .Where(o => o.RestaurantId == restaurantId && o.Id == orderId)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Extras)
+                        .ThenInclude(e => e.FoodAddon)
+                .FirstOrDefaultAsync();
+        }
+        public async Task<Order?> GetForUpdateAsync(int restaurantId, int orderId)
+        {
+            // Tracking query (بدون AsNoTracking)
+            return await _context.Orders
+                .Where(o => o.RestaurantId == restaurantId && o.Id == orderId)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> SaveChangesAsync() => await _context.SaveChangesAsync() > 0;
 
         /* ============================================================
            👤 USER-SPECIFIC RECENT FOODS (CACHED)

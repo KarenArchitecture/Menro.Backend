@@ -19,8 +19,10 @@ namespace Menro.Domain.Interfaces
 
 
         /* ============================================================
-           💰 REVENUE & ANALYTICS
+           💰 AdminPanel
         ============================================================ */
+
+        /* dashboard stats */
 
         Task<decimal> GetTotalRevenueAsync(int? restaurantId = null);
 
@@ -29,6 +31,13 @@ namespace Menro.Domain.Interfaces
         Task<int> GetRecentOrdersCountAsync(int? restaurantId, DateTime since);
 
         Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since);
+
+        /* order management */
+        Task<List<Order>> GetActiveOrdersAsync(int restaurantId);
+        Task<List<Order>> GetOrderHistoryAsync(int restaurantId);
+        Task<Order?> GetOrderDetailsAsync(int restaurantId, int orderId);
+        Task<Order?> GetForUpdateAsync(int restaurantId, int orderId);
+        Task<bool> SaveChangesAsync();
 
 
         /* ============================================================

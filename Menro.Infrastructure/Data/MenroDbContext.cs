@@ -201,7 +201,7 @@ namespace Menro.Infrastructure.Data
                 entity.Property(o => o.CreatedAt)
                       .HasDefaultValueSql("GETUTCDATE()");
 
-                entity.Property(o => o.TotalAmount)
+                entity.Property(o => o.TotalPrice)
                       .HasColumnType("decimal(18,2)");
 
                 entity.HasIndex(o => new { o.RestaurantId, o.RestaurantOrderNumber })
