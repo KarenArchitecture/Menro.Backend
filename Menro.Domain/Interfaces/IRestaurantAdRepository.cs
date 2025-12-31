@@ -15,8 +15,9 @@ namespace Menro.Domain.Interfaces
         Task<bool> UpdateAsync(RestaurantAd ad);
 
         //Public Face
-        Task<List<RestaurantAd>> GetActiveApprovedAdsAsync(AdPlacementType placementType, DateTime nowUtc);
-        Task<RestaurantAd?> GetRandomActiveApprovedAdAsync(AdPlacementType placementType, DateTime nowUtc, IReadOnlyCollection<int> excludeAdIds);
         Task<bool> TryConsumeUnitsAsync(int adId, int amount, AdBillingType billingType, DateTime nowUtc);
+        Task<List<RestaurantAd>> GetActiveApprovedAdsAsync(AdPlacementType placementType, AdBillingType billingType, DateTime nowUtc);
+        Task<RestaurantAd?> GetRandomActiveApprovedAdAsync(AdPlacementType placementType, AdBillingType billingType, DateTime nowUtc, IReadOnlyCollection<int> excludeAdIds);
+        Task<int?> FindPairedAdIdAsync(int primaryAdId, AdBillingType pairedBillingType, DateTime nowUtc);
     }
 }

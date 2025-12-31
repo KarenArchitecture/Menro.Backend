@@ -30,13 +30,14 @@ namespace Menro.Web.Controllers.Public
         [HttpGet("ad-banner/random")]
         public async Task<IActionResult> GetRandomBanner([FromQuery] string? exclude)
         {
-            var excludeIds = ParseExcludeIds(exclude);
+            var excludeRestaurantIds = ParseExcludeIds(exclude);
 
-            var ad = await _service.GetRandomBannerAsync(excludeIds);
-            if (ad == null) return NoContent(); // frontend already handles 204
+            var ad = await _service.GetRandomBannerAsync(excludeRestaurantIds);
+            if (ad == null) return NoContent();
 
             return Ok(ad);
         }
+
 
         // PerView billing should increment here (only if BillingType == PerView)
         // POST: /api/restaurant/ad-banner/{id}/impression

@@ -1,12 +1,9 @@
-﻿using Menro.Application.Common.Interfaces;
+﻿// PublicRestaurantAdService.cs
+using Menro.Application.Common.Interfaces;
 using Menro.Application.Features.Ads.DTOs;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Menro.Application.Features.Ads.Services
 {
@@ -15,9 +12,7 @@ namespace Menro.Application.Features.Ads.Services
         private readonly IRestaurantAdRepository _adsRepository;
         private readonly IFileUrlService _fileUrlService;
 
-        public PublicRestaurantAdService(
-            IRestaurantAdRepository adsRepository,
-            IFileUrlService fileUrlService)
+        public PublicRestaurantAdService(IRestaurantAdRepository adsRepository, IFileUrlService fileUrlService)
         {
             _adsRepository = adsRepository;
             _fileUrlService = fileUrlService;
@@ -27,68 +22,102 @@ namespace Menro.Application.Features.Ads.Services
         {
             var now = DateTime.UtcNow;
 
-            // Active + Approved + Placement(MainSlider) + RemainingUnits(PerClick/PerView)
-            var ads = await _adsRepository.GetActiveApprovedAdsAsync(AdPlacementType.MainSlider, now);
+            // Carousel display is time-based => PerDay row
+            var dayAds = await _adsRepository.GetActiveApprovedAdsAsync(
+                AdPlacementType.MainSlider,
+                AdBillingType.PerDay,
+                now);
 
-            // Prevent duplicate restaurants in carousel: keep most recent ad per restaurant
-            var chosen = ads
+            // prevent duplicate restaurants (keep latest)
+            var chosen = dayAds
                 .GroupBy(a => a.RestaurantId)
                 .Select(g => g.OrderByDescending(x => x.StartDate).ThenByDescending(x => x.Id).First())
                 .OrderByDescending(x => x.StartDate)
                 .Take(take)
                 .ToList();
 
-            return chosen.Select(a => new RestaurantAdCarouselDto
+            var result = new List<RestaurantAdCarouselDto>();
+
+            foreach (var a in chosen)
             {
-                Id = a.Restaurant.Id,
-                Name = a.Restaurant.Name,
-                Slug = a.Restaurant.Slug,
-                CarouselImageUrl = _fileUrlService.BuildAdImageUrl(a.ImageFileName),
-                AdId = a.Id
-            }).ToList();
+                // enforce "time + click": must have paired PerClick
+                var clickAdId = await _adsRepository.FindPairedAdIdAsync(a.Id, AdBillingType.PerClick, now);
+                if (clickAdId == null) continue;
+
+                result.Add(new RestaurantAdCarouselDto
+                {
+                    Id = a.Restaurant.Id,
+                    Name = a.Restaurant.Name,
+                    Slug = a.Restaurant.Slug,
+                    CarouselImageUrl = _fileUrlService.BuildAdImageUrl(a.ImageFileName),
+                    AdId = clickAdId.Value // frontend posts click using this id
+                });
+            }
+
+            return result;
         }
 
-        public async Task<RestaurantAdBannerDto?> GetRandomBannerAsync(IReadOnlyCollection<int> excludeAdIds)
+        public async Task<RestaurantAdBannerDto?> GetRandomBannerAsync(IReadOnlyCollection<int> excludeRestaurantIds)
         {
             var now = DateTime.UtcNow;
 
-            var ad = await _adsRepository.GetRandomActiveApprovedAdAsync(
-                AdPlacementType.FullscreenBanner,
-                now,
-                excludeAdIds ?? Array.Empty<int>());
-
-            if (ad == null) return null;
-
-            return new RestaurantAdBannerDto
+            // Banner display is view-based => PerView row
+            // Safety guard: avoid infinite loop when many PerView ads have no PerClick pair
+            for (var i = 0; i < 20; i++)
             {
-                Id = ad.Id,
-                ImageUrl = _fileUrlService.BuildAdImageUrl(ad.ImageFileName),
-                RestaurantName = ad.Restaurant.Name,
-                Slug = ad.Restaurant.Slug,
-                CommercialText = ad.CommercialText,
-                TargetUrl = string.IsNullOrWhiteSpace(ad.TargetUrl) ? null : ad.TargetUrl
-            };
+                var viewAd = await _adsRepository.GetRandomActiveApprovedAdAsync(
+                    AdPlacementType.FullscreenBanner,
+                    AdBillingType.PerView,
+                    now,
+                    excludeRestaurantIds ?? Array.Empty<int>());
+
+                if (viewAd == null) return null;
+
+                // enforce "view + click": must have paired PerClick
+                var clickAdId = await _adsRepository.FindPairedAdIdAsync(viewAd.Id, AdBillingType.PerClick, now);
+                if (clickAdId == null)
+                {
+                    excludeRestaurantIds = (excludeRestaurantIds ?? Array.Empty<int>()).Append(viewAd.RestaurantId).ToArray();
+                    continue;
+                }
+
+                return new RestaurantAdBannerDto
+                {
+                    Id = viewAd.Id,                 // PerView id
+                    RestaurantId = viewAd.RestaurantId,
+                    ImageUrl = _fileUrlService.BuildAdImageUrl(viewAd.ImageFileName),
+                    RestaurantName = viewAd.Restaurant.Name,
+                    Slug = viewAd.Restaurant.Slug,
+                    CommercialText = viewAd.CommercialText,
+                    TargetUrl = string.IsNullOrWhiteSpace(viewAd.TargetUrl) ? null : viewAd.TargetUrl
+                };
+            }
+
+            return null;
         }
 
         public async Task TrackBannerImpressionAsync(int adId)
         {
-            // Only PerView should consume on impression.
-            // If the ad is not PerView, TryConsumeUnitsAsync returns false and we ignore it.
             var now = DateTime.UtcNow;
+            // impression consumes PerView (adId is PerView id)
             await _adsRepository.TryConsumeUnitsAsync(adId, 1, AdBillingType.PerView, now);
         }
 
         public async Task TrackBannerClickAsync(int adId)
         {
-            // Only PerClick should consume on click.
             var now = DateTime.UtcNow;
-            await _adsRepository.TryConsumeUnitsAsync(adId, 1, AdBillingType.PerClick, now);
+
+            // adId is PerView id => find paired PerClick id, then consume click there
+            var clickAdId = await _adsRepository.FindPairedAdIdAsync(adId, AdBillingType.PerClick, now);
+            if (clickAdId == null) return;
+
+            await _adsRepository.TryConsumeUnitsAsync(clickAdId.Value, 1, AdBillingType.PerClick, now);
         }
 
         public async Task TrackCarouselClickAsync(int adId)
         {
-            // Carousel click consumption (only if that ad row is PerClick)
             var now = DateTime.UtcNow;
+            // frontend sends PerClick id (AdId)
             await _adsRepository.TryConsumeUnitsAsync(adId, 1, AdBillingType.PerClick, now);
         }
     }

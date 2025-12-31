@@ -9,6 +9,7 @@ namespace Menro.Application.Features.Ads.DTOs
     public class RestaurantAdBannerDto
     {
         public int Id { get; set; } // RestaurantAd.Id
+        public int RestaurantId { get; set; }
         public string ImageUrl { get; set; } = ""; // map from ImageFileName via IFileUrlService
         public string RestaurantName { get; set; } = ""; 
         public string Slug { get; set; } = ""; 

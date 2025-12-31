@@ -97,27 +97,6 @@ namespace Menro.Infrastructure.Repositories
         // ✅ NEW: Public Delivery Queries
         // -----------------------------
 
-        public async Task<List<RestaurantAd>> GetActiveApprovedAdsAsync(AdPlacementType placementType, DateTime nowUtc)
-        {
-            return await BuildActiveApprovedQuery(placementType, nowUtc)
-                .Include(a => a.Restaurant)
-                .OrderByDescending(a => a.CreatedAt)
-                .ToListAsync();
-        }
-
-        public async Task<RestaurantAd?> GetRandomActiveApprovedAdAsync(
-            AdPlacementType placementType,
-            DateTime nowUtc,
-            IReadOnlyCollection<int> excludeAdIds)
-        {
-            excludeAdIds ??= Array.Empty<int>();
-
-            return await BuildActiveApprovedQuery(placementType, nowUtc)
-                .Include(a => a.Restaurant)
-                .Where(a => !excludeAdIds.Contains(a.Id))
-                .OrderBy(_ => Guid.NewGuid())
-                .FirstOrDefaultAsync();
-        }
 
         // -----------------------------
         // Atomic billed consumption
@@ -126,12 +105,8 @@ namespace Menro.Infrastructure.Repositories
         public async Task<bool> TryConsumeUnitsAsync(int adId, int amount, AdBillingType billingType, DateTime nowUtc)
         {
             if (amount <= 0) return true;
-
-            // PerDay is time-based; do not consume units for billing
             if (billingType == AdBillingType.PerDay) return true;
 
-            // This guarantees we don't overshoot PurchasedUnits under concurrency.
-            // EF Core 7/8 supports ExecuteUpdateAsync (recommended).
             var updated = await _context.RestaurantAds
                 .Where(a =>
                     a.Id == adId &&
@@ -148,18 +123,85 @@ namespace Menro.Infrastructure.Repositories
             return updated == 1;
         }
 
-        private IQueryable<RestaurantAd> BuildActiveApprovedQuery(AdPlacementType placementType, DateTime nowUtc)
+        public async Task<List<RestaurantAd>> GetActiveApprovedAdsAsync(
+            AdPlacementType placementType,
+            AdBillingType billingType,
+            DateTime nowUtc)
         {
-            return _context.RestaurantAds
+            return await _context.RestaurantAds
                 .AsNoTracking()
                 .Where(a =>
                     a.PlacementType == placementType &&
+                    a.BillingType == billingType &&
                     a.Status == AdStatus.Approved &&
                     a.StartDate <= nowUtc &&
                     a.EndDate >= nowUtc
                 )
-                // For PerClick and PerView, enforce remaining units
-                .Where(a => a.BillingType == AdBillingType.PerDay || a.ConsumedUnits < a.PurchasedUnits);
+                .Where(a => billingType == AdBillingType.PerDay || a.ConsumedUnits < a.PurchasedUnits)
+                .Include(a => a.Restaurant)
+                .OrderByDescending(a => a.CreatedAt)
+                .ToListAsync();
         }
+
+        public async Task<RestaurantAd?> GetRandomActiveApprovedAdAsync(
+    AdPlacementType placementType,
+    AdBillingType billingType,
+    DateTime nowUtc,
+    IReadOnlyCollection<int> excludeRestaurantIds)
+        {
+            excludeRestaurantIds ??= Array.Empty<int>();
+
+            var baseQ = _context.RestaurantAds
+                .AsNoTracking()
+                .Where(a =>
+                    a.PlacementType == placementType &&
+                    a.BillingType == billingType &&
+                    a.Status == AdStatus.Approved &&
+                    a.StartDate <= nowUtc &&
+                    a.EndDate >= nowUtc &&
+                    !excludeRestaurantIds.Contains(a.RestaurantId))
+                .Where(a => billingType == AdBillingType.PerDay || a.ConsumedUnits < a.PurchasedUnits);
+
+            var count = await baseQ.CountAsync();
+            if (count == 0) return null;
+
+            var skip = Random.Shared.Next(0, count);
+
+            return await baseQ
+                .Include(a => a.Restaurant)
+                .OrderBy(a => a.Id)
+                .Skip(skip)
+                .FirstOrDefaultAsync();
+        }
+
+
+        public async Task<int?> FindPairedAdIdAsync(int primaryAdId, AdBillingType pairedBillingType, DateTime nowUtc)
+        {
+            var primary = await _context.RestaurantAds
+                .AsNoTracking()
+                .Where(a => a.Id == primaryAdId)
+                .Select(a => new { a.RestaurantId, a.PlacementType, a.ImageFileName, a.StartDate })
+                .FirstOrDefaultAsync();
+
+            if (primary == null) return null;
+
+            return await _context.RestaurantAds
+                .AsNoTracking()
+                .Where(a =>
+                    a.RestaurantId == primary.RestaurantId &&
+                    a.PlacementType == primary.PlacementType &&
+                    a.ImageFileName == primary.ImageFileName &&
+                    a.BillingType == pairedBillingType &&
+                    a.Status == AdStatus.Approved &&
+                    a.StartDate <= nowUtc &&
+                    a.EndDate >= nowUtc
+                )
+                .Where(a => pairedBillingType == AdBillingType.PerDay || a.ConsumedUnits < a.PurchasedUnits)
+                .OrderBy(a => Math.Abs(EF.Functions.DateDiffSecond(a.StartDate, primary.StartDate)))
+                .ThenByDescending(a => a.CreatedAt)
+                .Select(a => (int?)a.Id)
+                .FirstOrDefaultAsync();
+        }
+
     }
 }
