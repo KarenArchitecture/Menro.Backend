@@ -133,6 +133,7 @@ namespace Menro.Infrastructure.Repositories
                 .Include(f => f.GlobalFoodCategory)
                     .ThenInclude(gc => gc.Icon)
                 .Include(f => f.Ratings)
+                .Include(f => f.Variants)
                 .Include(f => f.Restaurant)
                 .ToListAsync();
         }

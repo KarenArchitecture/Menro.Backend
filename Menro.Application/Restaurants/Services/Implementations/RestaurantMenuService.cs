@@ -47,17 +47,32 @@ namespace Menro.Application.Restaurants.Services.Implementations
                         CategoryKey = categoryTitle.Replace(" ", "-"),
                         CategoryTitle = categoryTitle,
                         SvgIcon = svgIconUrl,
-                        Foods = g.Select(f => new FoodCardDto
+                        Foods = g.Select(f =>
                         {
-                            Id = f.Id,
-                            Name = f.Name,
-                            Ingredients = f.Ingredients,
-                            Price = f.Price,
-                            ImageUrl = f.ImageUrl,
-                            Rating = f.AverageRating,
-                            Voters = f.VotersCount,
-                            RestaurantName = f.Restaurant.Name,
-                            RestaurantCategory = categoryTitle
+                            var displayPrice = f.Price;
+
+                            // ✅ if variants exist, use default variant price
+                            if (f.Variants != null && f.Variants.Any())
+                            {
+                                var defaultVariant = f.Variants.FirstOrDefault(v => v.IsDefault == true)
+                                                   ?? f.Variants.FirstOrDefault(v => v.IsAvailable)
+                                                   ?? f.Variants.First();
+
+                                displayPrice = defaultVariant.Price;
+                            }
+
+                            return new FoodCardDto
+                            {
+                                Id = f.Id,
+                                Name = f.Name,
+                                Ingredients = f.Ingredients,
+                                Price = displayPrice, // ✅ changed (was f.Price)
+                                ImageUrl = f.ImageUrl,
+                                Rating = f.AverageRating,
+                                Voters = f.VotersCount,
+                                RestaurantName = f.Restaurant.Name,
+                                RestaurantCategory = categoryTitle
+                            };
                         }).ToList()
                     };
                 })
