@@ -2,8 +2,6 @@
 using Menro.Application.Foods.DTOs;
 using Menro.Domain.Interfaces;
 using Menro.Domain.Entities;
-using Menro.Application.Foods.Mappers;
-using Menro.Application.Common.Interfaces;
 
 namespace Menro.Application.Services.Implementations
 {
@@ -92,7 +90,7 @@ namespace Menro.Application.Services.Implementations
         }
         public async Task<FoodDetailsDto?> GetFoodDetailsAsync(int foodId, int restaurantId)
         {
-            var food = await _repository.GetFoodAsync(foodId);
+            var food = await _repository.GetFoodForAdminAsync(foodId);
             if (food == null) return null;
 
             var dto = new FoodDetailsDto
@@ -160,8 +158,16 @@ namespace Menro.Application.Services.Implementations
             // -----------------------------
             if (!dto.HasVariants)
             {
-                // اگر قبلاً variant داشت → همه را پاک کن
-                food.Variants.Clear();
+                // اگر قبلاً variant داشت → همه را soft delete کن
+                foreach (var v in food.Variants)
+                {
+                    v.IsDeleted = true;
+                    v.IsAvailable = false;
+
+                    foreach (var a in v.Addons)
+                        a.IsDeleted = true;
+                }
+
                 return await _repository.UpdateFoodAsync(food);
             }
 
@@ -169,18 +175,24 @@ namespace Menro.Application.Services.Implementations
                 throw new Exception("حداقل یک نوع غذا باید مشخص شود.");
 
 
-            // --- Step 1: حذف Variant هایی که در dto نیستند
+            // --- Step 1: حذف Variant هایی که در dto نیستند (✅ soft delete)
             var dtoVariantIds = dto.Variants
                 .Where(v => v.Id.HasValue)
                 .Select(v => v.Id!.Value)
                 .ToHashSet();
 
             var variantsToRemove = food.Variants
-                .Where(v => !dtoVariantIds.Contains(v.Id))
+                .Where(v => !dtoVariantIds.Contains(v.Id) && !v.IsDeleted)
                 .ToList(); // ToList برای safe remove
 
             foreach (var v in variantsToRemove)
-                food.Variants.Remove(v);
+            {
+                v.IsDeleted = true;
+                v.IsAvailable = false;
+
+                foreach (var a in v.Addons)
+                    a.IsDeleted = true;
+            }
 
 
             // --- Step 2: Add/Update Variants
@@ -197,6 +209,8 @@ namespace Menro.Application.Services.Implementations
                         Name = vDto.Name.Trim(),
                         Price = vDto.Price,
                         IsDefault = vDto.IsDefault,
+                        IsDeleted = false,
+                        IsAvailable = true,
                         Addons = new List<FoodAddon>()
                     };
 
@@ -206,7 +220,8 @@ namespace Menro.Application.Services.Implementations
                         newVariant.Addons.Add(new FoodAddon
                         {
                             Name = aDto.Name.Trim(),
-                            ExtraPrice = aDto.ExtraPrice
+                            ExtraPrice = aDto.ExtraPrice,
+                            IsDeleted = false
                         });
                     }
 
@@ -219,6 +234,9 @@ namespace Menro.Application.Services.Implementations
                     existing.Price = vDto.Price;
                     existing.IsDefault = vDto.IsDefault;
 
+                    existing.IsDeleted = false;   // ✅ restore اگر قبلاً soft delete شده بود
+                    existing.IsAvailable = true;
+
                     // -----------------------------
                     // Sync Addons (Add/Update/Delete)
                     // -----------------------------
@@ -228,24 +246,27 @@ namespace Menro.Application.Services.Implementations
                         .Select(a => a.Id!.Value)
                         .ToHashSet();
 
-                    // Delete removed addons
+                    // Delete removed addons (✅ soft delete)
                     var addonsToRemove = existing.Addons
-                        .Where(a => !dtoAddonIds.Contains(a.Id))
+                        .Where(a => !dtoAddonIds.Contains(a.Id) && !a.IsDeleted)
                         .ToList();
+
                     foreach (var a in addonsToRemove)
-                        existing.Addons.Remove(a);
+                        a.IsDeleted = true;
 
                     // Add or update addons
                     foreach (var aDto in vDto.Addons ?? Enumerable.Empty<FoodAddonDto>())
                     {
                         var existingAddon = existing.Addons.FirstOrDefault(a => a.Id == aDto.Id);
+
                         // add new addons
                         if (existingAddon == null)
                         {
                             existing.Addons.Add(new FoodAddon
                             {
                                 Name = aDto.Name.Trim(),
-                                ExtraPrice = aDto.ExtraPrice
+                                ExtraPrice = aDto.ExtraPrice,
+                                IsDeleted = false
                             });
                         }
                         // update existing addons
@@ -253,6 +274,7 @@ namespace Menro.Application.Services.Implementations
                         {
                             existingAddon.Name = aDto.Name.Trim();
                             existingAddon.ExtraPrice = aDto.ExtraPrice;
+                            existingAddon.IsDeleted = false; // ✅ restore
                         }
                     }
                 }

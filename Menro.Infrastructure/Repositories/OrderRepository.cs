@@ -165,6 +165,8 @@ namespace Menro.Infrastructure.Repositories
                 .AsNoTracking()
                 .Where(o => o.RestaurantId == restaurantId && o.Id == orderId)
                 .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Food)
+                .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Extras)
                         .ThenInclude(e => e.FoodAddon)
                 .FirstOrDefaultAsync();

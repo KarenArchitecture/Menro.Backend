@@ -12,6 +12,7 @@ namespace Menro.Domain.Entities
 
         [Required]
         public int ExtraPrice { get; set; }
+        public bool IsDeleted { get; set; } = false;
 
         // FK
         public int FoodVariantId { get; set; }
