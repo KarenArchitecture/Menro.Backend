@@ -11,25 +11,31 @@ namespace Menro.Application.Features.Ads.Services
     {
         private readonly IRestaurantAdRepository _repository;
         private readonly IGlobalDateTimeService _globalDateTimeService;
+        private readonly IRestaurantRepository _restaurantRepository;
 
         public RestaurantAdService(IRestaurantAdRepository repository,
-            IGlobalDateTimeService globalDateTimeService)
+            IGlobalDateTimeService globalDateTimeService,
+            IRestaurantRepository restaurantRepository)
         {
             _repository = repository;
             _globalDateTimeService = globalDateTimeService;
+            _restaurantRepository = restaurantRepository;
         }
 
         public async Task<bool> CreateAsync(ReserveRestaurantAdDto dto)
         {
             try
             {
+                Restaurant? restaurant = await _restaurantRepository.GetByIdAsync(dto.RestaurantId);
+                if (restaurant == null) return false;
+
                 var ad = new RestaurantAd
                 {
                     RestaurantId = dto.RestaurantId,
                     PlacementType = dto.PlacementType,
                     BillingType = dto.BillingType,
                     ImageFileName = dto.ImageFileName,
-                    TargetUrl = dto.TargetUrl,
+                    TargetUrl = restaurant.Slug,
                     CommercialText = dto.CommercialText,
                     PurchasedUnits = dto.PurchasedUnits,
                     Cost = dto.Cost,
@@ -44,6 +50,7 @@ namespace Menro.Application.Features.Ads.Services
                 }
                 else
                 {
+                    // هر نوع تبلیغات دیگری، تا حداکثر شش ماه اعتبار دارد
                     ad.EndDate = ad.StartDate.AddMonths(6);
                 }
 
