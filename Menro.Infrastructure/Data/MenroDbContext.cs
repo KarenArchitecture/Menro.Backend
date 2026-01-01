@@ -278,6 +278,10 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<OrderItem>()
                 .HasIndex(oi => oi.OrderId);
 
+            modelBuilder.Entity<AdPricingSetting>()
+                .HasIndex(x => new { x.PlacementType, x.BillingType })
+                .IsUnique();
+
             /* ---------------------------- Seed Data ---------------------------- */
 
             modelBuilder.Entity<RestaurantCategory>().HasData(

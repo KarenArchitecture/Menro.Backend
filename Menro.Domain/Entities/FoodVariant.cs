@@ -15,6 +15,7 @@ namespace Menro.Domain.Entities
         public int Price { get; set; }
 
         public bool IsAvailable { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
 
         // !! make non-null prop after removing data seeding !!
         public bool? IsDefault { get; set; } = false;

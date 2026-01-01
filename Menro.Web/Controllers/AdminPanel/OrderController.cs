@@ -13,12 +13,15 @@ namespace Menro.Web.Controllers.AdminPanel
     {
         private readonly IAdminOrderService _adminOrderService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IFileUrlService _fileUrlService;
 
         public OrderController(IAdminOrderService adminOrderService,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IFileUrlService fileUrlService)
         {
             _adminOrderService = adminOrderService;
             _currentUserService = currentUserService;
+            _fileUrlService = fileUrlService;
         }
 
         // pendings
@@ -44,9 +47,12 @@ namespace Menro.Web.Controllers.AdminPanel
         public async Task<IActionResult> GetOrderDetails(int id)
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-
             var dto = await _adminOrderService.GetOrderDetailsAsync(restaurantId, id);
             if (dto == null) return NotFound();
+
+            foreach (var item in dto.Items)
+                if (item.ImageUrl is not null)
+                    item.ImageUrl = _fileUrlService.BuildFoodImageUrl(item.ImageUrl);
 
             return Ok(dto);
         }

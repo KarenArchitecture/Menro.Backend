@@ -131,20 +131,19 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                 RestaurantOrderNumber = order.RestaurantOrderNumber,
                 TableNumber = order.TableNumber,
                 Status = order.Status,
-                CreatedAt = order.CreatedAt,
+                CreatedAt = new DateTimeOffset(DateTime.SpecifyKind(order.CreatedAt, DateTimeKind.Utc)),
                 TotalPrice = order.TotalPrice,
-
                 Items = order.OrderItems.Select(oi => new AdminOrderItemDto
                 {
                     Id = oi.Id,
-                    Name = oi.TitleSnapshot,     // ✅ بهترین گزینه برای UI
+                    Name = oi.TitleSnapshot,
                     Qty = oi.Quantity,
-                    Price = oi.UnitPrice,        // ✅ قیمت واحد برای نمایش کنار qty
-                    Image = null,                // چون در entity ندارید
+                    Price = oi.UnitPrice,
+                    ImageUrl = oi.Food.ImageUrl,
 
                     Addons = oi.Extras.Select(ex => new AdminOrderItemAddonDto
                     {
-                        Name = ex.FoodAddon.Name  // اگر اسم property فرق داره، تغییر بده
+                        Name = ex.FoodAddon.Name
                     }).ToList()
                 }).ToList()
             };
