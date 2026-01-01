@@ -134,6 +134,7 @@ namespace Menro.Infrastructure.Repositories
             {
             OrderStatus.Pending,
             OrderStatus.Confirmed,
+            OrderStatus.Delivered,
             OrderStatus.Paid
         };
 
@@ -149,7 +150,6 @@ namespace Menro.Infrastructure.Repositories
             var historyStatuses = new[]
             {
             OrderStatus.Cancelled,
-            OrderStatus.Delivered,
             OrderStatus.Completed
         };
 
@@ -159,6 +159,28 @@ namespace Menro.Infrastructure.Repositories
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
         }
+        public async Task<Order?> GetOrderDetailsAsync(int restaurantId, int orderId)
+        {
+            return await _context.Orders
+                .AsNoTracking()
+                .Where(o => o.RestaurantId == restaurantId && o.Id == orderId)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Food)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Extras)
+                        .ThenInclude(e => e.FoodAddon)
+                .FirstOrDefaultAsync();
+        }
+        public async Task<Order?> GetForUpdateAsync(int restaurantId, int orderId)
+        {
+            // Tracking query (بدون AsNoTracking)
+            return await _context.Orders
+                .Where(o => o.RestaurantId == restaurantId && o.Id == orderId)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> SaveChangesAsync() => await _context.SaveChangesAsync() > 0;
+
         /* ============================================================
            👤 USER-SPECIFIC RECENT FOODS (CACHED)
         ============================================================ */

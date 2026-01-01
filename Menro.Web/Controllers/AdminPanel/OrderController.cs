@@ -8,19 +8,23 @@ namespace Menro.Web.Controllers.AdminPanel
 {
     [ApiController]
     [Route("api/admin/orders")]
-    [Authorize(Roles = SD.Role_Admin)]
+    [Authorize(Roles = SD.Role_Owner)]
     public class OrderController : ControllerBase
     {
         private readonly IAdminOrderService _adminOrderService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IFileUrlService _fileUrlService;
 
         public OrderController(IAdminOrderService adminOrderService,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IFileUrlService fileUrlService)
         {
             _adminOrderService = adminOrderService;
             _currentUserService = currentUserService;
+            _fileUrlService = fileUrlService;
         }
 
+        // pendings
         [HttpGet("active")]
         public async Task<IActionResult> GetActiveOrders()
         {
@@ -29,6 +33,7 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(list);
         }
 
+        // history
         [HttpGet("history")]
         public async Task<IActionResult> GetOrderHistory()
         {
@@ -37,6 +42,60 @@ namespace Menro.Web.Controllers.AdminPanel
             return Ok(list);
         }
 
+        // order details
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetOrderDetails(int id)
+        {
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var dto = await _adminOrderService.GetOrderDetailsAsync(restaurantId, id);
+            if (dto == null) return NotFound();
+
+            foreach (var item in dto.Items)
+                if (item.ImageUrl is not null)
+                    item.ImageUrl = _fileUrlService.BuildFoodImageUrl(item.ImageUrl);
+
+            return Ok(dto);
+        }
+
+        /* manage order status */
+
+        // update order status (advances to next step)
+        [HttpPut("{id:int}/advance")]
+        public async Task<IActionResult> Advance(int id)
+        {
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
+            try
+            {
+                var newStatus = await _adminOrderService.AdvanceStatusAsync(restaurantId, id);
+                if (newStatus == null) return NotFound();
+
+                return Ok(new { status = newStatus });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // cancel order
+        [HttpPut("{id:int}/cancel")]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
+            try
+            {
+                var newStatus = await _adminOrderService.CancelOrderAsync(restaurantId, id);
+                if (newStatus == null) return NotFound();
+
+                return Ok(new { status = newStatus });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
     }
 }

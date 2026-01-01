@@ -18,6 +18,7 @@ using Menro.Web.Services.Implementations;
 using Menro.Infrastructure.Services;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -106,12 +107,15 @@ builder.Services
     .AddControllersWithViews()
     .AddJsonOptions(options =>
     {
-        // ✅ Frontend expects camelCase: imageUrl, restaurantName, carouselImageUrl, ...
+        // Frontend expects camelCase
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
-
-        // Optional but fine to keep
         options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+
+        // send enums to front as strings not digits
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter()
+        );
     });
 
 builder.Services.AddEndpointsApiExplorer();

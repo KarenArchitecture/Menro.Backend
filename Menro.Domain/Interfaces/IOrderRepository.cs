@@ -35,6 +35,10 @@ namespace Menro.Domain.Interfaces
         /* order management */
         Task<List<Order>> GetActiveOrdersAsync(int restaurantId);
         Task<List<Order>> GetOrderHistoryAsync(int restaurantId);
+        Task<Order?> GetOrderDetailsAsync(int restaurantId, int orderId);
+        Task<Order?> GetForUpdateAsync(int restaurantId, int orderId);
+        Task<bool> SaveChangesAsync();
+
 
         /* ============================================================
            👤 USER-SPECIFIC RECENT FOODS (CACHED)

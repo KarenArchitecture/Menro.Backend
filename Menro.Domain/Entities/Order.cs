@@ -8,7 +8,6 @@ namespace Menro.Domain.Entities
         public int Id { get; set; }
         public int RestaurantOrderNumber { get; set; }
 
-        // 🔹 Nullable: guest orders = null
         public string? UserId { get; set; }
         public User? User { get; set; }
 
