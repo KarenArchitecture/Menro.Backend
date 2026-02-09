@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    [Migration("20251231092141_ABInitialAds")]
-    partial class ABInitialAds
+    [Migration("20260106151614_ABFluentApiChangedInRestaurantAdSection")]
+    partial class ABFluentApiChangedInRestaurantAdSection
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -52,6 +52,9 @@ namespace Menro.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PlacementType", "BillingType")
+                        .IsUnique();
 
                     b.ToTable("AdPricingSettings");
                 });
@@ -163,6 +166,9 @@ namespace Menro.Infrastructure.Migrations
                     b.Property<int>("FoodVariantId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -220,6 +226,9 @@ namespace Menro.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<bool?>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
@@ -409,6 +418,9 @@ namespace Menro.Infrastructure.Migrations
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("VariantTitleSnapshot")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FoodId");
@@ -428,10 +440,14 @@ namespace Menro.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AddonTitleSnapshot")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("ExtraPrice")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("FoodAddonId")
+                    b.Property<int?>("FoodAddonId")
                         .HasColumnType("int");
 
                     b.Property<int>("OrderItemId")
@@ -627,7 +643,13 @@ namespace Menro.Infrastructure.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.HasIndex("PlacementType", "Status", "StartDate", "EndDate");
+                    b.HasIndex("PlacementType", "Status", "CreatedAt");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("PlacementType", "Status", "CreatedAt"), new[] { "StartDate", "EndDate", "BillingType", "ConsumedUnits", "PurchasedUnits", "RestaurantId" });
+
+                    b.HasIndex("PlacementType", "Status", "Id");
+
+                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("PlacementType", "Status", "Id"), new[] { "StartDate", "EndDate", "BillingType", "ConsumedUnits", "PurchasedUnits", "RestaurantId" });
 
                     b.ToTable("RestaurantAds");
                 });
@@ -1169,8 +1191,7 @@ namespace Menro.Infrastructure.Migrations
                     b.HasOne("Menro.Domain.Entities.FoodAddon", "FoodAddon")
                         .WithMany()
                         .HasForeignKey("FoodAddonId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Menro.Domain.Entities.OrderItem", "OrderItem")
                         .WithMany("Extras")

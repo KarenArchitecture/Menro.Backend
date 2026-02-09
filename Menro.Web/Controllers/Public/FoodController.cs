@@ -53,17 +53,28 @@ namespace Menro.Web.Controllers.Public
         /// <response code="200">Returns a PopularFoodsDto object containing category and foods.</response>
         [HttpPost("popular-foods-excluding")]
         [ProducesResponseType(typeof(PopularFoodsDto), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetPopularFoodsExcluding([FromBody] List<string> excludeTitles)
+        public async Task<IActionResult> GetPopularFoodsExcluding(
+            [FromBody] List<string>? excludeTitles,
+            [FromQuery] int foodsPerGroup = 8)
         {
-            var groups = await _popularFoodsService.GetPopularFoodsGroupsAsync(2, 8); // fetch 2 and pick one new
-            var filtered = groups
-                .Where(g => !excludeTitles.Contains(g.CategoryTitle))
-                .FirstOrDefault();
+            excludeTitles ??= new List<string>();
 
-            if (filtered == null)
+            // use a HashSet for fast lookups + case-insensitive safety
+            var excludeSet = new HashSet<string>(
+                excludeTitles.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()),
+                StringComparer.OrdinalIgnoreCase
+            );
+
+            // ✅ Fetch MANY random groups so we almost never "miss" a new category
+            // (service will never return more than eligible categories anyway)
+            var groups = await _popularFoodsService.GetPopularFoodsGroupsAsync(groupsCount: 50, foodsPerGroup: foodsPerGroup);
+
+            var next = groups.FirstOrDefault(g => !excludeSet.Contains(g.CategoryTitle));
+
+            if (next == null)
                 return NoContent();
 
-            return Ok(filtered);
+            return Ok(next);
         }
 
         /* ============================================================

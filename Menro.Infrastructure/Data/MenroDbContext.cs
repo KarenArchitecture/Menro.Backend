@@ -139,14 +139,35 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<RestaurantAd>(entity =>
             {
                 entity.HasOne(ad => ad.Restaurant)
-                      .WithMany(r => r.Advertisements)
-                      .HasForeignKey(ad => ad.RestaurantId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                  .WithMany(r => r.Advertisements)
+                  .HasForeignKey(ad => ad.RestaurantId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
-                // Helpful index for “active ads by placement/status/date”
-                entity.HasIndex(ad => new { ad.PlacementType, ad.Status, ad.StartDate, ad.EndDate });
+                // ✅ Optimized for random-seek selection (OrderBy Id)
+                entity.HasIndex(ad => new { ad.PlacementType, ad.Status, ad.Id })
+                      .IncludeProperties(ad => new
+                      {
+                          ad.StartDate,
+                          ad.EndDate,
+                          ad.BillingType,
+                          ad.ConsumedUnits,
+                          ad.PurchasedUnits,
+                          ad.RestaurantId
+                      });
 
-                // Optional: quick filtering per restaurant
+                // ✅ Optimized for list fetch sorted by CreatedAt (carousel list etc.)
+                entity.HasIndex(ad => new { ad.PlacementType, ad.Status, ad.CreatedAt })
+                      .IncludeProperties(ad => new
+                      {
+                          ad.StartDate,
+                          ad.EndDate,
+                          ad.BillingType,
+                          ad.ConsumedUnits,
+                          ad.PurchasedUnits,
+                          ad.RestaurantId
+                      });
+
+                // Optional: admin quick filter
                 entity.HasIndex(ad => ad.RestaurantId);
             });
 

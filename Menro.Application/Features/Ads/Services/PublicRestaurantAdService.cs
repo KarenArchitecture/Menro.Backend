@@ -1,9 +1,7 @@
-﻿// PublicRestaurantAdService.cs
-using Menro.Application.Common.Interfaces;
+﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Features.Ads.DTOs;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace Menro.Application.Features.Ads.Services
 {
@@ -18,88 +16,75 @@ namespace Menro.Application.Features.Ads.Services
             _fileUrlService = fileUrlService;
         }
 
+        // -----------------------------
+        // Carousel (row-based)
+        // -----------------------------
         public async Task<List<RestaurantAdCarouselDto>> GetCarouselAdsAsync(int take = 10)
         {
+            if (take <= 0) return new List<RestaurantAdCarouselDto>(0);
+
             var now = DateTime.UtcNow;
 
-            // Carousel display is time-based => PerDay row
-            var dayAds = await _adsRepository.GetActiveApprovedAdsAsync(
-                AdPlacementType.MainSlider,
-                AdBillingType.PerDay,
-                now);
+            // Row-based: every approved RestaurantAd row is eligible (no grouping by restaurant)
+            var all = await _adsRepository.GetActiveApprovedAdsAsync(AdPlacementType.MainSlider, now);
+            if (all.Count == 0) return new List<RestaurantAdCarouselDto>(0);
 
-            // prevent duplicate restaurants (keep latest)
-            var chosen = dayAds
-                .GroupBy(a => a.RestaurantId)
-                .Select(g => g.OrderByDescending(x => x.StartDate).ThenByDescending(x => x.Id).First())
-                .OrderByDescending(x => x.StartDate)
-                .Take(take)
-                .ToList();
+            // Pick a random subset without replacement (partial Fisher-Yates)
+            var chosen = TakeRandom(all, take);
 
-            var result = new List<RestaurantAdCarouselDto>();
-
+            var result = new List<RestaurantAdCarouselDto>(chosen.Count);
             foreach (var a in chosen)
             {
-                // enforce "time + click": must have paired PerClick
-                var clickAdId = await _adsRepository.FindPairedAdIdAsync(a.Id, AdBillingType.PerClick, now);
-                if (clickAdId == null) continue;
-
                 result.Add(new RestaurantAdCarouselDto
                 {
-                    Id = a.Restaurant.Id,
-                    Name = a.Restaurant.Name,
+                    AdId = a.Id,
+                    RestaurantId = a.RestaurantId,
+                    RestaurantName = a.Restaurant.Name,
                     Slug = a.Restaurant.Slug,
-                    CarouselImageUrl = _fileUrlService.BuildAdImageUrl(a.ImageFileName),
-                    AdId = clickAdId.Value // frontend posts click using this id
+                    ImageUrl = _fileUrlService.BuildAdImageUrl(a.ImageFileName),
+                    TargetUrl = NormalizeTargetUrl(a.TargetUrl)
                 });
             }
 
             return result;
         }
 
-        public async Task<RestaurantAdBannerDto?> GetRandomBannerAsync(IReadOnlyCollection<int> excludeRestaurantIds)
+        // -----------------------------
+        // Banner (row-based random)
+        // exclude = AdIds (global dedupe on client)
+        // -----------------------------
+        public async Task<RestaurantAdBannerDto?> GetRandomBannerAsync(IReadOnlyCollection<int>? excludeAdIds)
         {
             var now = DateTime.UtcNow;
+            excludeAdIds ??= Array.Empty<int>();
 
-            // Banner display is view-based => PerView row
-            // Safety guard: avoid infinite loop when many PerView ads have no PerClick pair
-            for (var i = 0; i < 20; i++)
+            var ad = await _adsRepository.GetRandomActiveApprovedAdAsync(
+                AdPlacementType.FullscreenBanner,
+                now,
+                excludeAdIds);
+
+            if (ad == null) return null;
+
+            return new RestaurantAdBannerDto
             {
-                var viewAd = await _adsRepository.GetRandomActiveApprovedAdAsync(
-                    AdPlacementType.FullscreenBanner,
-                    AdBillingType.PerView,
-                    now,
-                    excludeRestaurantIds ?? Array.Empty<int>());
-
-                if (viewAd == null) return null;
-
-                // enforce "view + click": must have paired PerClick
-                var clickAdId = await _adsRepository.FindPairedAdIdAsync(viewAd.Id, AdBillingType.PerClick, now);
-                if (clickAdId == null)
-                {
-                    excludeRestaurantIds = (excludeRestaurantIds ?? Array.Empty<int>()).Append(viewAd.RestaurantId).ToArray();
-                    continue;
-                }
-
-                return new RestaurantAdBannerDto
-                {
-                    Id = viewAd.Id,                 // PerView id
-                    RestaurantId = viewAd.RestaurantId,
-                    ImageUrl = _fileUrlService.BuildAdImageUrl(viewAd.ImageFileName),
-                    RestaurantName = viewAd.Restaurant.Name,
-                    Slug = viewAd.Restaurant.Slug,
-                    CommercialText = viewAd.CommercialText,
-                    TargetUrl = string.IsNullOrWhiteSpace(viewAd.TargetUrl) ? null : viewAd.TargetUrl
-                };
-            }
-
-            return null;
+                AdId = ad.Id,
+                RestaurantId = ad.RestaurantId,
+                RestaurantName = ad.Restaurant.Name,
+                Slug = ad.Restaurant.Slug,
+                ImageUrl = _fileUrlService.BuildAdImageUrl(ad.ImageFileName),
+                CommercialText = ad.CommercialText,
+                TargetUrl = NormalizeTargetUrl(ad.TargetUrl)
+            };
         }
 
+        // -----------------------------
+        // Tracking (AdId only)
+        // -----------------------------
         public async Task TrackBannerImpressionAsync(int adId)
         {
             var now = DateTime.UtcNow;
-            // impression consumes PerView (adId is PerView id)
+
+            // Only consumes if that row is PerView; otherwise it's a no-op (expected).
             await _adsRepository.TryConsumeUnitsAsync(adId, 1, AdBillingType.PerView, now);
         }
 
@@ -107,18 +92,47 @@ namespace Menro.Application.Features.Ads.Services
         {
             var now = DateTime.UtcNow;
 
-            // adId is PerView id => find paired PerClick id, then consume click there
-            var clickAdId = await _adsRepository.FindPairedAdIdAsync(adId, AdBillingType.PerClick, now);
-            if (clickAdId == null) return;
-
-            await _adsRepository.TryConsumeUnitsAsync(clickAdId.Value, 1, AdBillingType.PerClick, now);
+            // Only consumes if that row is PerClick; otherwise it's a no-op (expected).
+            await _adsRepository.TryConsumeUnitsAsync(adId, 1, AdBillingType.PerClick, now);
         }
 
         public async Task TrackCarouselClickAsync(int adId)
         {
             var now = DateTime.UtcNow;
-            // frontend sends PerClick id (AdId)
+
             await _adsRepository.TryConsumeUnitsAsync(adId, 1, AdBillingType.PerClick, now);
+        }
+
+        // -----------------------------
+        // Helpers
+        // -----------------------------
+        private static string? NormalizeTargetUrl(string? targetUrl)
+        {
+            if (string.IsNullOrWhiteSpace(targetUrl)) return null;
+            return targetUrl.Trim();
+        }
+
+        /// <summary>
+        /// Random subset without replacement. Works fast even when all.Count is large.
+        /// </summary>
+        private static List<T> TakeRandom<T>(List<T> source, int take)
+        {
+            if (take >= source.Count) return source;
+
+            // In-place partial shuffle on a copy to avoid mutating cached lists
+            var arr = source.ToArray();
+            var n = arr.Length;
+            for (int i = 0; i < take; i++)
+            {
+                int j = Random.Shared.Next(i, n);
+                (arr[i], arr[j]) = (arr[j], arr[i]);
+            }
+
+            var result = new List<T>(take);
+            for (int i = 0; i < take; i++)
+                result.Add(arr[i]);
+
+            return result;
         }
     }
 }

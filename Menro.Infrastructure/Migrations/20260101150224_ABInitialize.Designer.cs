@@ -4,6 +4,7 @@ using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    partial class MenroDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260101150224_ABInitialize")]
+    partial class ABInitialize
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -640,13 +643,7 @@ namespace Menro.Infrastructure.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.HasIndex("PlacementType", "Status", "CreatedAt");
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("PlacementType", "Status", "CreatedAt"), new[] { "StartDate", "EndDate", "BillingType", "ConsumedUnits", "PurchasedUnits", "RestaurantId" });
-
-                    b.HasIndex("PlacementType", "Status", "Id");
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("PlacementType", "Status", "Id"), new[] { "StartDate", "EndDate", "BillingType", "ConsumedUnits", "PurchasedUnits", "RestaurantId" });
+                    b.HasIndex("PlacementType", "Status", "StartDate", "EndDate");
 
                     b.ToTable("RestaurantAds");
                 });

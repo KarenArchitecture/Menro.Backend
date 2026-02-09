@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Menro.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class ABInitialAds : Migration
+    public partial class ABInitialize : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -558,6 +558,7 @@ namespace Menro.Infrastructure.Migrations
                     Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Price = table.Column<int>(type: "int", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     IsDefault = table.Column<bool>(type: "bit", nullable: true),
                     FoodId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -609,6 +610,7 @@ namespace Menro.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     ExtraPrice = table.Column<int>(type: "int", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     FoodVariantId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -633,7 +635,8 @@ namespace Menro.Infrastructure.Migrations
                     FoodVariantId = table.Column<int>(type: "int", nullable: true),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     UnitPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    TitleSnapshot = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    TitleSnapshot = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    VariantTitleSnapshot = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -665,7 +668,8 @@ namespace Menro.Infrastructure.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OrderItemId = table.Column<int>(type: "int", nullable: false),
-                    FoodAddonId = table.Column<int>(type: "int", nullable: false),
+                    FoodAddonId = table.Column<int>(type: "int", nullable: true),
+                    AddonTitleSnapshot = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ExtraPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
@@ -699,6 +703,12 @@ namespace Menro.Infrastructure.Migrations
                     { 7, "باغ رستوران" },
                     { 8, "دریایی" }
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AdPricingSettings_PlacementType_BillingType",
+                table: "AdPricingSettings",
+                columns: new[] { "PlacementType", "BillingType" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",

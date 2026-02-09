@@ -128,6 +128,7 @@ namespace Menro.Web.Controllers.Public
 
             var menu = await _menuService.GetMenuBySlugAsync(slug);
 
+
             if (menu == null || menu.Count == 0)
                 return NotFound("منوی این رستوران یافت نشد.");
 

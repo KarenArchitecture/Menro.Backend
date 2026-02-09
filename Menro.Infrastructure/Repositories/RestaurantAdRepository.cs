@@ -14,6 +14,7 @@ namespace Menro.Infrastructure.Repositories
         {
             _context = context;
         }
+
         public async Task<bool> AddAdAsync(RestaurantAd ad)
         {
             try
@@ -22,11 +23,12 @@ namespace Menro.Infrastructure.Repositories
                 await _context.SaveChangesAsync();
                 return true;
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
         }
+
         public async Task<List<RestaurantAd>> GetByRestaurantAsync(int restaurantId)
         {
             return await _context.RestaurantAds
@@ -43,8 +45,7 @@ namespace Menro.Infrastructure.Repositories
                 .Where(a =>
                     a.StartDate <= now &&
                     a.EndDate >= now &&
-                    (a.BillingType == AdBillingType.PerDay
-                        || a.ConsumedUnits < a.PurchasedUnits)
+                    (a.BillingType == AdBillingType.PerDay || a.ConsumedUnits < a.PurchasedUnits)
                 )
                 .ToListAsync();
         }
@@ -62,6 +63,7 @@ namespace Menro.Infrastructure.Repositories
             ad.ConsumedUnits += amount;
             await _context.SaveChangesAsync();
         }
+
         public async Task<List<RestaurantAd>> GetPendingAdsAsync()
         {
             return await _context.RestaurantAds
@@ -70,6 +72,7 @@ namespace Menro.Infrastructure.Repositories
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
         }
+
         public async Task<List<RestaurantAd>> GetHistoryAsync()
         {
             return await _context.RestaurantAds
@@ -78,42 +81,48 @@ namespace Menro.Infrastructure.Repositories
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
         }
+
         public async Task<bool> UpdateAsync(RestaurantAd ad)
         {
             if (ad == null) return false;
+
             try
             {
                 _context.RestaurantAds.Update(ad);
                 await _context.SaveChangesAsync();
                 return true;
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
         }
 
         // -----------------------------
-        // ✅ NEW: Public Delivery Queries
+        // Public Face (independent billing rows)
         // -----------------------------
+        private static bool IgnoreEndDate(AdPlacementType placementType)
+    => placementType == AdPlacementType.FullscreenBanner;
 
-
-        // -----------------------------
-        // Atomic billed consumption
-        // -----------------------------
-
-        public async Task<bool> TryConsumeUnitsAsync(int adId, int amount, AdBillingType billingType, DateTime nowUtc)
+        public async Task<bool> TryConsumeUnitsAsync(
+            int adId,
+            int amount,
+            AdBillingType expectedBillingType,
+            DateTime nowUtc)
         {
             if (amount <= 0) return true;
-            if (billingType == AdBillingType.PerDay) return true;
 
+            // PerDay is not consumed here (handled elsewhere)
+            if (expectedBillingType == AdBillingType.PerDay) return true;
+
+            // NOTE: Banner has no expiration => ignore EndDate for banner rows
             var updated = await _context.RestaurantAds
                 .Where(a =>
                     a.Id == adId &&
                     a.Status == AdStatus.Approved &&
-                    a.BillingType == billingType &&
+                    a.BillingType == expectedBillingType &&
                     a.StartDate <= nowUtc &&
-                    a.EndDate >= nowUtc &&
+                    (a.PlacementType == AdPlacementType.FullscreenBanner || a.EndDate >= nowUtc) &&
                     a.ConsumedUnits + amount <= a.PurchasedUnits
                 )
                 .ExecuteUpdateAsync(setters =>
@@ -123,83 +132,80 @@ namespace Menro.Infrastructure.Repositories
             return updated == 1;
         }
 
-        public async Task<List<RestaurantAd>> GetActiveApprovedAdsAsync(
-            AdPlacementType placementType,
-            AdBillingType billingType,
-            DateTime nowUtc)
+        public async Task<List<RestaurantAd>> GetActiveApprovedAdsAsync(AdPlacementType placementType, DateTime nowUtc)
         {
+            var ignoreEnd = IgnoreEndDate(placementType);
+
             return await _context.RestaurantAds
                 .AsNoTracking()
                 .Where(a =>
                     a.PlacementType == placementType &&
-                    a.BillingType == billingType &&
                     a.Status == AdStatus.Approved &&
                     a.StartDate <= nowUtc &&
-                    a.EndDate >= nowUtc
+                    (ignoreEnd || a.EndDate >= nowUtc) &&
+                    (a.BillingType == AdBillingType.PerDay || a.ConsumedUnits < a.PurchasedUnits)
                 )
-                .Where(a => billingType == AdBillingType.PerDay || a.ConsumedUnits < a.PurchasedUnits)
                 .Include(a => a.Restaurant)
                 .OrderByDescending(a => a.CreatedAt)
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Optimized row-based random selection:
+        /// - No COUNT+SKIP (O(N))
+        /// - No ORDER BY NEWID() (full sort)
+        /// - Uses a "random seek" strategy: pick a random target Id in [min..max] and take the first row >= target, wrapping around.
+        /// </summary>
         public async Task<RestaurantAd?> GetRandomActiveApprovedAdAsync(
     AdPlacementType placementType,
-    AdBillingType billingType,
     DateTime nowUtc,
-    IReadOnlyCollection<int> excludeRestaurantIds)
+    IReadOnlyCollection<int> excludeAdIds)
         {
-            excludeRestaurantIds ??= Array.Empty<int>();
+            excludeAdIds ??= Array.Empty<int>();
+            var ignoreEnd = IgnoreEndDate(placementType);
 
-            var baseQ = _context.RestaurantAds
+            IQueryable<RestaurantAd> baseQ = _context.RestaurantAds
                 .AsNoTracking()
                 .Where(a =>
                     a.PlacementType == placementType &&
-                    a.BillingType == billingType &&
                     a.Status == AdStatus.Approved &&
                     a.StartDate <= nowUtc &&
-                    a.EndDate >= nowUtc &&
-                    !excludeRestaurantIds.Contains(a.RestaurantId))
-                .Where(a => billingType == AdBillingType.PerDay || a.ConsumedUnits < a.PurchasedUnits);
+                    (a.BillingType == AdBillingType.PerDay || a.ConsumedUnits < a.PurchasedUnits)
+                );
 
-            var count = await baseQ.CountAsync();
-            if (count == 0) return null;
+            if (!ignoreEnd)
+                baseQ = baseQ.Where(a => a.EndDate >= nowUtc);
 
-            var skip = Random.Shared.Next(0, count);
+            if (excludeAdIds.Count != 0)
+                baseQ = baseQ.Where(a => !excludeAdIds.Contains(a.Id));
 
+            // one query min/max; safe if empty
+            var range = await baseQ
+                .Select(a => (long)a.Id)
+                .GroupBy(_ => 1)
+                .Select(g => new { Min = g.Min(), Max = g.Max() })
+                .FirstOrDefaultAsync();
+
+            if (range == null) return null;
+
+            // Try a few random seeks to reduce "gap bias"
+            for (int i = 0; i < 3; i++)
+            {
+                var target = (int)Random.Shared.NextInt64(range.Min, range.Max + 1);
+
+                var picked = await baseQ
+                    .Include(a => a.Restaurant)
+                    .Where(a => a.Id >= target)
+                    .OrderBy(a => a.Id)
+                    .FirstOrDefaultAsync();
+
+                if (picked != null) return picked;
+            }
+
+            // Wrap-around fallback (smallest Id)
             return await baseQ
                 .Include(a => a.Restaurant)
                 .OrderBy(a => a.Id)
-                .Skip(skip)
-                .FirstOrDefaultAsync();
-        }
-
-
-        public async Task<int?> FindPairedAdIdAsync(int primaryAdId, AdBillingType pairedBillingType, DateTime nowUtc)
-        {
-            var primary = await _context.RestaurantAds
-                .AsNoTracking()
-                .Where(a => a.Id == primaryAdId)
-                .Select(a => new { a.RestaurantId, a.PlacementType, a.ImageFileName, a.StartDate })
-                .FirstOrDefaultAsync();
-
-            if (primary == null) return null;
-
-            return await _context.RestaurantAds
-                .AsNoTracking()
-                .Where(a =>
-                    a.RestaurantId == primary.RestaurantId &&
-                    a.PlacementType == primary.PlacementType &&
-                    a.ImageFileName == primary.ImageFileName &&
-                    a.BillingType == pairedBillingType &&
-                    a.Status == AdStatus.Approved &&
-                    a.StartDate <= nowUtc &&
-                    a.EndDate >= nowUtc
-                )
-                .Where(a => pairedBillingType == AdBillingType.PerDay || a.ConsumedUnits < a.PurchasedUnits)
-                .OrderBy(a => Math.Abs(EF.Functions.DateDiffSecond(a.StartDate, primary.StartDate)))
-                .ThenByDescending(a => a.CreatedAt)
-                .Select(a => (int?)a.Id)
                 .FirstOrDefaultAsync();
         }
 

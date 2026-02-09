@@ -16,52 +16,56 @@ namespace Menro.Web.Controllers.Public
             _service = service;
         }
 
-        // Carousel data for HomePage Carousel.jsx
-        // GET: /api/restaurant/featured
+        // Carousel data (row-based)
+        // GET: /api/public/restaurant/featured?take=10
         [HttpGet("featured")]
         public async Task<IActionResult> GetFeatured([FromQuery] int take = 10)
         {
+            if (take <= 0) return Ok(Array.Empty<object>());
+
             var list = await _service.GetCarouselAdsAsync(take);
             return Ok(list);
         }
 
-        // Random banner for AdBanner.jsx
-        // GET: /api/restaurant/ad-banner/random?exclude=1,2,3
+        // Random banner (exclude = AdIds)
+        // GET: /api/public/restaurant/ad-banner/random?exclude=1,2,3
         [HttpGet("ad-banner/random")]
         public async Task<IActionResult> GetRandomBanner([FromQuery] string? exclude)
         {
-            var excludeRestaurantIds = ParseExcludeIds(exclude);
+            var excludeAdIds = ParseExcludeIds(exclude);
 
-            var ad = await _service.GetRandomBannerAsync(excludeRestaurantIds);
+            var ad = await _service.GetRandomBannerAsync(excludeAdIds);
             if (ad == null) return NoContent();
 
             return Ok(ad);
         }
 
-
-        // PerView billing should increment here (only if BillingType == PerView)
-        // POST: /api/restaurant/ad-banner/{id}/impression
-        [HttpPost("ad-banner/{id:int}/impression")]
-        public async Task<IActionResult> Impression([FromRoute] int id)
+        // Impression (AdId only)
+        // POST: /api/public/restaurant/ad-banner/{adId}/impression
+        [HttpPost("ad-banner/{adId:int}/impression")]
+        public async Task<IActionResult> Impression([FromRoute] int adId)
         {
-            await _service.TrackBannerImpressionAsync(id);
+            if (adId <= 0) return BadRequest();
+            await _service.TrackBannerImpressionAsync(adId);
             return Ok();
         }
 
-        // PerClick billing should increment here (only if BillingType == PerClick)
-        // POST: /api/restaurant/ad-banner/{id}/click
-        [HttpPost("ad-banner/{id:int}/click")]
-        public async Task<IActionResult> Click([FromRoute] int id)
+        // Click (AdId only)
+        // POST: /api/public/restaurant/ad-banner/{adId}/click
+        [HttpPost("ad-banner/{adId:int}/click")]
+        public async Task<IActionResult> Click([FromRoute] int adId)
         {
-            await _service.TrackBannerClickAsync(id);
+            if (adId <= 0) return BadRequest();
+            await _service.TrackBannerClickAsync(adId);
             return Ok();
         }
 
-        // Optional: if you later decide to track carousel clicks for PerClick carousel ads
-        // POST: /api/restaurant/carousel/{adId}/click
+        // Carousel click (AdId only)
+        // POST: /api/public/restaurant/carousel/{adId}/click
         [HttpPost("carousel/{adId:int}/click")]
         public async Task<IActionResult> CarouselClick([FromRoute] int adId)
         {
+            if (adId <= 0) return BadRequest();
             await _service.TrackCarouselClickAsync(adId);
             return Ok();
         }
@@ -74,7 +78,7 @@ namespace Menro.Web.Controllers.Public
             return exclude
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Select(s => int.TryParse(s, out var v) ? v : (int?)null)
-                .Where(v => v.HasValue)
+                .Where(v => v.HasValue && v.Value > 0)
                 .Select(v => v!.Value)
                 .Distinct()
                 .ToList();
