@@ -16,8 +16,8 @@ namespace Menro.Infrastructure.Extensions
             // Infrastructure-specific services
             services.AddScoped<IDbInitializer, DbInitializer>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddScoped<ISmsSender, FakeSmsSender>();
             services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+            services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
             services.AddScoped<IGlobalDateTimeService, GlobalDateTimeService>();
             services.AddHttpContextAccessor();
 

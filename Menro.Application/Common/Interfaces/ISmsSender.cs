@@ -3,6 +3,6 @@ namespace Menro.Application.Common.Interfaces
 {
     public interface ISmsSender
     {
-        Task SendAsync(string phoneNumber, string message);
+        Task<bool> SendOtpAsync(string phoneNumber, string otp);
     }
 }

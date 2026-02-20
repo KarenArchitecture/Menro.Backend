@@ -92,10 +92,17 @@ var applicationAssembly = Assembly.Load("Menro.Application");
 builder.Services.AddAutoRegisteredServices(applicationAssembly);
 var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
 builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
+
+// web layer services
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUrlService, FileUrlService>();
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
+
+//sms
+builder.Services.Configure<SmsSettings>(
+    builder.Configuration.GetSection("SmsSettings"));
+builder.Services.AddHttpClient<ISmsSender, IpPanelSmsSender>();
+
 
 
 //Caching Setup

@@ -47,11 +47,11 @@ namespace Menro.Application.Features.Identity.Services
         public async Task SendOtpAsync(string phoneNumber)
         {
             var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
-            //await _smsSender.SendAsync(phoneNumber, $"کد تایید شما: {code}");
+            await _smsSender.SendOtpAsync(phoneNumber, $"کد تایید شما: {code}");
             var otp = new Otp
             {
                 PhoneNumber = phoneNumber,
-                Code = code,
+                Code = ComputeHash(code),
                 ExpirationTime = DateTime.UtcNow.AddMinutes(2),
                 IsUsed = false
             };
@@ -66,7 +66,7 @@ namespace Menro.Application.Features.Identity.Services
             try
             {
                 var otp = await _uow.Otp.GetLatestUnexpiredAsync(phoneNumber);
-                if (otp is null || otp.Code != code)
+                if (otp is null || otp.Code != ComputeHash(code))
                     return false;
 
                 otp.IsUsed = true;
