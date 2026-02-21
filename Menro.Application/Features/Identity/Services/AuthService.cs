@@ -47,7 +47,11 @@ namespace Menro.Application.Features.Identity.Services
         public async Task SendOtpAsync(string phoneNumber)
         {
             var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
-            await _smsSender.SendOtpAsync(phoneNumber, $"کد تایید شما: {code}");
+
+            var send = await _smsSender.SendOtpAsync(phoneNumber, $"کد تایید شما: {code}");
+            if (!send.IsSuccess)
+                throw new Exception($"SMS failed: {send.ProviderMessage}");
+
             var otp = new Otp
             {
                 PhoneNumber = phoneNumber,
@@ -59,7 +63,6 @@ namespace Menro.Application.Features.Identity.Services
             await _uow.Otp.AddAsync(otp);
             await _uow.SaveChangesAsync();
         }
-
         // verification
         public async Task<bool> VerifyOtpAsync(string phoneNumber, string code)
         {

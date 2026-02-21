@@ -15,10 +15,11 @@ using Menro.Application.Extensions;
 using Menro.Web.Services;
 using Menro.Application.Common.Interfaces;
 using Menro.Web.Services.Implementations;
-using Menro.Infrastructure.Services;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Menro.Infrastructure.Services;
+using Menro.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,9 +88,11 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 
 // DI via Extensions
-builder.Services.AddInfrastructureServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
+
 var applicationAssembly = Assembly.Load("Menro.Application");
 builder.Services.AddAutoRegisteredServices(applicationAssembly);
+
 var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
 builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
 
@@ -98,12 +101,11 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUrlService, FileUrlService>();
 builder.Services.AddScoped<IFileService, FileService>();
 
-//sms
-builder.Services.Configure<SmsSettings>(
-    builder.Configuration.GetSection("SmsSettings"));
-builder.Services.AddHttpClient<ISmsSender, IpPanelSmsSender>();
+// utils
+builder.Services.AddSingleton<IGlobalDateTimeService, GlobalDateTimeService>();
 
-
+// IMPORTANT: UnitOfWork
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 //Caching Setup
 builder.Services.AddMemoryCache();
@@ -198,12 +200,12 @@ app.MapControllerRoute(
 
 #region DB Initialization
 
-using (var scope = app.Services.CreateScope())
+if (app.Environment.IsDevelopment())
 {
+    using var scope = app.Services.CreateScope();
     var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
     await dbInitializer.InitializeAsync();
 }
-
 #endregion
 
 app.Run();

@@ -2,8 +2,9 @@
 {
     public class SmsSettings
     {
-        public string ApiKey { get; set; }
-        public string BaseUrl { get; set; }
-        public string FromNumber { get; set; }
+        public string ApiKey { get; set; } = default!;
+        public string BaseUrl { get; set; } = default!;
+        public string FromNumber { get; set; } = default!;
+        public string? OtpPatternCode { get; set; }
     }
 }
