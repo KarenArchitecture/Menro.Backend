@@ -1,16 +1,22 @@
-﻿using Menro.Application.Foods.DTOs;
-using Menro.Application.Foods.Services.Interfaces;
+﻿using Menro.Application.Features.ShowAll.DTOs;
+using Menro.Application.Features.ShowAll.Services.Interfaces;
+using Menro.Application.Foods.DTOs;
 using Menro.Application.Orders.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Menro.Application.Foods.Services
+namespace Menro.Application.Features.ShowAll.Services.Implementations
 {
-    public class PopularFoodsService : IPopularFoodsService
+    public class PopularFoodsBrowseService : IPopularFoodsBrowseService
     {
         private readonly IGlobalFoodCategoryRepository _globalCatRepo;
 
-        public PopularFoodsService(IGlobalFoodCategoryRepository globalCatRepo)
+        public PopularFoodsBrowseService(IGlobalFoodCategoryRepository globalCatRepo)
         {
             _globalCatRepo = globalCatRepo;
         }
@@ -29,10 +35,7 @@ namespace Menro.Application.Foods.Services
                 ImageUrl = f.ImageUrl ?? string.Empty,
                 Rating = Math.Round(avg, 1),
                 Voters = f.Ratings?.Count ?? 0,
-
-                RestaurantId = f.RestaurantId,                 
-                RestaurantName = f.Restaurant?.Name ?? string.Empty,
-                RestaurantSlug = f.Restaurant?.Slug            
+                RestaurantName = f.Restaurant?.Name ?? string.Empty
             };
         }
 
@@ -44,29 +47,25 @@ namespace Menro.Application.Foods.Services
             var result = new List<PopularFoodsDto>();
             var excludeTitles = new List<string>();
 
-            // 1️⃣ Fetch all eligible global categories (active + has foods via custom/global)
             var eligibleGlobals = await _globalCatRepo.GetEligibleGlobalCategoriesAsync();
             if (eligibleGlobals == null || eligibleGlobals.Count == 0)
                 return result;
 
-            // 2️⃣ Shuffle them to get random order
             var random = new Random();
             var shuffled = eligibleGlobals.OrderBy(_ => random.Next()).ToList();
 
-            // 3️⃣ Pick random categories until we fill required groups
             foreach (var category in shuffled)
             {
                 if (excludeTitles.Contains(category.Name))
                     continue;
 
-                // 4️⃣ Get most popular foods (via CustomFoodCategory → Foods)
                 var foods = await _globalCatRepo.GetMostPopularFoodsByGlobalCategoryAsync(category.Id, foodsPerGroup);
                 if (foods == null || foods.Count == 0)
                     continue;
 
                 result.Add(new PopularFoodsDto
                 {
-                    CategoryId = category.Id,
+                    CategoryId = category.Id,       // ✅ IMPORTANT for frontend
                     CategoryTitle = category.Name,
                     IconId = category.IconId,
                     Foods = foods.Select(MapToHomeFoodCardDto).ToList()
@@ -81,7 +80,7 @@ namespace Menro.Application.Foods.Services
         }
 
         /* ============================================================
-           🎯 Get popular foods for a specific Global Category
+           🎯 Get popular foods for a specific Global Category (small list)
         ============================================================ */
         public async Task<List<HomeFoodCardDto>> GetPopularFoodsByCategoryAsync(int categoryId, int count = 8)
         {
@@ -96,6 +95,26 @@ namespace Menro.Application.Foods.Services
         {
             var all = await _globalCatRepo.GetEligibleGlobalCategoriesAsync();
             return all?.Select(x => x.Id).ToList() ?? new List<int>();
+        }
+
+        /* ============================================================
+           ✅ View All: cursor-based browse for one category
+        ============================================================ */
+        public async Task<PagedResultDto<HomeFoodCardDto>> BrowsePopularFoodsByCategoryAsync(
+            int categoryId,
+            int take = 6,
+            string? cursor = null,
+            CancellationToken ct = default)
+        {
+            var (foods, nextCursor, hasMore) =
+                await _globalCatRepo.BrowsePopularFoodsByGlobalCategoryAsync(categoryId, take, cursor, ct);
+
+            return new PagedResultDto<HomeFoodCardDto>
+            {
+                Items = foods.Select(MapToHomeFoodCardDto).ToList(),
+                NextCursor = nextCursor,
+                HasMore = hasMore
+            };
         }
     }
 }

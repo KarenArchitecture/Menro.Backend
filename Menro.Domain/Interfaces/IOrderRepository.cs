@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Menro.Domain.Entities;
 
@@ -11,11 +12,11 @@ namespace Menro.Domain.Interfaces
            ▶️  ORDER CREATION & RETRIEVAL
         ============================================================ */
 
-        Task<int> GetNextRestaurantOrderNumberAsync(int restaurantId);
+        Task<int> GetNextRestaurantOrderNumberAsync(int restaurantId, CancellationToken ct = default);
 
-        Task AddOrderAsync(Order order);
+        Task AddOrderAsync(Order order, CancellationToken ct = default);
 
-        Task<Order?> GetOrderWithDetailsAsync(int orderId);
+        Task<Order?> GetOrderWithDetailsAsync(int orderId, CancellationToken ct = default);
 
 
         /* ============================================================
@@ -24,28 +25,40 @@ namespace Menro.Domain.Interfaces
 
         /* dashboard stats */
 
-        Task<decimal> GetTotalRevenueAsync(int? restaurantId = null);
+        Task<decimal> GetTotalRevenueAsync(int? restaurantId = null, CancellationToken ct = default);
 
-        Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, DateTime from, DateTime to);
+        Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, DateTime from, DateTime to, CancellationToken ct = default);
 
-        Task<int> GetRecentOrdersCountAsync(int? restaurantId, DateTime since);
+        Task<int> GetRecentOrdersCountAsync(int? restaurantId, DateTime since, CancellationToken ct = default);
 
-        Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since);
+        Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since, CancellationToken ct = default);
 
         /* order management */
-        Task<List<Order>> GetActiveOrdersAsync(int restaurantId);
-        Task<List<Order>> GetOrderHistoryAsync(int restaurantId);
-        Task<Order?> GetOrderDetailsAsync(int restaurantId, int orderId);
-        Task<Order?> GetForUpdateAsync(int restaurantId, int orderId);
-        Task<bool> SaveChangesAsync();
+
+        Task<List<Order>> GetActiveOrdersAsync(int restaurantId, CancellationToken ct = default);
+
+        Task<List<Order>> GetOrderHistoryAsync(int restaurantId, CancellationToken ct = default);
+
+        Task<Order?> GetOrderDetailsAsync(int restaurantId, int orderId, CancellationToken ct = default);
+
+        Task<Order?> GetForUpdateAsync(int restaurantId, int orderId, CancellationToken ct = default);
+
+        Task<bool> SaveChangesAsync(CancellationToken ct = default);
 
 
         /* ============================================================
            👤 USER-SPECIFIC RECENT FOODS (CACHED)
         ============================================================ */
 
-        Task<List<Food>> GetUserRecentlyOrderedFoodsAsync(string userId, int count);
+        Task<List<Food>> GetUserRecentlyOrderedFoodsAsync(string userId, int count, CancellationToken ct = default);
 
         void InvalidateUserRecentOrders(string userId);
+
+        Task<(List<Food> Foods, string? NextCursor, bool HasMore)> GetUserRecentlyOrderedFoodsCursorAsync(
+            string userId,
+            int take,
+            string? cursor,
+            CancellationToken ct = default
+        );
     }
 }

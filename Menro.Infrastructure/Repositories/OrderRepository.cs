@@ -1,4 +1,10 @@
-﻿using Menro.Domain.Entities;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
@@ -24,24 +30,23 @@ namespace Menro.Infrastructure.Repositories
            ▶️  ORDER CREATION & RETRIEVAL
         ============================================================ */
 
-        public async Task<int> GetNextRestaurantOrderNumberAsync(int restaurantId)
+        public async Task<int> GetNextRestaurantOrderNumberAsync(int restaurantId, CancellationToken ct = default)
         {
             var last = await _context.Orders
                 .Where(o => o.RestaurantId == restaurantId)
                 .OrderByDescending(o => o.RestaurantOrderNumber)
                 .Select(o => (int?)o.RestaurantOrderNumber)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(ct);
 
             return (last ?? 0) + 1;
         }
 
-
-        public async Task AddOrderAsync(Order order)
+        public async Task AddOrderAsync(Order order, CancellationToken ct = default)
         {
-            await _context.Orders.AddAsync(order);
+            await _context.Orders.AddAsync(order, ct);
         }
 
-        public async Task<Order?> GetOrderWithDetailsAsync(int orderId)
+        public async Task<Order?> GetOrderWithDetailsAsync(int orderId, CancellationToken ct = default)
         {
             return await _context.Orders
                 .AsNoTracking()
@@ -55,17 +60,15 @@ namespace Menro.Infrastructure.Repositories
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Extras)
                         .ThenInclude(e => e.FoodAddon)
-                .FirstOrDefaultAsync(o => o.Id == orderId);
+                .FirstOrDefaultAsync(o => o.Id == orderId, ct);
         }
 
 
         /* ============================================================
            💰 AdminPanel
         ============================================================ */
-        
-        /* dashboard stats */
 
-        public async Task<decimal> GetTotalRevenueAsync(int? restaurantId = null)
+        public async Task<decimal> GetTotalRevenueAsync(int? restaurantId = null, CancellationToken ct = default)
         {
             var query = _context.Orders
                 .Where(o => o.Status == OrderStatus.Completed);
@@ -76,10 +79,10 @@ namespace Menro.Infrastructure.Repositories
                 query = query.Where(o => o.RestaurantId == id);
             }
 
-            return await query.SumAsync(o => o.TotalPrice);
+            return await query.SumAsync(o => o.TotalPrice, ct);
         }
 
-        public async Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, DateTime from, DateTime to)
+        public async Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, DateTime from, DateTime to, CancellationToken ct = default)
         {
             var query = _context.Orders
                 .Where(o =>
@@ -95,10 +98,10 @@ namespace Menro.Infrastructure.Repositories
 
             return await query
                 .AsNoTracking()
-                .ToListAsync();
+                .ToListAsync(ct);
         }
 
-        public async Task<int> GetRecentOrdersCountAsync(int? restaurantId, DateTime since)
+        public async Task<int> GetRecentOrdersCountAsync(int? restaurantId, DateTime since, CancellationToken ct = default)
         {
             var query = _context.Orders.AsQueryable();
 
@@ -108,10 +111,10 @@ namespace Menro.Infrastructure.Repositories
                 query = query.Where(o => o.RestaurantId == id);
             }
 
-            return await query.CountAsync(o => o.CreatedAt >= since);
+            return await query.CountAsync(o => o.CreatedAt >= since, ct);
         }
 
-        public async Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since)
+        public async Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since, CancellationToken ct = default)
         {
             var query = _context.Orders.AsQueryable();
 
@@ -123,43 +126,42 @@ namespace Menro.Infrastructure.Repositories
 
             return await query
                 .Where(o => o.CreatedAt >= since && o.Status == OrderStatus.Completed)
-                .SumAsync(o => (decimal?)o.TotalPrice ?? 0m);
+                .SumAsync(o => (decimal?)o.TotalPrice ?? 0m, ct);
         }
 
-        /* order management */
-
-        public async Task<List<Order>> GetActiveOrdersAsync(int restaurantId)
+        public async Task<List<Order>> GetActiveOrdersAsync(int restaurantId, CancellationToken ct = default)
         {
             var activeStatuses = new[]
             {
-            OrderStatus.Pending,
-            OrderStatus.Confirmed,
-            OrderStatus.Delivered,
-            OrderStatus.Paid
-        };
+                OrderStatus.Pending,
+                OrderStatus.Confirmed,
+                OrderStatus.Delivered,
+                OrderStatus.Paid
+            };
 
             return await _context.Orders
                 .AsNoTracking()
                 .Where(o => o.RestaurantId == restaurantId && activeStatuses.Contains(o.Status))
                 .OrderByDescending(o => o.CreatedAt)
-                .ToListAsync();
+                .ToListAsync(ct);
         }
 
-        public async Task<List<Order>> GetOrderHistoryAsync(int restaurantId)
+        public async Task<List<Order>> GetOrderHistoryAsync(int restaurantId, CancellationToken ct = default)
         {
             var historyStatuses = new[]
             {
-            OrderStatus.Cancelled,
-            OrderStatus.Completed
-        };
+                OrderStatus.Cancelled,
+                OrderStatus.Completed
+            };
 
             return await _context.Orders
                 .AsNoTracking()
                 .Where(o => o.RestaurantId == restaurantId && historyStatuses.Contains(o.Status))
                 .OrderByDescending(o => o.CreatedAt)
-                .ToListAsync();
+                .ToListAsync(ct);
         }
-        public async Task<Order?> GetOrderDetailsAsync(int restaurantId, int orderId)
+
+        public async Task<Order?> GetOrderDetailsAsync(int restaurantId, int orderId, CancellationToken ct = default)
         {
             return await _context.Orders
                 .AsNoTracking()
@@ -169,17 +171,20 @@ namespace Menro.Infrastructure.Repositories
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Extras)
                         .ThenInclude(e => e.FoodAddon)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(ct);
         }
-        public async Task<Order?> GetForUpdateAsync(int restaurantId, int orderId)
+
+        public async Task<Order?> GetForUpdateAsync(int restaurantId, int orderId, CancellationToken ct = default)
         {
             // Tracking query (بدون AsNoTracking)
             return await _context.Orders
                 .Where(o => o.RestaurantId == restaurantId && o.Id == orderId)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(ct);
         }
 
-        public async Task<bool> SaveChangesAsync() => await _context.SaveChangesAsync() > 0;
+        public async Task<bool> SaveChangesAsync(CancellationToken ct = default)
+            => await _context.SaveChangesAsync(ct) > 0;
+
 
         /* ============================================================
            👤 USER-SPECIFIC RECENT FOODS (CACHED)
@@ -190,7 +195,7 @@ namespace Menro.Infrastructure.Repositories
         private string GetCacheKey(string userId, int count)
             => $"{RecentOrdersKeyPrefix}{userId}_{count}";
 
-        public async Task<List<Food>> GetUserRecentlyOrderedFoodsAsync(string userId, int count)
+        public async Task<List<Food>> GetUserRecentlyOrderedFoodsAsync(string userId, int count, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(userId) || count <= 0)
                 return new List<Food>();
@@ -216,7 +221,7 @@ namespace Menro.Infrastructure.Repositories
                 .OrderByDescending(x => x.LastOrderedAt)
                 .Take(count)
                 .Select(x => x.FoodId)
-                .ToListAsync();
+                .ToListAsync(ct);
 
             if (latestFoodIds.Count == 0)
                 return new List<Food>();
@@ -227,7 +232,7 @@ namespace Menro.Infrastructure.Repositories
                 .Where(f => latestFoodIds.Contains(f.Id) && f.IsAvailable && !f.IsDeleted)
                 .Include(f => f.Ratings)
                 .Include(f => f.Restaurant)
-                .ToListAsync();
+                .ToListAsync(ct);
 
             // Preserve original order
             var indexLookup = latestFoodIds
@@ -251,6 +256,111 @@ namespace Menro.Infrastructure.Repositories
             return result;
         }
 
+        private static string EncodeCursor(DateTime dt, int foodId)
+        {
+            var raw = $"{dt.Ticks}:{foodId}";
+            var b64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(raw));
+            // url-safe
+            return b64.TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        }
+
+        private static bool TryDecodeCursor(string? cursor, out DateTime dt, out int foodId)
+        {
+            dt = default;
+            foodId = default;
+
+            if (string.IsNullOrWhiteSpace(cursor)) return false;
+
+            try
+            {
+                var b64 = cursor.Replace('-', '+').Replace('_', '/');
+                // pad
+                switch (b64.Length % 4)
+                {
+                    case 2: b64 += "=="; break;
+                    case 3: b64 += "="; break;
+                }
+
+                var raw = Encoding.UTF8.GetString(Convert.FromBase64String(b64));
+                var parts = raw.Split(':');
+                if (parts.Length != 2) return false;
+
+                if (!long.TryParse(parts[0], out var ticks)) return false;
+                if (!int.TryParse(parts[1], out var id)) return false;
+
+                dt = new DateTime(ticks);
+                foodId = id;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<(List<Food> Foods, string? NextCursor, bool HasMore)> GetUserRecentlyOrderedFoodsCursorAsync(
+            string userId, int take, string? cursor, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || take <= 0)
+                return (new List<Food>(), null, false);
+
+            take = Math.Clamp(take, 1, 24);
+
+            var baseQuery = _context.Orders
+                .AsNoTracking()
+                .Where(o => o.UserId == userId)
+                .SelectMany(o => o.OrderItems.Select(oi => new { oi.FoodId, o.CreatedAt }))
+                .GroupBy(x => x.FoodId)
+                .Select(g => new
+                {
+                    FoodId = g.Key,
+                    LastOrderedAt = g.Max(x => x.CreatedAt)
+                });
+
+            // cursor filter (desc order): load items "after" the cursor
+            if (TryDecodeCursor(cursor, out var cTime, out var cFoodId))
+            {
+                baseQuery = baseQuery.Where(x =>
+                    x.LastOrderedAt < cTime ||
+                    (x.LastOrderedAt == cTime && x.FoodId < cFoodId)
+                );
+            }
+
+            var rows = await baseQuery
+                .OrderByDescending(x => x.LastOrderedAt)
+                .ThenByDescending(x => x.FoodId)
+                .Take(take + 1)
+                .ToListAsync(ct);
+
+            var hasMore = rows.Count > take;
+            var pageRows = rows.Take(take).ToList();
+
+            if (pageRows.Count == 0)
+                return (new List<Food>(), null, false);
+
+            var nextCursor = hasMore
+                ? EncodeCursor(pageRows.Last().LastOrderedAt, pageRows.Last().FoodId)
+                : null;
+
+            var ids = pageRows.Select(x => x.FoodId).ToList();
+
+            var foods = await _context.Foods
+                .AsNoTracking()
+                .Where(f => ids.Contains(f.Id) && f.IsAvailable && !f.IsDeleted)
+                .Include(f => f.Ratings)
+                .Include(f => f.Restaurant)
+                .ToListAsync(ct);
+
+            // preserve ids order
+            var index = ids.Select((id, idx) => new { id, idx }).ToDictionary(x => x.id, x => x.idx);
+
+            var result = foods
+                .OrderBy(f => index.TryGetValue(f.Id, out var pos) ? pos : int.MaxValue)
+                .ToList();
+
+            return (result, nextCursor, hasMore);
+        }
+
 
         /* ============================================================
            🔄 CACHE INVALIDATION
@@ -258,7 +368,6 @@ namespace Menro.Infrastructure.Repositories
 
         public void InvalidateUserRecentOrders(string userId)
         {
-            // If you use only certain "count" sizes, you can clear those.
             foreach (var count in new[] { 8, 16, 32 })
             {
                 _cache.Remove(GetCacheKey(userId, count));

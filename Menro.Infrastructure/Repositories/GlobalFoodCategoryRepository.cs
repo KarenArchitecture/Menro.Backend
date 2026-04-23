@@ -7,12 +7,6 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Menro.Infrastructure.Repositories
 {
-    /// <summary>
-    /// Repository implementation for Global Food Categories.
-    /// Includes Admin CRUD operations and Home-page queries
-    /// with caching and invalidation. Works without requiring
-    /// navigation from Global → CustomFoodCategory.
-    /// </summary>
     public class GlobalFoodCategoryRepository : IGlobalFoodCategoryRepository
     {
         private readonly MenroDbContext _context;
@@ -49,6 +43,7 @@ namespace Menro.Infrastructure.Repositories
 
             return cat;
         }
+
         public async Task<bool> CreateAsync(GlobalFoodCategory category)
         {
             try
@@ -62,6 +57,7 @@ namespace Menro.Infrastructure.Repositories
                 return false;
             }
         }
+
         public async Task<bool> UpdateCategoryAsync(GlobalFoodCategory category)
         {
             if (category == null) return false;
@@ -90,17 +86,11 @@ namespace Menro.Infrastructure.Repositories
            🌍 Home Page — Popular Foods Section (with caching)
         ============================================================ */
 
-        /// <summary>
-        /// Returns all active global food categories that actually have
-        /// available foods (via CustomFoodCategory → Food → Restaurant).
-        /// Cached for 10 minutes for performance.
-        /// </summary>
         public async Task<List<GlobalFoodCategory>> GetEligibleGlobalCategoriesAsync()
         {
             if (_cache.TryGetValue(EligibleGlobalsCacheKey, out List<GlobalFoodCategory> cached))
                 return cached;
 
-            // Find all GlobalCategory IDs that have at least one active food
             var eligibleIds = await _context.CustomFoodCategories
                 .AsNoTracking()
                 .Where(cc =>
@@ -129,10 +119,6 @@ namespace Menro.Infrastructure.Repositories
             return result;
         }
 
-        /// <summary>
-        /// Returns all active global categories except excluded ones.
-        /// Cached for 10 minutes.
-        /// </summary>
         public async Task<List<GlobalFoodCategory>> GetEligibleGlobalCategoriesExcludingAsync(List<string> excludeTitles)
         {
             excludeTitles ??= new();
@@ -148,10 +134,6 @@ namespace Menro.Infrastructure.Repositories
             return filtered;
         }
 
-        /// <summary>
-        /// Returns the most popular foods for a global category, cached for 5 minutes.
-        /// Popularity = 60% order volume + 30% rating average + 10% voter weight.
-        /// </summary>
         public async Task<List<Food>> GetMostPopularFoodsByGlobalCategoryAsync(int globalCategoryId, int count = 8)
         {
             string cacheKey = $"{PopularFoodsCacheKeyPrefix}{globalCategoryId}";
@@ -195,6 +177,85 @@ namespace Menro.Infrastructure.Repositories
 
             _cache.Set(cacheKey, scored, TimeSpan.FromMinutes(5));
             return scored;
+        }
+
+        /* ============================================================
+           ✅ View All — cursor-based browse for one Global Category
+           No new entity/model needed: returns List<Food> directly.
+        ============================================================ */
+        public async Task<(List<Food> Items, string? NextCursor, bool HasMore)>
+        BrowsePopularFoodsByGlobalCategoryAsync(int globalCategoryId, int take = 6, string? cursor = null, CancellationToken ct = default)
+        {
+            take = Math.Clamp(take, 1, 50);
+
+            var offset = 0;
+            if (!string.IsNullOrWhiteSpace(cursor) && int.TryParse(cursor, out var parsed) && parsed > 0)
+                offset = parsed;
+
+            // 1) Get ordered IDs only (NO Include)
+            var baseFoods = _context.Foods
+                .AsNoTracking()
+                .Where(f =>
+                    f.CustomFoodCategory != null &&
+                    f.CustomFoodCategory.GlobalCategoryId == globalCategoryId &&
+                    f.IsAvailable &&
+                    !f.IsDeleted &&
+                    f.Restaurant.IsActive &&
+                    f.Restaurant.Status == RestaurantStatus.Approved);
+
+            var ordersAgg = _context.OrderItems
+                .AsNoTracking()
+                .GroupBy(oi => oi.FoodId)
+                .Select(g => new { FoodId = g.Key, Orders = g.Sum(x => x.Quantity) });
+
+            var ratingsAgg = _context.Set<FoodRating>()
+                .AsNoTracking()
+                .GroupBy(r => r.FoodId)
+                .Select(g => new { FoodId = g.Key, Avg = g.Average(x => x.Score), Voters = g.Count() });
+
+            var scored = from f in baseFoods.Select(f => new { f.Id })
+                         join o in ordersAgg on f.Id equals o.FoodId into og
+                         from o in og.DefaultIfEmpty()
+                         join r in ratingsAgg on f.Id equals r.FoodId into rg
+                         from r in rg.DefaultIfEmpty()
+                         select new
+                         {
+                             Id = f.Id,
+                             Orders = o == null ? 0 : o.Orders,
+                             Avg = r == null ? 0.0 : (double)r.Avg,
+                             Voters = r == null ? 0 : r.Voters,
+                             Popularity =
+                                ((o == null ? 0 : o.Orders) * 0.6)
+                                + ((r == null ? 0.0 : (double)r.Avg) * 10 * 0.3)
+                                + (Math.Log10((r == null ? 0 : r.Voters) + 1.0) * 10 * 0.1)
+                         };
+
+            var page = await scored
+                .OrderByDescending(x => x.Popularity)
+                .ThenByDescending(x => x.Id)
+                .Skip(offset)
+                .Take(take + 1)
+                .ToListAsync(ct);
+
+            var hasMore = page.Count > take;
+            if (hasMore) page.RemoveAt(page.Count - 1);
+
+            var ids = page.Select(x => x.Id).ToList();
+
+            // 2) Fetch only the 6 foods we need (with Includes for mapping)
+            var foods = await _context.Foods
+                .AsNoTracking()
+                .Include(f => f.Ratings)
+                .Include(f => f.Restaurant)
+                .Where(f => ids.Contains(f.Id))
+                .ToListAsync(ct);
+
+            // preserve ordering
+            var byId = foods.ToDictionary(x => x.Id);
+            var orderedFoods = ids.Where(byId.ContainsKey).Select(id => byId[id]).ToList();
+
+            var nextCursor = hasMore ? (offset + take).ToString() : null;
+            return (orderedFoods, nextCursor, hasMore);
         }
 
         /* ============================================================

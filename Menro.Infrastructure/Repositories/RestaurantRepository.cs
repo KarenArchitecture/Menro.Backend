@@ -62,12 +62,28 @@ namespace Menro.Infrastructure.Repositories
             return name;
         }
 
-
-
         /* ============================================================
            🔹 Featured restaurants (carousel)
         ============================================================ */
-        
+
+        /* ============================================================
+           🔹 Show All Page - Restaurants
+        ============================================================ */
+        public async Task<List<Restaurant>> GetActiveApprovedWithDetailsPageAsync(int take, int? cursorId)
+        {
+            var query = _context.Restaurants
+                .Where(r => r.IsActive && !r.IsDeleted && r.Status == RestaurantStatus.Approved)
+                .OrderByDescending(r => r.Id)
+                .Include(r => r.Ratings)
+                .Include(r => r.Discounts)
+                .Include(r => r.RestaurantCategory)
+                .AsNoTracking();
+
+            if (cursorId.HasValue)
+                query = query.Where(r => r.Id < cursorId.Value);
+
+            return await query.Take(take + 1).ToListAsync();
+        }
 
         /* ============================================================
            🔹 Home Page - Random Restaurant Cards
@@ -145,7 +161,7 @@ namespace Menro.Infrastructure.Repositories
                 .OrderByDescending(r => orderMap.ContainsKey(r.Id) ? orderMap[r.Id] : DateTime.MinValue)
                 .ToList();
         }
-
+        
         /* ============================================================
            🔹 Restaurant Page (Banner + Slug + Validation)
         ============================================================ */

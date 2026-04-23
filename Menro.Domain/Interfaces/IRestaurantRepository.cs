@@ -35,6 +35,11 @@ namespace Menro.Domain.Interfaces
         Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId);
 
         /* ============================================================
+           🔹 Show All Page - Restaurants
+        ============================================================ */
+        Task<List<Restaurant>> GetActiveApprovedWithDetailsPageAsync(int take, int? cursorId);
+
+        /* ============================================================
            🔹 Restaurant Page (Banner + Slug + Validation)
         ============================================================ */
         Task<Restaurant?> GetRestaurantBannerBySlugAsync(string slug);

@@ -1,14 +1,16 @@
 ﻿using Menro.Application.DTO;
-using Microsoft.AspNetCore.Mvc;
+using Menro.Application.Features.ShowAll.DTOs;
 using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Application.Restaurants.DTOs;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
-using Menro.Application.Common.SD;
 using Menro.Application.Features.Identity.Services;
 using Menro.Application.FoodCategories.Services.Interfaces;
 using Menro.Application.FoodCategories.DTOs;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.SD;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Menro.Application.Features.ShowAll.Services.Interfaces;
 
 namespace Menro.Web.Controllers.Public
 {
@@ -20,9 +22,10 @@ namespace Menro.Web.Controllers.Public
 
         private readonly IRestaurantService _restaurantService;
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
+        private readonly IRestaurantBrowseService _restaurantBrowseService;
+
         private readonly IRestaurantBannerService _restaurantBannerService;
         private readonly IUserService _userService;
-        private readonly IRestaurantBannerService _bannerService;
         private readonly IRestaurantMenuService _menuService;
         private readonly IRestaurantPageFoodCategoryService _restaurantPageFoodCategoryService;
         private readonly IFileUrlService _fileUrlService;
@@ -30,6 +33,7 @@ namespace Menro.Web.Controllers.Public
         public RestaurantController(
             IRestaurantService restaurantService,
             IRandomRestaurantCardService randomRestaurantCardService,
+            IRestaurantBrowseService restaurantBrowseService,
             IRestaurantBannerService restaurantBannerService,
             IUserService userService,
             IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService,
@@ -38,6 +42,8 @@ namespace Menro.Web.Controllers.Public
         {
             _restaurantService = restaurantService;
             _randomRestaurantCardService = randomRestaurantCardService;
+            _restaurantBrowseService = restaurantBrowseService;
+
             _restaurantBannerService = restaurantBannerService;
             _userService = userService;
             _menuService = menuService;
@@ -47,19 +53,35 @@ namespace Menro.Web.Controllers.Public
 
         #endregion
 
-
         #region Home Page Endpoints
+
+        // GET: /api/public/restaurant/random
         [HttpGet("random")]
         public async Task<ActionResult<IEnumerable<RestaurantCardDto>>> GetRandomRestaurants()
         {
             var result = await _randomRestaurantCardService.GetRandomRestaurantCardsAsync();
             return Ok(result);
         }
+
         #endregion
 
+        #region Show All Page - Restaurants (Browse)
+
+        // GET: /api/public/restaurant?take=20&cursor=123
+        [HttpGet]
+        public async Task<ActionResult<PagedResultDto<RestaurantCardDto>>> GetRestaurants(
+            [FromQuery] int take = 20,
+            [FromQuery] int? cursor = null)
+        {
+            var result = await _restaurantBrowseService.GetRestaurantsPageAsync(take, cursor);
+            return Ok(result);
+        }
+
+        #endregion
 
         #region Registration & Global Categories
 
+        // POST: /api/public/restaurant/register
         [HttpPost("register")]
         [Authorize]
         public async Task<ActionResult> RestaurantRegister([FromBody] RegisterRestaurantDto dto)
@@ -79,6 +101,7 @@ namespace Menro.Web.Controllers.Public
             return Ok("رستوران با موفقیت ثبت شد.");
         }
 
+        // GET: /api/public/restaurant/categories
         [HttpGet("categories")]
         public async Task<IActionResult> GetCategories()
         {
@@ -88,8 +111,9 @@ namespace Menro.Web.Controllers.Public
 
         #endregion
 
-
         #region Restaurant Page Endpoints
+
+        // GET: /api/public/restaurant/{slug}/banner
         [HttpGet("{slug}/banner")]
         public async Task<ActionResult<RestaurantBannerDto?>> GetBanner(string slug)
         {
@@ -100,26 +124,30 @@ namespace Menro.Web.Controllers.Public
             return Ok(banner);
         }
 
+        // GET: /api/public/restaurant/{slug}/categories
         [HttpGet("{slug}/categories")]
-        public async Task<ActionResult<List<RestaurantFoodCategoryDto>>> GetRestaurantCategoriesBySlug(string slug, CancellationToken ct)
+        public async Task<ActionResult<List<RestaurantFoodCategoryDto>>> GetRestaurantCategoriesBySlug(
+            string slug,
+            CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(slug))
                 return BadRequest("Slug cannot be empty.");
-            
+
             var categories = await _restaurantPageFoodCategoryService.GetRestaurantCategoriesAsync(slug, ct);
-            
-            // + //
+
+            // Build icon url (if you store svg path/key)
             categories.ForEach(cat =>
             {
                 cat.SvgIcon = _fileUrlService.BuildIconUrl(cat.SvgIcon);
             });
+
             if (categories == null || categories.Count == 0)
                 return NotFound("هیچ دسته‌ای برای این رستوران یافت نشد.");
 
             return Ok(categories);
         }
 
-        
+        // GET: /api/public/restaurant/{slug}/menu
         [HttpGet("{slug}/menu")]
         public async Task<ActionResult<List<RestaurantMenuDto>>> GetRestaurantMenuBySlug(string slug)
         {
@@ -128,13 +156,11 @@ namespace Menro.Web.Controllers.Public
 
             var menu = await _menuService.GetMenuBySlugAsync(slug);
 
-
             if (menu == null || menu.Count == 0)
                 return NotFound("منوی این رستوران یافت نشد.");
 
             return Ok(menu);
         }
-
 
         #endregion
     }
