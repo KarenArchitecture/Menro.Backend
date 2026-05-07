@@ -11,6 +11,7 @@ using Menro.Application.Common.Interfaces;
 using Menro.Domain.Entities.Identity;
 
 
+
 namespace Menro.Application.Features.Identity.Services
 {
     /*
@@ -46,24 +47,59 @@ namespace Menro.Application.Features.Identity.Services
         // send otp
         public async Task SendOtpAsync(string phoneNumber)
         {
-            var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+            var phone = NormalizeIranMobileToE164(phoneNumber);
+            var now = DateTime.UtcNow;
 
-            var send = await _smsSender.SendOtpAsync(phoneNumber, $"کد تایید شما: {code}");
+            var code = RandomNumberGenerator
+                .GetInt32(0, 1_000_000)
+                .ToString("D6");
+
+            var send = await _smsSender.SendOtpAsync(
+                phone,
+                $"کد تایید شما: {code}");
+
             if (!send.IsSuccess)
                 throw new Exception($"SMS failed: {send.ProviderMessage}");
 
             var otp = new Otp
             {
-                PhoneNumber = phoneNumber,
+                PhoneNumber = phone,
                 Code = ComputeHash(code),
-                ExpirationTime = DateTime.UtcNow.AddMinutes(2),
+                CreatedAt = now,
+                ExpirationTime = now.AddMinutes(2),
                 IsUsed = false
             };
 
             await _uow.Otp.AddAsync(otp);
             await _uow.SaveChangesAsync();
         }
-        // verification
+
+        private static string NormalizeIranMobileToE164(string phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                throw new Exception("شماره موبایل الزامی است.");
+
+            var phone = phoneNumber.Trim()
+                .Replace(" ", "")
+                .Replace("-", "");
+
+            if (phone.StartsWith("+98"))
+                return phone;
+
+            if (phone.StartsWith("0098"))
+                return "+" + phone[2..];
+
+            if (phone.StartsWith("98"))
+                return "+" + phone;
+
+            if (phone.StartsWith("0"))
+                return "+98" + phone[1..];
+
+            if (phone.Length == 10 && phone.StartsWith("9"))
+                return "+98" + phone;
+
+            throw new Exception("فرمت شماره موبایل معتبر نیست.");
+        }        // verification
         public async Task<bool> VerifyOtpAsync(string phoneNumber, string code)
         {
             try

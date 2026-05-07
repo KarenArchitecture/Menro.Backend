@@ -6,6 +6,7 @@
         public string PhoneNumber { get; set; }
         public string Code { get; set; }
         public DateTime ExpirationTime { get; set; }
+        public DateTime CreatedAt { get; set; }
         public bool IsUsed { get; set; }
     }
 }
