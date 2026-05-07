@@ -59,11 +59,6 @@ namespace Menro.Domain.Interfaces
             int? customCategoryId = null);
 
         /// <summary>
-        /// Returns a list of popular foods by global category (non-optimized legacy version).
-        /// </summary>
-        Task<List<Food>> GetPopularFoodsByGlobalCategoryIdAsync(int globalCategoryId, int count);
-
-        /// <summary>
         /// Returns a single food entity with its variants and addons.
         /// </summary>
         Task<Food?> GetFoodWithVariantsAsync(int foodId);
@@ -91,6 +86,8 @@ namespace Menro.Domain.Interfaces
         /// Returns detailed information of a food item including variants.
         /// </summary>
         Task<Food> GetFoodAsync(int foodId);
+
+        Task<Food> GetFoodForAdminAsync(int foodId);
 
         /// <summary>
         /// Updates an existing food record.

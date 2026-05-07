@@ -19,7 +19,6 @@ namespace Menro.Application.Restaurants.Services.Implementations
 
         public async Task<List<RestaurantCardDto>> GetRandomRestaurantCardsAsync(int count = 8)
         {
-            Console.WriteLine("➡️ Fetching random restaurants...");
             var restaurants = await _restaurantRepository.GetRandomActiveApprovedWithDetailsAsync(count);
             System.Diagnostics.Debug.WriteLine("✅ Got " + restaurants.Count + " restaurants from repository");
 

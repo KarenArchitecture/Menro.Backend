@@ -1,5 +1,9 @@
-﻿public enum AdPlacementType
+﻿namespace Menro.Domain.Enums
 {
-    MainSlider = 1,
-    FullscreenBanner = 2
+    public enum AdPlacementType
+    {
+        MainSlider = 1,
+        FullscreenBanner = 2
+    }
 }
+

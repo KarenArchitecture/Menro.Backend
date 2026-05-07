@@ -6,10 +6,6 @@ using Menro.Domain.Interfaces;
 
 namespace Menro.Application.Foods.Services
 {
-    /// <summary>
-    /// High-performance service that provides "Popular Foods"
-    /// data for the public home page — built on repository-level caching.
-    /// </summary>
     public class PopularFoodsService : IPopularFoodsService
     {
         private readonly IGlobalFoodCategoryRepository _globalCatRepo;
@@ -25,6 +21,7 @@ namespace Menro.Application.Foods.Services
         private static HomeFoodCardDto MapToHomeFoodCardDto(Food f)
         {
             var avg = f.Ratings?.Any() == true ? f.Ratings.Average(r => r.Score) : 0.0;
+
             return new HomeFoodCardDto
             {
                 Id = f.Id,
@@ -32,7 +29,10 @@ namespace Menro.Application.Foods.Services
                 ImageUrl = f.ImageUrl ?? string.Empty,
                 Rating = Math.Round(avg, 1),
                 Voters = f.Ratings?.Count ?? 0,
-                RestaurantName = f.Restaurant?.Name ?? string.Empty
+
+                RestaurantId = f.RestaurantId,                 
+                RestaurantName = f.Restaurant?.Name ?? string.Empty,
+                RestaurantSlug = f.Restaurant?.Slug            
             };
         }
 
@@ -66,6 +66,7 @@ namespace Menro.Application.Foods.Services
 
                 result.Add(new PopularFoodsDto
                 {
+                    CategoryId = category.Id,
                     CategoryTitle = category.Name,
                     IconId = category.IconId,
                     Foods = foods.Select(MapToHomeFoodCardDto).ToList()

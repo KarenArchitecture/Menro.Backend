@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace Menro.Application.Common.Interfaces
+﻿namespace Menro.Application.Common.Interfaces
 {
     /// <summary>
     /// Centralized service for triggering cache invalidation across repositories.

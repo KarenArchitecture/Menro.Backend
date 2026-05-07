@@ -1,6 +1,10 @@
-﻿public enum AdStatus
+﻿namespace Menro.Domain.Enums
 {
-    Pending = 1,
-    Approved = 2,
-    Rejected = 3
+    public enum AdStatus
+    {
+        Pending = 1,
+        Approved = 2,
+        Rejected = 3
+    }
 }
+

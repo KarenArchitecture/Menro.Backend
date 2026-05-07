@@ -165,24 +165,36 @@ namespace Menro.Infrastructure.Data
                     {
                         Name = restName,
                         Address = $"تهران، خیابان نمونه {i}",
+                        ContactNumber = owner.PhoneNumber ?? $"0912{345678 + i}",
+
                         OpenTime = new TimeSpan(8 + (i % 4), 0, 0),
                         CloseTime = new TimeSpan(20 + (i % 3), 30, 0),
+
                         Description = $"توضیح نمونه برای {restName}؛ غذای باکیفیت و سرویس سریع.",
                         NationalCode = (1000000000 + i).ToString(),
                         BankAccountNumber = (2000000000 + i).ToString(),
                         ShebaNumber = $"IR{3000000000 + i}",
+
                         OwnerUserId = owner.Id,
                         RestaurantCategoryId = (i % 8) + 1,
+
+                        // Keep these if your UI expects images; otherwise you can set some of them to null.
                         CarouselImageUrl = CarouselImages[(i - 1) % CarouselImages.Length],
                         BannerImageUrl = CardImages[(i - 1) % CardImages.Length],
-                        ShopBannerImageUrl = ShopBannerImages[(i - 1) % CardImages.Length],
+                        ShopBannerImageUrl = ShopBannerImages[(i - 1) % ShopBannerImages.Length],
                         LogoImageUrl = Logos[(i - 1) % Logos.Length],
-                        IsFeatured = (i % 3 == 0),
+
+                        // ✅ dynamic tables for checkout
+                        TableCount = rand.Next(6, 21),
+
                         IsActive = true,
-                        IsApproved = true,
+                        IsDeleted = false,
+                        Status = RestaurantStatus.Approved,
+
                         Slug = slug,
                         CreatedAt = DateTime.UtcNow.AddDays(-i)
                     };
+
                     _db.Restaurants.Add(restaurant);
                     await _db.SaveChangesAsync();
 
@@ -252,7 +264,7 @@ namespace Menro.Infrastructure.Data
                         }
                         string baseName = customCat.Name;
                         int duplicateCounter = 1;
-                        while (await _db.CustomFoodCategories.AnyAsync(c => c.RestaurantId == restaurant.Id && c.Name == customCat.Name))
+                        while (await _db.CustomFoodCategories.AnyAsync(x => x.RestaurantId == restaurant.Id && x.Name == customCat.Name))
                         {
                             duplicateCounter++;
                             customCat.Name = $"{baseName} {duplicateCounter}";
@@ -294,15 +306,9 @@ namespace Menro.Infrastructure.Data
 
                 foreach (var food in seededFoods)
                 {
-                    // --- Skip foods that already have variants (avoid duplication)
                     if (food.Variants != null && food.Variants.Any())
                         continue;
 
-                    // --- Decide variant count realistically:
-                    // 30% → no variants
-                    // 20% → 1 variant
-                    // 30% → 2 variants
-                    // 20% → 3 variants
                     double r = rand.NextDouble();
                     int variantCount =
                         (r < 0.30) ? 0 :
@@ -311,11 +317,10 @@ namespace Menro.Infrastructure.Data
                                       3;
 
                     if (variantCount == 0)
-                        continue;  // this food has no variants at all
+                        continue;
 
                     var basePrice = Math.Max(5000, food.Price);
 
-                    // Build variant list
                     var variants = new List<FoodVariant>();
 
                     if (variantCount >= 1)
@@ -346,26 +351,14 @@ namespace Menro.Infrastructure.Data
                         });
                     }
 
-                    // Choose DEFAULT variant:
-                    // • Prefer میان‌رده (special) if exists
-                    // • Else highest price
                     var defaultVariant =
                         variants.FirstOrDefault(v => v.Name == "ویژه")
                         ?? variants.OrderByDescending(v => v.Price).First();
 
                     defaultVariant.IsDefault = true;
 
-                    // Save variants
                     _db.FoodVariants.AddRange(variants);
                     await _db.SaveChangesAsync();
-
-                    /* ---------------------------------------------------------
-                       Addons SEEDING (per variant)
-                       40% = no addons
-                       30% = 1 addon
-                       20% = 2 addons
-                       10% = 3 addons
-                    --------------------------------------------------------- */
 
                     foreach (var v in variants)
                     {
@@ -376,7 +369,6 @@ namespace Menro.Infrastructure.Data
                             (addonRand < 0.90) ? 2 :
                                                  3;
 
-                        // No addons → skip
                         if (addonsToCreate == 0)
                             continue;
 
@@ -401,28 +393,25 @@ namespace Menro.Infrastructure.Data
                 }
                 await _db.SaveChangesAsync();
 
-
                 /* ============================================================
                    Restaurant Discounts (new structure)
-                   - Random subset of foods get discount
-                   - Restaurants inherit max food discount (for ribbon)
                 ============================================================ */
                 var percentPool = new[] { 10, 15, 20, 25, 30 };
-                var allRestaurants = await _db.Restaurants.Include(r => r.Foods).ToListAsync();
+                var allRestaurants = await _db.Restaurants.Include(x => x.Foods).ToListAsync();
 
-                foreach (var r in allRestaurants)
+                foreach (var rr in allRestaurants)
                 {
-                    if (!r.Foods.Any()) continue;
+                    if (!rr.Foods.Any()) continue;
 
                     var discountedFoods = new List<int>();
-                    foreach (var f in r.Foods)
+                    foreach (var f in rr.Foods)
                     {
-                        if (rand.NextDouble() < 0.35) // ~35% of foods discounted
+                        if (rand.NextDouble() < 0.35)
                         {
                             var percent = percentPool[rand.Next(percentPool.Length)];
                             _db.RestaurantDiscounts.Add(new RestaurantDiscount
                             {
-                                RestaurantId = r.Id,
+                                RestaurantId = rr.Id,
                                 FoodId = f.Id,
                                 Percent = percent,
                                 StartDate = DateTime.UtcNow.AddDays(-rand.Next(0, 2)),
@@ -432,11 +421,10 @@ namespace Menro.Infrastructure.Data
                         }
                     }
 
-                    // Ribbon logic — compute max discount
                     if (discountedFoods.Any())
                     {
                         int maxDiscount = discountedFoods.Max();
-                        r.Description += $"{maxDiscount}%";
+                        rr.Description += $"{maxDiscount}%";
                     }
                 }
                 await _db.SaveChangesAsync();
@@ -446,12 +434,12 @@ namespace Menro.Infrastructure.Data
                 ============================================================ */
                 var allUsers = await _db.Users.ToListAsync();
 
-                foreach (var r in allRestaurants)
+                foreach (var rr in allRestaurants)
                 {
-                    if (await _db.RestaurantRatings.AnyAsync(x => x.RestaurantId == r.Id)) continue;
+                    if (await _db.RestaurantRatings.AnyAsync(x => x.RestaurantId == rr.Id)) continue;
 
                     int howMany = rand.Next(MinRestRatings, MaxRestRatings + 1);
-                    var voters = allUsers.Where(u => u.Id != r.OwnerUserId)
+                    var voters = allUsers.Where(u => u.Id != rr.OwnerUserId)
                                          .OrderBy(_ => Guid.NewGuid())
                                          .Take(howMany)
                                          .ToList();
@@ -460,7 +448,7 @@ namespace Menro.Infrastructure.Data
                     {
                         _db.RestaurantRatings.Add(new RestaurantRating
                         {
-                            RestaurantId = r.Id,
+                            RestaurantId = rr.Id,
                             UserId = user.Id,
                             Score = rand.Next(3, 6),
                             CreatedAt = DateTime.UtcNow.AddDays(-rand.Next(0, 60))
@@ -492,46 +480,10 @@ namespace Menro.Infrastructure.Data
                 /* ============================================================
                    Ad Banners
                 ============================================================ */
-                var now = DateTime.UtcNow;
-                var bannerRestaurantIds = await _db.RestaurantAdBanners.Select(b => b.RestaurantId).ToListAsync();
-
-                if (bannerRestaurantIds.Count < TargetAdBanners)
-                {
-                    var candidates = await _db.Restaurants
-                        .Where(r => r.IsActive && r.IsApproved && !bannerRestaurantIds.Contains(r.Id))
-                        .OrderBy(_ => Guid.NewGuid())
-                        .Take(TargetAdBanners - bannerRestaurantIds.Count)
-                        .Select(r => new { r.Id })
-                        .ToListAsync();
-
-                    var slogans = new[]
-                    {
-                        "قهوه‌هامون تازه‌برشتن ☕",
-                        "پیتزاهای داغ با تخفیف 🍕",
-                        "ساندویچ‌های خوشمزه دمِ‌دست 🥪",
-                        "غذای خونگی با طعم نوستالژی 🍲",
-                        "دسرهای ویژه امروز 🍮"
-                    };
-
-                    foreach (var c in candidates)
-                    {
-                        _db.RestaurantAdBanners.Add(new RestaurantAdBanner
-                        {
-                            RestaurantId = c.Id,
-                            ImageUrl = BannerImages[rand.Next(BannerImages.Length)],
-                            StartDate = now.AddDays(-1),
-                            EndDate = now.AddDays(14),
-                            CommercialText = slogans[rand.Next(slogans.Length)],
-                            PurchasedViews = 600 + rand.Next(0, 900),
-                            ConsumedViews = 0,
-                            IsPaused = false
-                        });
-                    }
-                    await _db.SaveChangesAsync();
-                }
+                // (kept as-is, currently commented out)
 
                 /* ============================================================
-                   Demo Customer + Orders
+                   Demo Customer + Orders (with variants + addons + table code)
                 ============================================================ */
                 var demoPhone = "09121112233";
                 var demoCustomer = await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == demoPhone);
@@ -550,17 +502,24 @@ namespace Menro.Infrastructure.Data
 
                 if (!await _db.Orders.AnyAsync(o => o.UserId == demoCustomer.Id))
                 {
-                    var restaurantIds = await _db.Restaurants
-                        .Where(r => r.IsActive && r.IsApproved)
+                    var allVariants = await _db.FoodVariants
+                        .Include(v => v.Addons)
+                        .ToListAsync();
+
+                    // ✅ include TableCount so we can seed valid numeric table codes
+                    var restaurantInfos = await _db.Restaurants
+                        .Where(x => x.IsActive && !x.IsDeleted)
                         .OrderBy(_ => Guid.NewGuid())
-                        .Select(r => r.Id)
+                        .Select(x => new { x.Id, x.TableCount })
                         .Take(8)
                         .ToListAsync();
 
                     int dayOffset = 0;
 
-                    foreach (var rid in restaurantIds)
+                    foreach (var info in restaurantInfos)
                     {
+                        var rid = info.Id;
+
                         var foods = await _db.Foods
                             .Where(f => f.RestaurantId == rid && f.IsAvailable && !f.IsDeleted)
                             .OrderBy(_ => Guid.NewGuid())
@@ -572,32 +531,107 @@ namespace Menro.Infrastructure.Data
                         decimal totalAmount = 0m;
                         var orderItems = new List<OrderItem>();
 
+                        // ✅ TableCode: "1".."N" OR "takeout" (NO 't' prefix)
+
+                        //string tableCode;
+                        int? tableNumber;
+                        if (rand.NextDouble() < 0.30 || info.TableCount <= 0)
+                        {
+                            //tableCode = "takeout";
+                            tableNumber = null;
+                        }
+                        else
+                        {
+                            //var tblNum = rand.Next(1, info.TableCount + 1);
+                            //tableCode = tblNum.ToString();
+                            tableNumber = rand.Next(1, info.TableCount + 1);
+                        }
+
                         foreach (var food in foods)
                         {
-                            var quantity = rand.Next(1, 3);
-                            var unitPrice = food.Price;
-                            totalAmount += unitPrice * quantity;
+                            int quantity = rand.Next(1, 3);
 
-                            orderItems.Add(new OrderItem
+                            var variantsForFood = allVariants
+                                .Where(v => v.FoodId == food.Id)
+                                .ToList();
+
+                            if (variantsForFood.Count == 0)
+                            {
+                                decimal unitPrice = food.Price;
+                                totalAmount += unitPrice * quantity;
+
+                                var simpleItem = new OrderItem
+                                {
+                                    FoodId = food.Id,
+                                    Quantity = quantity,
+                                    UnitPrice = unitPrice,
+                                    TitleSnapshot = food.Name
+                                };
+
+                                orderItems.Add(simpleItem);
+                                continue;
+                            }
+
+                            var chosenVariant = variantsForFood
+                                .FirstOrDefault(v => v.IsDefault == true)
+                                ?? variantsForFood.OrderBy(_ => Guid.NewGuid()).First();
+
+                            var variantAddons = chosenVariant.Addons?.ToList() ?? new List<FoodAddon>();
+                            var selectedAddons = new List<FoodAddon>();
+
+                            foreach (var addon in variantAddons)
+                            {
+                                if (rand.NextDouble() < 0.45)
+                                {
+                                    selectedAddons.Add(addon);
+                                }
+                            }
+
+                            int addonsSum = selectedAddons.Sum(a => a.ExtraPrice);
+                            decimal finalUnitPrice = chosenVariant.Price + addonsSum;
+
+                            totalAmount += finalUnitPrice * quantity;
+
+                            var orderItem = new OrderItem
                             {
                                 FoodId = food.Id,
+                                FoodVariantId = chosenVariant.Id,
                                 Quantity = quantity,
-                                UnitPrice = unitPrice
-                            });
+                                UnitPrice = finalUnitPrice,
+                                TitleSnapshot = $"{food.Name} - {chosenVariant.Name}",
+                                Extras = selectedAddons.Select(a => new OrderItemExtra
+                                {
+                                    FoodAddonId = a.Id,
+                                    ExtraPrice = a.ExtraPrice
+                                }).ToList()
+                            };
+
+                            orderItems.Add(orderItem);
                         }
+
+                        // ✅ RestaurantOrderNumber is required; demo orders bypass OrderCreationService
+                        var lastNumber = await _db.Orders
+                            .Where(o => o.RestaurantId == rid)
+                            .Select(o => (int?)o.RestaurantOrderNumber)
+                            .MaxAsync() ?? 0;
 
                         var order = new Order
                         {
                             UserId = demoCustomer.Id,
                             RestaurantId = rid,
+
+                            RestaurantOrderNumber = lastNumber + 1,
+
+                            TableNumber = tableNumber,
                             Status = OrderStatus.Completed,
                             CreatedAt = DateTime.UtcNow.AddDays(-dayOffset++),
-                            TotalAmount = totalAmount,
+                            TotalPrice = totalAmount,
                             OrderItems = orderItems
                         };
 
                         _db.Orders.Add(order);
                     }
+
                     await _db.SaveChangesAsync();
                 }
             }

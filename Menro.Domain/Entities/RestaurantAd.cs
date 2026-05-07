@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Menro.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Menro.Domain.Entities
 {
@@ -14,6 +15,8 @@ namespace Menro.Domain.Entities
         public int Cost { get; set; } 
 
         public string ImageFileName { get; set; } = string.Empty;
+        
+        // rename target url to slug!
         public string TargetUrl { get; set; } = string.Empty;
         public string CommercialText { get; set; } = string.Empty;
 

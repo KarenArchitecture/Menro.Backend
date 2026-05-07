@@ -20,9 +20,9 @@ namespace Menro.Web.Controllers.AdminPanel
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetRestaurantsListForAdminAsync([FromQuery] bool? approved)
+        public async Task<IActionResult> GetRestaurantsListForAdminAsync()
         {
-            var result = await _service.GetRestaurantsListForAdminAsync(approved);
+            var result = await _service.GetRestaurantsListForAdminAsync();
             return Ok(result);
         }
 

@@ -1,4 +1,6 @@
-﻿namespace Menro.Application.Features.Ads.DTOs
+﻿using Menro.Domain.Enums;
+
+namespace Menro.Application.Features.Ads.DTOs
 {
     public class AdPricingSettingDto
     {

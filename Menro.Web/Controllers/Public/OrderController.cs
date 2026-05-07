@@ -1,44 +1,42 @@
-﻿using System.Security.Claims;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Orders.DTOs;
+using Menro.Application.Features.Orders.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Menro.Application.Orders.DTOs;
-using Menro.Application.Orders.Services.Interfaces;
 
-namespace Menro.Web.Controllers.User
+[ApiController]
+[Route("api/public/[controller]")]
+public class OrdersController : ControllerBase
 {
-    /// <summary>
-    /// Provides authenticated user endpoints related to orders,
-    /// such as viewing recently ordered foods.
-    /// </summary>
-    [ApiController]
-    [Route("api/user/orders")]
-    [Authorize]
-    public class OrderController : ControllerBase
+    private readonly IOrderCreationService _orderCreationService;
+    private readonly ICurrentUserService _currentUserService;
+
+    public OrdersController(
+        IOrderCreationService orderCreationService,
+        ICurrentUserService currentUserService)
     {
-        private readonly IUserRecentOrderCardService _recentService;
+        _orderCreationService = orderCreationService;
+        _currentUserService = currentUserService;
+    }
 
-        public OrderController(IUserRecentOrderCardService recentService)
+
+    [HttpPost("create")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Create([FromBody] CreateOrderDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var userId = _currentUserService.GetUserId();
+
+        try
         {
-            _recentService = recentService;
+            var orderId = await _orderCreationService.CreateOrderAsync(userId, dto);
+            return Ok(new { orderId });
         }
-
-        /// <summary>
-        /// Gets a list of recent foods ordered by the authenticated user.
-        /// </summary>
-        /// <param name="count">Maximum number of recent items (default 8, max 32).</param>
-        /// <returns>Recent foods ordered by the user.</returns>
-        [HttpGet("recent-foods")]
-        [ProducesResponseType(typeof(List<RecentOrdersFoodCardDto>), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<List<RecentOrdersFoodCardDto>>> GetRecentFoods([FromQuery] int count = 8)
+        catch (Exception ex)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized();
-
-            count = Math.Clamp(count, 1, 32);
-            var items = await _recentService.GetUserRecentOrderedFoodsAsync(userId, count);
-            return Ok(items ?? new List<RecentOrdersFoodCardDto>());
+            return BadRequest(new { message = ex.Message });
         }
     }
 }

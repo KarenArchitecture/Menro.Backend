@@ -1,4 +1,6 @@
-﻿public class AdPricingSetting
+﻿using Menro.Domain.Enums;
+
+public class AdPricingSetting
 {
     public int Id { get; set; }
 

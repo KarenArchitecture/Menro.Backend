@@ -1,4 +1,6 @@
-﻿namespace Menro.Application.Restaurants.DTOs
+﻿using Menro.Domain.Enums;
+
+namespace Menro.Application.Restaurants.DTOs
 {
     public class RestaurantDetailsForAdminDto
     {
@@ -15,6 +17,7 @@
         public string OwnerName { get; set; } = "";
 
         public bool IsApproved { get; set; }
+        public RestaurantStatus Status { get; set; }
         public string CreatedAt { get; set; } = "";
     }
 }

@@ -1,22 +1,25 @@
 ﻿using System.Reflection;
+using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Menro.Application.Common.Settings;
-using Menro.Domain.Entities;
-using Menro.Infrastructure.Data;
-using Menro.Web.Middleware;
-using Menro.Infrastructure.Extensions;
-using Menro.Application.Extensions;
-using Menro.Web.Services;
 using Menro.Application.Common.Interfaces;
-using Menro.Web.Services.Implementations;
-using Menro.Infrastructure.Services;
-using System.Security.Claims;
+using Menro.Application.Common.Settings;
+using Menro.Application.Extensions;
+using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
+using Menro.Infrastructure.Data;
+using Menro.Infrastructure.Extensions;
+using Menro.Infrastructure.Repositories;
+using Menro.Infrastructure.Services;
+using Menro.Web.Middleware;
+using Menro.Web.Services;
+using Menro.Web.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,14 +54,14 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtSettings>>().Value);
 
-builder.Services.AddAuthentication(opt =>
+builder.Services.AddAuthentication(options =>
 {
-    opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-.AddJwtBearer(opt =>
+.AddJwtBearer(options =>
 {
-    opt.TokenValidationParameters = new TokenValidationParameters
+    options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
@@ -75,32 +78,48 @@ builder.Services.AddAuthentication(opt =>
     };
 });
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
+});
+
 #endregion
 
 #region DI Services
 
-builder.Services.AddInfrastructureServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 
-var appAssembly = Assembly.Load("Menro.Application");
-builder.Services.AddAutoRegisteredServices(appAssembly);
+var applicationAssembly = Assembly.Load("Menro.Application");
+builder.Services.AddAutoRegisteredServices(applicationAssembly);
 
-var infraAssembly = Assembly.Load("Menro.Infrastructure");
-builder.Services.AddAutoRegisteredRepositories(infraAssembly);
+var infrastructureAssembly = Assembly.Load("Menro.Infrastructure");
+builder.Services.AddAutoRegisteredRepositories(infrastructureAssembly);
 
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUrlService, FileUrlService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
+
+builder.Services.AddSingleton<IGlobalDateTimeService, GlobalDateTimeService>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 builder.Services.AddMemoryCache();
 
 #endregion
 
 #region API & MVC
 
-builder.Services.AddControllersWithViews();
-
-builder.Services.AddControllers()
-    .AddJsonOptions(o => o.JsonSerializerOptions.PropertyNameCaseInsensitive = true);
+builder.Services
+    .AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -117,9 +136,9 @@ builder.Services.AddApiVersioning(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactDevClient", p =>
+    options.AddPolicy("AllowReactDevClient", policy =>
     {
-        p.WithOrigins(
+        policy.WithOrigins(
             "http://localhost:5173",
             "https://localhost:5173",
             "http://89.33.129.91"
@@ -153,6 +172,7 @@ app.UseStaticFiles();
 app.UseErrorHandlingMiddleware();
 
 app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -168,13 +188,13 @@ app.MapControllerRoute(
 
 #endregion
 
-#region DB Initialization (Production Only)
+#region DB Initialization
 
 if (app.Environment.IsProduction())
 {
     using var scope = app.Services.CreateScope();
-    var init = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-    await init.InitializeAsync();  // Includes: Migrate + Seed
+    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+    await dbInitializer.InitializeAsync();
 }
 
 #endregion
