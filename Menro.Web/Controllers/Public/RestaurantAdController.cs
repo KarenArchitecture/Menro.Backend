@@ -31,6 +31,7 @@ namespace Menro.Web.Controllers.Public
         // GET: /api/public/restaurant/ad-banner/random?exclude=1,2,3
         [HttpGet("ad-banner/random")]
         public async Task<IActionResult> GetRandomBanner([FromQuery] string? exclude)
+        
         {
             var excludeAdIds = ParseExcludeIds(exclude);
 

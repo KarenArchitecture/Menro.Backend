@@ -155,7 +155,6 @@ namespace Menro.Web.Controllers.Public
                 return BadRequest("Slug cannot be empty.");
 
             var menu = await _menuService.GetMenuBySlugAsync(slug);
-
             if (menu == null || menu.Count == 0)
                 return NotFound("منوی این رستوران یافت نشد.");
 

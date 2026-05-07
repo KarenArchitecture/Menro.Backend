@@ -32,7 +32,6 @@ namespace Menro.Infrastructure.Data
 
         public DbSet<AdPricingSetting> AdPricingSettings { get; set; }
 
-        // ✅ New Ads entity
         public DbSet<RestaurantAd> RestaurantAds { get; set; }
 
         public DbSet<Otp> Otps { get; set; }
@@ -42,6 +41,8 @@ namespace Menro.Infrastructure.Data
         public DbSet<OrderItemExtra> OrderItemExtras { get; set; }
 
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+
+        public DbSet<Music> Musics { get; set; }
 
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
         {

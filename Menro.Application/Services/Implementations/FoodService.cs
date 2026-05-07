@@ -2,6 +2,7 @@
 using Menro.Application.Foods.DTOs;
 using Menro.Domain.Interfaces;
 using Menro.Domain.Entities;
+using Menro.Application.Common.Interfaces;
 
 namespace Menro.Application.Services.Implementations
 {
