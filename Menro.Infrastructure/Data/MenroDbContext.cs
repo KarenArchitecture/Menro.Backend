@@ -144,29 +144,31 @@ namespace Menro.Infrastructure.Data
                   .HasForeignKey(ad => ad.RestaurantId)
                   .OnDelete(DeleteBehavior.Cascade);
 
-                // ✅ Optimized for random-seek selection (OrderBy Id)
-                entity.HasIndex(ad => new { ad.PlacementType, ad.Status, ad.Id })
-                      .IncludeProperties(ad => new
-                      {
-                          ad.StartDate,
-                          ad.EndDate,
-                          ad.BillingType,
-                          ad.ConsumedUnits,
-                          ad.PurchasedUnits,
-                          ad.RestaurantId
-                      });
+                // Optimized for random-seek selection (OrderBy Id)
+                Microsoft.EntityFrameworkCore.SqlServerIndexBuilderExtensions.IncludeProperties(
+                    entity.HasIndex(ad => new { ad.PlacementType, ad.Status, ad.Id }),
+                    ad => new
+                    {
+                        ad.StartDate,
+                        ad.EndDate,
+                        ad.BillingType,
+                        ad.ConsumedUnits,
+                        ad.PurchasedUnits,
+                        ad.RestaurantId
+                    });
 
-                // ✅ Optimized for list fetch sorted by CreatedAt (carousel list etc.)
-                entity.HasIndex(ad => new { ad.PlacementType, ad.Status, ad.CreatedAt })
-                      .IncludeProperties(ad => new
-                      {
-                          ad.StartDate,
-                          ad.EndDate,
-                          ad.BillingType,
-                          ad.ConsumedUnits,
-                          ad.PurchasedUnits,
-                          ad.RestaurantId
-                      });
+                // Optimized for list fetch sorted by CreatedAt (carousel list etc.)
+                Microsoft.EntityFrameworkCore.SqlServerIndexBuilderExtensions.IncludeProperties(
+                    entity.HasIndex(ad => new { ad.PlacementType, ad.Status, ad.CreatedAt }),
+                    ad => new
+                    {
+                        ad.StartDate,
+                        ad.EndDate,
+                        ad.BillingType,
+                        ad.ConsumedUnits,
+                        ad.PurchasedUnits,
+                        ad.RestaurantId
+                    });
 
                 // Optional: admin quick filter
                 entity.HasIndex(ad => ad.RestaurantId);

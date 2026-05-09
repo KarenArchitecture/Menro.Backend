@@ -50,78 +50,47 @@ namespace Menro.Application.Features.Identity.Services
             var phone = NormalizeIranMobileToE164(phoneNumber);
             var now = DateTime.UtcNow;
 
-            var code = RandomNumberGenerator
-                .GetInt32(0, 1_000_000)
-                .ToString("D6");
+            var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
 
-            var send = await _smsSender.SendOtpAsync(
-                phone,
-                $"کد تایید شما: {code}");
-
+            var send = await _smsSender.SendOtpAsync(phone, $"کد تایید شما: {code}");
             if (!send.IsSuccess)
                 throw new Exception($"SMS failed: {send.ProviderMessage}");
 
-            var otp = new Otp
+            await _uow.Otp.AddAsync(new Otp
             {
                 PhoneNumber = phone,
                 Code = ComputeHash(code),
                 CreatedAt = now,
                 ExpirationTime = now.AddMinutes(2),
                 IsUsed = false
-            };
+            });
 
-            await _uow.Otp.AddAsync(otp);
             await _uow.SaveChangesAsync();
         }
 
-        private static string NormalizeIranMobileToE164(string phoneNumber)
-        {
-            if (string.IsNullOrWhiteSpace(phoneNumber))
-                throw new Exception("شماره موبایل الزامی است.");
-
-            var phone = phoneNumber.Trim()
-                .Replace(" ", "")
-                .Replace("-", "");
-
-            if (phone.StartsWith("+98"))
-                return phone;
-
-            if (phone.StartsWith("0098"))
-                return "+" + phone[2..];
-
-            if (phone.StartsWith("98"))
-                return "+" + phone;
-
-            if (phone.StartsWith("0"))
-                return "+98" + phone[1..];
-
-            if (phone.Length == 10 && phone.StartsWith("9"))
-                return "+98" + phone;
-
-            throw new Exception("فرمت شماره موبایل معتبر نیست.");
-        }        // verification
+        // verify otp
         public async Task<bool> VerifyOtpAsync(string phoneNumber, string code)
         {
             try
             {
-                var otp = await _uow.Otp.GetLatestUnexpiredAsync(phoneNumber);
+                var phone = NormalizeIranMobileToE164(phoneNumber);
+                var otp = await _uow.Otp.GetLatestUnexpiredAsync(phone);
                 if (otp is null || otp.Code != ComputeHash(code))
                     return false;
 
                 otp.IsUsed = true;
-
                 await _uow.Otp.UpdateAsync(otp);
                 await _uow.SaveChangesAsync();
 
-                await PhoneConfirmed(phoneNumber);
-
+                await PhoneConfirmed(phone);
                 return true;
             }
-            catch (Exception)
+            catch
             {
                 return false;
             }
         }
+
         public async Task<bool> VerifyPasswordAsync(string phoneNumber, string password)
         {
             var user = await _userService.GetByPhoneNumberAsync(phoneNumber);
@@ -275,7 +244,7 @@ namespace Menro.Application.Features.Identity.Services
         }
 
 
-        /*--- misc. ---*/
+        /*--- utilities ---*/
 
         // hash token for save in db
         public static string ComputeHash(string input)
@@ -302,6 +271,22 @@ namespace Menro.Application.Features.Identity.Services
             }
             return true;
         }
+
+        // phonenumber normalize
+        private static string NormalizeIranMobileToE164(string phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                throw new Exception("شماره موبایل الزامی است.");
+
+            var p = phoneNumber.Trim().Replace(" ", "").Replace("-", "");
+            return p.StartsWith("+98") ? p :
+                   p.StartsWith("0098") ? "+" + p[2..] :
+                   p.StartsWith("98") ? "+" + p :
+                   p.StartsWith("0") && p.Length == 11 ? "+98" + p[1..] :
+                   p.Length == 10 && p.StartsWith("9") ? "+98" + p :
+                   throw new Exception("فرمت شماره موبایل معتبر نیست.");
+        }
+
 
     }
 }
