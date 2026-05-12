@@ -112,7 +112,7 @@ builder.Services.AddMemoryCache();
 #region API & MVC
 
 builder.Services
-    .AddControllersWithViews()
+    .AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -182,9 +182,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+//app.MapControllerRoute(
+//    name: "default",
+//    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 #endregion
 
