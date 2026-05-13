@@ -197,6 +197,20 @@ if (app.Environment.IsProduction())
     await dbInitializer.InitializeAsync();
 }
 
+//using (var scope = app.Services.CreateScope())
+//{
+//    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+//    await dbInitializer.InitializeAsync();
+//}
+
+//if (!app.Environment.IsProduction())
+//{
+//    using var scope = app.Services.CreateScope();
+//    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+//    await dbInitializer.InitializeAsync();
+//}
+
+
 #endregion
 
 app.Run();
