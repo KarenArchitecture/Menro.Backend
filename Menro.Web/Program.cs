@@ -23,16 +23,55 @@ using Menro.Web.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
+#region Required Configuration Validation
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is missing. Set Environment Variable: ConnectionStrings__DefaultConnection");
+}
+
+var jwtSecret = builder.Configuration["JwtSettings:Secret"];
+
+if (string.IsNullOrWhiteSpace(jwtSecret))
+{
+    throw new InvalidOperationException(
+        "JWT secret is missing. Set Environment Variable: JwtSettings__Secret");
+}
+
+var jwtIssuer = builder.Configuration["JwtSettings:Issuer"];
+
+if (string.IsNullOrWhiteSpace(jwtIssuer))
+{
+    throw new InvalidOperationException(
+        "JWT issuer is missing. Configure JwtSettings:Issuer in appsettings.Production.json");
+}
+
+var jwtAudience = builder.Configuration["JwtSettings:Audience"];
+
+if (string.IsNullOrWhiteSpace(jwtAudience))
+{
+    throw new InvalidOperationException(
+        "JWT audience is missing. Configure JwtSettings:Audience in appsettings.Production.json");
+}
+
+#endregion
+
 #region DbContext & Identity
 
 builder.Services.AddDbContext<MenroDbContext>(options =>
 {
-    var conn = builder.Configuration.GetConnectionString("DefaultConnection");
-
-    if (builder.Environment.IsDevelopment())
-        options.UseSqlServer(conn);
-    else
-        options.UseNpgsql(conn);
+    options.UseSqlServer(
+        connectionString,
+        sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null);
+        });
 });
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -51,6 +90,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 #region Authentication & JWT
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+
 builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtSettings>>().Value);
 
@@ -67,11 +107,14 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-        ValidAudience = builder.Configuration["JwtSettings:Audience"],
+
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"])
+            Encoding.UTF8.GetBytes(jwtSecret)
         ),
+
         ClockSkew = TimeSpan.Zero,
         NameClaimType = ClaimTypes.NameIdentifier,
         RoleClaimType = ClaimTypes.Role
@@ -109,7 +152,7 @@ builder.Services.AddMemoryCache();
 
 #endregion
 
-#region API & MVC
+#region API
 
 builder.Services
     .AddControllers()
@@ -122,6 +165,7 @@ builder.Services
     });
 
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Menro API", Version = "v1" });
@@ -136,12 +180,12 @@ builder.Services.AddApiVersioning(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactDevClient", policy =>
+    options.AddPolicy("AllowReactClient", policy =>
     {
         policy.WithOrigins(
             "http://localhost:5173",
             "https://localhost:5173",
-            "http://89.33.129.91"
+            "http://89.33.129.71"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
@@ -162,16 +206,20 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
-app.UseCors("AllowReactDevClient");
+// فعلاً چون SSL/domain نداری و BaseUrl روی http است، این را فعال نکن.
+// وقتی HTTPS واقعی راه افتاد، این خط را برگردان.
+// app.UseHttpsRedirection();
+
 app.UseStaticFiles();
+
 app.UseErrorHandlingMiddleware();
 
 app.UseRouting();
+
+app.UseCors("AllowReactClient");
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -181,10 +229,6 @@ app.UseAuthorization();
 #region Routing
 
 app.MapControllers();
-
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 #endregion
 
