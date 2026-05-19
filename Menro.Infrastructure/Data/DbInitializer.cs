@@ -36,6 +36,22 @@ namespace Menro.Infrastructure.Data
         private static readonly string[] Logos = { "/img/logo-orange.png", "/img/logo-green.png" };
         private static readonly string FoodFallbackImage = "/img/drink.png";
 
+        // ✅ Used by RestaurantAd.ImageFileName
+        // These should exist where BuildAdImageUrl expects ad images.
+        private static readonly string[] CarouselAdImages =
+        {
+            "res-slider.jpg",
+            "optcropban.jpg",
+            "top-banner.png"
+        };
+
+        private static readonly string[] FullscreenAdImages =
+        {
+            "ad-banner-1.jpg",
+            "ad-banner-2.png",
+            "top-banner.png"
+        };
+
         public DbInitializer(
             MenroDbContext db,
             RoleManager<IdentityRole> roleManager,
@@ -48,23 +64,22 @@ namespace Menro.Infrastructure.Data
             _restaurantService = restaurantService;
         }
 
-        // Seed Icons
         private async Task SeedIconsAsync()
         {
             if (await _db.Icons.AnyAsync()) return;
+
             _db.Icons.AddRange(IconSeed.Data);
             await _db.SaveChangesAsync();
         }
 
-        // Seed GlobalFoodCategories
         private async Task SeedGlobalFoodCategoriesAsync()
         {
             if (await _db.GlobalFoodCategories.AnyAsync()) return;
+
             _db.GlobalFoodCategories.AddRange(GlobalFoodCategorySeed.Data);
             await _db.SaveChangesAsync();
         }
 
-        // Food name pools for variety
         private static readonly Dictionary<string, string[]> FoodNamesByGlobal = new()
         {
             ["پیتزا"] = new[] { "پیتزا ناپلی", "پیتزا پپرونی", "پیتزا مارگاریتا", "پیتزا چهار فصل", "پیتزا قارچ و مرغ", "پیتزا ویژه", "پیتزا باربیکیو" },
@@ -90,6 +105,151 @@ namespace Menro.Infrastructure.Data
         private static int NextPrice(Random rnd, (int min, int max) range) =>
             rnd.Next(range.min, range.max + 1);
 
+        private async Task SeedRestaurantAdsAsync(Random rand)
+        {
+            // Prevent duplicate ads when initializer runs multiple times
+            if (await _db.RestaurantAds.AnyAsync())
+                return;
+
+            var now = DateTime.UtcNow;
+
+            var restaurants = await _db.Restaurants
+                .Where(r =>
+                    r.IsActive &&
+                    !r.IsDeleted &&
+                    r.Status == RestaurantStatus.Approved)
+                .OrderBy(r => r.Id)
+                .Take(10)
+                .ToListAsync();
+
+            if (!restaurants.Any())
+                return;
+
+            var carouselTexts = new[]
+            {
+                "افتتاحیه ویژه؛ تجربه‌ای تازه از طعم",
+                "پیشنهاد ویژه امروز فقط در منرو",
+                "غذاهای محبوب با ارسال سریع",
+                "طعم متفاوت، انتخاب هوشمندانه",
+                "رستوران منتخب این هفته"
+            };
+
+            var bannerTexts = new[]
+            {
+                "تخفیف ویژه سفارش آنلاین",
+                "پیشنهاد امروز را از دست ندهید",
+                "ارسال سریع، غذای تازه",
+                "طعم محبوب کاربران منرو",
+                "ویژه مشتریان منرو"
+            };
+
+            /* ============================================================
+               Main Slider Ads
+               Used by:
+               GET /api/public/restaurant/featured
+            ============================================================ */
+
+            var carouselCount = Math.Min(5, restaurants.Count);
+
+            for (int i = 0; i < carouselCount; i++)
+            {
+                var restaurant = restaurants[i];
+
+                var billingType = i % 2 == 0
+                    ? AdBillingType.PerDay
+                    : AdBillingType.PerClick;
+
+                var purchasedUnits = billingType == AdBillingType.PerDay
+                    ? rand.Next(7, 15)
+                    : rand.Next(500, 1500);
+
+                var ad = new RestaurantAd
+                {
+                    RestaurantId = restaurant.Id,
+
+                    PlacementType = AdPlacementType.MainSlider,
+                    BillingType = billingType,
+
+                    ImageFileName = CarouselAdImages[i % CarouselAdImages.Length],
+                    TargetUrl = restaurant.Slug,
+                    CommercialText = carouselTexts[i % carouselTexts.Length],
+
+                    CreatedAt = now.AddDays(-rand.Next(1, 5)),
+                    StartDate = now.AddDays(-1),
+
+                    EndDate = billingType == AdBillingType.PerDay
+                        ? now.AddDays(purchasedUnits)
+                        : now.AddMonths(3),
+
+                    PurchasedUnits = purchasedUnits,
+                    ConsumedUnits = 0,
+
+                    Cost = billingType == AdBillingType.PerDay
+                        ? purchasedUnits * 250_000
+                        : purchasedUnits * 2_000,
+
+                    Status = AdStatus.Approved,
+                    AdminNotes = null
+                };
+
+                _db.RestaurantAds.Add(ad);
+            }
+
+            /* ============================================================
+               Fullscreen Banner Ads
+               Used by:
+               GET /api/public/restaurant/ad-banner/random
+            ============================================================ */
+
+            var bannerRestaurants = restaurants
+                .OrderBy(_ => Guid.NewGuid())
+                .Take(TargetAdBanners)
+                .ToList();
+
+            for (int i = 0; i < bannerRestaurants.Count; i++)
+            {
+                var restaurant = bannerRestaurants[i];
+
+                var billingType = i % 2 == 0
+                    ? AdBillingType.PerView
+                    : AdBillingType.PerClick;
+
+                var purchasedUnits = billingType == AdBillingType.PerView
+                    ? rand.Next(3_000, 8_000)
+                    : rand.Next(400, 1200);
+
+                var ad = new RestaurantAd
+                {
+                    RestaurantId = restaurant.Id,
+
+                    PlacementType = AdPlacementType.FullscreenBanner,
+                    BillingType = billingType,
+
+                    ImageFileName = FullscreenAdImages[i % FullscreenAdImages.Length],
+                    TargetUrl = restaurant.Slug,
+                    CommercialText = bannerTexts[i % bannerTexts.Length],
+
+                    CreatedAt = now.AddDays(-rand.Next(1, 5)),
+                    StartDate = now.AddDays(-1),
+                    EndDate = now.AddMonths(3),
+
+                    PurchasedUnits = purchasedUnits,
+                    ConsumedUnits = 0,
+
+                    Cost = billingType == AdBillingType.PerView
+                        ? purchasedUnits * 500
+                        : purchasedUnits * 2_500,
+
+                    Status = AdStatus.Approved,
+                    AdminNotes = null
+                };
+
+                _db.RestaurantAds.Add(ad);
+            }
+
+            await _db.SaveChangesAsync();
+        }
+
         public async Task InitializeAsync()
         {
             try
@@ -101,7 +261,7 @@ namespace Menro.Infrastructure.Data
                     await _db.Database.MigrateAsync();
 
                 /* ============================================================
-                   Core Seeds (Icons + Globals + Roles + Admin)
+                   Core Seeds: Icons + Global Categories + Roles + Admin
                 ============================================================ */
                 await SeedIconsAsync();
                 await SeedGlobalFoodCategoriesAsync();
@@ -122,6 +282,7 @@ namespace Menro.Infrastructure.Data
                         FullName = "مدیر",
                         PhoneNumber = "+989486813486"
                     };
+
                     await _userManager.CreateAsync(admin, "@Admin123456");
                     await _userManager.AddToRoleAsync(admin, SD.Role_Admin);
                 }
@@ -146,7 +307,9 @@ namespace Menro.Infrastructure.Data
                 for (int i = 1; i <= RestaurantsToCreate; i++)
                 {
                     string email = $"owner{i}@menro.com";
-                    if (await _db.Users.AnyAsync(u => u.Email == email)) continue;
+
+                    if (await _db.Users.AnyAsync(u => u.Email == email))
+                        continue;
 
                     var owner = new User
                     {
@@ -155,11 +318,13 @@ namespace Menro.Infrastructure.Data
                         FullName = $"صاحب رستوران {i}",
                         PhoneNumber = $"0912{345678 + i}"
                     };
+
                     await _userManager.CreateAsync(owner, "Owner123!");
                     await _userManager.AddToRoleAsync(owner, SD.Role_Owner);
 
                     var restName = restNames[(i - 1) % restNames.Length];
-                    var slug = await _restaurantService.GenerateUniqueSlugAsync(restName.TransliterateToEnglish());
+                    var slug = await _restaurantService.GenerateUniqueSlugAsync(
+                        restName.TransliterateToEnglish());
 
                     var restaurant = new Restaurant
                     {
@@ -178,13 +343,11 @@ namespace Menro.Infrastructure.Data
                         OwnerUserId = owner.Id,
                         RestaurantCategoryId = (i % 8) + 1,
 
-                        // Keep these if your UI expects images; otherwise you can set some of them to null.
                         CarouselImageUrl = CarouselImages[(i - 1) % CarouselImages.Length],
                         BannerImageUrl = CardImages[(i - 1) % CardImages.Length],
                         ShopBannerImageUrl = ShopBannerImages[(i - 1) % ShopBannerImages.Length],
                         LogoImageUrl = Logos[(i - 1) % Logos.Length],
 
-                        // ✅ dynamic tables for checkout
                         TableCount = rand.Next(6, 21),
 
                         IsActive = true,
@@ -202,6 +365,7 @@ namespace Menro.Infrastructure.Data
                        Special Custom Categories
                     ------------------------- */
                     var specialCategoryNames = new[] { "پیشنهاد سرآشپز", "پرفروش‌ترین‌ها", "ویژه امروز" };
+
                     foreach (var specialName in specialCategoryNames)
                     {
                         var selectedGlobalCat = globalCats[rand.Next(globalCats.Count)];
@@ -212,10 +376,12 @@ namespace Menro.Infrastructure.Data
                             IconId = selectedGlobalCat.IconId,
                             RestaurantId = restaurant.Id
                         };
+
                         _db.CustomFoodCategories.Add(specialCat);
                         await _db.SaveChangesAsync();
 
                         var count = rand.Next(2, 4);
+
                         for (int f = 0; f < count; f++)
                         {
                             _db.Foods.Add(new Food
@@ -231,20 +397,24 @@ namespace Menro.Infrastructure.Data
                             });
                         }
                     }
+
                     await _db.SaveChangesAsync();
 
                     /* -------------------------
-                       Restaurant Categories (after global linking)
+                       Restaurant Categories
                     ------------------------- */
                     var catCount = rand.Next(MinCatsPerRestaurant, MaxCatsPerRestaurant + 1);
+
                     for (int c = 0; c < catCount; c++)
                     {
                         bool basedOnGlobal = rand.NextDouble() < 0.6;
 
                         CustomFoodCategory customCat;
+
                         if (basedOnGlobal && globalCats.Any())
                         {
                             var globalCat = globalCats[rand.Next(globalCats.Count)];
+
                             customCat = new CustomFoodCategory
                             {
                                 Name = globalCat.Name,
@@ -262,21 +432,27 @@ namespace Menro.Infrastructure.Data
                                 RestaurantId = restaurant.Id
                             };
                         }
+
                         string baseName = customCat.Name;
                         int duplicateCounter = 1;
-                        while (await _db.CustomFoodCategories.AnyAsync(x => x.RestaurantId == restaurant.Id && x.Name == customCat.Name))
+
+                        while (await _db.CustomFoodCategories.AnyAsync(x =>
+                            x.RestaurantId == restaurant.Id &&
+                            x.Name == customCat.Name))
                         {
                             duplicateCounter++;
                             customCat.Name = $"{baseName} {duplicateCounter}";
                         }
+
                         _db.CustomFoodCategories.Add(customCat);
                         await _db.SaveChangesAsync();
 
                         int foodCount = rand.Next(MinFoodsPerCategory, MaxFoodsPerCategory + 1);
-                        var pool = (customCat.GlobalCategoryId.HasValue &&
-                                    FoodNamesByGlobal.TryGetValue(customCat.Name, out var arr))
-                                   ? arr
-                                   : new[] { "آیتم ویژه", "آیتم محبوب", "غذای سرآشپز" };
+
+                        var pool = customCat.GlobalCategoryId.HasValue &&
+                                   FoodNamesByGlobal.TryGetValue(customCat.Name, out var arr)
+                            ? arr
+                            : new[] { "آیتم ویژه", "آیتم محبوب", "غذای سرآشپز" };
 
                         for (int k = 0; k < foodCount; k++)
                         {
@@ -292,12 +468,13 @@ namespace Menro.Infrastructure.Data
                                 IsAvailable = true
                             });
                         }
+
                         await _db.SaveChangesAsync();
                     }
-                } // end restaurant loop
+                }
 
                 /* ============================================================
-                   Variants + Addons (REALISTIC DISTRIBUTION, NO DUPLICATES)
+                   Variants + Addons
                 ============================================================ */
                 var seededFoods = await _db.Foods
                     .Include(f => f.Variants)
@@ -310,6 +487,7 @@ namespace Menro.Infrastructure.Data
                         continue;
 
                     double r = rand.NextDouble();
+
                     int variantCount =
                         (r < 0.30) ? 0 :
                         (r < 0.50) ? 1 :
@@ -320,7 +498,6 @@ namespace Menro.Infrastructure.Data
                         continue;
 
                     var basePrice = Math.Max(5000, food.Price);
-
                     var variants = new List<FoodVariant>();
 
                     if (variantCount >= 1)
@@ -332,6 +509,7 @@ namespace Menro.Infrastructure.Data
                             FoodId = food.Id
                         });
                     }
+
                     if (variantCount >= 2)
                     {
                         variants.Add(new FoodVariant
@@ -341,6 +519,7 @@ namespace Menro.Infrastructure.Data
                             FoodId = food.Id
                         });
                     }
+
                     if (variantCount == 3)
                     {
                         variants.Add(new FoodVariant
@@ -363,6 +542,7 @@ namespace Menro.Infrastructure.Data
                     foreach (var v in variants)
                     {
                         double addonRand = rand.NextDouble();
+
                         int addonsToCreate =
                             (addonRand < 0.40) ? 0 :
                             (addonRand < 0.70) ? 1 :
@@ -391,24 +571,30 @@ namespace Menro.Infrastructure.Data
                         }
                     }
                 }
+
                 await _db.SaveChangesAsync();
 
                 /* ============================================================
-                   Restaurant Discounts (new structure)
+                   Restaurant Discounts
                 ============================================================ */
                 var percentPool = new[] { 10, 15, 20, 25, 30 };
-                var allRestaurants = await _db.Restaurants.Include(x => x.Foods).ToListAsync();
+                var allRestaurants = await _db.Restaurants
+                    .Include(x => x.Foods)
+                    .ToListAsync();
 
                 foreach (var rr in allRestaurants)
                 {
-                    if (!rr.Foods.Any()) continue;
+                    if (!rr.Foods.Any())
+                        continue;
 
                     var discountedFoods = new List<int>();
+
                     foreach (var f in rr.Foods)
                     {
                         if (rand.NextDouble() < 0.35)
                         {
                             var percent = percentPool[rand.Next(percentPool.Length)];
+
                             _db.RestaurantDiscounts.Add(new RestaurantDiscount
                             {
                                 RestaurantId = rr.Id,
@@ -417,6 +603,7 @@ namespace Menro.Infrastructure.Data
                                 StartDate = DateTime.UtcNow.AddDays(-rand.Next(0, 2)),
                                 EndDate = DateTime.UtcNow.AddDays(rand.Next(7, 20))
                             });
+
                             discountedFoods.Add(percent);
                         }
                     }
@@ -427,22 +614,26 @@ namespace Menro.Infrastructure.Data
                         rr.Description += $"{maxDiscount}%";
                     }
                 }
+
                 await _db.SaveChangesAsync();
 
                 /* ============================================================
-                   Ratings (restaurants & foods)
+                   Ratings
                 ============================================================ */
                 var allUsers = await _db.Users.ToListAsync();
 
                 foreach (var rr in allRestaurants)
                 {
-                    if (await _db.RestaurantRatings.AnyAsync(x => x.RestaurantId == rr.Id)) continue;
+                    if (await _db.RestaurantRatings.AnyAsync(x => x.RestaurantId == rr.Id))
+                        continue;
 
                     int howMany = rand.Next(MinRestRatings, MaxRestRatings + 1);
-                    var voters = allUsers.Where(u => u.Id != rr.OwnerUserId)
-                                         .OrderBy(_ => Guid.NewGuid())
-                                         .Take(howMany)
-                                         .ToList();
+
+                    var voters = allUsers
+                        .Where(u => u.Id != rr.OwnerUserId)
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Take(howMany)
+                        .ToList();
 
                     foreach (var user in voters)
                     {
@@ -457,12 +648,18 @@ namespace Menro.Infrastructure.Data
                 }
 
                 var allFoodsFinal = await _db.Foods.ToListAsync();
+
                 foreach (var food in allFoodsFinal)
                 {
-                    if (await _db.FoodRatings.AnyAsync(fr => fr.FoodId == food.Id)) continue;
+                    if (await _db.FoodRatings.AnyAsync(fr => fr.FoodId == food.Id))
+                        continue;
 
                     int howMany = rand.Next(MinFoodRatings, MaxFoodRatings + 1);
-                    var voters = allUsers.OrderBy(_ => Guid.NewGuid()).Take(howMany).ToList();
+
+                    var voters = allUsers
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Take(howMany)
+                        .ToList();
 
                     foreach (var user in voters)
                     {
@@ -475,18 +672,20 @@ namespace Menro.Infrastructure.Data
                         });
                     }
                 }
+
                 await _db.SaveChangesAsync();
 
                 /* ============================================================
-                   Ad Banners
+                   Restaurant Ads: Carousel + Random Ad Banners
                 ============================================================ */
-                // (kept as-is, currently commented out)
+                await SeedRestaurantAdsAsync(rand);
 
                 /* ============================================================
-                   Demo Customer + Orders (with variants + addons + table code)
+                   Demo Customer + Orders
                 ============================================================ */
                 var demoPhone = "09121112233";
-                var demoCustomer = await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == demoPhone);
+                var demoCustomer = await _db.Users
+                    .FirstOrDefaultAsync(u => u.PhoneNumber == demoPhone);
 
                 if (demoCustomer == null)
                 {
@@ -496,6 +695,7 @@ namespace Menro.Infrastructure.Data
                         PhoneNumber = demoPhone,
                         FullName = "مشتری نمونه"
                     };
+
                     await _userManager.CreateAsync(demoCustomer, "Customer123!");
                     await _userManager.AddToRoleAsync(demoCustomer, SD.Role_Customer);
                 }
@@ -506,7 +706,6 @@ namespace Menro.Infrastructure.Data
                         .Include(v => v.Addons)
                         .ToListAsync();
 
-                    // ✅ include TableCount so we can seed valid numeric table codes
                     var restaurantInfos = await _db.Restaurants
                         .Where(x => x.IsActive && !x.IsDeleted)
                         .OrderBy(_ => Guid.NewGuid())
@@ -521,29 +720,28 @@ namespace Menro.Infrastructure.Data
                         var rid = info.Id;
 
                         var foods = await _db.Foods
-                            .Where(f => f.RestaurantId == rid && f.IsAvailable && !f.IsDeleted)
+                            .Where(f =>
+                                f.RestaurantId == rid &&
+                                f.IsAvailable &&
+                                !f.IsDeleted)
                             .OrderBy(_ => Guid.NewGuid())
                             .Take(rand.Next(2, 5))
                             .ToListAsync();
 
-                        if (!foods.Any()) continue;
+                        if (!foods.Any())
+                            continue;
 
                         decimal totalAmount = 0m;
                         var orderItems = new List<OrderItem>();
 
-                        // ✅ TableCode: "1".."N" OR "takeout" (NO 't' prefix)
-
-                        //string tableCode;
                         int? tableNumber;
+
                         if (rand.NextDouble() < 0.30 || info.TableCount <= 0)
                         {
-                            //tableCode = "takeout";
                             tableNumber = null;
                         }
                         else
                         {
-                            //var tblNum = rand.Next(1, info.TableCount + 1);
-                            //tableCode = tblNum.ToString();
                             tableNumber = rand.Next(1, info.TableCount + 1);
                         }
 
@@ -582,9 +780,7 @@ namespace Menro.Infrastructure.Data
                             foreach (var addon in variantAddons)
                             {
                                 if (rand.NextDouble() < 0.45)
-                                {
                                     selectedAddons.Add(addon);
-                                }
                             }
 
                             int addonsSum = selectedAddons.Sum(a => a.ExtraPrice);
@@ -599,9 +795,11 @@ namespace Menro.Infrastructure.Data
                                 Quantity = quantity,
                                 UnitPrice = finalUnitPrice,
                                 TitleSnapshot = $"{food.Name} - {chosenVariant.Name}",
+                                VariantTitleSnapshot = chosenVariant.Name,
                                 Extras = selectedAddons.Select(a => new OrderItemExtra
                                 {
                                     FoodAddonId = a.Id,
+                                    AddonTitleSnapshot = a.Name,
                                     ExtraPrice = a.ExtraPrice
                                 }).ToList()
                             };
@@ -609,7 +807,6 @@ namespace Menro.Infrastructure.Data
                             orderItems.Add(orderItem);
                         }
 
-                        // ✅ RestaurantOrderNumber is required; demo orders bypass OrderCreationService
                         var lastNumber = await _db.Orders
                             .Where(o => o.RestaurantId == rid)
                             .Select(o => (int?)o.RestaurantOrderNumber)
@@ -619,9 +816,7 @@ namespace Menro.Infrastructure.Data
                         {
                             UserId = demoCustomer.Id,
                             RestaurantId = rid,
-
                             RestaurantOrderNumber = lastNumber + 1,
-
                             TableNumber = tableNumber,
                             Status = OrderStatus.Completed,
                             CreatedAt = DateTime.UtcNow.AddDays(-dayOffset++),
