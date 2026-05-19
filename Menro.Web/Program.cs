@@ -22,6 +22,8 @@ using Menro.Web.Services;
 using Menro.Web.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
+var isDevelopment = builder.Environment.IsDevelopment();
+
 
 #region Required Configuration Validation
 
@@ -182,17 +184,25 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactClient", policy =>
     {
-        policy.WithOrigins(
-            "http://localhost:5173",
-            "https://localhost:5173",
-            "http://89.33.129.71"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        if (isDevelopment)
+        {
+            policy.WithOrigins(
+                "http://localhost:5173",
+                "https://localhost:5173"
+            );
+        }
+        else // isProdustion
+        {
+            policy.WithOrigins(
+                "http://89.33.129.71"
+            );
+        }
+
+        policy.AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
-
 #endregion
 
 var app = builder.Build();
@@ -229,6 +239,14 @@ app.UseAuthorization();
 #region Routing
 
 app.MapControllers();
+app.MapGet("/health", () => Results.Ok(new
+{
+    status = "Healthy",
+    app = "Menro API",
+    environment = app.Environment.EnvironmentName,
+    time = DateTime.UtcNow
+}))
+.AllowAnonymous();
 
 #endregion
 

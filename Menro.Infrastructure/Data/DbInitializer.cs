@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Menro.Application.Extensions; // for TransliterateToEnglish()
 using Menro.Application.Restaurants.Services.Interfaces; // for IRestaurantService
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Menro.Infrastructure.Data
 {
@@ -32,7 +36,7 @@ namespace Menro.Infrastructure.Data
         private static readonly string[] BannerImages = { "/img/top-banner.png", "/img/optcropban.jpg", "/img/res-slider.jpg" };
         private static readonly string[] CarouselImages = { "/img/res-slider.jpg", "/img/optcropban.jpg" };
         private static readonly string[] CardImages = { "/img/res-card-1.png", "/img/res-card-2.png" };
-        private static readonly string[] ShopBannerImages = { "/img/ad-banner-1.jpg", "/img/ad-banner-2.png" };
+        private static readonly string[] ShopBannerImages = { "/img/ad-banner-1.jpg", "/img/ad-banner-2.jpg" };
         private static readonly string[] Logos = { "/img/logo-orange.png", "/img/logo-green.png" };
         private static readonly string FoodFallbackImage = "/img/drink.png";
 
@@ -140,6 +144,37 @@ namespace Menro.Infrastructure.Data
                 {
                     Console.WriteLine("Warning: Icons table was not found. If Icons is part of your current model, create a new migration or check existing migrations.");
                 }
+
+                // ================= Minimal Production Seeding =================
+                // Roles
+                string[] roles = { SD.Role_Admin, SD.Role_Owner, SD.Role_Customer };
+                foreach (var role in roles)
+                {
+                    if (!await _roleManager.RoleExistsAsync(role))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(role));
+                        Console.WriteLine($"Role created: {role}");
+                    }
+                }
+
+                // Admin user
+                if (!await _db.Users.AnyAsync(u => u.Email == "MenroAdmin@gmail.com"))
+                {
+                    var admin = new User
+                    {
+                        UserName = "MenroAdmin_1",
+                        Email = "MenroAdmin@gmail.com",
+                        FullName = "مدیر",
+                        PhoneNumber = "+989486813486"
+                    };
+                    await _userManager.CreateAsync(admin, "@Admin123456");
+                    await _userManager.AddToRoleAsync(admin, SD.Role_Admin);
+                    Console.WriteLine("Admin user seeded.");
+                }
+
+                // Seed minimal essential data if tables empty
+                await SeedIconsAsync();
+                await SeedGlobalFoodCategoriesAsync();
 
                 Console.WriteLine("Database initialization completed successfully.");
                 Console.WriteLine("===================================================");
