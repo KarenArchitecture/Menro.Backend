@@ -54,10 +54,11 @@ namespace Menro.Web.Controllers.AdminPanel
         }
 
         [HttpPost("upload-ad-image")]
+        [Consumes("multipart/form-data")]
         [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> UploadAdImage([FromForm] IFormFile file)
+        public async Task<IActionResult> UploadAdImage([FromForm] UploadAdImageDto dto)
         {
-            string fileName = await _fileService.UploadAdImageAsync(file);
+            string fileName = await _fileService.UploadAdImageAsync(dto.File);
 
             return Ok(fileName);
         }

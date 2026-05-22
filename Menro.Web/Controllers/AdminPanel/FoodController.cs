@@ -5,6 +5,7 @@ using Menro.Application.Foods.DTOs;
 using Menro.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace Menro.Web.Controllers.AdminPanel
 {
@@ -145,31 +146,40 @@ namespace Menro.Web.Controllers.AdminPanel
         // ✅
         [HttpPost("upload-food-image")]
         [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> UploadFoodImage([FromForm] IFormFile file)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadFoodImage(
+            [FromForm] UploadFoodImageDto dto)
         {
+            var file = dto.File;
+
             if (file == null || file.Length == 0)
                 return BadRequest("هیچ فایلی ارسال نشده است.");
 
-            // Allowed extensions
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
 
             if (!allowedExtensions.Contains(ext))
-                return BadRequest("فرمت فایل مجاز نیست. فقط jpg, jpeg, png, webp");
+                return BadRequest("فرمت فایل مجاز نیست.");
 
-            // Max size (مثلاً 2MB)
             if (file.Length > 2 * 1024 * 1024)
                 return BadRequest("حجم فایل نباید بیش از 2 مگابایت باشد.");
 
             try
             {
                 var fileName = await _fileService.UploadFoodImageAsync(file);
-                return Ok(fileName);
+
+                return Ok(new
+                {
+                    fileName
+                });
             }
             catch (Exception ex)
             {
-                // می‌تونی Log هم بزنی
-                return StatusCode(500, new { message = "خطا در ذخیره‌سازی فایل", error = ex.Message });
+                return StatusCode(500, new
+                {
+                    message = "خطا در ذخیره‌سازی فایل",
+                    error = ex.Message
+                });
             }
         }
     }

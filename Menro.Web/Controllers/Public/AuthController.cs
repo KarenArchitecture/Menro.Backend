@@ -136,7 +136,7 @@ namespace Menro.Web.Controllers.Public
                 Response.Cookies.Append("menro.rtk", refreshToken, new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = true,
+                    Secure = false,
                     SameSite = SameSiteMode.Strict,
                     Expires = DateTime.UtcNow.AddDays(20)
                 });
@@ -161,7 +161,7 @@ namespace Menro.Web.Controllers.Public
             Response.Cookies.Delete("menro.rtk", new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,
+                Secure = false,
                 SameSite = SameSiteMode.Strict
             });
 
@@ -199,7 +199,7 @@ namespace Menro.Web.Controllers.Public
                 Response.Cookies.Append("menro.rtk", newRefresh, new CookieOptions
                 {
                     HttpOnly = true,
-                    Secure = true,
+                    Secure = false,
                     SameSite = SameSiteMode.Strict,
                     Expires = DateTime.UtcNow.AddDays(20)
                 });
@@ -311,3 +311,6 @@ namespace Menro.Web.Controllers.Public
 
     }
 }
+
+// Secure = false, => Secure = true,
+// بعد از اینکه https رو وصل کردیم

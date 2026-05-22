@@ -156,21 +156,24 @@ builder.Services.AddMemoryCache();
 
 #region API
 
-builder.Services
-    .AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
-        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+builder.Services.AddControllers()
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Menro API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Menro API",
+        Version = "v1"
+    });
 });
 
 builder.Services.AddApiVersioning(options =>
@@ -184,19 +187,22 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactClient", policy =>
     {
-        policy.WithOrigins(
+        var origins = new[]
+        {
             "http://localhost:5173",
             "https://localhost:5173",
             "http://89.33.129.71",
             "https://89.33.129.71"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+        };
+
+        policy.WithOrigins(origins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
-#endregion
 
+#endregion
 var app = builder.Build();
 
 #region Middleware
@@ -208,8 +214,17 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseHsts();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Menro API v1");
+        c.RoutePrefix = "swagger"; // مهم
+    });
 }
+//else
+//{
+//    app.UseHsts();
+//}
 
 // فعلاً چون SSL/domain نداری و BaseUrl روی http است، این را فعال نکن.
 // وقتی HTTPS واقعی راه افتاد، این خط را برگردان.
