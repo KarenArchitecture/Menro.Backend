@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Menro.Web.Controllers.User
 {
     [ApiController]
-    [Route("api/user/[controller]")]
+    [Route("api/user")]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;

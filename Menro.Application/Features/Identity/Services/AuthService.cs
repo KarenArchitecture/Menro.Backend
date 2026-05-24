@@ -50,11 +50,18 @@ namespace Menro.Application.Features.Identity.Services
             var phone = NormalizeIranMobileToE164(phoneNumber);
             var now = DateTime.UtcNow;
 
+            // برای تست و Development
+            var code = "123456";
+
+            /*
+            // نسخه Production (ارسال واقعی SMS)
             var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
 
             var send = await _smsSender.SendOtpAsync(phone, $"کد تایید شما: {code}");
+
             if (!send.IsSuccess)
                 throw new Exception($"SMS failed: {send.ProviderMessage}");
+            */
 
             await _uow.Otp.AddAsync(new Otp
             {
@@ -67,7 +74,6 @@ namespace Menro.Application.Features.Identity.Services
 
             await _uow.SaveChangesAsync();
         }
-
         // verify otp
         public async Task<bool> VerifyOtpAsync(string phoneNumber, string code)
         {
