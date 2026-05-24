@@ -26,6 +26,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="wwwroot\img\.picasaoriginals\ad-banner-1.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.11" />
@@ -54,8 +58,11 @@
     <Folder Include="wwwroot\img\adBanner\" />
     <Folder Include="wwwroot\img\food\" />
     <Folder Include="wwwroot\img\profile\" />
-    <Folder Include="wwwroot\img\restaurants\home\" />
-    <Folder Include="wwwroot\img\restaurants\shop\" />
+    <Folder Include="wwwroot\audio\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\img\.picasaoriginals\.picasa.ini" />
   </ItemGroup>
 
 </Project>

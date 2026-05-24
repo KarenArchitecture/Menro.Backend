@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Menro.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initiate : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -296,8 +296,7 @@ namespace Menro.Infrastructure.Migrations
                         name: "FK_GlobalFoodCategories_Icons_IconId",
                         column: x => x.IconId,
                         principalTable: "Icons",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -325,7 +324,7 @@ namespace Menro.Infrastructure.Migrations
                     NationalCode = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     BankAccountNumber = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
                     ShebaNumber = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
-                    OwnerUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    OwnerUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     RestaurantCategoryId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -335,14 +334,13 @@ namespace Menro.Infrastructure.Migrations
                         name: "FK_Restaurants_AspNetUsers_OwnerUserId",
                         column: x => x.OwnerUserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Restaurants_RestaurantCategories_RestaurantCategoryId",
                         column: x => x.RestaurantCategoryId,
                         principalTable: "RestaurantCategories",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -365,14 +363,12 @@ namespace Menro.Infrastructure.Migrations
                         name: "FK_CustomFoodCategories_GlobalFoodCategories_GlobalCategoryId",
                         column: x => x.GlobalCategoryId,
                         principalTable: "GlobalFoodCategories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_CustomFoodCategories_Icons_IconId",
                         column: x => x.IconId,
                         principalTable: "Icons",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_CustomFoodCategories_Restaurants_RestaurantId",
                         column: x => x.RestaurantId,
@@ -389,10 +385,10 @@ namespace Menro.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RestaurantOrderNumber = table.Column<int>(type: "int", nullable: false),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    RestaurantId = table.Column<int>(type: "int", nullable: false),
+                    RestaurantId = table.Column<int>(type: "int", nullable: true),
                     TotalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     TableNumber = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -402,14 +398,12 @@ namespace Menro.Infrastructure.Migrations
                         name: "FK_Orders_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Orders_Restaurants_RestaurantId",
                         column: x => x.RestaurantId,
                         principalTable: "Restaurants",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -441,7 +435,7 @@ namespace Menro.Infrastructure.Migrations
                         column: x => x.RestaurantId,
                         principalTable: "Restaurants",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -469,7 +463,7 @@ namespace Menro.Infrastructure.Migrations
                         column: x => x.RestaurantId,
                         principalTable: "Restaurants",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -491,13 +485,13 @@ namespace Menro.Infrastructure.Migrations
                         column: x => x.RestaurantId,
                         principalTable: "Restaurants",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Subscriptions_SubscriptionPlans_SubscriptionPlanId",
                         column: x => x.SubscriptionPlanId,
                         principalTable: "SubscriptionPlans",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -510,7 +504,6 @@ namespace Menro.Infrastructure.Migrations
                     Ingredients = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Price = table.Column<int>(type: "int", nullable: false),
-                    Discount = table.Column<int>(type: "int", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsAvailable = table.Column<bool>(type: "bit", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
@@ -542,6 +535,38 @@ namespace Menro.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Discounts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Scope = table.Column<int>(type: "int", nullable: false),
+                    RestaurantId = table.Column<int>(type: "int", nullable: true),
+                    FoodId = table.Column<int>(type: "int", nullable: true),
+                    ValueType = table.Column<int>(type: "int", nullable: false),
+                    Value = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Discounts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Discounts_Foods_FoodId",
+                        column: x => x.FoodId,
+                        principalTable: "Foods",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Discounts_Restaurants_RestaurantId",
+                        column: x => x.RestaurantId,
+                        principalTable: "Restaurants",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "FoodRatings",
                 columns: table => new
                 {
@@ -566,7 +591,7 @@ namespace Menro.Infrastructure.Migrations
                         column: x => x.FoodId,
                         principalTable: "Foods",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -589,35 +614,6 @@ namespace Menro.Infrastructure.Migrations
                         name: "FK_FoodVariants_Foods_FoodId",
                         column: x => x.FoodId,
                         principalTable: "Foods",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RestaurantDiscounts",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RestaurantId = table.Column<int>(type: "int", nullable: false),
-                    FoodId = table.Column<int>(type: "int", nullable: true),
-                    Percent = table.Column<int>(type: "int", nullable: false),
-                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RestaurantDiscounts", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_RestaurantDiscounts_Foods_FoodId",
-                        column: x => x.FoodId,
-                        principalTable: "Foods",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_RestaurantDiscounts_Restaurants_RestaurantId",
-                        column: x => x.RestaurantId,
-                        principalTable: "Restaurants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -665,8 +661,7 @@ namespace Menro.Infrastructure.Migrations
                         name: "FK_OrderItems_FoodVariants_FoodVariantId",
                         column: x => x.FoodVariantId,
                         principalTable: "FoodVariants",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_OrderItems_Foods_FoodId",
                         column: x => x.FoodId,
@@ -678,7 +673,7 @@ namespace Menro.Infrastructure.Migrations
                         column: x => x.OrderId,
                         principalTable: "Orders",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -699,8 +694,7 @@ namespace Menro.Infrastructure.Migrations
                         name: "FK_OrderItemExtras_FoodAddons_FoodAddonId",
                         column: x => x.FoodAddonId,
                         principalTable: "FoodAddons",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_OrderItemExtras_OrderItems_OrderItemId",
                         column: x => x.OrderItemId,
@@ -786,6 +780,16 @@ namespace Menro.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Discounts_FoodId",
+                table: "Discounts",
+                column: "FoodId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Discounts_RestaurantId",
+                table: "Discounts",
+                column: "RestaurantId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_FoodAddons_FoodVariantId",
                 table: "FoodAddons",
                 column: "FoodVariantId");
@@ -865,7 +869,8 @@ namespace Menro.Infrastructure.Migrations
                 name: "IX_Orders_RestaurantId_RestaurantOrderNumber",
                 table: "Orders",
                 columns: new[] { "RestaurantId", "RestaurantOrderNumber" },
-                unique: true);
+                unique: true,
+                filter: "[RestaurantId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_UserId",
@@ -873,30 +878,8 @@ namespace Menro.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RestaurantAds_PlacementType_Status_CreatedAt",
-                table: "RestaurantAds",
-                columns: new[] { "PlacementType", "Status", "CreatedAt" })
-                .Annotation("SqlServer:Include", new[] { "StartDate", "EndDate", "BillingType", "ConsumedUnits", "PurchasedUnits", "RestaurantId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RestaurantAds_PlacementType_Status_Id",
-                table: "RestaurantAds",
-                columns: new[] { "PlacementType", "Status", "Id" })
-                .Annotation("SqlServer:Include", new[] { "StartDate", "EndDate", "BillingType", "ConsumedUnits", "PurchasedUnits", "RestaurantId" });
-
-            migrationBuilder.CreateIndex(
                 name: "IX_RestaurantAds_RestaurantId",
                 table: "RestaurantAds",
-                column: "RestaurantId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RestaurantDiscounts_FoodId",
-                table: "RestaurantDiscounts",
-                column: "FoodId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_RestaurantDiscounts_RestaurantId",
-                table: "RestaurantDiscounts",
                 column: "RestaurantId");
 
             migrationBuilder.CreateIndex(
@@ -959,6 +942,9 @@ namespace Menro.Infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "Discounts");
+
+            migrationBuilder.DropTable(
                 name: "FoodRatings");
 
             migrationBuilder.DropTable(
@@ -975,9 +961,6 @@ namespace Menro.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "RestaurantAds");
-
-            migrationBuilder.DropTable(
-                name: "RestaurantDiscounts");
 
             migrationBuilder.DropTable(
                 name: "RestaurantRatings");

@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace Menro.Web.Services.Implementations
 {
@@ -11,65 +12,73 @@ namespace Menro.Web.Services.Implementations
             _baseUrl = config["AppSettings:BaseUrl"]?.TrimEnd('/') ?? "";
         }
 
+        private string Clean(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return "";
+
+            return path
+                .Replace("\\", "/")
+                .Trim()
+                .TrimStart('/')
+                .TrimEnd();
+        }
+
+        private string Normalize(string fileName)
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                return "";
+
+            var cleaned = Clean(fileName);
+
+            // remove accidental img/ prefix
+            if (cleaned.StartsWith("img/"))
+                cleaned = cleaned["img/".Length..];
+
+            return cleaned;
+        }
+
         public string BuildFileUrl(string relativePath)
         {
-            return $"{_baseUrl}/{relativePath.TrimStart('/')}";
+            var cleanPath = Clean(relativePath);
+            return $"{_baseUrl}/{cleanPath}";
         }
-        /*--------------*/
-        /*--- icons  ---*/
-        /*--------------*/
+
+        /* ICONS */
         public string BuildIconUrl(string fileName)
-        {
-            return BuildFileUrl($"icons/{fileName}");
-        }
+            => BuildFileUrl($"icons/{Normalize(fileName)}");
 
-        /*--------------*/
-        /*--- images ---*/
-        /*--------------*/
-        // general
+        /* GENERAL IMAGES */
         public string BuildImageUrl(string fileName)
-        {
-            return BuildFileUrl($"img/{fileName}");
-        }
-        
-        // profile
+            => BuildFileUrl($"img/{Normalize(fileName)}");
+
+        /* PROFILE */
         public string BuildProfileImageUrl(string fileName)
-        {
-            return BuildFileUrl($"img/profile/{fileName}");
-        }
-        
-        // ad
+            => BuildFileUrl($"img/profile/{Normalize(fileName)}");
+
+        /* ADS */
         public string BuildAdImageUrl(string fileName)
-        {
-            return BuildFileUrl($"img/adBanner/{fileName}");
-        }
+            => BuildFileUrl($"img/ads/banner/{Normalize(fileName)}");
 
-        // food
+        public string BuildCarouselImageUrl(string fileName)
+            => BuildFileUrl($"img/ads/carousel/{Normalize(fileName)}");
+
+        /* FOOD */
         public string BuildFoodImageUrl(string fileName)
-        {
-            return BuildFileUrl($"img/food/{fileName}");
-        }
-        
-        // restaurant
-        public string BuildRestaurantHomeBannerUrl(string fileName)
-        {
-            return BuildFileUrl($"img/restaurants/home/{fileName}");
-        }
-        public string BuildRestaurantShopBannerUrl(string fileName)
-        {
-            return BuildFileUrl($"img/restaurants/shop/{fileName}");
-        }
-        public string BuildRestaurantLogoUrl(string fileName)
-        {
-            return BuildFileUrl($"img/restaurants/logo/{fileName}");
-        }
+            => BuildFileUrl($"img/food/{Normalize(fileName)}");
 
-        /*--------------*/
-        /*--- audio  ---*/
-        /*--------------*/
+        /* RESTAURANTS */
+        public string BuildRestaurantHomeBannerUrl(string fileName)
+            => BuildFileUrl($"img/restaurant/home/{Normalize(fileName)}");
+
+        public string BuildRestaurantShopBannerUrl(string fileName)
+            => BuildFileUrl($"img/restaurant/shop/{Normalize(fileName)}");
+
+        public string BuildRestaurantLogoUrl(string fileName)
+            => BuildFileUrl($"img/restaurant/logo/{Normalize(fileName)}");
+
+        /* AUDIO */
         public string BuildAudioUrl(string fileName)
-        {
-            return BuildFileUrl($"audio/{fileName}");
-        }
+            => BuildFileUrl($"audio/{Normalize(fileName)}");
     }
 }

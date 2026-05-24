@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
-
+using Menro.Domain.Interfaces.Persistence;
 
 namespace Menro.Domain.Entities
 {
-    public class FoodVariant
+    public class FoodVariant : ISoftDeletable
     {
         [Key]
         public int Id { get; set; }

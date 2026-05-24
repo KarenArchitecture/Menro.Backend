@@ -2,6 +2,7 @@
 using Menro.Application.Features.Ads.DTOs;
 using Menro.Domain.Enums;
 using Menro.Domain.Rules;
+using Menro.Domain.Entities;
 
 namespace Menro.Application.Features.Ads.Services
 {

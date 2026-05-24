@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Menro.Infrastructure.Migrations
 {
     [DbContext(typeof(MenroDbContext))]
-    [Migration("20260509172300_Initiate")]
-    partial class Initiate
+    [Migration("20260524155641_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace Menro.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("AdPricingSetting", b =>
+            modelBuilder.Entity("Menro.Domain.Entities.AdPricingSetting", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -99,6 +99,53 @@ namespace Menro.Infrastructure.Migrations
                     b.ToTable("CustomFoodCategories");
                 });
 
+            modelBuilder.Entity("Menro.Domain.Entities.Discount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("FoodId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("RestaurantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Scope")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ValueType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FoodId");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.ToTable("Discounts");
+                });
+
             modelBuilder.Entity("Menro.Domain.Entities.Food", b =>
                 {
                     b.Property<int>("Id")
@@ -111,9 +158,6 @@ namespace Menro.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<int?>("CustomFoodCategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Discount")
                         .HasColumnType("int");
 
                     b.Property<int?>("GlobalFoodCategoryId")
@@ -393,20 +437,16 @@ namespace Menro.Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasColumnType("datetime2");
 
-                    b.Property<int>("RestaurantId")
+                    b.Property<int?>("RestaurantId")
                         .HasColumnType("int");
 
                     b.Property<int>("RestaurantOrderNumber")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
+                        .HasColumnType("int");
 
                     b.Property<int?>("TableNumber")
                         .HasColumnType("int");
@@ -424,7 +464,8 @@ namespace Menro.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.HasIndex("RestaurantId", "RestaurantOrderNumber")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[RestaurantId] IS NOT NULL");
 
                     b.ToTable("Orders");
                 });
@@ -591,7 +632,6 @@ namespace Menro.Infrastructure.Migrations
                         .HasColumnType("time");
 
                     b.Property<string>("OwnerUserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("RestaurantCategoryId")
@@ -684,14 +724,6 @@ namespace Menro.Infrastructure.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.HasIndex("PlacementType", "Status", "CreatedAt");
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("PlacementType", "Status", "CreatedAt"), new[] { "StartDate", "EndDate", "BillingType", "ConsumedUnits", "PurchasedUnits", "RestaurantId" });
-
-                    b.HasIndex("PlacementType", "Status", "Id");
-
-                    SqlServerIndexBuilderExtensions.IncludeProperties(b.HasIndex("PlacementType", "Status", "Id"), new[] { "StartDate", "EndDate", "BillingType", "ConsumedUnits", "PurchasedUnits", "RestaurantId" });
-
                     b.ToTable("RestaurantAds");
                 });
 
@@ -753,38 +785,6 @@ namespace Menro.Infrastructure.Migrations
                             Id = 8,
                             Name = "دریایی"
                         });
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.RestaurantDiscount", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("FoodId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Percent")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RestaurantId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FoodId");
-
-                    b.HasIndex("RestaurantId");
-
-                    b.ToTable("RestaurantDiscounts");
                 });
 
             modelBuilder.Entity("Menro.Domain.Entities.RestaurantRating", b =>
@@ -1086,13 +1086,11 @@ namespace Menro.Infrastructure.Migrations
                 {
                     b.HasOne("Menro.Domain.Entities.GlobalFoodCategory", "GlobalCategory")
                         .WithMany()
-                        .HasForeignKey("GlobalCategoryId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("GlobalCategoryId");
 
                     b.HasOne("Menro.Domain.Entities.Icon", "Icon")
                         .WithMany()
-                        .HasForeignKey("IconId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("IconId");
 
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
                         .WithMany("FoodCategories")
@@ -1103,6 +1101,21 @@ namespace Menro.Infrastructure.Migrations
                     b.Navigation("GlobalCategory");
 
                     b.Navigation("Icon");
+
+                    b.Navigation("Restaurant");
+                });
+
+            modelBuilder.Entity("Menro.Domain.Entities.Discount", b =>
+                {
+                    b.HasOne("Menro.Domain.Entities.Food", "Food")
+                        .WithMany("Discounts")
+                        .HasForeignKey("FoodId");
+
+                    b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
+                        .WithMany("Discounts")
+                        .HasForeignKey("RestaurantId");
+
+                    b.Navigation("Food");
 
                     b.Navigation("Restaurant");
                 });
@@ -1148,7 +1161,7 @@ namespace Menro.Infrastructure.Migrations
                     b.HasOne("Menro.Domain.Entities.Food", "Food")
                         .WithMany("Ratings")
                         .HasForeignKey("FoodId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Menro.Domain.Entities.User", "User")
@@ -1177,8 +1190,7 @@ namespace Menro.Infrastructure.Migrations
                 {
                     b.HasOne("Menro.Domain.Entities.Icon", "Icon")
                         .WithMany()
-                        .HasForeignKey("IconId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("IconId");
 
                     b.Navigation("Icon");
                 });
@@ -1187,14 +1199,11 @@ namespace Menro.Infrastructure.Migrations
                 {
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
                         .WithMany("Orders")
-                        .HasForeignKey("RestaurantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("RestaurantId");
 
                     b.HasOne("Menro.Domain.Entities.User", "User")
                         .WithMany("Orders")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("UserId");
 
                     b.Navigation("Restaurant");
 
@@ -1211,13 +1220,12 @@ namespace Menro.Infrastructure.Migrations
 
                     b.HasOne("Menro.Domain.Entities.FoodVariant", "FoodVariant")
                         .WithMany()
-                        .HasForeignKey("FoodVariantId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("FoodVariantId");
 
                     b.HasOne("Menro.Domain.Entities.Order", "Order")
                         .WithMany("OrderItems")
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Food");
@@ -1231,8 +1239,7 @@ namespace Menro.Infrastructure.Migrations
                 {
                     b.HasOne("Menro.Domain.Entities.FoodAddon", "FoodAddon")
                         .WithMany()
-                        .HasForeignKey("FoodAddonId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("FoodAddonId");
 
                     b.HasOne("Menro.Domain.Entities.OrderItem", "OrderItem")
                         .WithMany("Extras")
@@ -1249,14 +1256,12 @@ namespace Menro.Infrastructure.Migrations
                 {
                     b.HasOne("Menro.Domain.Entities.User", "OwnerUser")
                         .WithMany("Restaurants")
-                        .HasForeignKey("OwnerUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("OwnerUserId");
 
                     b.HasOne("Menro.Domain.Entities.RestaurantCategory", "RestaurantCategory")
                         .WithMany("Restaurants")
                         .HasForeignKey("RestaurantCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("OwnerUser");
@@ -1269,26 +1274,8 @@ namespace Menro.Infrastructure.Migrations
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
                         .WithMany("Advertisements")
                         .HasForeignKey("RestaurantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Restaurant");
-                });
-
-            modelBuilder.Entity("Menro.Domain.Entities.RestaurantDiscount", b =>
-                {
-                    b.HasOne("Menro.Domain.Entities.Food", "Food")
-                        .WithMany()
-                        .HasForeignKey("FoodId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
-                        .WithMany("Discounts")
-                        .HasForeignKey("RestaurantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Food");
 
                     b.Navigation("Restaurant");
                 });
@@ -1298,7 +1285,7 @@ namespace Menro.Infrastructure.Migrations
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
                         .WithMany("Ratings")
                         .HasForeignKey("RestaurantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Menro.Domain.Entities.User", "User")
@@ -1317,13 +1304,13 @@ namespace Menro.Infrastructure.Migrations
                     b.HasOne("Menro.Domain.Entities.Restaurant", "Restaurant")
                         .WithOne("Subscription")
                         .HasForeignKey("Menro.Domain.Entities.Subscription", "RestaurantId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Menro.Domain.Entities.SubscriptionPlan", "SubscriptionPlan")
                         .WithMany("Subscriptions")
                         .HasForeignKey("SubscriptionPlanId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Restaurant");
@@ -1389,6 +1376,8 @@ namespace Menro.Infrastructure.Migrations
 
             modelBuilder.Entity("Menro.Domain.Entities.Food", b =>
                 {
+                    b.Navigation("Discounts");
+
                     b.Navigation("OrderItems");
 
                     b.Navigation("Ratings");

@@ -14,13 +14,12 @@ namespace Menro.Domain.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // FK to Food
-        [Required]
         public int FoodId { get; set; }
-        public Food Food { get; set; }
+        public Food? Food { get; set; }
 
         // FK to User
         [Required]
         public string UserId { get; set; } = string.Empty;
-        public User User { get; set; }
+        public User? User { get; set; }
     }
 }

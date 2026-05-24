@@ -13,7 +13,7 @@ namespace Menro.Domain.Entities
 
         public int SubscriptionPlanId { get; set; }
 
-        public SubscriptionPlan SubscriptionPlan { get; set; }
+        public SubscriptionPlan? SubscriptionPlan { get; set; }
 
         public DateTime StartDate { get; set; }
 

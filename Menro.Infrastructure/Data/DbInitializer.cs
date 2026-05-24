@@ -29,12 +29,12 @@ namespace Menro.Infrastructure.Data
         private const int MaxFoodRatings = 6;
         private const int TargetAdBanners = 5;
 
-        private static readonly string[] BannerImages = { "/img/top-banner.png", "/img/optcropban.jpg", "/img/res-slider.jpg" };
-        private static readonly string[] CarouselImages = { "/img/res-slider.jpg", "/img/optcropban.jpg" };
-        private static readonly string[] CardImages = { "/img/res-card-1.png", "/img/res-card-2.png" };
-        private static readonly string[] ShopBannerImages = { "/img/ad-banner-1.jpg", "/img/ad-banner-2.png" };
-        private static readonly string[] Logos = { "/img/logo-orange.png", "/img/logo-green.png" };
-        private static readonly string FoodFallbackImage = "/img/drink.png";
+        private static readonly string[] BannerImages = { "top-banner.png", "optcropban.jpg", "res-slider.jpg" };
+        private static readonly string[] CarouselImages = { "res-slider.jpg", "optcropban.jpg" };
+        private static readonly string[] CardImages = { "res-card-1.png", "res-card-2.png" };
+        private static readonly string[] ShopBannerImages = { "ad-banner-1.jpg", "ad-banner-2.png" };
+        private static readonly string[] Logos = { "logo-orange.png", "logo-green.png" };
+        private static readonly string FoodFallbackImage = "drink.png";
 
         // ✅ Used by RestaurantAd.ImageFileName
         // These should exist where BuildAdImageUrl expects ad images.
@@ -575,9 +575,11 @@ namespace Menro.Infrastructure.Data
                 await _db.SaveChangesAsync();
 
                 /* ============================================================
-                   Restaurant Discounts
-                ============================================================ */
-                var percentPool = new[] { 10, 15, 20, 25, 30 };
+   Restaurant Discounts (FINAL VERSION)
+============================================================ */
+
+                var percentPool = new[] { 10m, 15m, 20m, 25m, 30m };
+
                 var allRestaurants = await _db.Restaurants
                     .Include(x => x.Foods)
                     .ToListAsync();
@@ -587,35 +589,63 @@ namespace Menro.Infrastructure.Data
                     if (!rr.Foods.Any())
                         continue;
 
-                    var discountedFoods = new List<int>();
+                    // =========================================================
+                    // STEP 1: Only SOME restaurants get discounts
+                    // =========================================================
+                    bool hasDiscount = rand.NextDouble() < 0.35; // 35% only
 
-                    foreach (var f in rr.Foods)
+                    if (!hasDiscount)
+                        continue;
+
+                    decimal? maxDiscount = null;
+
+                    // =========================================================
+                    // STEP 2: Pick limited foods only (not whole menu)
+                    // =========================================================
+                    var discountedFoods = rr.Foods
+                        .OrderBy(_ => Guid.NewGuid())
+                        .Take(rand.Next(1, Math.Min(4, rr.Foods.Count))) // 1–3 foods usually
+                        .ToList();
+
+                    foreach (var f in discountedFoods)
                     {
-                        if (rand.NextDouble() < 0.35)
+                        // Not every selected food gets discount (adds realism)
+                        if (rand.NextDouble() < 0.5)
                         {
                             var percent = percentPool[rand.Next(percentPool.Length)];
 
-                            _db.RestaurantDiscounts.Add(new RestaurantDiscount
+                            var discount = new Discount
                             {
+                                Scope = DiscountScope.Food,
                                 RestaurantId = rr.Id,
                                 FoodId = f.Id,
-                                Percent = percent,
-                                StartDate = DateTime.UtcNow.AddDays(-rand.Next(0, 2)),
-                                EndDate = DateTime.UtcNow.AddDays(rand.Next(7, 20))
-                            });
 
-                            discountedFoods.Add(percent);
+                                ValueType = DiscountValueType.Percent,
+                                Value = percent,
+
+                                StartDate = DateTime.UtcNow.AddDays(-rand.Next(0, 3)),
+                                EndDate = DateTime.UtcNow.AddDays(rand.Next(5, 15)),
+
+                                IsActive = true,
+                                IsDeleted = false,
+                                CreatedAt = DateTime.UtcNow
+                            };
+
+                            _db.Discounts.Add(discount);
+
+                            if (!maxDiscount.HasValue || percent > maxDiscount.Value)
+                                maxDiscount = percent;
                         }
                     }
 
-                    if (discountedFoods.Any())
+                    // =========================================================
+                    // STEP 3: Only show meaningful max discount in description
+                    // =========================================================
+                    if (maxDiscount.HasValue && maxDiscount.Value >= 10)
                     {
-                        int maxDiscount = discountedFoods.Max();
-                        rr.Description += $"{maxDiscount}%";
+                        rr.Description += $" 🔥 تا {maxDiscount.Value}% تخفیف";
                     }
                 }
-
-                await _db.SaveChangesAsync();
 
                 /* ============================================================
                    Ratings
