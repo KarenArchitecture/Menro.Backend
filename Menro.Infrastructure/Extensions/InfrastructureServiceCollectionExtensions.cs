@@ -4,6 +4,7 @@ using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Settings;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
+using Menro.Infrastructure.Persistence;
 using Menro.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
