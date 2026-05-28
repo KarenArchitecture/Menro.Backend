@@ -3,7 +3,7 @@ using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.EntityFrameworkCore;
 
-namespace Menro.Infrastructure.Seed.Demo.Seeders;
+namespace Menro.Infrastructure.Data.Seed.Demo.Seeders;
 
 public class DemoVariantSeeder : IDataSeeder
 {

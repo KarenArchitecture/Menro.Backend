@@ -22,7 +22,7 @@ using Menro.Web.Services;
 using Menro.Web.Services.Implementations;
 using Menro.Infrastructure.Data.Seed.Core.Seeders;
 using Menro.Infrastructure.Data.Seed.Contracts;
-using Menro.Infrastructure.Seed.Demo.Seeders;
+using Menro.Infrastructure.Data.Seed.Demo.Seeders;
 
 var builder = WebApplication.CreateBuilder(args);
 var isDevelopment = builder.Environment.IsDevelopment();

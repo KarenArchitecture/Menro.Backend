@@ -8,7 +8,7 @@ using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Menro.Infrastructure.Seed.Demo.Seeders;
+namespace Menro.Infrastructure.Data.Seed.Demo.Seeders;
 
 public class DemoRestaurantSeeder : IDataSeeder
 {
@@ -115,7 +115,7 @@ public class DemoRestaurantSeeder : IDataSeeder
 
                 ContactNumber = owner.PhoneNumber!,
 
-                OpenTime = new TimeSpan(8 + (i % 4), 0, 0),
+                OpenTime = new TimeSpan(8 + i % 4, 0, 0),
                 CloseTime = new TimeSpan(21, 0, 0),
 
                 Description =
@@ -127,7 +127,7 @@ public class DemoRestaurantSeeder : IDataSeeder
 
                 OwnerUserId = owner.Id,
 
-                RestaurantCategoryId = (i % 8) + 1,
+                RestaurantCategoryId = i % 8 + 1,
 
                 CarouselImageUrl = "/img/res-slider.jpg",
                 BannerImageUrl = "/img/res-card-1.png",
