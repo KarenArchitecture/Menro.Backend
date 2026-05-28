@@ -154,13 +154,18 @@ namespace Menro.Web.Controllers.Public
             if (string.IsNullOrWhiteSpace(slug))
                 return BadRequest("Slug cannot be empty.");
 
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
             var menu = await _menuService.GetMenuBySlugAsync(slug);
+
+            sw.Stop();
+            Console.WriteLine($"[RestaurantController] GetMenuBySlugAsync for slug '{slug}' took: {sw.ElapsedMilliseconds} ms");
+
             if (menu == null || menu.Count == 0)
                 return NotFound("منوی این رستوران یافت نشد.");
 
             return Ok(menu);
         }
-
         #endregion
     }
 }

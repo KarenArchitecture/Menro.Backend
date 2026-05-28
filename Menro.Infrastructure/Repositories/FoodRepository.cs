@@ -97,25 +97,53 @@ namespace Menro.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        //public async Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug)
+        //{
+        //    return await _context.Foods
+        //        .AsNoTracking()
+        //        .Where(f =>
+        //            f.Restaurant.Slug == slug &&
+        //            f.IsAvailable &&
+        //            !f.IsDeleted &&
+        //            f.Restaurant.IsActive &&
+        //            f.Restaurant.Status == RestaurantStatus.Approved)
+        //        .Include(f => f.CustomFoodCategory)
+        //            .ThenInclude(c => c.Icon)
+        //        .Include(f => f.GlobalFoodCategory)
+        //            .ThenInclude(gc => gc.Icon)
+        //        .Include(f => f.Ratings)
+        //        .Include(f => f.Variants.Where(v => !v.IsDeleted && v.IsAvailable))
+        //        .Include(f => f.Restaurant)
+        //        .ToListAsync();
+        //}
+
         public async Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug)
         {
             return await _context.Foods
-                .AsNoTracking()
+                .AsNoTracking() // چون فقط برای نمایش است، Tracking را غیرفعال می‌کنیم
                 .Where(f =>
                     f.Restaurant.Slug == slug &&
                     f.IsAvailable &&
                     !f.IsDeleted &&
                     f.Restaurant.IsActive &&
                     f.Restaurant.Status == RestaurantStatus.Approved)
+                // لود کردن دسته‌بندی‌ها و آیکون‌ها
                 .Include(f => f.CustomFoodCategory)
                     .ThenInclude(c => c.Icon)
                 .Include(f => f.GlobalFoodCategory)
                     .ThenInclude(gc => gc.Icon)
+                // لود کردن امتیازها برای محاسبه AverageRating
                 .Include(f => f.Ratings)
+                // لود کردن واریانت‌های موجود و حذف نشده
                 .Include(f => f.Variants.Where(v => !v.IsDeleted && v.IsAvailable))
+                // لود کردن اطلاعات رستوران
                 .Include(f => f.Restaurant)
+                // نکته طلایی برای سرعت: جدا کردن کوئری‌ها برای جلوگیری از Cartesian Product
+                .AsSplitQuery()
                 .ToListAsync();
         }
+
+
 
         public async Task<List<Food>> GetByCategoryIdsAsync(List<int> categoryIds)
         {

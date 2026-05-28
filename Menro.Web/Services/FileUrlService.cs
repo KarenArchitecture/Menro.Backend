@@ -41,8 +41,16 @@ namespace Menro.Web.Services.Implementations
         public string BuildFileUrl(string relativePath)
         {
             var cleanPath = Clean(relativePath);
+
+            if (string.IsNullOrWhiteSpace(cleanPath))
+                return string.Empty;
+
+            if (string.IsNullOrWhiteSpace(_baseUrl))
+                return "/" + cleanPath;
+
             return $"{_baseUrl}/{cleanPath}";
         }
+
 
         /* ICONS */
         public string BuildIconUrl(string fileName)
