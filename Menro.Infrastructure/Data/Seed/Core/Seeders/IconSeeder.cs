@@ -13,7 +13,7 @@ public class IconSeeder : IDataSeeder
     {
         _db = db;
     }
-
+    public int Order => SeedOrder.Icon;
     public async Task SeedAsync()
     {
         if (await _db.Icons.AnyAsync())

@@ -1,5 +1,4 @@
 ﻿using Menro.Domain.Entities;
-using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,51 +7,78 @@ namespace Menro.Infrastructure.Data.Seed.Demo.Seeders;
 public class DemoRatingSeeder : IDataSeeder
 {
     private readonly MenroDbContext _db;
-
     private readonly Random _rand = new(42);
 
     public DemoRatingSeeder(MenroDbContext db)
     {
         _db = db;
     }
-
+    public int Order => SeedOrder.Rating;
     public async Task SeedAsync()
     {
-        if (await _db.RestaurantRatings.AnyAsync())
-            return;
-
-        var users = await _db.Users.ToListAsync();
-
+        var allUsers = await _db.Users.ToListAsync();
         var restaurants = await _db.Restaurants.ToListAsync();
+        var foods = await _db.Foods.ToListAsync();
 
-        var ratings = new List<RestaurantRating>();
+        /* =========================
+           Restaurant Ratings
+        ========================= */
 
         foreach (var restaurant in restaurants)
         {
-            var voters = users
-                .Where(x => x.Id != restaurant.OwnerUserId)
+            if (await _db.RestaurantRatings.AnyAsync(x => x.RestaurantId == restaurant.Id))
+                continue;
+
+            int howMany = _rand.Next(3, 8);
+
+            var voters = allUsers
+                .Where(u => u.Id != restaurant.OwnerUserId)
                 .OrderBy(_ => Guid.NewGuid())
-                .Take(_rand.Next(3, 8))
+                .Take(howMany)
                 .ToList();
 
             foreach (var user in voters)
             {
-                ratings.Add(new RestaurantRating
+                _db.RestaurantRatings.Add(new RestaurantRating
                 {
                     RestaurantId = restaurant.Id,
                     UserId = user.Id,
                     Score = _rand.Next(3, 6),
-                    CreatedAt =
-                        DateTime.UtcNow.AddDays(
-                            -_rand.Next(0, 60))
+                    CreatedAt = DateTime.UtcNow.AddDays(-_rand.Next(0, 60))
                 });
             }
         }
 
-        await _db.RestaurantRatings.AddRangeAsync(ratings);
+        /* =========================
+           Food Ratings
+        ========================= */
+
+        foreach (var food in foods)
+        {
+            if (await _db.FoodRatings.AnyAsync(fr => fr.FoodId == food.Id))
+                continue;
+
+            int howMany = _rand.Next(2, 7);
+
+            var voters = allUsers
+                .OrderBy(_ => Guid.NewGuid())
+                .Take(howMany)
+                .ToList();
+
+            foreach (var user in voters)
+            {
+                _db.FoodRatings.Add(new FoodRating
+                {
+                    FoodId = food.Id,
+                    UserId = user.Id,
+                    Score = _rand.Next(3, 6),
+                    CreatedAt = DateTime.UtcNow.AddDays(-_rand.Next(0, 45))
+                });
+            }
+        }
 
         await _db.SaveChangesAsync();
 
-        Console.WriteLine("[Seed] Restaurant ratings seeded.");
+        Console.WriteLine("[Seed] Demo ratings seeded.");
     }
 }

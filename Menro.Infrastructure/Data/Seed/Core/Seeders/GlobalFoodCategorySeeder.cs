@@ -1,5 +1,4 @@
-﻿using Menro.Infrastructure.Data;
-using Menro.Infrastructure.Data.Seed.Contracts;
+﻿using Menro.Infrastructure.Data.Seed.Contracts;
 using Menro.Infrastructure.Data.Seed.Core.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +12,7 @@ public class GlobalFoodCategorySeeder : IDataSeeder
     {
         _db = db;
     }
-
+    public int Order => SeedOrder.GlobalFoodCategory;
     public async Task SeedAsync()
     {
         if (await _db.GlobalFoodCategories.AnyAsync())

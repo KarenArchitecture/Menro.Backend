@@ -1,6 +1,7 @@
 ﻿using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Infrastructure.Data;
+using Menro.Infrastructure.Data.Seed;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +17,7 @@ public class DemoDiscountSeeder : IDataSeeder
     {
         _db = db;
     }
-
+    public int Order => SeedOrder.Discount;
     public async Task SeedAsync()
     {
         if (await _db.Discounts.AnyAsync())

@@ -27,7 +27,7 @@ public class DemoRestaurantSeeder : IDataSeeder
         _userManager = userManager;
         _restaurantService = restaurantService;
     }
-
+    public int Order => SeedOrder.Restaurant;
     public async Task SeedAsync()
     {
         if (await _db.Restaurants.AnyAsync())

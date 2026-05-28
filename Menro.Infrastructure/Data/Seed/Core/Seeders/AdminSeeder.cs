@@ -14,7 +14,7 @@ public class AdminSeeder : IDataSeeder
     {
         _userManager = userManager;
     }
-
+    public int Order => SeedOrder.Admin;
     public async Task SeedAsync()
     {
         const string adminEmail = "MenroAdmin@gmail.com";

@@ -12,7 +12,7 @@ public class RoleSeeder : IDataSeeder
     {
         _roleManager = roleManager;
     }
-
+    public int Order => SeedOrder.Role;
     public async Task SeedAsync()
     {
         var roles = new[]
