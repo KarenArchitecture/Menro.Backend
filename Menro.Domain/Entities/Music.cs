@@ -2,7 +2,7 @@
 {
     public class Music
     {
-        public Guid Id { get; private set; }
+        public Guid Id { get; private set; } = Guid.NewGuid();
 
         public string Title { get; private set; }
         public string Artist { get; private set; }

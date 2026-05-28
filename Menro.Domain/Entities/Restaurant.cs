@@ -1,10 +1,11 @@
 using Menro.Domain.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Menro.Domain.Interfaces.Persistence;
 
 namespace Menro.Domain.Entities
 {
-    public class Restaurant
+    public class Restaurant : ISoftDeletable
     {
         [Key]
         public int Id { get; set; }
@@ -69,9 +70,9 @@ namespace Menro.Domain.Entities
         // FKs and relations
 
         // Owner
-        public string OwnerUserId { get; set; }
+        public string? OwnerUserId { get; set; }
 
-        public User OwnerUser { get; set; }
+        public User? OwnerUser { get; set; }
 
         // Subscription
         public Subscription? Subscription { get; set; }
@@ -91,13 +92,14 @@ namespace Menro.Domain.Entities
 
         // Ratings
         public ICollection<RestaurantRating> Ratings { get; set; } = new List<RestaurantRating>();
+
         [NotMapped]
         public double AverageRating => Ratings.Any() ? Ratings.Average(r => r.Score) : 0;
 
         [NotMapped]
         public int VotersCount => Ratings.Count;
 
-        public ICollection<RestaurantDiscount> Discounts { get; set; } = new List<RestaurantDiscount>();
+        public ICollection<Discount> Discounts { get; set; } = new List<Discount>();
         // connection to Orders from specific restaurant
         public ICollection<Order> Orders { get; set; } = new List<Order>();
         

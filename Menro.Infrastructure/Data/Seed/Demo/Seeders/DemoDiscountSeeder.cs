@@ -120,4 +120,3 @@ public class DemoDiscountSeeder : IDataSeeder
             "[Seed] Demo discounts seeded.");
     }
 }
-```

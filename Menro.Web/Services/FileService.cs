@@ -93,7 +93,10 @@ namespace Menro.Web.Services
         /*                  AD IMAGE                  */
         /*--------------------------------------------*/
         public Task<string> UploadAdImageAsync(IFormFile file)
-            => SaveFileAsync(file, "adBanner");
+            => SaveFileAsync(file, Path.Combine("ads", "banner"));
+
+        public Task<string> UploadCarouselImageAsync(IFormFile file)
+            => SaveFileAsync(file, Path.Combine("ads", "carousel"));
 
         /*--------------------------------------------*/
         /*                  FOOD IMAGE                */
@@ -125,13 +128,13 @@ namespace Menro.Web.Services
         /*             RESTAURANT IMAGES              */
         /*--------------------------------------------*/
         public Task<string> UploadRestaurantHomeBannerAsync(IFormFile file, string? oldFileName = null)
-            => SaveFileAsync(file, Path.Combine("restaurants", "home"), oldFileName);
+            => SaveFileAsync(file, Path.Combine("restaurant", "home"), oldFileName);
 
         public Task<string> UploadRestaurantShopBannerAsync(IFormFile file, string? oldFileName = null)
-            => SaveFileAsync(file, Path.Combine("restaurants", "shop"), oldFileName);
+            => SaveFileAsync(file, Path.Combine("restaurant", "shop"), oldFileName);
 
         public Task<string> UploadRestaurantLogoAsync(IFormFile file, string? oldFileName = null)
-            => SaveFileAsync(file, Path.Combine("restaurants", "logo"), oldFileName);
+            => SaveFileAsync(file, Path.Combine("restaurant", "logo"), oldFileName);
 
         /*--------------------------------------------*/
         /*                 MUSIC FILES                */
