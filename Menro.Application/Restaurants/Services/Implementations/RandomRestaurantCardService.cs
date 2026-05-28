@@ -1,63 +1,75 @@
-﻿using Menro.Application.DTO;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.DTO;
 using Menro.Application.Restaurants.Services.Interfaces;
 using Menro.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Menro.Application.Restaurants.Services.Implementations
 {
     public class RandomRestaurantCardService : IRandomRestaurantCardService
     {
         private readonly IRestaurantRepository _restaurantRepository;
+        private readonly IFileUrlService _fileUrlService;
 
-        public RandomRestaurantCardService(IRestaurantRepository restaurantRepository)
+        public RandomRestaurantCardService(
+            IRestaurantRepository restaurantRepository,
+            IFileUrlService fileUrlService)
         {
             _restaurantRepository = restaurantRepository;
+            _fileUrlService = fileUrlService;
         }
 
         public async Task<List<RestaurantCardDto>> GetRandomRestaurantCardsAsync(int count = 8)
         {
-            var restaurants = await _restaurantRepository.GetRandomActiveApprovedWithDetailsAsync(count);
-            System.Diagnostics.Debug.WriteLine("✅ Got " + restaurants.Count + " restaurants from repository");
+            var restaurants =
+                await _restaurantRepository.GetRandomActiveApprovedWithDetailsAsync(count);
 
             var nowTime = DateTime.Now.TimeOfDay;
             var nowUtc = DateTime.UtcNow;
 
             return restaurants.Select(r =>
             {
-                double avgRating = r.Ratings?.Any() == true
-                    ? Math.Round(r.Ratings.Average(rt => rt.Score), 1)
+                var rating = r.Ratings.Any()
+                    ? Math.Round(r.Ratings.Average(x => x.Score), 1)
                     : 0;
 
-                int voters = r.Ratings?.Count ?? 0;
+                var voters = r.Ratings.Count;
 
-                int? discountPercent = r.Discounts?
-                    .Where(d => d.StartDate <= nowUtc && d.EndDate >= nowUtc)
-                    .Select(d => (int?)d.Percent)
+                var discount = r.Discounts
+                    .Where(d =>
+                        d.IsActive &&
+                        !d.IsDeleted &&
+                        d.StartDate <= nowUtc &&
+                        d.EndDate >= nowUtc)
+                    .Select(d => (int?)d.Value)
                     .DefaultIfEmpty(null)
                     .Max();
 
-                bool isOpen = r.OpenTime <= r.CloseTime
+                var isOpen = r.OpenTime <= r.CloseTime
                     ? nowTime >= r.OpenTime && nowTime < r.CloseTime
                     : nowTime >= r.OpenTime || nowTime < r.CloseTime;
+
                 return new RestaurantCardDto
                 {
                     Id = r.Id,
                     Name = r.Name,
+
                     Category = r.RestaurantCategory?.Name ?? "بدون دسته‌بندی",
+
                     BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl)
-                        ? "/img/res-cards.png"
-                        : r.BannerImageUrl,
+                        ? _fileUrlService.BuildRestaurantHomeBannerUrl("res-card-1.png")
+                        : _fileUrlService.BuildRestaurantHomeBannerUrl(r.BannerImageUrl),
+
                     LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl)
-                        ? "/img/res-slider.png"
-                        : r.LogoImageUrl,
-                    Rating = avgRating,
+                        ? _fileUrlService.BuildRestaurantLogoUrl("logo-green.png")
+                        : _fileUrlService.BuildRestaurantLogoUrl(r.LogoImageUrl),
+
+                    Rating = rating,
                     Voters = voters,
-                    Discount = discountPercent,
+                    Discount = discount,
+
                     OpenTime = r.OpenTime.ToString(@"hh\:mm"),
                     CloseTime = r.CloseTime.ToString(@"hh\:mm"),
+
                     IsOpen = isOpen,
                     Slug = r.Slug
                 };

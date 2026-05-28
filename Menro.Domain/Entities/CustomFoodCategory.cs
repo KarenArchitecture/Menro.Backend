@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Menro.Domain.Interfaces.Persistence;
 
 namespace Menro.Domain.Entities
 {
-    public class CustomFoodCategory
+    public class CustomFoodCategory : ISoftDeletable
     {
         [Key]
         public int Id { get; set; }

@@ -1,4 +1,5 @@
-﻿using Menro.Domain.Enums;
+﻿using Menro.Domain.Entities;
+using Menro.Domain.Enums;
 
 namespace Menro.Domain.Interfaces
 {

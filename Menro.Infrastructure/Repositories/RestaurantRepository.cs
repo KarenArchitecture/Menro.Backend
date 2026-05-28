@@ -1,4 +1,5 @@
-﻿using Menro.Domain.Entities;
+﻿using Menro.Application.DTO;
+using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
@@ -12,20 +13,18 @@ namespace Menro.Infrastructure.Repositories
         private readonly MenroDbContext _context;
         private readonly IMemoryCache _cache;
 
-        public RestaurantRepository(MenroDbContext context, IMemoryCache cache) : base(context)
+        public RestaurantRepository(MenroDbContext context, IMemoryCache cache)
+            : base(context)
         {
             _context = context;
             _cache = cache;
         }
 
-
-
-        /* ============================================================
-                                    CRUDS
-        ============================================================ */
         public async Task<Restaurant?> GetByIdAsync(int id)
         {
-            return await _context.Restaurants.Include(r => r.OwnerUser).FirstOrDefaultAsync(r => r.Id == id);
+            return await _context.Restaurants
+                .Include(r => r.OwnerUser)
+                .FirstOrDefaultAsync(r => r.Id == id);
         }
 
         public async Task SaveChangesAsync()
@@ -33,25 +32,12 @@ namespace Menro.Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-
-        /* ============================================================
-           🔹 Basic name lookup
-        ============================================================ */
-
-        /// <summary>
-        /// Retrieves a restaurant by ID.
-        /// </summary>
-        //public async Task<Restaurant?> GetByIdAsync(int id)
-        //{
-        //    return await _context.Restaurants
-        //        .FirstOrDefaultAsync(r => r.Id == id);
-        //}
-
         public async Task<string> GetRestaurantName(int restaurantId)
         {
             string cacheKey = $"RestaurantName:{restaurantId}";
-            if (_cache.TryGetValue(cacheKey, out string cachedName))
-                return cachedName;
+
+            if (_cache.TryGetValue(cacheKey, out string cached))
+                return cached;
 
             var name = await _context.Restaurants
                 .Where(r => r.Id == restaurantId)
@@ -62,21 +48,14 @@ namespace Menro.Infrastructure.Repositories
             return name;
         }
 
-        /* ============================================================
-           🔹 Featured restaurants (carousel)
-        ============================================================ */
-
-        /* ============================================================
-           🔹 Show All Page - Restaurants
-        ============================================================ */
         public async Task<List<Restaurant>> GetActiveApprovedWithDetailsPageAsync(int take, int? cursorId)
         {
             var query = _context.Restaurants
                 .Where(r => r.IsActive && !r.IsDeleted && r.Status == RestaurantStatus.Approved)
                 .OrderByDescending(r => r.Id)
                 .Include(r => r.Ratings)
-                .Include(r => r.Discounts)
                 .Include(r => r.RestaurantCategory)
+                .Include(r => r.Discounts)   // ✅ FIX ADDED
                 .AsNoTracking();
 
             if (cursorId.HasValue)
@@ -85,38 +64,35 @@ namespace Menro.Infrastructure.Repositories
             return await query.Take(take + 1).ToListAsync();
         }
 
-        /* ============================================================
-           🔹 Home Page - Random Restaurant Cards
-        ============================================================ */
         public async Task<List<Restaurant>> GetRandomActiveApprovedWithDetailsAsync(int count)
         {
             const string cacheKey = "RandomRestaurants";
+
             if (_cache.TryGetValue(cacheKey, out List<Restaurant> cached))
             {
                 return cached.OrderBy(_ => Guid.NewGuid()).Take(count).ToList();
             }
 
+            var nowUtc = DateTime.UtcNow;
+
             var restaurants = await _context.Restaurants
+                .AsNoTracking()
                 .Where(r => r.IsActive && !r.IsDeleted && r.Status == RestaurantStatus.Approved)
                 .OrderBy(r => EF.Functions.Random())
                 .Take(count * 2)
                 .Include(r => r.Ratings)
-                .Include(r => r.Discounts)
                 .Include(r => r.RestaurantCategory)
-                .AsNoTracking()
+                .Include(r => r.Discounts)
                 .ToListAsync();
 
             _cache.Set(cacheKey, restaurants, TimeSpan.FromMinutes(5));
-            return restaurants.OrderBy(_ => Guid.NewGuid()).Take(count).ToList();
+
+            return restaurants
+                .OrderBy(_ => Guid.NewGuid())
+                .Take(count)
+                .ToList();
         }
 
-        /* ============================================================
-           🔹 Home Page - Advertisement Banners
-        ============================================================ */
-
-        /* ============================================================
-           🔹 Atomic impression counter
-        ============================================================ */
         public async Task<bool> IncrementBannerImpressionAsync(int bannerId)
         {
             var rows = await _context.Database.ExecuteSqlInterpolatedAsync($@"
@@ -125,27 +101,30 @@ namespace Menro.Infrastructure.Repositories
                 WHERE [Id] = {bannerId}
                   AND [IsPaused] = 0
                   AND [StartDate] <= GETUTCDATE()
-                  AND [EndDate]   >= GETUTCDATE()
+                  AND [EndDate] >= GETUTCDATE()
                   AND ([PurchasedViews] = 0 OR [ConsumedViews] < [PurchasedViews]);
             ");
+
             return rows > 0;
         }
 
-        /* ============================================================
-           🔹 Restaurants ordered by user (no caching - user specific)
-        ============================================================ */
         public async Task<List<Restaurant>> GetRestaurantsOrderedByUserAsync(string userId)
         {
-            if (string.IsNullOrWhiteSpace(userId)) return new();
+            if (string.IsNullOrWhiteSpace(userId))
+                return new();
 
             var latestByRestaurant = await _context.Orders
                 .Where(o => o.UserId == userId)
                 .GroupBy(o => o.RestaurantId)
-                .Select(g => new { RestaurantId = g.Key, LastOrderAt = g.Max(o => o.CreatedAt) })
-                .OrderByDescending(x => x.LastOrderAt)
+                .Select(g => new
+                {
+                    RestaurantId = g.Key,
+                    LastOrderAt = g.Max(o => o.CreatedAt)
+                })
                 .ToListAsync();
 
-            if (latestByRestaurant.Count == 0) return new();
+            if (!latestByRestaurant.Any())
+                return new();
 
             var ids = latestByRestaurant.Select(x => x.RestaurantId).ToList();
 
@@ -153,28 +132,32 @@ namespace Menro.Infrastructure.Repositories
                 .Where(r => ids.Contains(r.Id))
                 .Include(r => r.RestaurantCategory)
                 .Include(r => r.Ratings)
-                .Include(r => r.Discounts)
+                .Include(r => r.Discounts)   // (optional but safe) 
                 .ToListAsync();
 
-            var orderMap = latestByRestaurant.ToDictionary(x => x.RestaurantId, x => x.LastOrderAt);
+            var map = latestByRestaurant.ToDictionary(x => x.RestaurantId, x => x.LastOrderAt);
+
             return restaurants
-                .OrderByDescending(r => orderMap.ContainsKey(r.Id) ? orderMap[r.Id] : DateTime.MinValue)
+                .OrderByDescending(r => map.TryGetValue(r.Id, out var t) ? t : DateTime.MinValue)
                 .ToList();
         }
-        
-        /* ============================================================
-           🔹 Restaurant Page (Banner + Slug + Validation)
-        ============================================================ */
+
         public async Task<Restaurant?> GetRestaurantBannerBySlugAsync(string slug)
         {
             string cacheKey = $"RestaurantBanner:{slug}";
+
             if (_cache.TryGetValue(cacheKey, out Restaurant cached))
                 return cached;
 
             var restaurant = await _context.Restaurants
                 .AsNoTracking()
                 .Include(r => r.Ratings)
-                .FirstOrDefaultAsync(r => r.Slug == slug && r.IsActive && !r.IsDeleted && r.Status == RestaurantStatus.Approved);
+                .Include(r => r.Discounts)   // ✅ FIX ADDED
+                .FirstOrDefaultAsync(r =>
+                    r.Slug == slug &&
+                    r.IsActive &&
+                    !r.IsDeleted &&
+                    r.Status == RestaurantStatus.Approved);
 
             if (restaurant != null)
                 _cache.Set(cacheKey, restaurant, TimeSpan.FromMinutes(10));
@@ -182,22 +165,17 @@ namespace Menro.Infrastructure.Repositories
             return restaurant;
         }
 
-        /* ============================================================
-           🔹 Slug checks
-        ============================================================ */
         public async Task<bool> SlugExistsAsync(string slug)
         {
             return await _context.Restaurants.AnyAsync(r => r.Slug == slug);
         }
 
-        /* ============================================================
-           🔹 RestaurantId lookup by OwnerUserId
-        ============================================================ */
         public async Task<int> GetRestaurantIdByUserIdAsync(string userId)
         {
             string cacheKey = $"RestaurantIdByUser:{userId}";
-            if (_cache.TryGetValue(cacheKey, out int cachedId))
-                return cachedId;
+
+            if (_cache.TryGetValue(cacheKey, out int cached))
+                return cached;
 
             var id = await _context.Restaurants
                 .Where(r => r.OwnerUserId == userId)
@@ -208,50 +186,39 @@ namespace Menro.Infrastructure.Repositories
             return id;
         }
 
-        /* ============================================================
-           🔄 Cache invalidation methods
-        ============================================================ */
         public void InvalidateFeaturedRestaurants() => _cache.Remove("FeaturedRestaurants");
         public void InvalidateRandomRestaurants() => _cache.Remove("RandomRestaurants");
         public void InvalidateRestaurantBanner(string slug) => _cache.Remove($"RestaurantBanner:{slug}");
         public void InvalidateRestaurantIdByUser(string userId) => _cache.Remove($"RestaurantIdByUser:{userId}");
         public void InvalidateBannerIds() => _cache.Remove("LiveBannerIds");
 
-        // admin panel => restaurant management tab
         public async Task<List<Restaurant>> GetRestaurantsListForAdminAsync()
         {
-            var query = _context.Restaurants
+            return await _context.Restaurants
                 .Include(r => r.OwnerUser)
-                .AsQueryable();
-
-            return await query
                 .OrderByDescending(r => r.Id)
+                .Include(r => r.Discounts)   // optional consistency
                 .ToListAsync();
         }
+
         public async Task<Restaurant?> GetRestaurantDetailsForAdminAsync(int id)
         {
-            var restaurant = await _context.Restaurants
+            return await _context.Restaurants
                 .Include(r => r.OwnerUser)
                 .Include(r => r.RestaurantCategory)
+                .Include(r => r.Discounts)   // optional consistency
                 .FirstOrDefaultAsync(r => r.Id == id);
-            return restaurant;
         }
 
-        
-        // restaurant profile
         public async Task<Restaurant?> GetRestaurantProfileAsync(int restaurantId)
         {
-            var restaurant = await _context.Restaurants
+            return await _context.Restaurants
                 .Include(r => r.OwnerUser)
                 .Include(r => r.RestaurantCategory)
                 .Include(r => r.Subscription)
-                .ThenInclude(s => s.SubscriptionPlan)
+                    .ThenInclude(s => s.SubscriptionPlan)
+                .Include(r => r.Discounts)   // optional consistency
                 .FirstOrDefaultAsync(r => r.Id == restaurantId);
-            return restaurant;
-
         }
-
-
-
     }
 }

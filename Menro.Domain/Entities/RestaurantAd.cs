@@ -8,7 +8,7 @@ namespace Menro.Domain.Entities
         public int Id { get; set; }
 
         public int RestaurantId { get; set; }
-        public Restaurant Restaurant { get; set; } = null!;
+        public Restaurant? Restaurant { get; set; } = null!;
 
         public AdPlacementType PlacementType { get; set; }
         public AdBillingType BillingType { get; set; }
