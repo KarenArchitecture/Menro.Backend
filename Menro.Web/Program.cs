@@ -20,6 +20,9 @@ using Menro.Infrastructure.Services;
 using Menro.Web.Middleware;
 using Menro.Web.Services;
 using Menro.Web.Services.Implementations;
+using Menro.Infrastructure.Data.Seed.Core.Seeders;
+using Menro.Infrastructure.Data.Seed.Contracts;
+using Menro.Infrastructure.Seed.Demo.Seeders;
 
 var builder = WebApplication.CreateBuilder(args);
 var isDevelopment = builder.Environment.IsDevelopment();
@@ -152,6 +155,19 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddMemoryCache();
 
+/* --- Data Seeders Registration --- */
+builder.Services.AddScoped<IDataSeeder, RoleSeeder>();
+builder.Services.AddScoped<IDataSeeder, AdminSeeder>();
+
+builder.Services.AddScoped<IDataSeeder, IconSeeder>();
+builder.Services.AddScoped<IDataSeeder, GlobalFoodCategorySeeder>();
+
+
+// demo seeders
+builder.Services.AddScoped<IDataSeeder, DemoRestaurantSeeder>();
+builder.Services.AddScoped<IDataSeeder, DemoVariantSeeder>();
+builder.Services.AddScoped<IDataSeeder, DemoRatingSeeder>();
+builder.Services.AddScoped<IDataSeeder, DemoOrderSeeder>();
 #endregion
 
 #region API
@@ -259,12 +275,12 @@ app.MapGet("/health", () => Results.Ok(new
 
 #region DB Initialization
 
-if (app.Environment.IsProduction())
-{
+//if (app.Environment.IsProduction())
+//{
     using var scope = app.Services.CreateScope();
     var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
     await dbInitializer.InitializeAsync();
-}
+//}
 
 #endregion
 
