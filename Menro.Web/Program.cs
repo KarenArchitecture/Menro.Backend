@@ -83,6 +83,9 @@ builder.Services.AddDbContext<MenroDbContext>(options =>
                 maxRetryDelay: TimeSpan.FromSeconds(10),
                 errorNumbersToAdd: null);
         });
+
+    options.EnableSensitiveDataLogging();
+    options.EnableDetailedErrors();
 });
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>

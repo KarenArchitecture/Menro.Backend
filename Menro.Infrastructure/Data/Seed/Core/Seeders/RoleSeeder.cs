@@ -17,31 +17,24 @@ public class RoleSeeder : IDataSeeder
     {
         var roles = new[]
         {
-            SD.Role_Admin,
-            SD.Role_Owner,
-            SD.Role_Customer
-        };
+        SD.Role_Admin,
+        SD.Role_Owner,
+        SD.Role_Customer
+    };
 
         foreach (var role in roles)
         {
             var exists = await _roleManager.RoleExistsAsync(role);
 
-            if (exists)
-                continue;
-
-            var result = await _roleManager.CreateAsync(
-                new IdentityRole(role));
-
-            if (!result.Succeeded)
+            if (!exists)
             {
-                var errors = string.Join(", ",
-                    result.Errors.Select(x => x.Description));
+                var result = await _roleManager.CreateAsync(new IdentityRole(role));
 
-                throw new Exception(
-                    $"Failed to create role '{role}'. Errors: {errors}");
+                if (!result.Succeeded)
+                    throw new Exception(string.Join(", ", result.Errors.Select(x => x.Description)));
+
+                Console.WriteLine($"[Seed] Role created: {role}");
             }
-
-            Console.WriteLine($"[Seed] Role created: {role}");
         }
     }
 }

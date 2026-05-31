@@ -16,18 +16,24 @@ public class IconSeeder : IDataSeeder
     public int Order => SeedOrder.Icon;
     public async Task SeedAsync()
     {
-        if (await _db.Icons.AnyAsync())
-        {
-            Console.WriteLine("[Seed] Icons already seeded.");
-            return;
-        }
+        var existing = await _db.Icons.ToListAsync();
 
-        await _db.Icons.AddRangeAsync(
-            IconSeedData.Data);
+        foreach (var seed in IconSeedData.Data)
+        {
+            var item = existing.FirstOrDefault(x => x.FileName == seed.FileName);
+
+            if (item == null)
+            {
+                await _db.Icons.AddAsync(seed);
+            }
+            else
+            {
+                item.Label = seed.Label;
+            }
+        }
 
         await _db.SaveChangesAsync();
 
-        Console.WriteLine(
-            $"[Seed] {IconSeedData.Data.Count} icons seeded.");
+        Console.WriteLine("[Seed] Icons synced.");
     }
 }

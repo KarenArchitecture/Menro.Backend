@@ -56,6 +56,7 @@ namespace Menro.Application.Services.Implementations
             return await _repository.AddFoodAsync(food);
 
         }
+
         public async Task<List<FoodsListItemDto>> GetFoodsListAsync(int restaurantId)
         {
             var foods = await _repository.GetFoodsListForAdminAsync(restaurantId);

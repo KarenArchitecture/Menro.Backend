@@ -6,7 +6,7 @@
         public string? Ingredients { get; set; }
         public int Price { get; set; }
 
-        public string? ImageName { get; set; } // ← تغییر کرد!
+        public string? ImageName { get; set; }
 
         public int FoodCategoryId { get; set; }
         public bool HasVariants { get; set; }

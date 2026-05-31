@@ -69,10 +69,10 @@ namespace Menro.Infrastructure.Repositories
 
             return category;
         }
-
+        
         /// <summary>
-        /// Returns a category by its name.
-        /// </summary>
+                 /// Returns a category by its name.
+                 /// </summary>
         public async Task<CustomFoodCategory?> GetByNameAsync(int restaurantId, string catName)
         {
             return await _context.CustomFoodCategories
@@ -179,10 +179,20 @@ namespace Menro.Infrastructure.Repositories
         {
             if (category == null) return false;
 
-            _context.CustomFoodCategories.Update(category);
+            var existing = await _context.CustomFoodCategories
+                .FirstOrDefaultAsync(x => x.Id == category.Id);
+
+            if (existing == null)
+                return false;
+
+            // فقط scalar properties
+            existing.Name = category.Name;
+            existing.IconId = category.IconId;
+            existing.GlobalCategoryId = category.GlobalCategoryId;
+            existing.IsAvailable = category.IsAvailable;
+
             return await _context.SaveChangesAsync() > 0;
         }
-
         /* ============================================================
            🔄 Cache invalidation methods (consistent with other repos)
         ============================================================ */

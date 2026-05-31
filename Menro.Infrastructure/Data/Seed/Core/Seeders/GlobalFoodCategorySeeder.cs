@@ -15,20 +15,28 @@ public class GlobalFoodCategorySeeder : IDataSeeder
     public int Order => SeedOrder.GlobalFoodCategory;
     public async Task SeedAsync()
     {
-        if (await _db.GlobalFoodCategories.AnyAsync())
+        var existing = await _db.GlobalFoodCategories
+            .ToListAsync();
+
+        foreach (var seed in GlobalFoodCategorySeedData.Data)
         {
-            Console.WriteLine(
-                "[Seed] Global food categories already seeded.");
+            var item = existing.FirstOrDefault(x => x.Name == seed.Name);
 
-            return;
+            if (item == null)
+            {
+                await _db.GlobalFoodCategories.AddAsync(seed);
+            }
+            else
+            {
+                // sync fields (if needed)
+                item.IconId = seed.IconId;
+                item.DisplayOrder = seed.DisplayOrder;
+                item.IsActive = seed.IsActive;
+            }
         }
-
-        await _db.GlobalFoodCategories.AddRangeAsync(
-            GlobalFoodCategorySeedData.Data);
 
         await _db.SaveChangesAsync();
 
-        Console.WriteLine(
-            $"[Seed] {GlobalFoodCategorySeedData.Data.Count} global food categories seeded.");
+        Console.WriteLine("[Seed] GlobalFoodCategories synced.");
     }
 }

@@ -59,8 +59,7 @@ namespace Menro.Domain.Entities
         public string NationalCode { get; set; } = string.Empty;
 
         [Display(Name = "شماره حساب")]
-        [MaxLength(15)]
-        [Required(ErrorMessage = "شماره حساب الزامی است")]
+        [MaxLength(34)]
         public string BankAccountNumber { get; set; } = string.Empty;
 
         [Display(Name = "شماره شبا")]

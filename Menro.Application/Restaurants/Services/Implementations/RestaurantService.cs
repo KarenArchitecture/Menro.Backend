@@ -178,7 +178,7 @@ namespace Menro.Application.Restaurants.Services.Implementations
                 RestaurantCategoryId = r.RestaurantCategoryId,
                 Address = r.Address,
                 Description = r.Description,
-                //PhoneNumber = r.ContactNumber,
+                PhoneNumber = r.ContactNumber,
                 BankAccountNumber = r.BankAccountNumber,
 
                 OpenTime = r.OpenTime.ToString(@"hh\:mm"),
@@ -214,8 +214,8 @@ namespace Menro.Application.Restaurants.Services.Implementations
             /*----------------------------------------------
              *      Update Restaurant Contact Number
              *----------------------------------------------*/
-            //if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
-            //    restaurant.OwnerUser.PhoneNumber = dto.PhoneNumber;
+
+            restaurant.ContactNumber = dto.PhoneNumber;
 
             /*----------------------------------------------
              *      Working hours (convert string → TimeSpan)
