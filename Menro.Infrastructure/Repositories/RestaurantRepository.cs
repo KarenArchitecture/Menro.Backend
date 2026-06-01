@@ -192,15 +192,25 @@ namespace Menro.Infrastructure.Repositories
         public void InvalidateRestaurantIdByUser(string userId) => _cache.Remove($"RestaurantIdByUser:{userId}");
         public void InvalidateBannerIds() => _cache.Remove("LiveBannerIds");
 
-        public async Task<List<Restaurant>> GetRestaurantsListForAdminAsync()
+        public async Task<List<Restaurant>> GetRestaurantsListForAdminAsync(RestaurantStatus status)
         {
-            return await _context.Restaurants
+            var query = _context.Restaurants
                 .Include(r => r.OwnerUser)
+                .Include(r => r.Discounts)
+                .AsQueryable();
+
+            query = status switch
+            {
+                RestaurantStatus.Approved => query.Where(r => r.Status == RestaurantStatus.Approved),
+                RestaurantStatus.Pending => query.Where(r => r.Status != RestaurantStatus.Approved && r.Status != RestaurantStatus.Rejected),
+                RestaurantStatus.Rejected => query.Where(r => r.Status == RestaurantStatus.Rejected),
+                _ => query
+            };
+
+            return await query
                 .OrderByDescending(r => r.Id)
-                .Include(r => r.Discounts)   // optional consistency
                 .ToListAsync();
         }
-
         public async Task<Restaurant?> GetRestaurantDetailsForAdminAsync(int id)
         {
             return await _context.Restaurants

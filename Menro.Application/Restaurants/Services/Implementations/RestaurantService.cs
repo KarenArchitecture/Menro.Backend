@@ -105,21 +105,22 @@ namespace Menro.Application.Restaurants.Services.Implementations
 
 
         // admin panel => restaurant management tab
-        public async Task<List<RestaurantListForAdminDto>> GetRestaurantsListForAdminAsync()
+        public async Task<List<RestaurantListForAdminDto>> GetRestaurantsListForAdminAsync(RestaurantStatus status)
         {
-            var restaurants = await _uow.Restaurant.GetRestaurantsListForAdminAsync();
+            var restaurants = await _uow.Restaurant.GetRestaurantsListForAdminAsync(status);
 
-            var list = restaurants.Select(r => new RestaurantListForAdminDto
+            return restaurants.Select(r => new RestaurantListForAdminDto
             {
                 Id = r.Id,
                 Name = r.Name,
                 PhoneNumber = r.OwnerUser.PhoneNumber ?? "",
                 OwnerName = r.OwnerUser.FullName ?? "",
+                Status = (int)r.Status,
                 CreatedAt = _globalDateTimeService.ToPersianDateTimeString(r.CreatedAt),
             }).ToList();
-
-            return list;
         }
+
+
         public async Task<RestaurantDetailsForAdminDto?> GetRestaurantDetailsForAdminAsync(int id)
         {
             var r = await _uow.Restaurant.GetRestaurantDetailsForAdminAsync(id);
@@ -147,8 +148,10 @@ namespace Menro.Application.Restaurants.Services.Implementations
                 OwnerNationalId = r.NationalCode ?? "",
                 OwnerBankAccount = r.BankAccountNumber ?? "",
 
-                Status = r.Status,
-                CreatedAt = _globalDateTimeService.ToPersianDateTimeString(r.CreatedAt)
+                Status = (int)r.Status,
+                RejectReason = r.RejectReason ?? "",
+                CreatedAt = _globalDateTimeService.ToPersianDateTimeString(r.CreatedAt),
+
             };
         }
 
@@ -157,12 +160,25 @@ namespace Menro.Application.Restaurants.Services.Implementations
         {
             var restaurant = await _uow.Restaurant.GetByIdAsync(restaurantId);
             if (restaurant == null) return false;
-            //adminNote ?? restaurant.AdminNote = adminNote;
             restaurant.Status = RestaurantStatus.Approved;
             await _uow.Restaurant.SaveChangesAsync();
             return true;
         }
+        public async Task<bool> UpdateRestaurantStatusAsync(int restaurantId, RestaurantStatus status, string? rejectReason)
+        {
+            var restaurant = await _uow.Restaurant.GetByIdAsync(restaurantId);
+            if (restaurant == null) return false;
 
+            restaurant.Status = status;
+
+            if (status == RestaurantStatus.Rejected)
+                restaurant.RejectReason = rejectReason?.Trim();
+            else
+                restaurant.RejectReason = null;
+
+            await _uow.Restaurant.SaveChangesAsync();
+            return true;
+        }
 
         // restaurant profile
 

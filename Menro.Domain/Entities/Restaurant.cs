@@ -51,6 +51,9 @@ namespace Menro.Domain.Entities
         public bool IsActive { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
         public RestaurantStatus Status { get; set; } = RestaurantStatus.Pending;
+        [Display(Name = "دلیل رد")]
+        [MaxLength(500)]
+        public string? RejectReason { get; set; }
 
         // مشخصات صاحب رستوران
         [Display(Name = "کد ملی")]
@@ -101,7 +104,7 @@ namespace Menro.Domain.Entities
         public ICollection<Discount> Discounts { get; set; } = new List<Discount>();
         // connection to Orders from specific restaurant
         public ICollection<Order> Orders { get; set; } = new List<Order>();
-        
+
 
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Menro.Domain.Entities;
+using Menro.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -66,7 +67,7 @@ namespace Menro.Domain.Interfaces
 
 
         // admin panel => restaurant management tab
-        Task<List<Restaurant>> GetRestaurantsListForAdminAsync();
+        Task<List<Restaurant>> GetRestaurantsListForAdminAsync(RestaurantStatus status);
         Task<Restaurant?> GetRestaurantDetailsForAdminAsync(int id);
 
         // restaurant profile

@@ -24,8 +24,11 @@ public class AdminSeeder : IDataSeeder
     public async Task SeedAsync()
     {
         const string adminEmail = "MenroAdmin@gmail.com";
+        const string ownerEmail = "owner@menro.com";
 
-        // 1. UPSERT USER
+        // =========================
+        // 1. ADMIN UPSERT
+        // =========================
         var admin = await _userManager.Users
             .FirstOrDefaultAsync(x => x.Email == adminEmail);
 
@@ -47,22 +50,59 @@ public class AdminSeeder : IDataSeeder
                 throw new Exception(string.Join(", ", result.Errors.Select(x => x.Description)));
         }
 
-        // 2. SYNC ROLES (idempotent)
-        var roles = await _userManager.GetRolesAsync(admin);
+        var adminRoles = await _userManager.GetRolesAsync(admin);
 
-        if (!roles.Contains(SD.Role_Admin))
+        if (!adminRoles.Contains(SD.Role_Admin))
             await _userManager.AddToRoleAsync(admin, SD.Role_Admin);
 
-        if (!roles.Contains(SD.Role_Owner))
+        if (!adminRoles.Contains(SD.Role_Owner))
             await _userManager.AddToRoleAsync(admin, SD.Role_Owner);
 
-        // 3. UPSERT RESTAURANT
-        var restaurant = await _db.Restaurants
+
+        // =========================
+        // 2. OWNER (separate user)
+        // =========================
+        var owner = await _userManager.Users
+            .FirstOrDefaultAsync(x => x.Email == ownerEmail);
+
+        if (owner == null)
+        {
+            owner = new User
+            {
+                UserName = "Owner_1",
+                Email = ownerEmail,
+                FullName = "صاحب رستوران نمونه",
+                PhoneNumber = "09120000001",
+                EmailConfirmed = true,
+                PhoneNumberConfirmed = true
+            };
+
+            var result = await _userManager.CreateAsync(owner, "Owner123!");
+
+            if (!result.Succeeded)
+                throw new Exception(string.Join(", ", result.Errors.Select(x => x.Description)));
+        }
+
+        var ownerRoles = await _userManager.GetRolesAsync(owner);
+
+        // 🔥 فقط Owner role
+        if (!ownerRoles.Contains(SD.Role_Owner))
+            await _userManager.AddToRoleAsync(owner, SD.Role_Owner);
+
+        // اگر اشتباهی Admin داشت حذفش کن
+        if (ownerRoles.Contains(SD.Role_Admin))
+            await _userManager.RemoveFromRoleAsync(owner, SD.Role_Admin);
+
+
+        // =========================
+        // 3. ADMIN RESTAURANT
+        // =========================
+        var adminRestaurant = await _db.Restaurants
             .FirstOrDefaultAsync(x => x.OwnerUserId == admin.Id);
 
-        if (restaurant == null)
+        if (adminRestaurant == null)
         {
-            restaurant = new Restaurant
+            adminRestaurant = new Restaurant
             {
                 Name = "رستوران مدیریت سیستم",
                 Slug = "admin-restaurant",
@@ -91,17 +131,53 @@ public class AdminSeeder : IDataSeeder
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _db.Restaurants.AddAsync(restaurant);
+            await _db.Restaurants.AddAsync(adminRestaurant);
         }
-        else
+
+        // =========================
+        // 4. OWNER RESTAURANT
+        // =========================
+        var ownerRestaurant = await _db.Restaurants
+            .FirstOrDefaultAsync(x => x.OwnerUserId == owner.Id);
+
+        if (ownerRestaurant == null)
         {
-            // optional sync updates (safe fields)
-            restaurant.Name = "رستوران مدیریت سیستم";
-            restaurant.Address = "تهران، دفتر مرکزی";
+            ownerRestaurant = new Restaurant
+            {
+                Name = "رستوران نمونه صاحب",
+                Slug = "owner-restaurant",
+                Address = "تهران، شعبه مرکزی",
+                ContactNumber = owner.PhoneNumber!,
+
+                OpenTime = new TimeSpan(10, 0, 0),
+                CloseTime = new TimeSpan(23, 0, 0),
+
+                Description = "رستوران متعلق به صاحب نمونه",
+
+                NationalCode = "8888888888",
+                BankAccountNumber = "1111111111",
+                ShebaNumber = "IR111111111111111111111",
+
+                OwnerUserId = owner.Id,
+                RestaurantCategoryId = 2,
+
+                CarouselImageUrl = "/img/res-slider.jpg",
+                BannerImageUrl = "/img/res-card-1.png",
+                ShopBannerImageUrl = "/img/ad-banner-1.jpg",
+                LogoImageUrl = "/img/logo-orange.png",
+
+                TableCount = 8,
+                Status = Domain.Enums.RestaurantStatus.Approved,
+                IsActive = true,
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _db.Restaurants.AddAsync(ownerRestaurant);
         }
 
         await _db.SaveChangesAsync();
 
-        Console.WriteLine("[Seed] Admin synced.");
+        Console.WriteLine("[Seed] Admin + Owner synced.");
     }
 }
