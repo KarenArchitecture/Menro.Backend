@@ -38,7 +38,6 @@ public class DbInitializer : IDbInitializer
                 Console.WriteLine("Migrations completed.");
             }
 
-            // 👇 THIS IS THE IMPORTANT FIX
             foreach (var seeder in _seeders.OrderBy(x => x.Order))
             {
                 Console.WriteLine($"➡ START {seeder.GetType().Name} ({seeder.Order})");

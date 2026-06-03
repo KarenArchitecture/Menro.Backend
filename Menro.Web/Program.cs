@@ -258,22 +258,18 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactClient", policy =>
     {
-        var origins = new[]
-        {
-            "http://localhost:5173",
-            "https://localhost:5173",
-
-            "http://89.33.129.71",
-            "https://89.33.129.71"
-        };
-
-        policy.WithOrigins(origins)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        policy
+            .WithOrigins(
+                "http://localhost:5173",
+                "https://localhost:5173",
+                "http://89.33.129.71",
+                "https://89.33.129.71"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
-
 #endregion
 
 var app = builder.Build();
@@ -303,13 +299,13 @@ else
 
 // app.UseHttpsRedirection();
 
+app.UseRouting();
+app.UseCors("AllowReactClient");
+
 app.UseStaticFiles();
 
 app.UseErrorHandlingMiddleware();
 
-app.UseRouting();
-
-app.UseCors("AllowReactClient");
 
 app.UseAuthentication();
 app.UseAuthorization();

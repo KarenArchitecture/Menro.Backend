@@ -30,11 +30,15 @@ public class DemoRestaurantSeeder : IDataSeeder
     public int Order => SeedOrder.Restaurant;
     public async Task SeedAsync()
     {
-        if (await _db.Restaurants.AnyAsync())
+        var demoOwnerExists = await _userManager.Users
+            .AnyAsync(x => x.Email == "owner1@menro.com");
+
+        if (demoOwnerExists)
         {
             Console.WriteLine("[Seed] Demo restaurants already seeded.");
             return;
         }
+
 
         var globalCats = await _db.GlobalFoodCategories
             .Where(x => x.IsActive)
