@@ -10,14 +10,15 @@ public static class SeedOrder
 
     // DEMO BASE
     public const int Restaurant = 100;
+    public const int Food = 120;
+
+    // ADS
+    public const int RestaurantAd = 150;
 
     // MENU SYSTEM
     public const int Variant = 200;
     public const int Discount = 250;
     public const int Rating = 300;
-
-    // ADS
-    public const int RestaurantAd = 150;
 
     // USERS
     public const int Customer = 400;
