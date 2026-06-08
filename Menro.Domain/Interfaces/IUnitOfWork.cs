@@ -15,6 +15,7 @@
         IOrderRepository Order { get;}
         IOrderItemRepository OrderItem { get;}
         IRefreshTokenRepository RefreshToken { get;}
+        IMusicTrackRepository MusicTrack { get;}
         Task<int> SaveChangesAsync();
     }
 }

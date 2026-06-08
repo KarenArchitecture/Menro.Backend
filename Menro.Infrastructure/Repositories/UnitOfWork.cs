@@ -30,6 +30,7 @@ namespace Menro.Infrastructure.Repositories
         private IOrderRepository _order;
         private IOrderItemRepository _orderItem;
         private IRefreshTokenRepository _refreshToken;
+        private IMusicTrackRepository _musicTrack;
         private readonly IMemoryCache _cache;
 
         // public properties with lazy instantiation
@@ -46,6 +47,8 @@ namespace Menro.Infrastructure.Repositories
         public IOrderRepository Order => _order ??= new OrderRepository(_context, _cache);
         public IOrderItemRepository OrderItem => _orderItem ??= new OrderItemRepository(_context);
         public IRefreshTokenRepository RefreshToken => _refreshToken ??= new RefreshTokenRepository(_context);
+        public IMusicTrackRepository MusicTrack => _musicTrack ??= new MusicTrackRepository(_context);
+
         // constructor
         public UnitOfWork(MenroDbContext context, IMemoryCache cache)
         {

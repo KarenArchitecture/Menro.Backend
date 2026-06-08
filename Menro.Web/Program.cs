@@ -341,4 +341,6 @@ using (var scope = app.Services.CreateScope())
 
 #endregion
 
+app.Logger.LogInformation("Menro.Api is running");
+
 app.Run();

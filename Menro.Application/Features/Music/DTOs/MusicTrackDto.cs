@@ -1,14 +1,18 @@
-﻿namespace Menro.Application.Features.MusicPlayer.Dtos
+﻿namespace Menro.Application.Features.Music.DTOs
 {
-    public class MusicListItemDto
+    public class MusicTrackDto
     {
         public Guid Id { get; set; }
 
         public string Title { get; set; }
+
         public string Artist { get; set; }
 
         public TimeSpan Duration { get; set; }
 
+        public string AudioFileName { get; set; }
+        public string? CoverFileName { get; set; }
         public bool IsActive { get; set; }
+
     }
 }
