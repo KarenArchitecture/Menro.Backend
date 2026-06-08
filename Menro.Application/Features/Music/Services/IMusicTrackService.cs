@@ -5,7 +5,7 @@ namespace Menro.Application.Features.Music.Services
 {
     public interface IMusicTrackService
     {
-        Task<bool> CreateAsync(int restaurantId,CreateMusicTrackDto request);
+        Task<MusicTrack> CreateAsync(int restaurantId, CreateMusicTrackDto dto);
         Task<List<MusicTrackListItemDto>> GetAllAsync(int restaurantId);
         Task<MusicTrackDto?> GetByIdAsync(Guid trackId, int restaurantId);
         Task<MusicTrack?> RemoveAsync(Guid trackId, int restaurantId);

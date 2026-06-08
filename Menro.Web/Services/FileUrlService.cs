@@ -85,7 +85,11 @@ namespace Menro.Web.Services.Implementations
             => BuildFileUrl($"img/restaurant/logo/{Normalize(fileName)}");
 
         /* MUSIC */
-        public string BuildAudioUrl(string fileName)
-            => BuildFileUrl($"audio/{Normalize(fileName)}");
+        /* MUSIC FILE URL */
+        public string BuildMusicFileUrl(string fileName)
+            => BuildFileUrl($"media/music/files/{Normalize(fileName)}");
+        public string BuildMusicCoverUrl(string fileName)
+            => BuildFileUrl($"media/music/covers/{Normalize(fileName)}");
+
     }
 }

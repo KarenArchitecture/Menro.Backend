@@ -9,5 +9,7 @@
         public string AudioFileName { get; set; }
 
         public string? CoverFileName { get; set; }
+        public TimeSpan Duration { get; set; }
+
     }
 }

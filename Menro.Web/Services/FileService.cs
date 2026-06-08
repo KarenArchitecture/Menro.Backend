@@ -139,11 +139,30 @@ namespace Menro.Web.Services
         /*--------------------------------------------*/
         /*                 MUSIC FILES                */
         /*--------------------------------------------*/
-        public Task<string> UploadMusicAsync(IFormFile file)
-            => SaveFileAsync(file, Path.Combine("media", "music", "files"));
+        private async Task<string> SaveMusicFileAsync(IFormFile file,string folder)
+        {
+            var uploadDir =
+                Path.Combine(_env.WebRootPath, folder);
 
-        public Task<string> UploadMusicCoverAsync(IFormFile file, string? oldFileName = null)
-            => SaveFileAsync(file, Path.Combine("media", "music", "covers"), oldFileName);
+            Directory.CreateDirectory(uploadDir);
+
+            var ext = Path.GetExtension(file.FileName);
+            var fileName = $"{Guid.NewGuid()}{ext}";
+
+            var filePath =
+                Path.Combine(uploadDir, fileName);
+
+            using var stream =
+                new FileStream(filePath, FileMode.Create);
+
+            await file.CopyToAsync(stream);
+
+            return fileName;
+        }
+        public Task<string> UploadMusicAsync(IFormFile file)
+            => SaveMusicFileAsync(file,Path.Combine("media", "music", "files"));
+        public Task<string> UploadMusicCoverAsync(IFormFile file,string? oldFileName = null)
+            => SaveMusicFileAsync(file,Path.Combine("media", "music", "covers"));
         public bool DeleteMusic(string fileName)
         {
             try
@@ -153,7 +172,6 @@ namespace Menro.Web.Services
 
                 var uploadDir = Path.Combine(
                     _env.WebRootPath,
-                    "img",
                     "media",
                     "music",
                     "files");
@@ -181,7 +199,6 @@ namespace Menro.Web.Services
 
                 var uploadDir = Path.Combine(
                     _env.WebRootPath,
-                    "img",
                     "media",
                     "music",
                     "covers");
@@ -199,6 +216,38 @@ namespace Menro.Web.Services
             {
                 return false;
             }
+        }
+        public string GetMusicPhysicalPath(string fileName)
+        {
+            return Path.Combine(
+                _env.WebRootPath,
+                "media",
+                "music",
+                "files",
+                fileName);
+        }
+
+        public async Task<string?> SaveMusicCoverFromBytesAsync(byte[] imageBytes)
+        {
+            var uploadDir = Path.Combine(
+                _env.WebRootPath,
+                "media",
+                "music",
+                "covers");
+
+            Directory.CreateDirectory(uploadDir);
+
+            var fileName = $"{Guid.NewGuid()}.jpg";
+
+            var filePath = Path.Combine(
+                uploadDir,
+                fileName);
+
+            await File.WriteAllBytesAsync(
+                filePath,
+                imageBytes);
+
+            return fileName;
         }
     }
 

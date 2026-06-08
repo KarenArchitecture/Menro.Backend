@@ -1,4 +1,5 @@
-﻿using Menro.Application.Features.Music.DTOs;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Music.DTOs;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces;
 
@@ -15,7 +16,7 @@ namespace Menro.Application.Features.Music.Services
 
 
         // add music
-        public async Task<bool> CreateAsync(int restaurantId, CreateMusicTrackDto dto)
+        public async Task<MusicTrack> CreateAsync(int restaurantId, CreateMusicTrackDto dto)
         {
             var track = new MusicTrack
             {
@@ -24,25 +25,24 @@ namespace Menro.Application.Features.Music.Services
 
                 Title = dto.Title,
                 Artist = dto.Artist,
+                Duration = dto.Duration,
 
                 AudioFileName = dto.AudioFileName,
                 CoverFileName = dto.CoverFileName,
 
-                Duration = TimeSpan.Zero,
                 IsActive = true
             };
 
             await _uow.MusicTrack.AddAsync(track);
             await _uow.SaveChangesAsync();
 
-            return true;
+            return track;
         }
+
         // get musics
         public async Task<List<MusicTrackListItemDto>> GetAllAsync(int restaurantId)
         {
-            var tracks =
-                await _uow.MusicTrack.GetAllByRestaurantIdAsync(
-                    restaurantId);
+            var tracks = await _uow.MusicTrack.GetAllByRestaurantIdAsync(restaurantId);
 
             return tracks.Select(t => new MusicTrackListItemDto
             {
@@ -54,6 +54,7 @@ namespace Menro.Application.Features.Music.Services
                 IsActive = t.IsActive
             }).ToList();
         }
+
 
         // get music
         public async Task<MusicTrackDto?> GetByIdAsync(Guid trackId, int restaurantId)
@@ -69,8 +70,9 @@ namespace Menro.Application.Features.Music.Services
                 Title = track.Title,
                 Artist = track.Artist,
                 Duration = track.Duration,
-                AudioFileName = track.AudioFileName,
-                CoverFileName = track.CoverFileName,
+
+                AudioUrl = track.AudioFileName,
+                CoverUrl = track.CoverFileName,
                 IsActive = track.IsActive
             };
         }

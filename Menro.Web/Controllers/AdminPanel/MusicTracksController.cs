@@ -2,6 +2,8 @@
 using Menro.Application.Common.SD;
 using Menro.Application.Features.Music.DTOs;
 using Menro.Application.Features.Music.Services;
+using Menro.Application.Helpers;
+using Menro.Domain.Entities.Music;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,46 +18,145 @@ namespace Menro.Web.Controllers.AdminPanel
         private readonly IMusicTrackService _musicTrackService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileService _fileService;
+        private readonly IFileUrlService _fileUrlService;
 
         public MusicTracksController(
             IMusicTrackService musicTrackService,
             ICurrentUserService currentUserService,
-            IFileService fileService)
+            IFileService fileService,
+            IFileUrlService fileUrlService)
         {
             _musicTrackService = musicTrackService;
             _currentUserService = currentUserService;
             _fileService = fileService;
+            _fileUrlService = fileUrlService;
         }
         #endregion
 
 
         // add music
         [Authorize(Roles = SD.Role_Owner)]
-        [HttpPost("add")]
-        public async Task<IActionResult> AddAsync(
-            [FromBody] CreateMusicTrackDto dto)
+        [HttpPost]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Create([FromForm] UploadMusicTrackDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var restaurantId =
-                await _currentUserService.GetRestaurantIdAsync();
+            if (dto.AudioFile == null || dto.AudioFile.Length == 0)
+                return BadRequest("فایل موسیقی ارسال نشده است.");
 
-            var result =
-                await _musicTrackService.CreateAsync(
-                    restaurantId,
-                    dto);
+            string? audioFileName = null;
+            string? coverFileName = null;
 
-            if (!result)
+            try
             {
-                return BadRequest(new
+                // ---------------- AUDIO ----------------
+                var allowedAudioExtensions = new[] { ".mp3", ".wav", ".ogg" };
+
+                var audioExt = Path.GetExtension(dto.AudioFile.FileName)
+                    .ToLowerInvariant();
+
+                if (!allowedAudioExtensions.Contains(audioExt))
+                    return BadRequest("فرمت فایل موسیقی مجاز نیست.");
+
+                if (dto.AudioFile.Length > 20 * 1024 * 1024)
+                    return BadRequest("حجم فایل موسیقی بیش از حد مجاز است.");
+
+                audioFileName = await _fileService.UploadMusicAsync(dto.AudioFile);
+
+                var audioPath = _fileService.GetMusicPhysicalPath(audioFileName);
+
+                var metadata = AudioMetadataExtractor.Extract(audioPath);
+
+                // ---------------- COVER ----------------
+                if (dto.CoverFile != null)
                 {
-                    message = "خطای ناشناخته‌ای رخ داده است."
+                    var allowedCoverExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+
+                    var coverExt = Path.GetExtension(dto.CoverFile.FileName)
+                        .ToLowerInvariant();
+
+                    if (!allowedCoverExtensions.Contains(coverExt))
+                        return BadRequest("فرمت تصویر کاور مجاز نیست.");
+
+                    if (dto.CoverFile.Length > 2 * 1024 * 1024)
+                        return BadRequest("حجم تصویر کاور بیش از 2 مگابایت است.");
+
+                    coverFileName = await _fileService.UploadMusicCoverAsync(dto.CoverFile);
+                }
+                else
+                {
+                    var coverBytes = AudioMetadataExtractor.ExtractCover(audioPath);
+
+                    if (coverBytes != null)
+                    {
+                        coverFileName =
+                            await _fileService.SaveMusicCoverFromBytesAsync(coverBytes);
+                    }
+                }
+
+                // ---------------- CREATE DTO ----------------
+                var createDto = new CreateMusicTrackDto
+                {
+                    Title = metadata.Title,
+                    Artist = metadata.Artist,
+                    Duration = metadata.Duration,
+                    AudioFileName = audioFileName,
+                    CoverFileName = coverFileName
+                };
+
+                var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
+                MusicTrack result;
+
+                try
+                {
+                    result = await _musicTrackService.CreateAsync(restaurantId, createDto);
+                }
+                catch
+                {
+                    // rollback DB failure → cleanup files
+                    if (!string.IsNullOrWhiteSpace(audioFileName))
+                        _fileService.DeleteMusic(audioFileName);
+
+                    if (!string.IsNullOrWhiteSpace(coverFileName))
+                        _fileService.DeleteMusicCover(coverFileName);
+
+                    throw;
+                }
+
+                // ---------------- RESPONSE ----------------
+                return Ok(new MusicTrackListItemDto
+                {
+                    Id = result.Id,
+                    Title = result.Title,
+                    Artist = result.Artist,
+                    Duration = result.Duration,
+                    IsActive = result.IsActive,
+
+                    CoverFileName = coverFileName == null
+                        ? null
+                        : _fileUrlService.BuildMusicCoverUrl(coverFileName)
                 });
             }
+            catch (Exception ex)
+            {
+                // global cleanup (file system rollback safety)
+                if (!string.IsNullOrWhiteSpace(audioFileName))
+                    _fileService.DeleteMusic(audioFileName);
 
-            return Ok();
+                if (!string.IsNullOrWhiteSpace(coverFileName))
+                    _fileService.DeleteMusicCover(coverFileName);
+
+                return StatusCode(500, new
+                {
+                    message = "خطا در ذخیره موسیقی",
+                    error = ex.Message
+                });
+            }
         }
+
 
         // get musics
         [Authorize]
@@ -64,10 +165,22 @@ namespace Menro.Web.Controllers.AdminPanel
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
 
-            var tracks = await _musicTrackService
-                .GetAllAsync(restaurantId);
+            var tracks = await _musicTrackService.GetAllAsync(restaurantId);
 
-            return Ok(tracks);
+            var result = tracks.Select(t => new MusicTrackListItemDto
+            {
+                Id = t.Id,
+                Title = t.Title,
+                Artist = t.Artist,
+                Duration = t.Duration,
+                IsActive = t.IsActive,
+
+                CoverFileName = string.IsNullOrWhiteSpace(t.CoverFileName)
+                    ? null
+                    : _fileUrlService.BuildMusicCoverUrl(t.CoverFileName)
+            });
+
+            return Ok(result);
         }
 
         // get music
@@ -75,15 +188,26 @@ namespace Menro.Web.Controllers.AdminPanel
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
             var track = await _musicTrackService.GetByIdAsync(id, restaurantId);
 
             if (track == null)
                 return NotFound();
 
-            return Ok(track);
-        }
+            var result = new MusicTrackDto
+            {
+                Id = track.Id,
+                Title = track.Title,
+                Artist = track.Artist,
+                Duration = track.Duration,
 
+                AudioUrl = _fileUrlService.BuildMusicFileUrl(track.AudioUrl),
+                CoverUrl = string.IsNullOrWhiteSpace(track.AudioUrl) ? null : _fileUrlService.BuildMusicCoverUrl(track.AudioUrl)
+            };
+
+            return Ok(result);
+        }
         // delete music
         [Authorize(Roles = SD.Role_Owner)]
         [HttpDelete("{id:guid}")]
@@ -137,104 +261,6 @@ namespace Menro.Web.Controllers.AdminPanel
             }
 
             return Ok();
-        }
-
-        /*--------------http context----------------*/
-
-        /*upload files*/
-        [HttpPost("upload-music")]
-        [Authorize(Roles = SD.Role_Owner)]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UploadMusic(
-            [FromForm] UploadMusicDto dto)
-        {
-            var file = dto.File;
-
-            if (file == null || file.Length == 0)
-                return BadRequest("هیچ فایلی ارسال نشده است.");
-
-            var allowedExtensions = new[]
-            {
-                ".mp3",
-                ".wav",
-                ".ogg"
-            };
-
-            var ext = Path.GetExtension(file.FileName)
-                .ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(ext))
-                return BadRequest("فرمت فایل مجاز نیست.");
-
-            if (file.Length > 20 * 1024 * 1024)
-                return BadRequest("حجم فایل بیش از حد مجاز است.");
-
-            try
-            {
-                var fileName =
-                    await _fileService.UploadMusicAsync(file);
-
-                return Ok(new
-                {
-                    fileName
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    message = "خطا در ذخیره فایل",
-                    error = ex.Message
-                });
-            }
-        }
-
-        [HttpPost("upload-cover")]
-        [Authorize(Roles = SD.Role_Owner)]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UploadCover(
-    [FromForm] UploadMusicCoverDto dto)
-        {
-            var file = dto.File;
-
-            if (file == null || file.Length == 0)
-                return BadRequest("هیچ فایلی ارسال نشده است.");
-
-            var allowedExtensions = new[]
-            {
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-            };
-
-            var ext = Path.GetExtension(file.FileName)
-                .ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(ext))
-                return BadRequest("فرمت فایل مجاز نیست.");
-
-            if (file.Length > 2 * 1024 * 1024)
-                return BadRequest("حجم فایل بیش از 2 مگابایت است.");
-
-            try
-            {
-                var fileName =
-                    await _fileService.UploadMusicCoverAsync(file);
-
-                return Ok(new
-                {
-                    fileName
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    message = "خطا در ذخیره فایل",
-                    error = ex.Message
-                });
-            }
         }
     }
 }
