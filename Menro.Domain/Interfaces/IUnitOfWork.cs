@@ -1,4 +1,6 @@
-﻿namespace Menro.Domain.Interfaces
+﻿using Menro.Domain.Interfaces.Music;
+
+namespace Menro.Domain.Interfaces
 {
     public interface IUnitOfWork
     {
@@ -15,7 +17,11 @@
         IOrderRepository Order { get;}
         IOrderItemRepository OrderItem { get;}
         IRefreshTokenRepository RefreshToken { get;}
+        
+        // MUSIC
         IMusicTrackRepository MusicTrack { get;}
+        IPlaylistRepository Playlist { get;}
+        IPlaylistTrackRepository PlaylistTrack { get;}
         Task<int> SaveChangesAsync();
     }
 }

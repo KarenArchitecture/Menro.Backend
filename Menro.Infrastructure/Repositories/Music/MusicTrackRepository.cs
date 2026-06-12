@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Menro.Domain.Entities.Music;
-using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
+using Menro.Domain.Interfaces.Music;
 
-namespace Menro.Infrastructure.Repositories
+namespace Menro.Infrastructure.Repositories.Music
 {
     internal class MusicTrackRepository : IMusicTrackRepository
     {

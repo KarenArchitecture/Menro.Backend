@@ -2,13 +2,13 @@
 {
     public class Playlist
     {
-        public Guid Id { get; private set; }
+        public Guid Id { get; set; }
 
-        public Guid RestaurantId { get; private set; }
+        public int RestaurantId { get; set; }
 
-        public string Name { get; private set; }
+        public string Name { get; set; }
 
-        public bool IsActive { get; private set; }
+        public bool IsActive { get; set; }
 
         private readonly List<PlaylistTrack> _tracks = [];
 

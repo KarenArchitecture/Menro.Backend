@@ -7,12 +7,12 @@ using Menro.Domain.Entities.Music;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.AdminPanel.Music
 {
     [Authorize]
     [ApiController]
-    [Route("api/music-tracks")]
-    public class MusicTracksController : ControllerBase
+    [Route("api/admin/music/archive")]
+    public class ArchiveController : ControllerBase
     {
         #region DI
         private readonly IMusicTrackService _musicTrackService;
@@ -20,7 +20,7 @@ namespace Menro.Web.Controllers.AdminPanel
         private readonly IFileService _fileService;
         private readonly IFileUrlService _fileUrlService;
 
-        public MusicTracksController(
+        public ArchiveController(
             IMusicTrackService musicTrackService,
             ICurrentUserService currentUserService,
             IFileService fileService,
@@ -242,7 +242,7 @@ namespace Menro.Web.Controllers.AdminPanel
         // update music
         [Authorize(Roles = SD.Role_Owner)]
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id,[FromBody] UpdateMusicTrackDto dto)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateMusicTrackDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

@@ -1,6 +1,6 @@
 ﻿using Menro.Domain.Entities.Music;
 
-namespace Menro.Domain.Interfaces
+namespace Menro.Domain.Interfaces.Music
 {
     public interface IMusicTrackRepository
     {

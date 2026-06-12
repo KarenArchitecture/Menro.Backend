@@ -47,6 +47,9 @@ namespace Menro.Infrastructure.Data
         /* ===================== MUSIC ===================== */
 
         public DbSet<MusicTrack> MusicTracks { get; set; }
+        public DbSet<Playlist> Playlists { get; set; }
+        public DbSet<PlaylistTrack> PlaylistTracks { get; set; }
+
 
         /* ===================== SAVE ===================== */
 

@@ -1,5 +1,6 @@
 ﻿using Menro.Application.Common.SD;
 using Menro.Domain.Entities;
+using Menro.Domain.Entities.Music;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -174,6 +175,40 @@ public class AdminSeeder : IDataSeeder
             };
 
             await _db.Restaurants.AddAsync(ownerRestaurant);
+        }
+
+        await _db.SaveChangesAsync();
+
+        // =========================
+        // 5. DEFAULT PLAYLISTS
+        // =========================
+
+        var adminPlaylistExists = await _db.Playlists
+            .AnyAsync(x => x.RestaurantId == adminRestaurant.Id);
+
+        if (!adminPlaylistExists)
+        {
+            await _db.Playlists.AddAsync(new Playlist
+            {
+                Id = Guid.NewGuid(),
+                RestaurantId = adminRestaurant.Id,
+                Name = "پلی لیست اصلی",
+                IsActive = true
+            });
+        }
+
+        var ownerPlaylistExists = await _db.Playlists
+            .AnyAsync(x => x.RestaurantId == ownerRestaurant.Id);
+
+        if (!ownerPlaylistExists)
+        {
+            await _db.Playlists.AddAsync(new Playlist
+            {
+                Id = Guid.NewGuid(),
+                RestaurantId = ownerRestaurant.Id,
+                Name = "پلی لیست اصلی",
+                IsActive = true
+            });
         }
 
         await _db.SaveChangesAsync();
