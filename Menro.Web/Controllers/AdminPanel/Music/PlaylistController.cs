@@ -4,6 +4,7 @@ using Menro.Application.Features.Music.DTOs;
 using Menro.Application.Features.Music.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ActionConstraints;
 
 namespace Menro.Web.Controllers.AdminPanel.Music
 {
@@ -28,6 +29,38 @@ namespace Menro.Web.Controllers.AdminPanel.Music
         #endregion
 
 
+        // add playlist
+        [Authorize(Roles = SD.Role_Owner)]
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreatePlaylistDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
+                var playlist =
+                    await _playlistService.CreateAsync(restaurantId, dto);
+
+                return Ok(new
+                {
+                    playlist.Id,
+                    playlist.Name,
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+
+
         // get all playlists
         [Authorize(Roles = SD.Role_Owner)]
         [HttpGet]
@@ -40,8 +73,6 @@ namespace Menro.Web.Controllers.AdminPanel.Music
 
             return Ok(playlists);
         }
-
-
 
         // get playlist
         [Authorize(Roles = SD.Role_Owner)]
@@ -72,7 +103,74 @@ namespace Menro.Web.Controllers.AdminPanel.Music
             return Ok(playlist);
         }
 
+        // rename playlist
+        [Authorize(Roles = SD.Role_Owner)]
+        [HttpPut("{playlistId:guid}/rename")]
+        public async Task<IActionResult> Rename(Guid playlistId,[FromBody] RenamePlaylistDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
+            try
+            {
+                var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
+                var result = await _playlistService.RenameAsync(playlistId, restaurantId, dto);
+
+                if (!result)
+                {
+                    return NotFound(new
+                    {
+                        message = "پلی‌لیست یافت نشد."
+                    });
+                }
+
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+
+        // set active tab on fetch playlists list
+        [Authorize(Roles = SD.Role_Owner)]
+        [HttpPut("{playlistId:guid}/activate")]
+        public async Task<IActionResult> Activate(Guid playlistId)
+        {
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
+            var result = await _playlistService.SetActiveAsync(playlistId, restaurantId);
+
+            if (!result)
+                return NotFound();
+
+            return Ok();
+        }
+
+        [HttpDelete("{playlistId:guid}")]
+        public async Task<IActionResult> DeletePlaylist(Guid playlistId)
+        {
+            int restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
+            var result = await _playlistService.DeletePlaylistAsync(
+                restaurantId,
+                playlistId);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.Error);
+
+            return Ok();
+        }
+
+
+        /*-----------------*/
+        /* --- Tracks --- */
+        /*---------------*/
 
         // add track to playlist
         [Authorize(Roles = SD.Role_Owner)]
@@ -94,6 +192,7 @@ namespace Menro.Web.Controllers.AdminPanel.Music
         }
 
 
+
         // remove track from playlist
         [Authorize(Roles = SD.Role_Owner)]
         [HttpDelete("{id:guid}/tracks/{playlistTrackId:guid}")]
@@ -106,6 +205,21 @@ namespace Menro.Web.Controllers.AdminPanel.Music
                 restaurantId,
                 playlistTrackId
             );
+
+            if (!result)
+                return NotFound();
+
+            return Ok();
+        }
+
+        // re-order track in playlist
+        [Authorize(Roles = SD.Role_Owner)]
+        [HttpPut("{playlistId:guid}/tracks/{playlistTrackId:guid}/move")]
+        public async Task<IActionResult> ReorderTrack(Guid playlistId, Guid playlistTrackId, [FromBody] ReorderPlaylistTrackDto dto)
+        {
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
+            var result = await _playlistService.ReorderTrackAsync(playlistId, restaurantId, playlistTrackId, dto.Direction);
 
             if (!result)
                 return NotFound();

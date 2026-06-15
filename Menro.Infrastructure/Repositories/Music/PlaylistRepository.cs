@@ -13,7 +13,15 @@ namespace Menro.Infrastructure.Repositories.Music
         {
             _context = context;
         }
+        public async Task AddAsync(Playlist playlist)
+        {
+            await _context.Playlists.AddAsync(playlist);
+        }
 
+        public async Task<bool> ExistsAsync(int restaurantId, string name)
+        {
+            return await _context.Playlists.AnyAsync(x =>x.RestaurantId == restaurantId && x.Name == name);
+        }
         public async Task<List<Playlist>> GetAllByRestaurantIdAsync(int restaurantId)
         {
             var entities = await _context.Playlists
@@ -29,9 +37,34 @@ namespace Menro.Infrastructure.Repositories.Music
             var playlist = await _context.Playlists
         .Include(x => x.Tracks)
             .ThenInclude(x => x.MusicTrack)
-        .FirstOrDefaultAsync(x => x.Id == playlistId);
+        .FirstAsync(x => x.Id == playlistId);
 
             return playlist;
+        }
+
+        public Task<bool> UpdateAsync(Playlist playlist)
+        {
+            _context.Playlists.Update(playlist);
+
+            return Task.FromResult(true);
+        }
+
+        public Task DeleteAsync(Guid playlistId)
+        {
+            var playlist = new Playlist { Id = playlistId };
+
+            _context.Playlists.Attach(playlist);
+            _context.Playlists.Remove(playlist);
+
+            return Task.CompletedTask;
+        }
+
+        public async Task<Playlist?> GetActiveByRestaurantIdAsync(int restaurantId)
+        {
+            return await _context.Playlists
+                .FirstOrDefaultAsync(x =>
+                    x.RestaurantId == restaurantId &&
+                    x.IsActive);
         }
     }
 }

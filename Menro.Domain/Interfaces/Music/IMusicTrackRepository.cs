@@ -10,7 +10,7 @@ namespace Menro.Domain.Interfaces.Music
 
         Task AddAsync(MusicTrack track);
 
-        void Update(MusicTrack track);
+        Task UpdateAsync(MusicTrack track);
 
         bool Remove(MusicTrack track);
 

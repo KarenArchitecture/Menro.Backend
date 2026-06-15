@@ -1,6 +1,6 @@
 ﻿namespace Menro.Application.Features.Music.DTOs
 {
-    public class UpdateMusicTrackDto
+    public class RenameMusicTrackDto
     {
         public string Title { get; set; }
 

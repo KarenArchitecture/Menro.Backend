@@ -133,7 +133,6 @@ namespace Menro.Web.Controllers.AdminPanel.Music
                     Title = result.Title,
                     Artist = result.Artist,
                     Duration = result.Duration,
-                    IsActive = result.IsActive,
 
                     CoverFileName = coverFileName == null
                         ? null
@@ -173,7 +172,6 @@ namespace Menro.Web.Controllers.AdminPanel.Music
                 Title = t.Title,
                 Artist = t.Artist,
                 Duration = t.Duration,
-                IsActive = t.IsActive,
 
                 CoverFileName = string.IsNullOrWhiteSpace(t.CoverFileName)
                     ? null
@@ -183,7 +181,7 @@ namespace Menro.Web.Controllers.AdminPanel.Music
             return Ok(result);
         }
 
-        // get music
+        // get (play) music
         [Authorize]
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
@@ -208,6 +206,7 @@ namespace Menro.Web.Controllers.AdminPanel.Music
 
             return Ok(result);
         }
+        
         // delete music
         [Authorize(Roles = SD.Role_Owner)]
         [HttpDelete("{id:guid}")]

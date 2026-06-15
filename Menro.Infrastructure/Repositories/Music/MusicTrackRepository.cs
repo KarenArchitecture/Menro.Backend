@@ -59,9 +59,11 @@ namespace Menro.Infrastructure.Repositories.Music
         /*------------------------------------------------------------------------------*/
 
 
-        public void Update(MusicTrack track)
+        public Task UpdateAsync(MusicTrack track)
         {
-            throw new NotImplementedException();
+            _context.MusicTracks.Update(track);
+
+            return Task.CompletedTask;
         }
     }
 }

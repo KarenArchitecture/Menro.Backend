@@ -12,6 +12,5 @@
 
         public string? CoverFileName { get; set; }
 
-        public bool IsActive { get; set; }
     }
 }

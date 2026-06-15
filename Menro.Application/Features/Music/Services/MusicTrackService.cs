@@ -30,7 +30,6 @@ namespace Menro.Application.Features.Music.Services
                 AudioFileName = dto.AudioFileName,
                 CoverFileName = dto.CoverFileName,
 
-                IsActive = true
             };
 
             await _uow.MusicTrack.AddAsync(track);
@@ -51,7 +50,6 @@ namespace Menro.Application.Features.Music.Services
                 Artist = t.Artist,
                 Duration = t.Duration,
                 CoverFileName = t.CoverFileName,
-                IsActive = t.IsActive
             }).ToList();
         }
 
@@ -73,7 +71,6 @@ namespace Menro.Application.Features.Music.Services
 
                 AudioUrl = track.AudioFileName,
                 CoverUrl = track.CoverFileName,
-                IsActive = track.IsActive
             };
         }
 
@@ -97,8 +94,8 @@ namespace Menro.Application.Features.Music.Services
             }
         }
 
-
-        public async Task<bool> UpdateAsync(Guid trackId,int restaurantId,UpdateMusicTrackDto dto)
+        // rename music track title
+        public async Task<bool> UpdateAsync(Guid trackId, int restaurantId, UpdateMusicTrackDto dto)
         {
             var track = await _uow.MusicTrack.GetByIdAsync(
                 trackId,
@@ -107,10 +104,9 @@ namespace Menro.Application.Features.Music.Services
             if (track == null)
                 return false;
 
-            // direct mutation (anemic model)
             track.Title = dto.Title;
-            track.Artist = dto.Artist;
-            track.IsActive = dto.IsActive;
+
+            await _uow.MusicTrack.UpdateAsync(track);
 
             await _uow.SaveChangesAsync();
 
