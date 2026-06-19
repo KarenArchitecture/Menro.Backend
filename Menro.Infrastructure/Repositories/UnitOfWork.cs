@@ -38,6 +38,8 @@ namespace Menro.Infrastructure.Repositories
         private IMusicTrackRepository _musicTrack;
         private IPlaylistRepository _playlist;
         private IPlaylistTrackRepository _playlistTrack;
+        private IMusicPlayerRepository _musicPlayer;
+        private ITrackRequestRepository _trackRequest;
 
 
         // public properties with lazy instantiation
@@ -59,6 +61,8 @@ namespace Menro.Infrastructure.Repositories
         public IMusicTrackRepository MusicTrack => _musicTrack ??= new MusicTrackRepository(_context);
         public IPlaylistRepository Playlist => _playlist ??= new PlaylistRepository(_context);
         public IPlaylistTrackRepository PlaylistTrack => _playlistTrack ??= new PlaylistTrackRepository(_context);
+        public IMusicPlayerRepository MusicPlayer => _musicPlayer ??= new MusicPlayerRepository(_context);
+        public ITrackRequestRepository TrackRequest => _trackRequest ??= new TrackRequestRepository(_context);
 
         // constructor
         public UnitOfWork(MenroDbContext context, IMemoryCache cache)

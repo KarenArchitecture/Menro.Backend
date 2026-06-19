@@ -25,6 +25,7 @@ namespace Menro.Infrastructure.Repositories.Music
         public async Task<List<Playlist>> GetAllByRestaurantIdAsync(int restaurantId)
         {
             var entities = await _context.Playlists
+                .Include(x => x.Tracks)
                 .Where(x => x.RestaurantId == restaurantId)
                 .OrderBy(x => x.Name)
                 .ToListAsync();

@@ -1,7 +1,8 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.SD;
-using Menro.Application.Features.Music.DTOs;
+using Menro.Application.Features.Music.DTOs.Playlist;
 using Menro.Application.Features.Music.Services;
+using Menro.Domain.Interfaces.Music;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
@@ -18,13 +19,16 @@ namespace Menro.Web.Controllers.AdminPanel.Music
         private readonly IPlaylistService _playlistService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileUrlService _fileUrlService;
+        private readonly IMusicPlayerService _playerService;
         public PlaylistController(IPlaylistService playlistService,
             ICurrentUserService currentUserService,
-            IFileUrlService fileUrlService)
+            IFileUrlService fileUrlService,
+            IMusicPlayerService playerService)
         {
             _playlistService = playlistService;
             _currentUserService = currentUserService;
             _fileUrlService = fileUrlService;
+            _playerService = playerService;
         }
         #endregion
 
@@ -68,8 +72,7 @@ namespace Menro.Web.Controllers.AdminPanel.Music
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
 
-            var playlists = await _playlistService
-                .GetAllAsync(restaurantId);
+            var playlists = await _playlistService.GetAllAsync(restaurantId);
 
             return Ok(playlists);
         }
@@ -144,7 +147,7 @@ namespace Menro.Web.Controllers.AdminPanel.Music
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
 
-            var result = await _playlistService.SetActiveAsync(playlistId, restaurantId);
+            var result = await _playlistService.SetActivePlaylistAsync(playlistId, restaurantId);
 
             if (!result)
                 return NotFound();
@@ -196,7 +199,7 @@ namespace Menro.Web.Controllers.AdminPanel.Music
         // remove track from playlist
         [Authorize(Roles = SD.Role_Owner)]
         [HttpDelete("{id:guid}/tracks/{playlistTrackId:guid}")]
-        public async Task<IActionResult> RemoveTrack(Guid id, Guid playlistTrackId)
+        public async Task<IActionResult> RemoveTrack(Guid id /*(playlistId)*/, Guid playlistTrackId)
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
 

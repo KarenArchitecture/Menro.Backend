@@ -7,8 +7,7 @@ namespace Menro.Infrastructure.Data.Configuration
     public class PlaylistTrackConfiguration
         : IEntityTypeConfiguration<PlaylistTrack>
     {
-        public void Configure(
-            EntityTypeBuilder<PlaylistTrack> builder)
+        public void Configure(EntityTypeBuilder<PlaylistTrack> builder)
         {
             builder.HasKey(x => x.Id);
 
@@ -17,12 +16,13 @@ namespace Menro.Infrastructure.Data.Configuration
 
             builder.HasOne(x => x.Playlist)
                 .WithMany(x => x.Tracks)
-                .HasForeignKey(x => x.PlaylistId);
+                .HasForeignKey(x => x.PlaylistId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(x => x.MusicTrack)
                 .WithMany()
                 .HasForeignKey(x => x.MusicTrackId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

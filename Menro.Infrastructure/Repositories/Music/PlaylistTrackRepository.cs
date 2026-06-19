@@ -1,6 +1,7 @@
 ﻿using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces.Music;
 using Menro.Infrastructure.Data;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 
 namespace Menro.Infrastructure.Repositories.Music
@@ -19,14 +20,6 @@ namespace Menro.Infrastructure.Repositories.Music
             await _context.PlaylistTracks.AddAsync(entity);
         }
 
-        public async Task<int> GetLastSortOrderAsync(Guid playlistId)
-        {
-            return await _context.PlaylistTracks
-                .Where(x => x.PlaylistId == playlistId)
-                .Select(x => (int?)x.SortOrder)
-                .MaxAsync() ?? 0;
-        }
-
         public async Task<PlaylistTrack?> GetByIdAsync(Guid playlistTrackId)
         {
             var playlistTrack = await _context.PlaylistTracks
@@ -35,6 +28,45 @@ namespace Menro.Infrastructure.Repositories.Music
             return playlistTrack;
         }
 
+        public Task UpdateAsync(PlaylistTrack request)
+        {
+            _context.PlaylistTracks.Update(request);
+
+            return Task.CompletedTask;
+        }
+
+        public void Remove(PlaylistTrack entity)
+        {
+            _context.PlaylistTracks.Remove(entity);
+        }
+        public async Task<bool> RemoveByIdAsync(Guid playlistTrackId)
+        {
+            try
+            {
+                var track = await _context.PlaylistTracks.FirstOrDefaultAsync(t => t.Id == playlistTrackId);
+                if (track is null)
+                {
+                    return false;
+                }
+                _context.PlaylistTracks.Remove(track);
+                _context.SaveChanges();
+                return true;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+
+        public async Task<int> GetLastSortOrderAsync(Guid playlistId)
+        {
+            return await _context.PlaylistTracks
+                .Where(x => x.PlaylistId == playlistId)
+                .Select(x => (int?)x.SortOrder)
+                .MaxAsync() ?? 0;
+        }
 
         // re-order track in playlist
         public async Task<PlaylistTrack?> GetPreviousTrackAsync(Guid playlistId, int sortOrder)
@@ -58,9 +90,27 @@ namespace Menro.Infrastructure.Repositories.Music
         }
 
 
-        public void Remove(PlaylistTrack entity)
+        public async Task<List<PlaylistTrack>> GetAfterSortOrderAsync(
+            Guid playlistId,
+            int sortOrder)
         {
-            _context.PlaylistTracks.Remove(entity);
+            return await _context.PlaylistTracks
+                .Where(x =>
+                    x.PlaylistId == playlistId &&
+                    x.SortOrder > sortOrder)
+                .OrderBy(x => x.SortOrder)
+                .ToListAsync();
+        }
+
+        public async Task<List<PlaylistTrack>> GetRequestedTracksAfterCurrentAsync(Guid playlistId, int currentSortOrder)
+        {
+            return await _context.PlaylistTracks
+                .Where(x =>
+                    x.PlaylistId == playlistId &&
+                    x.IsRequestedTrack &&
+                    x.SortOrder > currentSortOrder)
+                .OrderBy(x => x.SortOrder)
+                .ToListAsync();
         }
     }
 }

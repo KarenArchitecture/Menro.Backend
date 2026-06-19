@@ -49,6 +49,8 @@ namespace Menro.Infrastructure.Data
         public DbSet<MusicTrack> MusicTracks { get; set; }
         public DbSet<Playlist> Playlists { get; set; }
         public DbSet<PlaylistTrack> PlaylistTracks { get; set; }
+        public DbSet<MusicPlayer> MusicPlayers { get; set; }
+        public DbSet<TrackRequest> TrackRequests { get; set; }
 
 
         /* ===================== SAVE ===================== */
@@ -74,7 +76,8 @@ namespace Menro.Infrastructure.Data
 
         private void ConfigureConfigurations(ModelBuilder modelBuilder)
         {
-            modelBuilder.ApplyConfiguration(new MusicTrackConfiguration());
+            modelBuilder.ApplyConfigurationsFromAssembly(
+                typeof(MenroDbContext).Assembly);
         }
 
         /* ===================== SOFT DELETE ===================== */

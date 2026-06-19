@@ -1,5 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
-using Menro.Application.Features.Music.DTOs;
+using Menro.Application.Features.Music.DTOs.Archive;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces;
 

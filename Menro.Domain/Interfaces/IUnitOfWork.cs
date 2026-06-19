@@ -22,6 +22,8 @@ namespace Menro.Domain.Interfaces
         IMusicTrackRepository MusicTrack { get;}
         IPlaylistRepository Playlist { get;}
         IPlaylistTrackRepository PlaylistTrack { get;}
+        IMusicPlayerRepository MusicPlayer { get;}
+        ITrackRequestRepository TrackRequest { get;}
         Task<int> SaveChangesAsync();
     }
 }

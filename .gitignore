@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/Menro.Infrastructure/Migrations
+/Menro.Web/wwwroot/media/music
