@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
-namespace Menro.Application.Features.Music.DTOs
+namespace Menro.Application.Features.Music.DTOs.Archive
 {
     public class UploadMusicTrackDto
     {

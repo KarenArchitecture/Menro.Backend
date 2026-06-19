@@ -1,4 +1,4 @@
-﻿namespace Menro.Application.Features.Music.DTOs
+﻿namespace Menro.Application.Features.Music.DTOs.Playlist
 {
     public class RenamePlaylistDto
     {

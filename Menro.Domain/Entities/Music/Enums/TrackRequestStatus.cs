@@ -1,11 +1,9 @@
 ﻿namespace Menro.Domain.Entities.Music.Enums
 {
-    public enum MusicRequestStatus
+    public enum TrackRequestStatus
     {
         Pending = 1,
         Approved = 2,
-        Rejected = 3,
-        Cancelled = 4,
-        Played = 5
+        Rejected = 3
     }
 }

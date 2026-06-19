@@ -6,13 +6,21 @@ namespace Menro.Domain.Interfaces.Music
     {
 
         Task AddAsync(PlaylistTrack entity);
-        Task<int> GetLastSortOrderAsync(Guid playlistId);
         Task<PlaylistTrack?> GetByIdAsync(Guid playlistTrackId);
+        Task UpdateAsync(PlaylistTrack request);
+        void Remove(PlaylistTrack entity);
+        Task<bool> RemoveByIdAsync(Guid playlistTrackId);
+
+        Task<int> GetLastSortOrderAsync(Guid playlistId);
 
         // re-order track in playlist
         Task<PlaylistTrack?> GetPreviousTrackAsync(Guid playlistId, int sortOrder);
 
         Task<PlaylistTrack?> GetNextTrackAsync(Guid playlistId, int sortOrder);
-        void Remove(PlaylistTrack entity);
+
+
+        Task<List<PlaylistTrack>> GetAfterSortOrderAsync(Guid playlistId, int sortOrder);
+        Task<List<PlaylistTrack>> GetRequestedTracksAfterCurrentAsync(Guid playlistId, int currentSortOrder);
+
     }
 }
