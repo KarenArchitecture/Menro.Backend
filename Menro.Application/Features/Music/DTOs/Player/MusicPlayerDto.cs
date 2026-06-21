@@ -2,10 +2,10 @@
 {
     public class MusicPlayerDto
     {
-        public Guid PlaylistId { get; set; }
+        public Guid? PlaylistId { get; set; }
 
         public Guid? CurrentPlaylistTrackId { get; set; }
 
-        public DateTime LastUpdatedAt { get; set; }
+        //public DateTime LastUpdatedAt { get; set; }
     }
 }

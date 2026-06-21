@@ -2,16 +2,19 @@
 using Menro.Application.Features.Music.DTOs.Playlist;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces;
+using Menro.Domain.Interfaces.Music;
 
 namespace Menro.Application.Features.Music.Services
 {
     public class PlaylistService : IPlaylistService
     {
         private readonly IUnitOfWork _uow;
+        private readonly IMusicPlayerService _musicPlayerService;
 
-        public PlaylistService(IUnitOfWork uow)
+        public PlaylistService(IUnitOfWork uow, IMusicPlayerService musicPlayerService)
         {
             _uow = uow;
+            _musicPlayerService = musicPlayerService;
         }
 
         // add playlist
@@ -136,51 +139,36 @@ namespace Menro.Application.Features.Music.Services
         }
 
         // activate playlist
-        public async Task<bool> SetActivePlaylistAsync(Guid playlistId,int restaurantId)
+        public async Task<bool> SetActivePlaylistAsync(Guid playlistId, int restaurantId)
         {
             var playlists = await _uow.Playlist.GetAllByRestaurantIdAsync(restaurantId);
 
             var selected = playlists.FirstOrDefault(x => x.Id == playlistId);
-
             if (selected == null)
                 return false;
 
             foreach (var playlist in playlists)
             {
                 playlist.IsActive = playlist.Id == playlistId;
-
                 await _uow.Playlist.UpdateAsync(playlist);
             }
 
-            var player = await _uow.MusicPlayer.GetByRestaurantIdAsync(restaurantId);
+            var player = await _musicPlayerService.GetOrCreatePlayerAsync(restaurantId);
 
-            var firstTrack = selected.Tracks.OrderBy(x => x.SortOrder).FirstOrDefault();
+            var firstTrack = selected.Tracks
+                .OrderBy(x => x.SortOrder)
+                .FirstOrDefault();
 
-            if (player == null)
-            {
-                await _uow.MusicPlayer.CreateAsync(
-                    new MusicPlayer
-                    {
-                        RestaurantId = restaurantId,
-                        PlaylistId = selected.Id,
-                        CurrentPlaylistTrackId = firstTrack?.Id,
-                        LastUpdatedAt = DateTime.UtcNow
-                    });
-            }
-            else
-            {
-                player.PlaylistId = selected.Id;
-                player.CurrentPlaylistTrackId = firstTrack?.Id;
-                player.LastUpdatedAt = DateTime.UtcNow;
+            player.PlaylistId = selected.Id;
+            player.CurrentPlaylistTrackId = firstTrack?.Id;
+            player.LastUpdatedAt = DateTime.UtcNow;
 
-                await _uow.MusicPlayer.UpdateAsync(player);
-            }
+            await _uow.MusicPlayer.UpdateAsync(player);
 
             await _uow.SaveChangesAsync();
-
             return true;
-        }
-
+        }        
+        
         /*-----------------*/
         /* --- Tracks --- */
         /*---------------*/

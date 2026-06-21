@@ -27,6 +27,21 @@ namespace Menro.Infrastructure.Repositories.Music
 
             return playlistTrack;
         }
+        public async Task<PlaylistTrack?> GetFirstByPlaylistIdAsync(Guid playlistId)
+        {
+            return await _context.PlaylistTracks
+                .Where(t => t.PlaylistId == playlistId)
+                .OrderBy(t => t.SortOrder)
+                .FirstOrDefaultAsync();
+        }
+        public async Task<int> GetLastSortOrderAsync(Guid playlistId)
+        {
+            return await _context.PlaylistTracks
+                .Where(x => x.PlaylistId == playlistId)
+                .Select(x => (int?)x.SortOrder)
+                .MaxAsync() ?? 0;
+        }
+
 
         public Task UpdateAsync(PlaylistTrack request)
         {
@@ -60,13 +75,6 @@ namespace Menro.Infrastructure.Repositories.Music
         }
 
 
-        public async Task<int> GetLastSortOrderAsync(Guid playlistId)
-        {
-            return await _context.PlaylistTracks
-                .Where(x => x.PlaylistId == playlistId)
-                .Select(x => (int?)x.SortOrder)
-                .MaxAsync() ?? 0;
-        }
 
         // re-order track in playlist
         public async Task<PlaylistTrack?> GetPreviousTrackAsync(Guid playlistId, int sortOrder)

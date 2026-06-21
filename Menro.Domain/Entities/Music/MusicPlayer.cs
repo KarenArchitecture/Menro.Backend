@@ -7,7 +7,7 @@ namespace Menro.Domain.Entities.Music
         [Key]
         public int RestaurantId { get; set; }
 
-        public Guid PlaylistId { get; set; }
+        public Guid? PlaylistId { get; set; }
 
         public Guid? CurrentPlaylistTrackId { get; set; }
 

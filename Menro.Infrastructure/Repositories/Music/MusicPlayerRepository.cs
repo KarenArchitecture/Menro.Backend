@@ -16,6 +16,7 @@ namespace Menro.Infrastructure.Repositories.Music
         public async Task CreateAsync(MusicPlayer player)
         {
             await _context.MusicPlayers.AddAsync(player);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<MusicPlayer?> GetByRestaurantIdAsync(int restaurantId)

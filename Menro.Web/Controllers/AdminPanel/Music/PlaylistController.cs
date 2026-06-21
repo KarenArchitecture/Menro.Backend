@@ -19,16 +19,13 @@ namespace Menro.Web.Controllers.AdminPanel.Music
         private readonly IPlaylistService _playlistService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileUrlService _fileUrlService;
-        private readonly IMusicPlayerService _playerService;
         public PlaylistController(IPlaylistService playlistService,
             ICurrentUserService currentUserService,
-            IFileUrlService fileUrlService,
-            IMusicPlayerService playerService)
+            IFileUrlService fileUrlService)
         {
             _playlistService = playlistService;
             _currentUserService = currentUserService;
             _fileUrlService = fileUrlService;
-            _playerService = playerService;
         }
         #endregion
 
