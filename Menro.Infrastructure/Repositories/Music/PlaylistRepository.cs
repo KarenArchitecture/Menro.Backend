@@ -50,13 +50,9 @@ namespace Menro.Infrastructure.Repositories.Music
             return Task.FromResult(true);
         }
 
-        public Task DeleteAsync(Guid playlistId)
+        public Task DeleteAsync(Playlist playlist)
         {
-            var playlist = new Playlist { Id = playlistId };
-
-            _context.Playlists.Attach(playlist);
             _context.Playlists.Remove(playlist);
-
             return Task.CompletedTask;
         }
 

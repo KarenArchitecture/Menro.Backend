@@ -9,7 +9,7 @@ namespace Menro.Domain.Interfaces.Music
         Task<List<Playlist>> GetAllByRestaurantIdAsync(int restaurantId);
         Task<Playlist> GetByIdAsync(Guid playlistId);
         Task<bool> UpdateAsync(Playlist playlist);
-        Task DeleteAsync(Guid playlistId);
+        Task DeleteAsync(Playlist playlist);
 
 
 

@@ -26,23 +26,23 @@ namespace Menro.Application.Features.Music.Services
             var exists = await _uow.Playlist.ExistsAsync(restaurantId, dto.Name);
 
             if (exists)
-                throw new InvalidOperationException(
-                    "Playlist already exists.");
-            var hasPlaylist = (await _uow.Playlist.GetAllByRestaurantIdAsync(restaurantId)).Any();
+                throw new InvalidOperationException("Playlist already exists.");
+
             var playlist = new Playlist
             {
                 Id = Guid.NewGuid(),
                 RestaurantId = restaurantId,
                 Name = dto.Name.Trim(),
-                IsActive = !hasPlaylist,
+                IsActive = false
             };
 
             await _uow.Playlist.AddAsync(playlist);
             await _uow.SaveChangesAsync();
 
+            await SetActivePlaylistAsync(playlist.Id, restaurantId);
+
             return playlist;
         }
-
         // get playlist
         public async Task<List<PlaylistItemDto>> GetAllAsync(int restaurantId)
         {
@@ -132,7 +132,18 @@ namespace Menro.Application.Features.Music.Services
         // remove playlist
         public async Task<Result> DeletePlaylistAsync(int restaurantId, Guid playlistId)
         {
-            await _uow.Playlist.DeleteAsync(playlistId);
+            var playlist = await _uow.Playlist.GetByIdAsync(playlistId);
+
+            if (playlist == null)
+                return Result.Failure("Playlist not found.");
+
+            if (playlist.RestaurantId != restaurantId)
+                return Result.Failure("Playlist not found.");
+
+            if (playlist.IsActive)
+                return Result.Failure("پلی‌لیست فعال قابل حذف نیست.");
+
+            await _uow.Playlist.DeleteAsync(playlist);
             await _uow.SaveChangesAsync();
 
             return Result.Success();
@@ -150,7 +161,6 @@ namespace Menro.Application.Features.Music.Services
             foreach (var playlist in playlists)
             {
                 playlist.IsActive = playlist.Id == playlistId;
-                await _uow.Playlist.UpdateAsync(playlist);
             }
 
             var player = await _musicPlayerService.GetOrCreatePlayerAsync(restaurantId);
@@ -167,8 +177,8 @@ namespace Menro.Application.Features.Music.Services
 
             await _uow.SaveChangesAsync();
             return true;
-        }        
-        
+        }
+
         /*-----------------*/
         /* --- Tracks --- */
         /*---------------*/

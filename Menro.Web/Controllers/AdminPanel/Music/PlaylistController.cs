@@ -2,10 +2,8 @@
 using Menro.Application.Common.SD;
 using Menro.Application.Features.Music.DTOs.Playlist;
 using Menro.Application.Features.Music.Services;
-using Menro.Domain.Interfaces.Music;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ActionConstraints;
 
 namespace Menro.Web.Controllers.AdminPanel.Music
 {
@@ -152,6 +150,7 @@ namespace Menro.Web.Controllers.AdminPanel.Music
             return Ok();
         }
 
+        // delete playlist
         [HttpDelete("{playlistId:guid}")]
         public async Task<IActionResult> DeletePlaylist(Guid playlistId)
         {
