@@ -7,7 +7,7 @@ using Menro.Domain.Entities.Music;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel.Music
+namespace Menro.Web.Controllers.Music.Admin
 {
     [Authorize]
     [ApiController]
@@ -206,7 +206,7 @@ namespace Menro.Web.Controllers.AdminPanel.Music
 
             return Ok(result);
         }
-        
+
         // delete music
         [Authorize(Roles = SD.Role_Owner)]
         [HttpDelete("{id:guid}")]

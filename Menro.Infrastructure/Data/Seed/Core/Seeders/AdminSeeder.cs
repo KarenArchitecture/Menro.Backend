@@ -193,6 +193,7 @@ public class AdminSeeder : IDataSeeder
                 Id = Guid.NewGuid(),
                 RestaurantId = adminRestaurant.Id,
                 Name = "پلی لیست اصلی",
+                IsActive = true,
             });
         }
 
@@ -206,6 +207,7 @@ public class AdminSeeder : IDataSeeder
                 Id = Guid.NewGuid(),
                 RestaurantId = ownerRestaurant.Id,
                 Name = "پلی لیست اصلی",
+                IsActive = true,
             });
         }
 

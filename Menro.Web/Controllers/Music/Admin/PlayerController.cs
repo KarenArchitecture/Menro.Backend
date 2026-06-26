@@ -5,7 +5,7 @@ using Menro.Domain.Interfaces.Music;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel.Music
+namespace Menro.Web.Controllers.Music.Admin
 {
     [Authorize(Roles = SD.Role_Owner)]
     [ApiController]

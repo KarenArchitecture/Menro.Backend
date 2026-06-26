@@ -14,7 +14,12 @@ namespace Menro.Infrastructure.Repositories.Music
         {
             _context = context;
         }
+        public Task AddAsync(TrackRequest request)
+        {
+            _context.TrackRequests.Add(request);
 
+            return Task.CompletedTask;
+        }
         public async Task<TrackRequest?> GetByIdAsync(Guid requestId)
         {
             return await _context.TrackRequests.FirstOrDefaultAsync(x => x.Id == requestId);
@@ -39,6 +44,30 @@ namespace Menro.Infrastructure.Repositories.Music
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        // for public page
+
+        public async Task<List<TrackRequest>> GetTodayByRestaurantAsync(int restaurantId)
+        {
+            var today = DateTime.UtcNow.Date;
+
+            return await _context.TrackRequests
+                .Where(x =>
+                    x.RestaurantId == restaurantId &&
+                    x.Status == TrackRequestStatus.Pending &&
+                    x.RequestedAt.Date == today)
+                .ToListAsync();
+        }
+
+        public async Task<bool> HasRequestedTodayAsync(int restaurantId, string userId)
+        {
+            var today = DateTime.UtcNow.Date;
+
+            return await _context.TrackRequests.AnyAsync(x => 
+                x.RestaurantId == restaurantId && 
+                x.UserId == userId && 
+                x.RequestedAt.Date == today);
         }
     }
 }

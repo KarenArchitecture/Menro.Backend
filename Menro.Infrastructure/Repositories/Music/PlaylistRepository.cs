@@ -63,5 +63,16 @@ namespace Menro.Infrastructure.Repositories.Music
                     x.RestaurantId == restaurantId &&
                     x.IsActive);
         }
+
+        // for public page
+        public async Task<Playlist?> GetActivePlaylistAsync(int restaurantId)
+        {
+            return await _context.Playlists
+                .Include(x => x.Tracks)
+                    .ThenInclude(x => x.MusicTrack)
+                .FirstOrDefaultAsync(x =>
+                    x.RestaurantId == restaurantId &&
+                    x.IsActive);
+        }
     }
 }

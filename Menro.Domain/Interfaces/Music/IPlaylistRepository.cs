@@ -14,6 +14,9 @@ namespace Menro.Domain.Interfaces.Music
 
 
         Task<Playlist?> GetActiveByRestaurantIdAsync(int restaurantId);
+        
+        // for public page
+        Task<Playlist?> GetActivePlaylistAsync(int restaurantId);
 
     }
 }

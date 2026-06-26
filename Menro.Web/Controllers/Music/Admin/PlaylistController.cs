@@ -5,7 +5,7 @@ using Menro.Application.Features.Music.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel.Music
+namespace Menro.Web.Controllers.Music.Admin
 {
     [Authorize]
     [ApiController]
@@ -104,7 +104,7 @@ namespace Menro.Web.Controllers.AdminPanel.Music
         // rename playlist
         [Authorize(Roles = SD.Role_Owner)]
         [HttpPut("{playlistId:guid}/rename")]
-        public async Task<IActionResult> Rename(Guid playlistId,[FromBody] RenamePlaylistDto dto)
+        public async Task<IActionResult> Rename(Guid playlistId, [FromBody] RenamePlaylistDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

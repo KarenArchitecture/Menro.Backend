@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Menro.Application.Common.Interfaces;
 
-namespace Menro.Web.Controllers.AdminPanel.Music
+namespace Menro.Web.Controllers.Music.Admin
 {
-    [Authorize (Roles = SD.Role_Owner)]
+    [Authorize(Roles = SD.Role_Owner)]
     [ApiController]
     [Route("api/admin/music/requests")]
     public class TrackRequestController : ControllerBase
