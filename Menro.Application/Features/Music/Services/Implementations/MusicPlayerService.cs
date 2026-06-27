@@ -1,8 +1,9 @@
 ﻿using Menro.Application.Features.Music.DTOs.Player;
+using Menro.Application.Features.Music.Services.Interfaces;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces.Music;
 
-namespace Menro.Application.Features.Music
+namespace Menro.Application.Features.Music.Services.Implementations
 {
     public class MusicPlayerService : IMusicPlayerService
     {
@@ -10,7 +11,7 @@ namespace Menro.Application.Features.Music
         private readonly IPlaylistTrackRepository _playlistTrackRepository;
         private readonly IPlaylistRepository _playlistRepository;
 
-        public MusicPlayerService(IMusicPlayerRepository musicPlayerRepository, 
+        public MusicPlayerService(IMusicPlayerRepository musicPlayerRepository,
             IPlaylistTrackRepository playlistTrackRepository,
             IPlaylistRepository playlistRepository)
         {

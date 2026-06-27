@@ -1,10 +1,10 @@
 ﻿using Menro.Application.Common.Models;
 using Menro.Application.Features.Music.DTOs.Playlist;
+using Menro.Application.Features.Music.Services.Interfaces;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces;
-using Menro.Domain.Interfaces.Music;
 
-namespace Menro.Application.Features.Music.Services
+namespace Menro.Application.Features.Music.Services.Implementations
 {
     public class PlaylistService : IPlaylistService
     {
@@ -48,7 +48,7 @@ namespace Menro.Application.Features.Music.Services
         {
             var playlists = await _uow.Playlist.GetAllByRestaurantIdAsync(restaurantId);
 
-            var dto  = playlists.Select(x => new PlaylistItemDto
+            var dto = playlists.Select(x => new PlaylistItemDto
             {
                 Id = x.Id,
                 Name = x.Name,
@@ -111,7 +111,7 @@ namespace Menro.Application.Features.Music.Services
 
             var duplicateExists = await _uow.Playlist.ExistsAsync(restaurantId, newName);
 
-            if (duplicateExists &&!string.Equals(playlist.Name, newName, StringComparison.OrdinalIgnoreCase))
+            if (duplicateExists && !string.Equals(playlist.Name, newName, StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidOperationException(
                     "Playlist name already exists.");
@@ -182,6 +182,7 @@ namespace Menro.Application.Features.Music.Services
         /*-----------------*/
         /* --- Tracks --- */
         /*---------------*/
+
 
         // add track to playlist
         public async Task<bool> AddTrackAsync(Guid playlistId, int restaurantId, Guid musicTrackId)

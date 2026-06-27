@@ -1,7 +1,7 @@
 ﻿using Menro.Application.Features.Music.DTOs.Archive;
 using Menro.Domain.Entities.Music;
 
-namespace Menro.Application.Features.Music.Services
+namespace Menro.Application.Features.Music.Services.Interfaces
 {
     public interface IMusicTrackService
     {
@@ -9,6 +9,6 @@ namespace Menro.Application.Features.Music.Services
         Task<List<MusicTrackListItemDto>> GetAllAsync(int restaurantId);
         Task<MusicTrackDto?> GetByIdAsync(Guid trackId, int restaurantId);
         Task<MusicTrack?> RemoveAsync(Guid trackId, int restaurantId);
-        Task<bool> UpdateAsync(Guid trackId,int restaurantId,UpdateMusicTrackDto dto);
+        Task<bool> UpdateAsync(Guid trackId, int restaurantId, UpdateMusicTrackDto dto);
     }
 }

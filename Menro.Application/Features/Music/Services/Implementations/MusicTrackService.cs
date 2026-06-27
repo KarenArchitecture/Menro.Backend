@@ -1,15 +1,16 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Features.Music.DTOs.Archive;
+using Menro.Application.Features.Music.Services.Interfaces;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces;
 
-namespace Menro.Application.Features.Music.Services
+namespace Menro.Application.Features.Music.Services.Implementations
 {
     internal class MusicTrackService : IMusicTrackService
     {
         private readonly IUnitOfWork _uow;
 
-        public MusicTrackService( IUnitOfWork uow)
+        public MusicTrackService(IUnitOfWork uow)
         {
             _uow = uow;
         }
@@ -75,9 +76,9 @@ namespace Menro.Application.Features.Music.Services
         }
 
         // remove music
-        public async Task<MusicTrack?> RemoveAsync(Guid trackId,int restaurantId)
+        public async Task<MusicTrack?> RemoveAsync(Guid trackId, int restaurantId)
         {
-            var track = await _uow.MusicTrack.GetByIdAsync(trackId,restaurantId);
+            var track = await _uow.MusicTrack.GetByIdAsync(trackId, restaurantId);
 
             if (track == null)
                 return null;

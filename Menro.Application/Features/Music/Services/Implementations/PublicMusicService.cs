@@ -4,19 +4,22 @@ using Menro.Application.Features.Music.Enums;
 using Menro.Domain.Entities.Music.Enums;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces;
-using Menro.Domain.Interfaces.Music;
+using Menro.Application.Features.Music.Services.Interfaces;
+using Menro.Application.Common.Interfaces;
 
-namespace Menro.Application.Features.Music.Services
+namespace Menro.Application.Features.Music.Services.Implementations
 {
     public class PublicMusicService : IPublicMusicService
     {
         private readonly IUnitOfWork _uow;
         private readonly IMusicPlayerService _musicPlayerService;
+        private readonly IMusicNotificationService _notifier;
         public PublicMusicService(
-            IUnitOfWork uow, IMusicPlayerService musicPlayerService)
+            IUnitOfWork uow, IMusicPlayerService musicPlayerService, IMusicNotificationService notifier)
         {
             _uow = uow;
             _musicPlayerService = musicPlayerService;
+            _notifier = notifier;
         }
 
         public async Task<PublicMusicPageDto?> GetPageAsync(int restaurantId, string userId)
@@ -47,7 +50,7 @@ namespace Menro.Application.Features.Music.Services
 
                 return new PublicTrackDto
                 {
-                    Id = track.MusicTrackId,
+                    Id = track.Id,
 
                     Title = track.MusicTrack.Title,
 
@@ -72,23 +75,25 @@ namespace Menro.Application.Features.Music.Services
             };
         }
 
-        public async Task<Result> RequestTrackAsync(int restaurantId, string userId, Guid musicTrackId)
+        public async Task<Result> RequestTrackAsync(int restaurantId, string userId, Guid playlistTrackId)
         {
             var playlist = await _uow.Playlist.GetActivePlaylistAsync(restaurantId);
 
             if (playlist is null)
-                return Result.Failure("پلی‌لیست فعالی یافت نشد.");
+                return Result.Failure("پلی‌لیست فعالی یافت نشد");
 
-            var existsInPlaylist = playlist.Tracks.Any(x => x.MusicTrackId == musicTrackId);
+            var existsInPlaylist = playlist.Tracks.Any(x => x.Id == playlistTrackId);
 
             if (!existsInPlaylist)
-                return Result.Failure("آهنگ در پلی‌لیست فعال وجود ندارد.");
+                return Result.Failure("مشکلی رخ داده");
 
-            var hasRequestedToday = await _uow.TrackRequest.HasRequestedTodayAsync(restaurantId, userId);
+            var musicTrackId = await _uow.PlaylistTrack.GetMusicTrackIdAsync(playlistTrackId);
 
-            if (hasRequestedToday)
-                return Result.Failure(
-                    "شما امروز قبلاً درخواست ثبت کرده‌اید.");
+            //var hasRequestedToday = await _uow.TrackRequest.HasRequestedTodayAsync(restaurantId, userId);
+
+            //if (hasRequestedToday)
+            //    return Result.Failure(
+            //        "شما امروز قبلاً درخواست ثبت کرده‌اید.");
 
             var request = new TrackRequest
             {
@@ -107,9 +112,19 @@ namespace Menro.Application.Features.Music.Services
 
             await _uow.TrackRequest.AddAsync(request);
 
-            await _uow.TrackRequest.SaveChangesAsync();
+            await _uow.SaveChangesAsync();
 
-            return Result.Success();
-        }
+            await _notifier.NotifyTrackRequested(
+                restaurantId,
+                new
+                {
+                    id = request.Id,
+                    musicTrackId,
+                    userId,
+                    status = "Pending"
+                });
+
+                    return Result.Success();
+            }
     }
 }

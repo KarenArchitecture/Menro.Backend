@@ -24,6 +24,7 @@ using Menro.Infrastructure.Data.Seed.Core.Seeders;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Menro.Infrastructure.Data.Seed.Demo.Seeders;
 using Menro.Infrastructure.Seed.Demo.Seeders;
+using Menro.Web.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -153,7 +154,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 #endregion
 
-#region DI Services
+#region Services
 
 builder.Services.AddInfrastructureServices(
     builder.Configuration);
@@ -170,16 +171,20 @@ var infrastructureAssembly =
 builder.Services.AddAutoRegisteredRepositories(
     infrastructureAssembly);
 
+// multi-layered services
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUrlService, FileUrlService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
+builder.Services.AddScoped<IMusicNotificationService, MusicNotificationService>(); 
 
 builder.Services.AddSingleton<IGlobalDateTimeService, GlobalDateTimeService>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddMemoryCache();
+
+builder.Services.AddSignalR();
 
 #endregion
 
@@ -315,7 +320,6 @@ app.UseAuthorization();
 #region Routing
 
 app.MapControllers();
-
 app.MapGet("/health", () =>
     Results.Ok(new
     {
@@ -326,15 +330,16 @@ app.MapGet("/health", () =>
     }))
 .AllowAnonymous();
 
+//hubs
+app.MapHub<MusicHub>("/hubs/music");
+
 #endregion
 
 #region DB Initialization
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbInitializer =
-        scope.ServiceProvider
-            .GetRequiredService<IDbInitializer>();
+    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
 
     await dbInitializer.InitializeAsync();
 }

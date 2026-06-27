@@ -1,7 +1,7 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.SD;
 using Menro.Application.Features.Music.DTOs.Archive;
-using Menro.Application.Features.Music.Services;
+using Menro.Application.Features.Music.Services.Interfaces;
 using Menro.Application.Helpers;
 using Menro.Domain.Entities.Music;
 using Microsoft.AspNetCore.Authorization;

@@ -7,6 +7,7 @@ namespace Menro.Domain.Interfaces.Music
 
         Task AddAsync(PlaylistTrack entity);
         Task<PlaylistTrack?> GetByIdAsync(Guid playlistTrackId);
+        Task<Guid> GetMusicTrackIdAsync(Guid playlistTrackId);
         Task<PlaylistTrack?> GetFirstByPlaylistIdAsync(Guid playlistId);
         Task<int> GetLastSortOrderAsync(Guid playlistId);
 

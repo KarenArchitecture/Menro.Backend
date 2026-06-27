@@ -1,6 +1,6 @@
 ﻿using Menro.Application.Features.Music.DTOs.Requests;
 
-namespace Menro.Application.Features.Music.Services
+namespace Menro.Application.Features.Music.Services.Interfaces
 {
     public interface ITrackRequestService
     {

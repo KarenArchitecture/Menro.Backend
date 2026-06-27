@@ -1,22 +1,27 @@
-﻿using Menro.Application.Features.Music.DTOs.Requests;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Music.DTOs.Requests;
+using Menro.Application.Features.Music.Services.Interfaces;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Entities.Music.Enums;
 using Menro.Domain.Interfaces;
-using Menro.Domain.Interfaces.Music;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace Menro.Application.Features.Music.Services
+namespace Menro.Application.Features.Music.Services.Implementations
 {
     public class TrackRequestService : ITrackRequestService
     {
         private readonly IUnitOfWork _uow;
-        public TrackRequestService(IUnitOfWork uow) 
+        private readonly IMusicNotificationService _notifier;
+
+        public TrackRequestService(IUnitOfWork uow, IMusicNotificationService notifier)
         {
             _uow = uow;
+            _notifier = notifier;
         }
 
         public async Task<List<RequestedTrackDto>> GetPendingAsync(int restaurantId)
         {
-            var requests =await _uow.TrackRequest.GetPendingByRestaurantIdAsync(restaurantId);
+            var requests = await _uow.TrackRequest.GetPendingByRestaurantIdAsync(restaurantId);
 
             return requests.Select(x => new RequestedTrackDto
             {
@@ -42,6 +47,14 @@ namespace Menro.Application.Features.Music.Services
 
             await _uow.TrackRequest.UpdateAsync(request);
             await _uow.SaveChangesAsync();
+
+            await _notifier.NotifyTrackRequested(
+                restaurantId,
+                new
+                {
+                    id = request.Id,
+                    status = "Rejected"
+                });
 
             return true;
         }
@@ -114,6 +127,15 @@ namespace Menro.Application.Features.Music.Services
 
             // 10. Single save
             await _uow.SaveChangesAsync();
+
+            await _notifier.NotifyTrackRequested(
+                restaurantId,
+                new
+                {
+                    id = request.Id,
+                    musicTrackId = request.MusicTrackId,
+                    status = "Approved"
+                });
 
             return true;
         }

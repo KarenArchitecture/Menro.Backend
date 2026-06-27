@@ -1,7 +1,7 @@
 ﻿using Menro.Application.Features.Music.DTOs.Player;
 using Menro.Domain.Entities.Music;
 
-namespace Menro.Domain.Interfaces.Music
+namespace Menro.Application.Features.Music.Services.Interfaces
 {
     public interface IMusicPlayerService
     {

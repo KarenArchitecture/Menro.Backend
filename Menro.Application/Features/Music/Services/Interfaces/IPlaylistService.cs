@@ -3,7 +3,7 @@ using Menro.Application.Features.Music.DTOs.Archive;
 using Menro.Application.Features.Music.DTOs.Playlist;
 using Menro.Domain.Entities.Music;
 
-namespace Menro.Application.Features.Music.Services
+namespace Menro.Application.Features.Music.Services.Interfaces
 {
     public interface IPlaylistService
     {

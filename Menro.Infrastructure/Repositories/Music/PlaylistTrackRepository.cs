@@ -27,6 +27,15 @@ namespace Menro.Infrastructure.Repositories.Music
 
             return playlistTrack;
         }
+
+        public async Task<Guid> GetMusicTrackIdAsync(Guid playlistTrackId)
+        {
+            return await _context.PlaylistTracks
+                .Where(x => x.Id == playlistTrackId)
+                .Select(x => x.MusicTrackId)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<PlaylistTrack?> GetFirstByPlaylistIdAsync(Guid playlistId)
         {
             return await _context.PlaylistTracks

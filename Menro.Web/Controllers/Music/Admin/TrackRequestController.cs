@@ -1,8 +1,8 @@
 ﻿using Menro.Application.Common.SD;
-using Menro.Application.Features.Music.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Music.Services.Interfaces;
 
 namespace Menro.Web.Controllers.Music.Admin
 {

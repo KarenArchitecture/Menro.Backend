@@ -92,5 +92,17 @@ namespace Menro.Web.Controllers.AdminPanel
 
             return Ok(new { message = "Updated successfully" });
         }
+
+
+        [HttpGet("context")]
+        public async Task<IActionResult> Get()
+        {
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+
+            return Ok(new
+            {
+                restaurantId
+            });
+        }
     }
 }
