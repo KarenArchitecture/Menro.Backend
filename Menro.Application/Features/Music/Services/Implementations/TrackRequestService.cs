@@ -48,11 +48,12 @@ namespace Menro.Application.Features.Music.Services.Implementations
             await _uow.TrackRequest.UpdateAsync(request);
             await _uow.SaveChangesAsync();
 
-            await _notifier.NotifyTrackRequested(
+            await _notifier.NotifyTrackRejected(
                 restaurantId,
                 new
                 {
                     id = request.Id,
+                    musicTrackId = request.MusicTrackId,
                     status = "Rejected"
                 });
 
@@ -128,7 +129,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
             // 10. Single save
             await _uow.SaveChangesAsync();
 
-            await _notifier.NotifyTrackRequested(
+            await _notifier.NotifyTrackApproved(
                 restaurantId,
                 new
                 {

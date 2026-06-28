@@ -19,5 +19,19 @@ namespace Menro.Web.Services
                 .Group(MusicHub.GetGroupName(restaurantId))
                 .SendAsync("RequestCreated", payload);
         }
+
+        public Task NotifyTrackApproved(int restaurantId, object payload)
+        {
+            return _hub.Clients
+                .Group(MusicHub.GetGroupName(restaurantId))
+                .SendAsync("RequestApproved", payload);
+        }
+
+        public Task NotifyTrackRejected(int restaurantId, object payload)
+        {
+            return _hub.Clients
+                .Group(MusicHub.GetGroupName(restaurantId))
+                .SendAsync("RequestRejected", payload);
+        }
     }
 }
