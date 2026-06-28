@@ -24,6 +24,15 @@ namespace Menro.Infrastructure.Repositories.Music
         {
             return await _context.TrackRequests.FirstOrDefaultAsync(x => x.Id == requestId);
         }
+        public async Task<List<TrackRequest>> GetByIdsAsync(List<Guid> requestIds)
+        {
+            if (requestIds.Count == 0)
+                return [];
+
+            return await _context.TrackRequests
+                .Where(x => requestIds.Contains(x.Id))
+                .ToListAsync();
+        }
 
         public async Task<List<TrackRequest>> GetPendingByRestaurantIdAsync(int restaurantId)
         {
@@ -68,6 +77,19 @@ namespace Menro.Infrastructure.Repositories.Music
                 x.RestaurantId == restaurantId && 
                 x.UserId == userId && 
                 x.RequestedAt.Date == today);
+        }
+
+        public async Task<List<TrackRequest>> GetByMusicTrackIdsAsync(int restaurantId, List<Guid> musicTrackIds)
+        {
+            if (musicTrackIds == null || musicTrackIds.Count == 0)
+                return new List<TrackRequest>();
+
+            return await _context.TrackRequests
+                .AsNoTracking()
+                .Where(x =>
+                    x.RestaurantId == restaurantId &&
+                    musicTrackIds.Contains(x.MusicTrackId))
+                .ToListAsync();
         }
     }
 }

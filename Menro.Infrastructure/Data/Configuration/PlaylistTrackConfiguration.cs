@@ -1,6 +1,6 @@
 ﻿using Menro.Domain.Entities.Music;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Menro.Infrastructure.Data.Configuration
 {
@@ -14,6 +14,9 @@ namespace Menro.Infrastructure.Data.Configuration
             builder.Property(x => x.SortOrder)
                 .IsRequired();
 
+            builder.Property(x => x.IsRequestedTrack)
+                .IsRequired();
+
             builder.HasOne(x => x.Playlist)
                 .WithMany(x => x.Tracks)
                 .HasForeignKey(x => x.PlaylistId)
@@ -22,7 +25,7 @@ namespace Menro.Infrastructure.Data.Configuration
             builder.HasOne(x => x.MusicTrack)
                 .WithMany()
                 .HasForeignKey(x => x.MusicTrackId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

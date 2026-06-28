@@ -20,15 +20,27 @@ namespace Menro.Infrastructure.Data.Configuration
             builder.Property(x => x.Status)
                 .IsRequired();
 
+            builder.Property(x => x.MusicTrackId)
+                .IsRequired();
+
             builder.HasOne(x => x.MusicTrack)
                 .WithMany()
                 .HasForeignKey(x => x.MusicTrackId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(x => x.User)
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne<PlaylistTrack>()
+                .WithMany()
+                .HasForeignKey(x => x.PlaylistTrackId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasIndex(x => new { x.RestaurantId, x.UserId, x.MusicTrackId });
+
+            builder.HasIndex(x => x.PlaylistTrackId);
         }
     }
 }

@@ -9,13 +9,16 @@ namespace Menro.Domain.Entities.Music
         public int RestaurantId { get; set; }
 
         public Guid MusicTrackId { get; set; }
-        public string UserId { get; set; } = null;
+
+        public Guid? PlaylistTrackId { get; set; }
+
+        public string UserId { get; set; } = null!;
 
         public TrackRequestStatus Status { get; set; }
 
         public DateTime RequestedAt { get; set; }
 
-        public MusicTrack MusicTrack { get; set; } = null;
-        public User User { get; set; } = null;
+        public MusicTrack MusicTrack { get; set; } = null!;
+        public User User { get; set; } = null!;
     }
 }

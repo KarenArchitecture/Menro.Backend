@@ -20,17 +20,17 @@ namespace Menro.Web.Services
                 .SendAsync("RequestCreated", payload);
         }
 
-        public Task NotifyTrackApproved(int restaurantId, object payload)
+        public Task NotifyTrackApproved(string userId, object payload)
         {
             return _hub.Clients
-                .Group(MusicHub.GetGroupName(restaurantId))
+                .User(userId)
                 .SendAsync("RequestApproved", payload);
         }
 
-        public Task NotifyTrackRejected(int restaurantId, object payload)
+        public Task NotifyTrackRejected(string userId, object payload)
         {
             return _hub.Clients
-                .Group(MusicHub.GetGroupName(restaurantId))
+                .User(userId)
                 .SendAsync("RequestRejected", payload);
         }
     }

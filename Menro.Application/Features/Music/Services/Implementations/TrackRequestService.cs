@@ -43,13 +43,16 @@ namespace Menro.Application.Features.Music.Services.Implementations
             if (request.RestaurantId != restaurantId)
                 return false;
 
+            if (request.Status != TrackRequestStatus.Pending)
+                return false;
+
             request.Status = TrackRequestStatus.Rejected;
 
             await _uow.TrackRequest.UpdateAsync(request);
             await _uow.SaveChangesAsync();
 
             await _notifier.NotifyTrackRejected(
-                restaurantId,
+                request.UserId,
                 new
                 {
                     id = request.Id,
@@ -60,10 +63,8 @@ namespace Menro.Application.Features.Music.Services.Implementations
             return true;
         }
 
-
         public async Task<bool> ApproveAsync(Guid requestId, int restaurantId)
         {
-            // 1. Request
             var request = await _uow.TrackRequest.GetByIdAsync(requestId);
 
             if (request == null || request.RestaurantId != restaurantId)
@@ -72,13 +73,11 @@ namespace Menro.Application.Features.Music.Services.Implementations
             if (request.Status != TrackRequestStatus.Pending)
                 return false;
 
-            // 2. Player
             var player = await _uow.MusicPlayer.GetByRestaurantIdAsync(restaurantId);
 
             if (player == null)
                 return false;
 
-            // 3. Active playlist (source of truth)
             var playlist = await _uow.Playlist.GetActiveByRestaurantIdAsync(restaurantId);
 
             if (playlist == null)
@@ -86,30 +85,31 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
             var playlistId = playlist.Id;
 
-            // 4. Current track
             var current = player.CurrentPlaylistTrackId.HasValue
                 ? await _uow.PlaylistTrack.GetByIdAsync(player.CurrentPlaylistTrackId.Value)
                 : null;
 
             var currentSortOrder = current?.SortOrder ?? 0;
 
-            // 5. Find last requested track AFTER current
-            var requestedTracks = await _uow.PlaylistTrack.GetRequestedTracksAfterCurrentAsync(playlistId, currentSortOrder);
+            var requestedTracks =
+                await _uow.PlaylistTrack.GetRequestedTracksAfterCurrentAsync(
+                    playlistId,
+                    currentSortOrder);
 
             var lastRequested = requestedTracks.LastOrDefault();
 
-            // 6. Insert position
             var insertAfterSortOrder = lastRequested?.SortOrder ?? currentSortOrder;
 
-            // 7. Shift tracks in ONE batch (important fix)
-            var tracksToShift = await _uow.PlaylistTrack.GetAfterSortOrderAsync(playlistId, insertAfterSortOrder);
+            var tracksToShift =
+                await _uow.PlaylistTrack.GetAfterSortOrderAsync(
+                    playlistId,
+                    insertAfterSortOrder);
 
             foreach (var track in tracksToShift)
             {
                 track.SortOrder += 1;
             }
 
-            // 8. Create new requested track
             var newTrack = new PlaylistTrack
             {
                 Id = Guid.NewGuid(),
@@ -122,22 +122,20 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
             await _uow.PlaylistTrack.AddAsync(newTrack);
 
-            // 9. Update request
             request.Status = TrackRequestStatus.Approved;
-            await _uow.TrackRequest.UpdateAsync(request);
+            request.PlaylistTrackId = newTrack.Id;
 
-            // 10. Single save
+            await _uow.TrackRequest.UpdateAsync(request);
             await _uow.SaveChangesAsync();
 
             await _notifier.NotifyTrackApproved(
-                restaurantId,
+                request.UserId,
                 new
                 {
                     id = request.Id,
                     musicTrackId = request.MusicTrackId,
                     status = "Approved"
                 });
-
             return true;
         }
     }

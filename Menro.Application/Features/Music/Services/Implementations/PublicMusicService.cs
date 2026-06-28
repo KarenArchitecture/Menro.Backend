@@ -24,50 +24,72 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
         public async Task<PublicMusicPageDto?> GetPageAsync(int restaurantId, string userId)
         {
-            var playlist = await _uow.Playlist.GetActivePlaylistAsync(restaurantId);
+            var playlist =await _uow.Playlist.GetActivePlaylistAsync(restaurantId);
+            var player = await _musicPlayerService.GetPlayerAsync(restaurantId);
 
-            if (playlist is null)
+            if (playlist is null || player is null)
                 return null;
 
-            var player = await _musicPlayerService.GetPlayerAsync(restaurantId);
+            // Daily limit
+            var today = DateTime.UtcNow.Date;
 
             var todayRequests = await _uow.TrackRequest.GetTodayByRestaurantAsync(restaurantId);
 
-            var hasRequestedToday = todayRequests.Any(x => x.UserId == userId);
+            var myTodayRequests = todayRequests.Count(x => x.UserId == userId);
 
-            var requestLookup = todayRequests.GroupBy(x => x.MusicTrackId).ToDictionary(x => x.Key, x => x.First());
+            var remainingRequests = Math.Max(0, 50 - myTodayRequests);
 
-            var tracks = playlist.Tracks.OrderBy(x => x.SortOrder).Select(track =>
-            {
-                requestLookup.TryGetValue(track.MusicTrackId, out var request);
+            // فقط درخواست‌هایی که به PlaylistTrack وصل شده‌اند
+            var requestIds = playlist.Tracks
+                .Where(x =>
+                    x.IsRequestedTrack &&
+                    x.TrackRequestId.HasValue)
+                .Select(x => x.TrackRequestId!.Value)
+                .ToList();
 
-                var status = PublicTrackStatus.None;
+            var requests = await _uow.TrackRequest.GetByIdsAsync(requestIds);
 
-                if (request is not null)
+            var requestLookup = requests.ToDictionary(x => x.Id);
+
+            var tracks = playlist.Tracks
+                .OrderBy(x => x.SortOrder)
+                .Select(track =>
                 {
-                    status = request.UserId == userId ? PublicTrackStatus.MineRequested : PublicTrackStatus.Requested;
-                }
+                    var status = PublicTrackStatus.None;
 
-                return new PublicTrackDto
-                {
-                    Id = track.Id,
+                    if (track.IsRequestedTrack &&
+                        track.TrackRequestId.HasValue &&
+                        requestLookup.TryGetValue(
+                            track.TrackRequestId.Value,
+                            out var request))
+                    {
+                        status =
+                            request.UserId == userId
+                            ? PublicTrackStatus.MineRequested
+                            : PublicTrackStatus.Requested;
+                    }
 
-                    Title = track.MusicTrack.Title,
+                    return new PublicTrackDto
+                    {
+                        Id = track.Id,
 
-                    Subtitle = track.MusicTrack.Artist,
+                        Title = track.MusicTrack.Title,
 
-                    ImageUrl /*(cover file name for just now)*/ = track.MusicTrack.CoverFileName,
+                        Subtitle = track.MusicTrack.Artist,
 
-                    IsCurrentTrack = player?.CurrentPlaylistTrackId == track.Id,
+                        ImageUrl = track.MusicTrack.CoverFileName,
 
-                    Status = status
-                };
-            })
-            .ToList();
+                        IsCurrentTrack =
+                            player?.CurrentPlaylistTrackId == track.Id,
+
+                        Status = status
+                    };
+                })
+                .ToList();
 
             return new PublicMusicPageDto
             {
-                RemainingRequests = hasRequestedToday ? 0 : 1,
+                RemainingRequests = remainingRequests,
 
                 CurrentTrackId = player?.CurrentPlaylistTrackId,
 
@@ -77,23 +99,18 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
         public async Task<Result> RequestTrackAsync(int restaurantId, string userId, Guid playlistTrackId)
         {
+            if (string.IsNullOrEmpty(userId))
+                return Result.Failure("کاربر معتبر نیست");
+
             var playlist = await _uow.Playlist.GetActivePlaylistAsync(restaurantId);
 
             if (playlist is null)
                 return Result.Failure("پلی‌لیست فعالی یافت نشد");
 
-            var existsInPlaylist = playlist.Tracks.Any(x => x.Id == playlistTrackId);
+            var playlistTrack = playlist.Tracks.FirstOrDefault(x => x.Id == playlistTrackId);
 
-            if (!existsInPlaylist)
+            if (playlistTrack is null)
                 return Result.Failure("مشکلی رخ داده");
-
-            var musicTrackId = await _uow.PlaylistTrack.GetMusicTrackIdAsync(playlistTrackId);
-
-            //var hasRequestedToday = await _uow.TrackRequest.HasRequestedTodayAsync(restaurantId, userId);
-
-            //if (hasRequestedToday)
-            //    return Result.Failure(
-            //        "شما امروز قبلاً درخواست ثبت کرده‌اید.");
 
             var request = new TrackRequest
             {
@@ -101,7 +118,9 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
                 RestaurantId = restaurantId,
 
-                MusicTrackId = musicTrackId,
+                MusicTrackId = playlistTrack.MusicTrackId,
+
+                PlaylistTrackId = playlistTrackId,
 
                 UserId = userId,
 
@@ -119,12 +138,12 @@ namespace Menro.Application.Features.Music.Services.Implementations
                 new
                 {
                     id = request.Id,
-                    musicTrackId,
+                    playlistTrackId,
                     userId,
                     status = "Pending"
                 });
 
-                    return Result.Success();
-            }
+            return Result.Success();
+        }
     }
 }

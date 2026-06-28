@@ -49,6 +49,7 @@ namespace Menro.Web.Controllers.Music.Public
             return Ok(result);
         }
 
+        [Authorize]
         [HttpPost("{restaurantId:int}/request")]
         public async Task<IActionResult> RequestTrack(int restaurantId,RequestTrackDto dto)
         {

@@ -25,6 +25,8 @@ using Menro.Infrastructure.Data.Seed.Contracts;
 using Menro.Infrastructure.Data.Seed.Demo.Seeders;
 using Menro.Infrastructure.Seed.Demo.Seeders;
 using Menro.Web.Hubs;
+using Menro.Web.Hubs.SignalR;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -112,6 +114,8 @@ builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<
         Microsoft.Extensions.Options.IOptions<JwtSettings>>().Value);
 
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme =
@@ -143,6 +147,26 @@ builder.Services.AddAuthentication(options =>
             NameClaimType = ClaimTypes.NameIdentifier,
             RoleClaimType = ClaimTypes.Role
         };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken =
+                context.Request.Query["access_token"];
+
+            var path =
+                context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments("/hubs/music"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.ConfigureApplicationCookie(options =>

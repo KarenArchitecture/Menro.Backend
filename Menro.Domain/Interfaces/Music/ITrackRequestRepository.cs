@@ -8,6 +8,8 @@ namespace Menro.Domain.Interfaces.Music
         Task<List<TrackRequest>> GetPendingByRestaurantIdAsync(int restaurantId);
 
         Task<TrackRequest?> GetByIdAsync(Guid requestId);
+        Task<List<TrackRequest>> GetByIdsAsync(List<Guid> requestIds);
+
 
         Task UpdateAsync(TrackRequest request);
         Task SaveChangesAsync();
@@ -16,6 +18,7 @@ namespace Menro.Domain.Interfaces.Music
 
         Task<List<TrackRequest>> GetTodayByRestaurantAsync(int restaurantId);
         Task<bool> HasRequestedTodayAsync(int restaurantId, string userId);
+        Task<List<TrackRequest>> GetByMusicTrackIdsAsync(int restaurantId, List<Guid> musicTrackIds);
 
     }
 }
