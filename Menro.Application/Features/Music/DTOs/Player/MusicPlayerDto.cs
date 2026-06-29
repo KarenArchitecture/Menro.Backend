@@ -4,8 +4,7 @@
     {
         public Guid? PlaylistId { get; set; }
 
-        public Guid? CurrentPlaylistTrackId { get; set; }
+        public Guid? CurrentTrackId { get; set; }
 
-        //public DateTime LastUpdatedAt { get; set; }
     }
 }

@@ -80,7 +80,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
                         ImageUrl = track.MusicTrack.CoverFileName,
 
                         IsCurrentTrack =
-                            player?.CurrentPlaylistTrackId == track.Id,
+                            player?.CurrentTrackId == track.Id,
 
                         Status = status
                     };
@@ -91,7 +91,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
             {
                 RemainingRequests = remainingRequests,
 
-                CurrentTrackId = player?.CurrentPlaylistTrackId,
+                CurrentTrackId = player?.CurrentTrackId,
 
                 Tracks = tracks
             };
