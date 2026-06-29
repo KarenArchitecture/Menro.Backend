@@ -21,29 +21,28 @@ namespace Menro.Application.Features.Music.Services.Implementations
             _notification = notification;
         }
 
-        // add playlist
-        public async Task<Playlist> CreateAsync(int restaurantId, CreatePlaylistDto dto)
+    public async Task<Playlist> CreateAsync(int restaurantId, CreatePlaylistDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            throw new ArgumentException("Playlist name is required.");
+
+        var exists = await _uow.Playlist.ExistsAsync(restaurantId, dto.Name);
+
+        if (exists)
+            throw new InvalidOperationException("Playlist already exists.");
+
+        var playlist = new Playlist
         {
-            if (string.IsNullOrWhiteSpace(dto.Name))
-                throw new ArgumentException("Playlist name is required.");
+            Id = Guid.NewGuid(),
+            RestaurantId = restaurantId,
+            Name = dto.Name.Trim(),
+            IsActive = false
+        };
 
-            var exists = await _uow.Playlist.ExistsAsync(restaurantId, dto.Name);
+        await _uow.Playlist.AddAsync(playlist);
+        await _uow.SaveChangesAsync();
 
-            if (exists)
-                throw new InvalidOperationException("Playlist already exists.");
-
-            var playlist = new Playlist
-            {
-                Id = Guid.NewGuid(),
-                RestaurantId = restaurantId,
-                Name = dto.Name.Trim(),
-                IsActive = false
-            };
-
-            await _uow.Playlist.AddAsync(playlist);
-            await _uow.SaveChangesAsync();
-
-            await SetActivePlaylistAsync(playlist.Id, restaurantId);
+        await SetActivePlaylistAsync(playlist.Id, restaurantId);
 
             await _notification.NotifyPlaylistChanged(restaurantId);
 
@@ -69,8 +68,8 @@ namespace Menro.Application.Features.Music.Services.Implementations
         {
             var playlist = await _uow.Playlist.GetByIdAsync(playlistId);
 
-            if (playlist == null || playlist.RestaurantId != restaurantId)
-                return null;
+        if (playlist == null || playlist.RestaurantId != restaurantId)
+            return null;
 
             return new PlaylistDto
             {
@@ -92,25 +91,24 @@ namespace Menro.Application.Features.Music.Services.Implementations
             };
         }
 
-        // rename playlist
-        public async Task<bool> RenameAsync(Guid playlistId, int restaurantId, RenamePlaylistDto dto)
-        {
-            if (string.IsNullOrWhiteSpace(dto.Name))
-                throw new ArgumentException("Playlist name is required.");
+    public async Task<bool> RenameAsync(Guid playlistId, int restaurantId, RenamePlaylistDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            throw new ArgumentException("Playlist name is required.");
 
-            var playlist = await _uow.Playlist.GetByIdAsync(playlistId);
+        var playlist = await _uow.Playlist.GetByIdAsync(playlistId);
 
-            if (playlist == null)
-                return false;
+        if (playlist == null)
+            return false;
 
-            var newName = dto.Name.Trim();
+        var newName = dto.Name.Trim();
 
-            var duplicateExists = await _uow.Playlist.ExistsAsync(restaurantId, newName);
+        var duplicateExists = await _uow.Playlist.ExistsAsync(restaurantId, newName);
 
             if (duplicateExists && !string.Equals(playlist.Name, newName, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("Playlist name already exists.");
 
-            playlist.Name = newName;
+        playlist.Name = newName;
 
             await _uow.Playlist.UpdateAsync(playlist);
             await _uow.SaveChangesAsync();
@@ -128,39 +126,38 @@ namespace Menro.Application.Features.Music.Services.Implementations
             if (playlist == null || playlist.RestaurantId != restaurantId)
                 return Result.Failure("Playlist not found.");
 
-            if (playlist.IsActive)
-                return Result.Failure("پلی‌لیست فعال قابل حذف نیست.");
+        if (playlist.IsActive)
+            return Result.Failure("پلی‌لیست فعال قابل حذف نیست.");
 
-            await _uow.Playlist.DeleteAsync(playlist);
-            await _uow.SaveChangesAsync();
+        await _uow.Playlist.DeleteAsync(playlist);
+        await _uow.SaveChangesAsync();
 
             await _notification.NotifyPlaylistChanged(restaurantId);
 
             return Result.Success();
         }
 
-        // activate playlist
-        public async Task<bool> SetActivePlaylistAsync(Guid playlistId, int restaurantId)
-        {
-            var playlists = await _uow.Playlist.GetAllByRestaurantIdAsync(restaurantId);
+    public async Task<bool> SetActivePlaylistAsync(Guid playlistId, int restaurantId)
+    {
+        var playlists = await _uow.Playlist.GetAllByRestaurantIdAsync(restaurantId);
 
             var selected = playlists.FirstOrDefault(x => x.Id == playlistId);
 
             if (selected == null)
                 return false;
 
-            foreach (var playlist in playlists)
-            {
-                playlist.IsActive = playlist.Id == playlistId;
-            }
+        foreach (var playlist in playlists)
+        {
+            playlist.IsActive = playlist.Id == playlistId;
+        }
 
-            var player = await _musicPlayerService.GetOrCreatePlayerAsync(restaurantId);
+        var player = await _musicPlayerService.GetOrCreatePlayerAsync(restaurantId);
 
             var firstTrack = selected.Tracks.OrderBy(x => x.SortOrder).FirstOrDefault();
 
-            player.PlaylistId = selected.Id;
-            player.CurrentPlaylistTrackId = firstTrack?.Id;
-            player.LastUpdatedAt = DateTime.UtcNow;
+        player.PlaylistId = selected.Id;
+        player.CurrentPlaylistTrackId = firstTrack?.Id;
+        player.LastUpdatedAt = DateTime.UtcNow;
 
             await _uow.MusicPlayer.UpdateAsync(player);
             await _uow.SaveChangesAsync();
@@ -199,18 +196,17 @@ namespace Menro.Application.Features.Music.Services.Implementations
             return true;
         }
 
-        // remove track from playlist
-        public async Task<bool> RemoveTrackAsync(Guid playlistId, int restaurantId, Guid playlistTrackId)
-        {
-            var playlist = await _uow.Playlist.GetByIdAsync(playlistId);
+    public async Task<bool> RemoveTrackAsync(Guid playlistId, int restaurantId, Guid playlistTrackId)
+    {
+        var playlist = await _uow.Playlist.GetByIdAsync(playlistId);
 
-            if (playlist == null || playlist.RestaurantId != restaurantId)
-                return false;
+        if (playlist == null || playlist.RestaurantId != restaurantId)
+            return false;
 
-            var entity = await _uow.PlaylistTrack.GetByIdAsync(playlistTrackId);
+        var entity = await _uow.PlaylistTrack.GetByIdAsync(playlistTrackId);
 
-            if (entity == null)
-                return false;
+        if (entity == null)
+            return false;
 
             var player = await _uow.MusicPlayer.GetByRestaurantIdAsync(restaurantId);
 
@@ -261,8 +257,10 @@ namespace Menro.Application.Features.Music.Services.Implementations
                     });
             }
 
-            return true;
-        }
+        await _notification.NotifyPlaylistChanged(restaurantId);
+
+        return true;
+    }
 
         // re-order playlistTracks
         public async Task<bool> ReorderTrackAsync(Guid playlistId, int restaurantId, Guid playlistTrackId, PlaylistTrackMoveDirection direction)
@@ -272,12 +270,12 @@ namespace Menro.Application.Features.Music.Services.Implementations
             if (playlist == null || playlist.RestaurantId != restaurantId)
                 return false;
 
-            var track = await _uow.PlaylistTrack.GetByIdAsync(playlistTrackId);
+        var track = await _uow.PlaylistTrack.GetByIdAsync(playlistTrackId);
 
-            if (track == null)
-                return false;
+        if (track == null)
+            return false;
 
-            PlaylistTrack? swapTrack = null;
+        PlaylistTrack? swapTrack = null;
 
             if (direction.ToString().ToLower() == "up")
                 swapTrack = await _uow.PlaylistTrack.GetPreviousTrackAsync(playlistId, track.SortOrder);
@@ -288,15 +286,15 @@ namespace Menro.Application.Features.Music.Services.Implementations
             else
                 throw new ArgumentException("Invalid direction.");
 
-            if (swapTrack == null)
-                return true;
+        if (swapTrack == null)
+            return true;
 
-            var currentOrder = track.SortOrder;
+        var currentOrder = track.SortOrder;
 
-            track.SortOrder = swapTrack.SortOrder;
-            swapTrack.SortOrder = currentOrder;
+        track.SortOrder = swapTrack.SortOrder;
+        swapTrack.SortOrder = currentOrder;
 
-            await _uow.SaveChangesAsync();
+        await _uow.SaveChangesAsync();
 
             await _notification.NotifyPlaylistChanged(restaurantId);
 
