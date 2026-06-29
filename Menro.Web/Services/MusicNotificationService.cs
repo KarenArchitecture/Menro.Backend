@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Music.DTOs.Player;
 using Menro.Web.Hubs;
 using Microsoft.AspNetCore.SignalR;
 
@@ -32,6 +33,18 @@ namespace Menro.Web.Services
             return _hub.Clients
                 .User(userId)
                 .SendAsync("RequestRejected", payload);
+        }
+
+        public async Task NotifyPlaylistChanged(int restaurantId)
+        {
+            await _hub.Clients.Group(MusicHub.GetGroupName(restaurantId)).SendAsync("PlaylistChanged");
+        }
+
+        public async Task NotifyPlaybackChanged(int restaurantId, MusicPlayerDto payload)
+        {
+            await _hub.Clients
+                .Group(MusicHub.GetGroupName(restaurantId))
+                .SendAsync("PlaybackChanged", payload);
         }
     }
 }

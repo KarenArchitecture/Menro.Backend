@@ -1,4 +1,5 @@
-﻿using Menro.Application.Features.Music.DTOs.Player;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Music.DTOs.Player;
 using Menro.Application.Features.Music.Services.Interfaces;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces.Music;
@@ -7,32 +8,34 @@ namespace Menro.Application.Features.Music.Services.Implementations
 {
     public class MusicPlayerService : IMusicPlayerService
     {
+        #region DI
         private readonly IMusicPlayerRepository _musicPlayerRepository;
         private readonly IPlaylistTrackRepository _playlistTrackRepository;
         private readonly IPlaylistRepository _playlistRepository;
+        private readonly IMusicNotificationService _notification;
 
-        public MusicPlayerService(IMusicPlayerRepository musicPlayerRepository,
-            IPlaylistTrackRepository playlistTrackRepository,
-            IPlaylistRepository playlistRepository)
+        public MusicPlayerService(IMusicPlayerRepository musicPlayerRepository, IPlaylistTrackRepository playlistTrackRepository, IPlaylistRepository playlistRepository, IMusicNotificationService notification)
         {
             _musicPlayerRepository = musicPlayerRepository;
             _playlistTrackRepository = playlistTrackRepository;
             _playlistRepository = playlistRepository;
+            _notification = notification;
         }
+        #endregion
 
+        // gets player
         public async Task<MusicPlayerDto?> GetPlayerAsync(int restaurantId)
         {
-            var player =
-                await GetOrCreatePlayerAsync(restaurantId);
+            var player = await GetOrCreatePlayerAsync(restaurantId);
 
             return new MusicPlayerDto
             {
                 PlaylistId = player.PlaylistId,
-                CurrentPlaylistTrackId = player.CurrentPlaylistTrackId
+                CurrentTrackId = player.CurrentPlaylistTrackId
             };
         }
 
-
+        // set currently playling track from playlist
         public async Task<bool> SetCurrentTrackAsync(int restaurantId, Guid playlistId, Guid playlistTrackId)
         {
             var track = await _playlistTrackRepository.GetByIdAsync(playlistTrackId);
@@ -43,6 +46,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
             return await ChangeTrackAsync(restaurantId, track);
         }
 
+        // next track
         public async Task<bool> AdvanceTrackAsync(int restaurantId, Guid playlistTrackId)
         {
             var track = await _playlistTrackRepository.GetByIdAsync(playlistTrackId);
@@ -53,10 +57,10 @@ namespace Menro.Application.Features.Music.Services.Implementations
             return await ChangeTrackAsync(restaurantId, track);
         }
 
+        // previous track
         public async Task<bool> MoveToPreviousAsync(int restaurantId, Guid playlistTrackId)
         {
-            var track =
-                await _playlistTrackRepository.GetByIdAsync(playlistTrackId);
+            var track = await _playlistTrackRepository.GetByIdAsync(playlistTrackId);
 
             if (track == null)
                 return false;
@@ -64,31 +68,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
             return await ChangeTrackAsync(restaurantId, track);
         }
 
-
-
-        /* --- helpers --- */
-        //public async Task<MusicPlayer> EnsureMusicPlayerExistsAsync(int restaurantId)
-        //{
-        //    var player = await _musicPlayerRepository.GetByRestaurantIdAsync(restaurantId);
-
-        //    if (player != null)
-        //        return player;
-
-        //    var playlistId = _playlistRepository.GetActiveByRestaurantIdAsync(restaurantId).Id;
-
-        //    var newPlayer = new MusicPlayer
-        //    {
-        //        RestaurantId = restaurantId,
-        //        PlaylistId = playlistId,
-        //        CurrentPlaylistTrackId = null,
-        //        LastUpdatedAt = DateTime.UtcNow
-        //    };
-
-        //    await _musicPlayerRepository.CreateAsync(newPlayer);
-
-        //    return newPlayer;
-        //}
-
+        // get/create(if null) player
         public async Task<MusicPlayer> GetOrCreatePlayerAsync(int restaurantId)
         {
             var player = await _musicPlayerRepository.GetByRestaurantIdAsync(restaurantId);
@@ -111,12 +91,23 @@ namespace Menro.Application.Features.Music.Services.Implementations
                 };
 
                 await _musicPlayerRepository.CreateAsync(player);
+
+                await BroadcastPlaybackChanged(player);
+
                 return player;
             }
 
             await NormalizePlayerState(player);
+
             return player;
         }
+
+
+        /*-----------------*/
+        /*-----HELPERS----*/
+        /*---------------*/
+
+
         private async Task NormalizePlayerState(MusicPlayer player)
         {
             bool changed = false;
@@ -131,8 +122,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
             if (!player.CurrentPlaylistTrackId.HasValue)
             {
-                var firstTrack = await _playlistTrackRepository
-                    .GetFirstByPlaylistIdAsync(playlist.Id);
+                var firstTrack = await _playlistTrackRepository.GetFirstByPlaylistIdAsync(playlist.Id);
 
                 if (firstTrack != null)
                 {
@@ -144,14 +134,20 @@ namespace Menro.Application.Features.Music.Services.Implementations
             if (changed)
             {
                 player.LastUpdatedAt = DateTime.UtcNow;
+
                 await _musicPlayerRepository.UpdateAsync(player);
+
                 await _musicPlayerRepository.SaveChangesAsync();
+
+                await BroadcastPlaybackChanged(player);
             }
         }
+
+
+        // private helper for track change
         private async Task<bool> ChangeTrackAsync(int restaurantId, PlaylistTrack newTrack)
         {
-            var player =
-                await GetOrCreatePlayerAsync(restaurantId);
+            var player = await GetOrCreatePlayerAsync(restaurantId);
 
             PlaylistTrack? currentTrack = null;
 
@@ -163,6 +159,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
             if (currentTrack?.IsRequestedTrack == true)
             {
                 await _playlistTrackRepository.RemoveByIdAsync(currentTrack.Id);
+                await _notification.NotifyPlaylistChanged(restaurantId);
             }
 
             player.CurrentPlaylistTrackId = newTrack.Id;
@@ -172,8 +169,21 @@ namespace Menro.Application.Features.Music.Services.Implementations
             await _musicPlayerRepository.UpdateAsync(player);
             await _musicPlayerRepository.SaveChangesAsync();
 
+            await BroadcastPlaybackChanged(player);
+
             return true;
         }
 
+        // private helper for notifier
+        private async Task BroadcastPlaybackChanged(MusicPlayer player)
+        {
+            await _notification.NotifyPlaybackChanged(
+                player.RestaurantId,
+                new MusicPlayerDto
+                {
+                    PlaylistId = player.PlaylistId,
+                    CurrentTrackId = player.CurrentPlaylistTrackId
+                });
+        }
     }
 }
