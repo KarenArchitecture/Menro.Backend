@@ -23,6 +23,9 @@ public static class SeedOrder
     // USERS
     public const int Customer = 400;
 
+    //FAVORITES
+    public const int FavoriteFood = 450;
+
     // ORDERS (LAST)
     public const int Order = 500;
 }

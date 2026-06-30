@@ -38,6 +38,7 @@ namespace Menro.Domain.Entities
         public ICollection<FoodRating> Ratings { get; set; } = new List<FoodRating>();
         public ICollection<Discount> Discounts { get; set; } = new List<Discount>();
         public ICollection<FoodVariant> Variants { get; set; } = new List<FoodVariant>();
+        public ICollection<FavoriteFood> FavoriteFoods { get; set; } = new List<FavoriteFood>();
 
         [NotMapped]
         public double AverageRating => Ratings.Count != 0 ? Ratings.Average(r => r.Score) : 0;

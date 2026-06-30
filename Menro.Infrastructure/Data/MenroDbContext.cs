@@ -345,6 +345,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<FoodRating> FoodRatings { get; set; }
         public DbSet<FoodVariant> FoodVariants { get; set; }
         public DbSet<FoodAddon> FoodAddons { get; set; }
+        public DbSet<FavoriteFood> FavoriteFoods { get; set; }
 
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<RestaurantCategory> RestaurantCategories { get; set; }
@@ -407,6 +408,9 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<FoodRating>()
                 .HasQueryFilter(x => !x.Food.IsDeleted);
 
+            modelBuilder.Entity<FavoriteFood>()
+                .HasQueryFilter(x => !x.Food.IsDeleted);
+
             modelBuilder.Entity<OrderItem>()
                 .HasQueryFilter(x => !x.Food.IsDeleted);
 
@@ -446,6 +450,18 @@ namespace Menro.Infrastructure.Data
                 .WithOne(r => r.Food)
                 .HasForeignKey(r => r.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FavoriteFood>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.FavoriteFoods)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<FavoriteFood>()
+                .HasOne(x => x.Food)
+                .WithMany(x => x.FavoriteFoods)
+                .HasForeignKey(x => x.FoodId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Restaurant>()
                 .HasMany(r => r.Ratings)
@@ -500,6 +516,10 @@ namespace Menro.Infrastructure.Data
 
             modelBuilder.Entity<CustomFoodCategory>()
                 .HasIndex(x => new { x.RestaurantId, x.Name })
+                .IsUnique();
+
+            modelBuilder.Entity<FavoriteFood>()
+                .HasIndex(x => new { x.UserId, x.FoodId })
                 .IsUnique();
 
             modelBuilder.Entity<Order>()

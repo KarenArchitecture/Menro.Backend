@@ -16,6 +16,8 @@ namespace Menro.Domain.Entities
         public ICollection<Restaurant> Restaurants { get; set; } = new List<Restaurant>();
         // ارتباط با سفارشات مربوط به کاربر
         public ICollection<Order> Orders { get; set; } = new List<Order>(); // این رو اضافه کن
+        //ارتباط با علاقه مندی‌ها
+        public ICollection<FavoriteFood> FavoriteFoods { get; set; } = new List<FavoriteFood>();
 
     }
 }
