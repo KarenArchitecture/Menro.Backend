@@ -20,6 +20,12 @@ namespace Menro.Infrastructure.Repositories.Music
 
             return Task.CompletedTask;
         }
+        public async Task<List<TrackRequest>> GetAllByMusicTrackId(Guid musicTrackId)
+        {
+            return await _context.TrackRequests
+                .Where(x => x.MusicTrackId == musicTrackId)
+                .ToListAsync();
+        }
         public async Task<TrackRequest?> GetByIdAsync(Guid requestId)
         {
             return await _context.TrackRequests.FirstOrDefaultAsync(x => x.Id == requestId);
@@ -47,6 +53,11 @@ namespace Menro.Infrastructure.Repositories.Music
         {
             _context.TrackRequests.Update(request);
 
+            return Task.CompletedTask;
+        }
+        public Task RemoveRange(IEnumerable<TrackRequest> entity)
+        {
+            _context.TrackRequests.RemoveRange(entity);
             return Task.CompletedTask;
         }
 

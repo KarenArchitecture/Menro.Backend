@@ -10,6 +10,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
 {
     public class PlaylistService : IPlaylistService
     {
+        #region DI
         private readonly IUnitOfWork _uow;
         private readonly IMusicPlayerService _musicPlayerService;
         private readonly IMusicNotificationService _notification;
@@ -20,8 +21,10 @@ namespace Menro.Application.Features.Music.Services.Implementations
             _musicPlayerService = musicPlayerService;
             _notification = notification;
         }
+        #endregion
 
-    public async Task<Playlist> CreateAsync(int restaurantId, CreatePlaylistDto dto)
+        // create playlist
+        public async Task<Playlist> CreateAsync(int restaurantId, CreatePlaylistDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Name))
             throw new ArgumentException("Playlist name is required.");
@@ -63,7 +66,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
             }).ToList();
         }
 
-        // get playlist with it's tracks
+        // get playlist with tracks
         public async Task<PlaylistDto?> GetByIdAsync(Guid playlistId, int restaurantId)
         {
             var playlist = await _uow.Playlist.GetByIdAsync(playlistId);
@@ -91,7 +94,8 @@ namespace Menro.Application.Features.Music.Services.Implementations
             };
         }
 
-    public async Task<bool> RenameAsync(Guid playlistId, int restaurantId, RenamePlaylistDto dto)
+        // rename playlist
+        public async Task<bool> RenameAsync(Guid playlistId, int restaurantId, RenamePlaylistDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Name))
             throw new ArgumentException("Playlist name is required.");
@@ -137,7 +141,8 @@ namespace Menro.Application.Features.Music.Services.Implementations
             return Result.Success();
         }
 
-    public async Task<bool> SetActivePlaylistAsync(Guid playlistId, int restaurantId)
+        // activate playlist
+        public async Task<bool> SetActivePlaylistAsync(Guid playlistId, int restaurantId)
     {
         var playlists = await _uow.Playlist.GetAllByRestaurantIdAsync(restaurantId);
 
@@ -196,17 +201,18 @@ namespace Menro.Application.Features.Music.Services.Implementations
             return true;
         }
 
-    public async Task<bool> RemoveTrackAsync(Guid playlistId, int restaurantId, Guid playlistTrackId)
-    {
-        var playlist = await _uow.Playlist.GetByIdAsync(playlistId);
+        // remove track from playlist
+        public async Task<bool> RemoveTrackAsync(Guid playlistId, int restaurantId, Guid playlistTrackId)
+        {
+            var playlist = await _uow.Playlist.GetByIdAsync(playlistId);
 
-        if (playlist == null || playlist.RestaurantId != restaurantId)
-            return false;
+            if (playlist == null || playlist.RestaurantId != restaurantId)
+                return false;
 
-        var entity = await _uow.PlaylistTrack.GetByIdAsync(playlistTrackId);
+            var entity = await _uow.PlaylistTrack.GetByIdAsync(playlistTrackId);
 
-        if (entity == null)
-            return false;
+            if (entity == null)
+                return false;
 
             var player = await _uow.MusicPlayer.GetByRestaurantIdAsync(restaurantId);
 
@@ -241,10 +247,8 @@ namespace Menro.Application.Features.Music.Services.Implementations
                 playbackChanged = true;
             }
 
-            _uow.PlaylistTrack.Remove(entity);
+            await _uow.PlaylistTrack.RemoveAsync(entity);
             await _uow.SaveChangesAsync();
-
-            await _notification.NotifyPlaylistChanged(restaurantId);
 
             if (playbackChanged)
             {
@@ -257,10 +261,10 @@ namespace Menro.Application.Features.Music.Services.Implementations
                     });
             }
 
-        await _notification.NotifyPlaylistChanged(restaurantId);
+            await _notification.NotifyPlaylistChanged(restaurantId);
 
-        return true;
-    }
+            return true;
+        }
 
         // re-order playlistTracks
         public async Task<bool> ReorderTrackAsync(Guid playlistId, int restaurantId, Guid playlistTrackId, PlaylistTrackMoveDirection direction)

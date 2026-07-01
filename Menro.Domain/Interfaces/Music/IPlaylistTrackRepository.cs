@@ -7,12 +7,14 @@ namespace Menro.Domain.Interfaces.Music
 
         Task AddAsync(PlaylistTrack entity);
         Task<PlaylistTrack?> GetByIdAsync(Guid playlistTrackId);
+        Task<List<PlaylistTrack>> GetAllByMusicTrackId(Guid musicTrackId);
         Task<Guid> GetMusicTrackIdAsync(Guid playlistTrackId);
         Task<PlaylistTrack?> GetFirstByPlaylistIdAsync(Guid playlistId);
         Task<int> GetLastSortOrderAsync(Guid playlistId);
 
         Task UpdateAsync(PlaylistTrack request);
-        void Remove(PlaylistTrack entity);
+        Task RemoveAsync(PlaylistTrack playlistTrack);
+        Task RemoveRange(IEnumerable<PlaylistTrack> entity);
         Task<bool> RemoveByIdAsync(Guid playlistTrackId);
 
 

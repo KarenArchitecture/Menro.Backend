@@ -28,6 +28,14 @@ namespace Menro.Infrastructure.Repositories.Music
             return playlistTrack;
         }
 
+        public async Task<List<PlaylistTrack>> GetAllByMusicTrackId(Guid musicTrackId)
+        {
+            return await _context.PlaylistTracks
+                .Where(x => x.MusicTrackId == musicTrackId)
+                .ToListAsync();
+        }
+
+
         public async Task<Guid> GetMusicTrackIdAsync(Guid playlistTrackId)
         {
             return await _context.PlaylistTracks
@@ -59,9 +67,16 @@ namespace Menro.Infrastructure.Repositories.Music
             return Task.CompletedTask;
         }
 
-        public void Remove(PlaylistTrack entity)
+        public Task RemoveAsync(PlaylistTrack playlistTrack)
         {
-            _context.PlaylistTracks.Remove(entity);
+            _context.PlaylistTracks.Remove(playlistTrack);
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveRange(IEnumerable<PlaylistTrack> entity)
+        {
+            _context.PlaylistTracks.RemoveRange(entity);
+            return Task.CompletedTask;
         }
         public async Task<bool> RemoveByIdAsync(Guid playlistTrackId)
         {

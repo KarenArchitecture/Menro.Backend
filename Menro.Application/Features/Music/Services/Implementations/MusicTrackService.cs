@@ -1,5 +1,6 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Features.Music.DTOs.Archive;
+using Menro.Application.Features.Music.DTOs.Player;
 using Menro.Application.Features.Music.Services.Interfaces;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces;
@@ -9,10 +10,12 @@ namespace Menro.Application.Features.Music.Services.Implementations
     internal class MusicTrackService : IMusicTrackService
     {
         private readonly IUnitOfWork _uow;
+        private readonly IMusicNotificationService _musicNotificationService;
 
-        public MusicTrackService(IUnitOfWork uow)
+        public MusicTrackService(IUnitOfWork uow, IMusicNotificationService musicNotificationService)
         {
             _uow = uow;
+            _musicNotificationService = musicNotificationService;
         }
 
 
@@ -85,11 +88,80 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
             try
             {
+                bool playbackChanged = false;
+
+                // 1. get player
+                var player = await _uow.MusicPlayer.GetByRestaurantIdAsync(restaurantId);
+
+                // 2. playlist dependencies
+                var playlistTracks = await _uow.PlaylistTrack.GetAllByMusicTrackId(trackId);
+
+                // 3. request dependencies
+                var trackRequests = await _uow.TrackRequest.GetAllByMusicTrackId(trackId);
+
+                // 4. if is set as current, update player
+                if (player?.CurrentPlaylistTrackId != null)
+                {
+                    var currentPlaylistTrack = playlistTracks.FirstOrDefault(
+                        x => x.Id == player.CurrentPlaylistTrackId
+                    );
+
+                    if (currentPlaylistTrack != null)
+                    {
+                        var nextTrack = await _uow.PlaylistTrack.GetNextTrackAsync(
+                            currentPlaylistTrack.PlaylistId,
+                            currentPlaylistTrack.SortOrder
+                        );
+
+                        if (nextTrack != null)
+                        {
+                            player.CurrentPlaylistTrackId = nextTrack.Id;
+                            player.PlaylistId = nextTrack.PlaylistId;
+                        }
+                        else
+                        {
+                            player.CurrentPlaylistTrackId = null;
+                            player.PlaylistId = null;
+                        }
+
+                        player.LastUpdatedAt = DateTime.UtcNow;
+
+                        await _uow.MusicPlayer.UpdateAsync(player);
+
+                        playbackChanged = true;
+                    }
+                }
+
+                // 5. delete playlistTrack & trackRequest references
+                await _uow.PlaylistTrack.RemoveRange(playlistTracks);
+                await _uow.TrackRequest.RemoveRange(trackRequests);
+
+                // 6. delete track
                 _uow.MusicTrack.Remove(track);
+
                 await _uow.SaveChangesAsync();
+
+                // 7. notify playlist change (only if playlist actually affected)
+                if (playlistTracks.Any())
+                {
+                    await _musicNotificationService.NotifyPlaylistChanged(restaurantId);
+                }
+
+                // 8. notify playback change (only if player state changed)
+                if (playbackChanged)
+                {
+                    await _musicNotificationService.NotifyPlaybackChanged(
+                        restaurantId,
+                        new MusicPlayerDto
+                        {
+                            PlaylistId = player?.PlaylistId,
+                            CurrentTrackId = player?.CurrentPlaylistTrackId
+                        });
+                }
+
                 return track;
             }
-            catch (Exception)
+            catch
             {
                 return null;
             }
