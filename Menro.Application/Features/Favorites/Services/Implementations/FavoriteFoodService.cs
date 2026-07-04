@@ -53,13 +53,23 @@ namespace Menro.Application.Features.Favorites.Services.Implementations
 
             var foods = await _foodRepo.GetFoodsByIdsAsync(foodIds);
 
-            return foods.Select(f => new FavoriteFoodDto
-            {
-                FoodId = f.Id,
-                FoodName = f.Name,
-                RestaurantName = f.Restaurant.Name,
-                ImageUrl = f.ImageUrl
-            }).ToList();
+            return foods
+                .Select(f => new FavoriteFoodDto
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    ImageUrl = f.ImageUrl,
+
+                    Price = f.Price,
+
+                    Rating = f.AverageRating,
+                    Voters = f.VotersCount,
+
+                    RestaurantName = f.Restaurant.Name,
+                    RestaurantId = f.RestaurantId,
+                    RestaurantSlug = f.Restaurant.Slug
+                })
+                .ToList();
         }
 
         public async Task<List<int>> GetFavoriteFoodIdsAsync(string userId)
