@@ -1,4 +1,5 @@
-﻿using Menro.Domain.Entities;
+﻿using System.Linq.Expressions;
+using Menro.Domain.Entities;
 using Menro.Domain.Entities.Identity;
 using Menro.Domain.Entities.Music;
 using Menro.Infrastructure.Data.Configuration;
@@ -56,6 +57,9 @@ namespace Menro.Infrastructure.Data
 
         /* ===================== SAVE ===================== */
 
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<CommentLike> CommentLikes { get; set; }
+
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
             => await base.SaveChangesAsync(cancellationToken);
 
@@ -92,6 +96,9 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<GlobalFoodCategory>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<FoodVariant>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<FoodAddon>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<Comment>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<CommentLike>()
+                .HasQueryFilter(x => !x.Comment.IsDeleted);
 
             modelBuilder.Entity<OrderItemExtra>()
                 .HasQueryFilter(x => !x.OrderItem.Food.IsDeleted);
@@ -193,6 +200,43 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<Discount>()
                 .Property(x => x.Value)
                 .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<Restaurant>()
+                .HasMany(r => r.Advertisements)
+                .WithOne(a => a.Restaurant)
+                .HasForeignKey(a => a.RestaurantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Subscription>()
+                .HasOne(s => s.Restaurant)
+                .WithOne(r => r.Subscription)
+                .HasForeignKey<Subscription>(s => s.RestaurantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Food)
+                .WithMany()
+                .HasForeignKey(c => c.FoodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CommentLike>()
+                .HasOne(l => l.Comment)
+                .WithMany(c => c.Likes)
+                .HasForeignKey(l => l.CommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CommentLike>()
+                .HasOne(l => l.User)
+                .WithMany()
+                .HasForeignKey(l => l.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
 
         /* ===================== INDEXES ===================== */
@@ -228,6 +272,12 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<Food>().HasIndex(x => x.GlobalFoodCategoryId);
             modelBuilder.Entity<Order>().HasIndex(x => x.UserId);
             modelBuilder.Entity<Order>().HasIndex(x => x.RestaurantId);
+
+            modelBuilder.Entity<Comment>().HasIndex(x => x.FoodId);
+            modelBuilder.Entity<Comment>().HasIndex(x => x.Status);
+            modelBuilder.Entity<CommentLike>()
+                .HasIndex(x => new { x.CommentId, x.UserId, x.Target })
+                .IsUnique();
         }
 
         /* ===================== SEED ===================== */
