@@ -69,6 +69,11 @@ namespace Menro.Domain.Interfaces
         Task<List<Food>> GetRestaurantMenuBySlugAsync(string slug);
 
         /* ============================================================
+             Favorites
+        ============================================================ */
+        Task<List<Food>> GetFoodsByIdsAsync(List<int> ids);
+
+        /* ============================================================
            ⚙️ Admin / CRUD Operations
         ============================================================ */
 

@@ -240,6 +240,8 @@ builder.Services.AddScoped<IDataSeeder, DemoRatingSeeder>();
 
 builder.Services.AddScoped<IDataSeeder, DemoCustomerSeeder>();
 
+builder.Services.AddScoped<IDataSeeder, DemoFavoriteFoodSeeder>();
+
 builder.Services.AddScoped<IDataSeeder, DemoOrderSeeder>();
 
 #endregion

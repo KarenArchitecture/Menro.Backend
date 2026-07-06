@@ -234,6 +234,21 @@ namespace Menro.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        /* ============================================================
+             Favorites
+        ============================================================ */
+        public async Task<List<Food>> GetFoodsByIdsAsync(List<int> ids)
+        {
+            return await _context.Foods
+                .AsNoTracking()
+                .Where(f =>
+                    ids.Contains(f.Id) &&
+                    f.IsAvailable &&
+                    !f.IsDeleted)
+                .Include(f => f.Restaurant)
+                .ToListAsync();
+        }
+
         public async Task<bool> AddFoodAsync(Food food)
         {
             try

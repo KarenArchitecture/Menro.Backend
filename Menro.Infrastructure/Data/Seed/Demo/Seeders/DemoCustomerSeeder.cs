@@ -10,7 +10,6 @@ namespace Menro.Infrastructure.Data.Seed.Demo.Seeders;
 public class DemoCustomerSeeder : IDataSeeder
 {
     private readonly MenroDbContext _db;
-
     private readonly UserManager<User> _userManager;
 
     public DemoCustomerSeeder(
@@ -20,52 +19,48 @@ public class DemoCustomerSeeder : IDataSeeder
         _db = db;
         _userManager = userManager;
     }
+
     public int Order => SeedOrder.Customer;
+
     public async Task SeedAsync()
     {
-        var demoPhone = "09121112233";
+        const string demoPhone = "09121112233";
+        const string password = "Customer123!";
 
-        var existingCustomer = await _db.Users
-            .FirstOrDefaultAsync(
-                x => x.PhoneNumber == demoPhone);
+        var customer = await _db.Users
+            .FirstOrDefaultAsync(x => x.PhoneNumber == demoPhone);
 
-        if (existingCustomer != null)
+        if (customer == null)
         {
-            Console.WriteLine(
-                "[Seed] Demo customer already seeded.");
+            customer = new User
+            {
+                UserName = demoPhone,
+                PhoneNumber = demoPhone,
+                PhoneNumberConfirmed = true,
+                FullName = "مشتری نمونه"
+            };
 
-            return;
+            var result = await _userManager.CreateAsync(customer, password);
+
+            if (!result.Succeeded)
+                throw new Exception(string.Join(", ", result.Errors.Select(x => x.Description)));
         }
 
-        var demoCustomer = new User
+        var roles = await _userManager.GetRolesAsync(customer);
+
+        if (!roles.Contains(SD.Role_Customer))
+            await _userManager.AddToRoleAsync(customer, SD.Role_Customer);
+
+        var hasPassword = await _userManager.HasPasswordAsync(customer);
+
+        if (!hasPassword)
         {
-            UserName = demoPhone,
+            var result = await _userManager.AddPasswordAsync(customer, password);
 
-            PhoneNumber = demoPhone,
-
-            FullName = "مشتری نمونه"
-        };
-
-        var createResult = await _userManager
-            .CreateAsync(
-                demoCustomer,
-                "Customer123!");
-
-        if (!createResult.Succeeded)
-        {
-            var errors = string.Join(
-                ", ",
-                createResult.Errors.Select(
-                    x => x.Description));
-
-            throw new Exception(errors);
+            if (!result.Succeeded)
+                throw new Exception(string.Join(", ", result.Errors.Select(x => x.Description)));
         }
 
-        await _userManager.AddToRoleAsync(
-            demoCustomer,
-            SD.Role_Customer);
-
-        Console.WriteLine(
-            "[Seed] Demo customer seeded.");
+        Console.WriteLine("[Seed] Demo customer synced.");
     }
 }
