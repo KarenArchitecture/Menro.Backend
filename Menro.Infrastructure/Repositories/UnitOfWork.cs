@@ -1,5 +1,7 @@
 ﻿using Menro.Domain.Interfaces;
+using Menro.Domain.Interfaces.Music;
 using Menro.Infrastructure.Data;
+using Menro.Infrastructure.Repositories.Music;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Menro.Infrastructure.Repositories
@@ -32,6 +34,14 @@ namespace Menro.Infrastructure.Repositories
         private IRefreshTokenRepository _refreshToken;
         private readonly IMemoryCache _cache;
 
+        // MUSIC
+        private IMusicTrackRepository _musicTrack;
+        private IPlaylistRepository _playlist;
+        private IPlaylistTrackRepository _playlistTrack;
+        private IMusicPlayerRepository _musicPlayer;
+        private ITrackRequestRepository _trackRequest;
+
+
         // public properties with lazy instantiation
         public IUserRepository User => _user ??= new UserRepository(_context);
         public IFoodRepository Food => _food ??= new FoodRepository(_context);
@@ -46,6 +56,14 @@ namespace Menro.Infrastructure.Repositories
         public IOrderRepository Order => _order ??= new OrderRepository(_context, _cache);
         public IOrderItemRepository OrderItem => _orderItem ??= new OrderItemRepository(_context);
         public IRefreshTokenRepository RefreshToken => _refreshToken ??= new RefreshTokenRepository(_context);
+        
+        // MUSIC
+        public IMusicTrackRepository MusicTrack => _musicTrack ??= new MusicTrackRepository(_context);
+        public IPlaylistRepository Playlist => _playlist ??= new PlaylistRepository(_context);
+        public IPlaylistTrackRepository PlaylistTrack => _playlistTrack ??= new PlaylistTrackRepository(_context);
+        public IMusicPlayerRepository MusicPlayer => _musicPlayer ??= new MusicPlayerRepository(_context);
+        public ITrackRequestRepository TrackRequest => _trackRequest ??= new TrackRequestRepository(_context);
+
         // constructor
         public UnitOfWork(MenroDbContext context, IMemoryCache cache)
         {

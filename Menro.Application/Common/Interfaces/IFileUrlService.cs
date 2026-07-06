@@ -22,6 +22,8 @@
 
         string BuildRestaurantLogoUrl(string fileName);
 
-        string BuildAudioUrl(string fileName);
+        string BuildMusicFileUrl(string fileName);
+        string BuildMusicCoverUrl(string fileName);
+
     }
 }

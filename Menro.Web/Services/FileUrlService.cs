@@ -1,5 +1,4 @@
 ﻿using Menro.Application.Common.Interfaces;
-using Microsoft.Extensions.Configuration;
 
 namespace Menro.Web.Services.Implementations
 {
@@ -85,8 +84,12 @@ namespace Menro.Web.Services.Implementations
         public string BuildRestaurantLogoUrl(string fileName)
             => BuildFileUrl($"img/restaurant/logo/{Normalize(fileName)}");
 
-        /* AUDIO */
-        public string BuildAudioUrl(string fileName)
-            => BuildFileUrl($"audio/{Normalize(fileName)}");
+        /* MUSIC */
+        /* MUSIC FILE URL */
+        public string BuildMusicFileUrl(string fileName)
+            => BuildFileUrl($"media/music/files/{Normalize(fileName)}");
+        public string BuildMusicCoverUrl(string fileName)
+            => BuildFileUrl($"media/music/covers/{Normalize(fileName)}");
+
     }
 }

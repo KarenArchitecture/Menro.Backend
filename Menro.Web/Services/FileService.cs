@@ -84,7 +84,7 @@ namespace Menro.Web.Services
         }
 
         /*--------------------------------------------*/
-        /*                 PROFILE IMAGE              */
+        /*                 PROFILE IMAGES             */
         /*--------------------------------------------*/
         public Task<string> UploadProfileImageAsync(IFormFile file, string? oldFileName = null)
             => SaveFileAsync(file, "profile", oldFileName);
@@ -139,12 +139,116 @@ namespace Menro.Web.Services
         /*--------------------------------------------*/
         /*                 MUSIC FILES                */
         /*--------------------------------------------*/
+        private async Task<string> SaveMusicFileAsync(IFormFile file,string folder)
+        {
+            var uploadDir =
+                Path.Combine(_env.WebRootPath, folder);
+
+            Directory.CreateDirectory(uploadDir);
+
+            var ext = Path.GetExtension(file.FileName);
+            var fileName = $"{Guid.NewGuid()}{ext}";
+
+            var filePath =
+                Path.Combine(uploadDir, fileName);
+
+            using var stream =
+                new FileStream(filePath, FileMode.Create);
+
+            await file.CopyToAsync(stream);
+
+            return fileName;
+        }
         public Task<string> UploadMusicAsync(IFormFile file)
-            => SaveFileAsync(file, Path.Combine("media", "music", "files"));
+            => SaveMusicFileAsync(file,Path.Combine("media", "music", "files"));
+        public Task<string> UploadMusicCoverAsync(IFormFile file,string? oldFileName = null)
+            => SaveMusicFileAsync(file,Path.Combine("media", "music", "covers"));
+        public bool DeleteMusic(string fileName)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(fileName))
+                    return false;
 
-        public Task<string> UploadMusicCoverAsync(IFormFile file, string? oldFileName = null)
-            => SaveFileAsync(file, Path.Combine("media", "music", "covers"), oldFileName);
+                var uploadDir = Path.Combine(
+                    _env.WebRootPath,
+                    "media",
+                    "music",
+                    "files");
 
+                var path = Path.Combine(uploadDir, fileName);
+
+                if (!File.Exists(path))
+                    return false;
+
+                File.Delete(path);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        public bool DeleteMusicCover(string fileName)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(fileName))
+                    return false;
+
+                var uploadDir = Path.Combine(
+                    _env.WebRootPath,
+                    "media",
+                    "music",
+                    "covers");
+
+                var path = Path.Combine(uploadDir, fileName);
+
+                if (!File.Exists(path))
+                    return false;
+
+                File.Delete(path);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        public string GetMusicPhysicalPath(string fileName)
+        {
+            return Path.Combine(
+                _env.WebRootPath,
+                "media",
+                "music",
+                "files",
+                fileName);
+        }
+
+        public async Task<string?> SaveMusicCoverFromBytesAsync(byte[] imageBytes)
+        {
+            var uploadDir = Path.Combine(
+                _env.WebRootPath,
+                "media",
+                "music",
+                "covers");
+
+            Directory.CreateDirectory(uploadDir);
+
+            var fileName = $"{Guid.NewGuid()}.jpg";
+
+            var filePath = Path.Combine(
+                uploadDir,
+                fileName);
+
+            await File.WriteAllBytesAsync(
+                filePath,
+                imageBytes);
+
+            return fileName;
+        }
     }
 
 }

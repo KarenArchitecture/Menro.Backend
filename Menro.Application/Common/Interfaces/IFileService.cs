@@ -41,5 +41,9 @@ namespace Menro.Application.Common.Interfaces
         Task<string> UploadMusicCoverAsync(
             IFormFile file,
             string? oldFileName = null);
+        bool DeleteMusic(string fileName);
+        bool DeleteMusicCover(string fileName);
+        string GetMusicPhysicalPath(string fileName);
+        Task<string?> SaveMusicCoverFromBytesAsync(byte[] imageBytes);
     }
 }

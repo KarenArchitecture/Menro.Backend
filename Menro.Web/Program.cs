@@ -24,6 +24,9 @@ using Menro.Infrastructure.Data.Seed.Core.Seeders;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Menro.Infrastructure.Data.Seed.Demo.Seeders;
 using Menro.Infrastructure.Seed.Demo.Seeders;
+using Menro.Web.Hubs;
+using Menro.Web.Hubs.SignalR;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -111,6 +114,8 @@ builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<
         Microsoft.Extensions.Options.IOptions<JwtSettings>>().Value);
 
+builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme =
@@ -142,6 +147,26 @@ builder.Services.AddAuthentication(options =>
             NameClaimType = ClaimTypes.NameIdentifier,
             RoleClaimType = ClaimTypes.Role
         };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken =
+                context.Request.Query["access_token"];
+
+            var path =
+                context.HttpContext.Request.Path;
+
+            if (!string.IsNullOrEmpty(accessToken) &&
+                path.StartsWithSegments("/hubs/music"))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.ConfigureApplicationCookie(options =>
@@ -153,7 +178,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 #endregion
 
-#region DI Services
+#region Services
 
 builder.Services.AddInfrastructureServices(
     builder.Configuration);
@@ -170,16 +195,20 @@ var infrastructureAssembly =
 builder.Services.AddAutoRegisteredRepositories(
     infrastructureAssembly);
 
+// multi-layered services
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUrlService, FileUrlService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
+builder.Services.AddScoped<IMusicNotificationService, MusicNotificationService>(); 
 
 builder.Services.AddSingleton<IGlobalDateTimeService, GlobalDateTimeService>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddMemoryCache();
+
+builder.Services.AddSignalR();
 
 #endregion
 
@@ -315,7 +344,6 @@ app.UseAuthorization();
 #region Routing
 
 app.MapControllers();
-
 app.MapGet("/health", () =>
     Results.Ok(new
     {
@@ -326,19 +354,22 @@ app.MapGet("/health", () =>
     }))
 .AllowAnonymous();
 
+//hubs
+app.MapHub<MusicHub>("/hubs/music");
+
 #endregion
 
 #region DB Initialization
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbInitializer =
-        scope.ServiceProvider
-            .GetRequiredService<IDbInitializer>();
+    var dbInitializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
 
     await dbInitializer.InitializeAsync();
 }
 
 #endregion
+
+app.Logger.LogInformation("Menro.Api is running");
 
 app.Run();
