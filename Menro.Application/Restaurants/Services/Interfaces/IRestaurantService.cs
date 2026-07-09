@@ -24,5 +24,13 @@ namespace Menro.Application.Restaurants.Services.Interfaces
         Task<RestaurantProfileDto?> GetRestaurantProfileAsync(int id);
         Task UpdateRestaurantProfileAsync(UpdateRestaurantProfileDto dto);
 
+
+        // admin panel => restaurant category management tab
+
+        Task<RestaurantCategoryDto?> GetRestaurantCategoryByIdAsync(int id);
+        Task<(bool Success, string? Error)> CreateRestaurantCategoryAsync(CreateRestaurantCategoryDto dto);
+        Task<(bool Success, string? Error)> UpdateRestaurantCategoryAsync(UpdateRestaurantCategoryDto dto);
+        Task<(bool Success, string? Error)> DeleteRestaurantCategoryAsync(int id);
+
     }
 }

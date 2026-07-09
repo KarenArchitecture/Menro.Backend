@@ -73,6 +73,85 @@ namespace Menro.Application.Restaurants.Services.Implementations
             return categoryDtos;
 
         }
+
+        // ==========================================================
+        //  Restaurant Category CRUD (admin panel - "دسته‌بندی انواع رستوران")
+        // ==========================================================
+
+        public async Task<RestaurantCategoryDto?> GetRestaurantCategoryByIdAsync(int id)
+        {
+            var category = await _uow.RestaurantCategory.GetByIdAsync(id);
+            if (category == null) return null;
+
+            return new RestaurantCategoryDto
+            {
+                Id = category.Id,
+                Name = category.Name
+            };
+        }
+
+        public async Task<(bool Success, string? Error)> CreateRestaurantCategoryAsync(CreateRestaurantCategoryDto dto)
+        {
+            var name = dto.Name?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(name))
+                return (false, "نام دسته‌بندی الزامی است");
+
+            var isDuplicate = await _uow.RestaurantCategory.IsNameTakenAsync(name);
+            if (isDuplicate)
+                return (false, "دسته‌بندی با این نام قبلاً ثبت شده است");
+
+            var category = new RestaurantCategory { Name = name };
+
+            await _uow.RestaurantCategory.AddAsync(category);
+            var result = await _uow.RestaurantCategory.SaveChangesAsync();
+
+            return result
+                ? (true, null)
+                : (false, "خطا در ذخیره‌سازی دسته‌بندی");
+        }
+
+        public async Task<(bool Success, string? Error)> UpdateRestaurantCategoryAsync(UpdateRestaurantCategoryDto dto)
+        {
+            var category = await _uow.RestaurantCategory.GetByIdAsync(dto.Id);
+            if (category == null)
+                return (false, "دسته‌بندی یافت نشد");
+
+            var name = dto.Name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(name))
+                return (false, "نام دسته‌بندی الزامی است");
+
+            var isDuplicate = await _uow.RestaurantCategory.IsNameTakenAsync(name, dto.Id);
+            if (isDuplicate)
+                return (false, "دسته‌بندی با این نام قبلاً ثبت شده است");
+
+            category.Name = name;
+            var result = await _uow.RestaurantCategory.SaveChangesAsync();
+
+            return result
+                ? (true, null)
+                : (false, "خطا در بروزرسانی دسته‌بندی");
+        }
+
+        public async Task<(bool Success, string? Error)> DeleteRestaurantCategoryAsync(int id)
+        {
+            var category = await _uow.RestaurantCategory.GetByIdAsync(id);
+            if (category == null)
+                return (false, "دسته‌بندی یافت نشد");
+
+            // don't allow deleting a category that restaurants still depend on
+            var isInUse = await _uow.Restaurant.AnyAsync(r => r.RestaurantCategoryId == id);
+            if (isInUse)
+                return (false, "این دسته‌بندی توسط یک یا چند رستوران استفاده شده و قابل حذف نیست");
+
+            await _uow.RestaurantCategory.DeleteAsync(category);
+            var result = await _uow.RestaurantCategory.SaveChangesAsync();
+
+            return result
+                ? (true, null)
+                : (false, "خطا در حذف دسته‌بندی");
+        }
+
         public async Task<Restaurant?> GetRestaurantByIdAsync(int id)
         {
             var restaurant = await _uow.Restaurant.GetByIdAsync(id);
