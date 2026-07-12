@@ -6,7 +6,7 @@ namespace Menro.Application.Features.Identity.Services
 {
     public interface IAuthService
     {
-        Task SendOtpAsync(string phoneNumber);
+        Task<Result> SendOtpAsync(string phoneNumber);
         Task<bool> VerifyOtpAsync(string phoneNumber, string code);
         Task<bool> VerifyPasswordAsync(string phoneNumber, string password);
         Task<bool> PhoneConfirmed(string phoneNumber);
@@ -18,6 +18,8 @@ namespace Menro.Application.Features.Identity.Services
         string GenerateToken(Guid userId, string fullName, string email, List<string> roles);
         (string RawToken, RefreshToken Entity) IssueRefreshToken(string userId, string ip, string? userAgent);
         Task<(string NewAccessToken, string NewRefreshToken)> RefreshAccessTokenAsync(string rawRefreshToken, string ip, string? userAgent);
+        string GeneratePasswordResetToken(string phoneNumber);
+        bool ValidatePasswordResetToken(string token, string expectedPhoneNumber, out string error);
         Task<bool> LogoutAsync(string rawRefreshToken);
 
 

@@ -16,6 +16,7 @@ namespace Menro.Application.Features.Identity.Services
         Task<(bool IsSuccess, IdentityResult? Result, User? User)> RegisterUserAsync(string fullName, string email, string phoneNumber, string? password);
         //public Task<User?> LoginUserAsync(string email, string password);
         Task<List<string>> GetRolesAsync(User user);
+        Task<Result> SetPasswordAsync(string userId, string newPassword);
         Task<bool> CheckPasswordAsync(User user, string password);
         Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword);
         Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword);

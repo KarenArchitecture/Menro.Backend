@@ -5,5 +5,6 @@
         public string PhoneNumber { get; set; }
         public string NewPassword { get; set; }
         public string NewPasswordConfirm { get; set; }
+        public string ResetToken { get; set; }
     }
 }

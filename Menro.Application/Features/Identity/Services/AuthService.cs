@@ -28,6 +28,21 @@ namespace Menro.Application.Features.Identity.Services
         private readonly JwtSettings _jwtSettings;
         private readonly ISmsSender _smsSender;
 
+        // ⏱️ Minimum time that must pass between two OTP sends to the same
+        // phone number. This is the single source of truth for the
+        // rate limit — adjust here if the desired window changes.
+        private static readonly TimeSpan OtpResendCooldown = TimeSpan.FromSeconds(60);
+
+        // ⏱️ How long a password-reset token stays valid after OTP
+        // verification. Short window: it only needs to survive the time
+        // between finishing step 2 (enter OTP) and submitting step 3
+        // (new password) of the forgot-password flow.
+        private static readonly TimeSpan PasswordResetTokenLifetime = TimeSpan.FromMinutes(10);
+
+        private const string PasswordResetPurposeClaim = "purpose";
+        private const string PasswordResetPurposeValue = "password-reset";
+        private const string PasswordResetPhoneClaim = "phone";
+
         public AuthService(
             JwtSettings jwtSettings,
             IUnitOfWork uow,
@@ -45,18 +60,32 @@ namespace Menro.Application.Features.Identity.Services
         /*--- login management ---*/
 
         // send otp
-        public async Task SendOtpAsync(string phoneNumber)
+        public async Task<Result> SendOtpAsync(string phoneNumber)
         {
             var phone = NormalizeIranMobileToE164(phoneNumber);
             var now = DateTime.UtcNow;
 
+            // ⏱️ Rate limit: refuse to issue a new OTP if the last one sent
+            // to this phone number is still within the cooldown window.
+            // GetLatestUnexpiredAsync works for this because the OTP's own
+            // expiration (2 minutes) is longer than the cooldown, so a
+            // just-sent code is still "unexpired" when we check.
+            var lastOtp = await _uow.Otp.GetLatestUnexpiredAsync(phone);
+            if (lastOtp is not null)
+            {
+                var elapsed = now - lastOtp.CreatedAt;
+                if (elapsed < OtpResendCooldown)
+                {
+                    var secondsLeft = (int)Math.Ceiling((OtpResendCooldown - elapsed).TotalSeconds);
+                    return Result.Failure($"لطفاً {secondsLeft} ثانیه دیگر دوباره تلاش کنید.");
+                }
+            }
+
             // برای تست و Development
-            var code = "123456";
+            var code = "12345";
 
-            /*
-            // نسخه Production (ارسال واقعی SMS)
-            var code = RandomNumberGenerator.GetInt32(0, 1_000_000).ToString("D6");
-
+            /* نسخه Production (ارسال واقعی SMS)
+            var code = RandomNumberGenerator.GetInt32(10000, 100000).ToString();
             var send = await _smsSender.SendOtpAsync(phone, $"کد تایید شما: {code}");
 
             if (!send.IsSuccess)
@@ -73,6 +102,8 @@ namespace Menro.Application.Features.Identity.Services
             });
 
             await _uow.SaveChangesAsync();
+
+            return Result.Success();
         }
         // verify otp
         public async Task<bool> VerifyOtpAsync(string phoneNumber, string code)
@@ -171,7 +202,7 @@ namespace Menro.Application.Features.Identity.Services
         /*--- jwt management ---*/
 
         // create Refresh Token
-        public (string RawToken, RefreshToken Entity) 
+        public (string RawToken, RefreshToken Entity)
             IssueRefreshToken(string userId, string ip, string? userAgent)
         {
             var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)); // 512bit random
@@ -190,9 +221,9 @@ namespace Menro.Application.Features.Identity.Services
 
             return (rawToken, entity);
         }
-        
+
         // refresh Access Token
-        public async Task<(string NewAccessToken, string NewRefreshToken)> 
+        public async Task<(string NewAccessToken, string NewRefreshToken)>
             RefreshAccessTokenAsync(string rawRefreshToken, string ip, string? userAgent)
         {
             var hash = ComputeHash(rawRefreshToken);
@@ -220,7 +251,7 @@ namespace Menro.Application.Features.Identity.Services
 
             return (newAccess, newRaw);
         }
-        
+
         // generate jwt token (access token)
         public string GenerateToken(Guid userId, string fullName, string email, List<string> roles)
         {
@@ -247,6 +278,97 @@ namespace Menro.Application.Features.Identity.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        // 🔒 SECURITY FIX (new): mint a short-lived token that proves "an
+        // OTP was just correctly verified for this exact phone number".
+        // /reset-password requires this instead of trusting [Authorize] +
+        // a phone number in the request body, which is what previously
+        // let any logged-in user reset any other account's password.
+        public string GeneratePasswordResetToken(string phoneNumber)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(PasswordResetPhoneClaim, phoneNumber),
+                new Claim(PasswordResetPurposeClaim, PasswordResetPurposeValue),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _jwtSettings.Issuer,
+                audience: _jwtSettings.Audience,
+                claims: claims,
+                expires: DateTime.UtcNow.Add(PasswordResetTokenLifetime),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        // Validates a password-reset token AND that it was issued for the
+        // exact phone number the caller is now trying to reset. Both checks
+        // are required — a valid-but-mismatched-phone token must fail too,
+        // otherwise someone could reset their own phone's password (to get
+        // a legitimately-signed token) and then replay it against a
+        // different phone number.
+        public bool ValidatePasswordResetToken(string token, string expectedPhoneNumber, out string error)
+        {
+            error = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                error = "توکن بازیابی رمز عبور یافت نشد.";
+                return false;
+            }
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = _jwtSettings.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = _jwtSettings.Audience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero,
+                };
+
+                var principal = handler.ValidateToken(token, validationParameters, out _);
+
+                var purpose = principal.FindFirst(PasswordResetPurposeClaim)?.Value;
+                if (purpose != PasswordResetPurposeValue)
+                {
+                    error = "توکن برای این عملیات معتبر نیست.";
+                    return false;
+                }
+
+                var tokenPhone = principal.FindFirst(PasswordResetPhoneClaim)?.Value;
+                if (string.IsNullOrEmpty(tokenPhone) || tokenPhone != expectedPhoneNumber)
+                {
+                    error = "این توکن متعلق به این شماره تلفن نیست.";
+                    return false;
+                }
+
+                return true;
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                error = "نشست بازیابی رمز منقضی شده؛ لطفاً دوباره کد تأیید را دریافت کنید.";
+                return false;
+            }
+            catch (Exception)
+            {
+                error = "توکن بازیابی رمز عبور نامعتبر است.";
+                return false;
+            }
         }
 
 
@@ -292,7 +414,5 @@ namespace Menro.Application.Features.Identity.Services
                    p.Length == 10 && p.StartsWith("9") ? "+98" + p :
                    throw new Exception("فرمت شماره موبایل معتبر نیست.");
         }
-
-
     }
 }

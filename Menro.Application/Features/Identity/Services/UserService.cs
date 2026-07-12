@@ -112,6 +112,32 @@ namespace Menro.Application.Features.Identity.Services
             var roles = await _userManager.GetRolesAsync(user);
             return roles.ToList();
         }
+
+        public async Task<Result> SetPasswordAsync(string userId, string newPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return Result.Failure("کاربر یافت نشد.");
+
+            var hasPassword = await _userManager.HasPasswordAsync(user);
+
+            if (hasPassword)
+                return Result.Failure("این حساب قبلاً رمز عبور دارد.");
+
+            var identityResult = await _userManager.AddPasswordAsync(user, newPassword);
+
+            if (!identityResult.Succeeded)
+            {
+                var errors = string.Join(" | ",
+                    identityResult.Errors.Select(e => e.Description));
+
+                return Result.Failure(errors);
+            }
+
+            return Result.Success();
+        }
+
         public async Task<bool> CheckPasswordAsync(User user, string password)
         {
             bool isCorrect = await _userManager.CheckPasswordAsync(user, password);
@@ -185,7 +211,8 @@ namespace Menro.Application.Features.Identity.Services
                 Id = user.Id,
                 FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber ?? "",
-                ProfileImageUrl = user.ProfileImage // just file name
+                ProfileImageUrl = user.ProfileImage,
+                HasPassword = await _userManager.HasPasswordAsync(user)   
             };
         }
 

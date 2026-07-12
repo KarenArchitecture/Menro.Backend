@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /Menro.Infrastructure/Migrations
 /Menro.Web/wwwroot/media/music
+/Menro.Web/wwwroot/img/profile
