@@ -26,17 +26,19 @@ namespace Menro.Infrastructure.Repositories
         }
 
         public async Task<IReadOnlyList<BlogPost>> GetAllAsync(
-            string? searchTitle,
-            BlogFeedCategory? category,
+            string? search,
+            Guid? categoryId,
             CancellationToken ct = default)
         {
-            var query = _context.BlogPosts.AsQueryable();
+            var query = _context.BlogPosts
+                .Include(p => p.Category)
+                .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(searchTitle))
-                query = query.Where(p => p.Title.Contains(searchTitle));
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(p => p.Title.Contains(search));
 
-            if (category.HasValue)
-                query = query.Where(p => p.Category == category.Value);
+            if (categoryId.HasValue)
+                query = query.Where(p => p.CategoryId == categoryId.Value);
 
             return await query
                 .OrderByDescending(p => p.CreatedAtUtc)
@@ -69,5 +71,6 @@ namespace Menro.Infrastructure.Repositories
             _context.BlogPosts.Remove(post);
             await _context.SaveChangesAsync(ct);
         }
+
     }
 }

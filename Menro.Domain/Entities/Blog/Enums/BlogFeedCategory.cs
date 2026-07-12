@@ -11,6 +11,5 @@ namespace Menro.Domain.Enums
         Newest = 1,       // جدیدترین‌ها
         MostPopular = 2,  // محبوب‌ترین‌ها
         MostViewed = 3,   // پربازدیدترین‌ها
-        Trending = 4      // داغ‌ترین‌ها
     }
 }

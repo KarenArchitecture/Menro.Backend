@@ -20,10 +20,6 @@ namespace Menro.Infrastructure.Data.Configuration
             builder.Property(x => x.ReadingMinutes)
                 .IsRequired();
 
-            builder.Property(x => x.Category)
-                .IsRequired()
-                .HasConversion<int>();
-
             builder.Property(x => x.IsPublished)
                 .IsRequired()
                 .HasDefaultValue(true);
@@ -31,7 +27,16 @@ namespace Menro.Infrastructure.Data.Configuration
             builder.Property(x => x.CreatedAtUtc)
                 .IsRequired();
 
-            builder.HasIndex(x => x.Category);
+            // Category is now a real FK to BlogCategory, not an enum.
+            builder.Property(x => x.CategoryId)
+                .IsRequired();
+
+            builder.HasOne(x => x.Category)
+                .WithMany() // change to .WithMany(c => c.Posts) if you add a Posts collection to BlogCategory
+                .HasForeignKey(x => x.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasIndex(x => x.CategoryId);
             builder.HasIndex(x => x.IsPublished);
         }
     }

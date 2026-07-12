@@ -1,10 +1,5 @@
-using Menro.Domain.Enums;
-
 namespace Menro.Domain.Entities.Blog
 {
-    /// <summary>
-    /// A single blog post ("پست‌های وبلاگ" tab).
-    /// </summary>
     public class BlogPost
     {
         public Guid Id { get; set; }
@@ -15,10 +10,9 @@ namespace Menro.Domain.Entities.Blog
 
         public int ReadingMinutes { get; set; }
 
-        /// <summary>
-        /// Fixed feed filter this post belongs to (جدیدترین‌ها / محبوب‌ترین‌ها / ...).
-        /// </summary>
-        public BlogFeedCategory Category { get; set; }
+        public Guid CategoryId { get; set; }
+
+        public BlogCategory? Category { get; set; }
 
         public bool IsPublished { get; set; }
 
@@ -26,11 +20,9 @@ namespace Menro.Domain.Entities.Blog
 
         public DateTime? UpdatedAtUtc { get; set; }
 
-        /// <summary>
-        /// Join rows to BlogTag. Used only to derive each tag's article count -
-        /// there's no tag-picker in the current post form, but the relation is kept
-        /// so "تعداد مقاله" on BlogTag can be computed instead of stored.
-        /// </summary>
+        // Navigation for BlogPostTag join rows - lets BlogTagService compute
+        // per-tag article counts (see CountByTagIdAsync) and lets
+        // BlogPostTagConfiguration's WithMany(x => x.PostTags) resolve.
         public ICollection<BlogPostTag> PostTags { get; set; } = new List<BlogPostTag>();
     }
 }

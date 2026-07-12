@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Menro.Domain.Enums;
 
 namespace Menro.Application.DTOs.Blog
 {
@@ -8,8 +7,8 @@ namespace Menro.Application.DTOs.Blog
         string Title,
         string? CoverImageUrl,
         int ReadingMinutes,
-        BlogFeedCategory Category,
-        string CategoryLabel,
+        Guid CategoryId,
+        string CategoryTitle,
         bool IsPublished,
         DateTime CreatedAtUtc,
         DateTime? UpdatedAtUtc);
@@ -27,7 +26,7 @@ namespace Menro.Application.DTOs.Blog
         public int ReadingMinutes { get; set; }
 
         [Required(ErrorMessage = "انتخاب دسته‌بندی الزامی است.")]
-        public BlogFeedCategory Category { get; set; }
+        public Guid CategoryId { get; set; }
 
         public bool IsPublished { get; set; } = true;
     }
@@ -45,7 +44,7 @@ namespace Menro.Application.DTOs.Blog
         public int ReadingMinutes { get; set; }
 
         [Required(ErrorMessage = "انتخاب دسته‌بندی الزامی است.")]
-        public BlogFeedCategory Category { get; set; }
+        public Guid CategoryId { get; set; }
 
         public bool IsPublished { get; set; }
     }

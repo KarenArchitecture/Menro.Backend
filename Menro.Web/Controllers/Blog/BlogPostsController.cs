@@ -1,6 +1,6 @@
+﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.DTOs.Blog;
 using Menro.Application.Features.Blog.Services;
-using Menro.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Api.Controllers
@@ -10,18 +10,22 @@ namespace Menro.Api.Controllers
     public class BlogPostsController : ControllerBase
     {
         private readonly IBlogPostService _service;
+        private readonly IFileService _fileService;
+        private readonly IFileUrlService _fileUrlService;
 
-        public BlogPostsController(IBlogPostService service)
+        public BlogPostsController(IBlogPostService service, IFileService fileService, IFileUrlService fileUrlService)
         {
             _service = service;
+            _fileService = fileService;
+            _fileUrlService = fileUrlService;
         }
 
-        // GET api/admin/blog/posts?search=...&category=Newest
+        // GET api/admin/blog/posts?search=...&categoryId=...
         [HttpGet]
         public async Task<ActionResult<IReadOnlyList<BlogPostResponse>>> GetAll(
-            [FromQuery] string? search, [FromQuery] BlogFeedCategory? category, CancellationToken ct)
+            [FromQuery] string? search, [FromQuery] Guid? categoryId, CancellationToken ct)
         {
-            var posts = await _service.GetAllAsync(search, category, ct);
+            var posts = await _service.GetAllAsync(search, categoryId, ct);
             return Ok(posts);
         }
 
@@ -32,6 +36,24 @@ namespace Menro.Api.Controllers
             return post is null ? NotFound() : Ok(post);
         }
 
+        // POST api/admin/blog/posts/cover-image
+        [HttpPost("cover-image")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<object>> UploadCoverImage(
+            [FromForm] IFormFile file,
+            [FromForm] string? oldFileName,
+            CancellationToken ct)
+        {
+            if (file is null || file.Length == 0)
+                return BadRequest("فایلی ارسال نشده است.");
+
+            var fileName = await _fileService.UploadBlogPostImageAsync(file, oldFileName);
+            var url = _fileUrlService.BuildBlogPostImageUrl(fileName);
+
+            return Ok(new { fileName, url });
+        }
+
+        // POST api/admin/blog/posts
         [HttpPost]
         public async Task<ActionResult<BlogPostResponse>> Create(
             [FromBody] CreateBlogPostRequest request, CancellationToken ct)

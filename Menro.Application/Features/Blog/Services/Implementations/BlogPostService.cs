@@ -1,7 +1,6 @@
 using Menro.Application.Common;
 using Menro.Application.DTOs.Blog;
 using Menro.Domain.Entities.Blog;
-using Menro.Domain.Enums;
 using Menro.Domain.Interfaces.Blog;
 
 namespace Menro.Application.Features.Blog.Services.Implementations
@@ -16,9 +15,9 @@ namespace Menro.Application.Features.Blog.Services.Implementations
         }
 
         public async Task<IReadOnlyList<BlogPostResponse>> GetAllAsync(
-            string? search, BlogFeedCategory? category, CancellationToken ct = default)
+            string? search, Guid? categoryId, CancellationToken ct = default)
         {
-            var posts = await _repository.GetAllAsync(search, category, ct);
+            var posts = await _repository.GetAllAsync(search, categoryId, ct);
             return posts.Select(ToResponse).ToList();
         }
 
@@ -36,13 +35,16 @@ namespace Menro.Application.Features.Blog.Services.Implementations
                 Title = request.Title.Trim(),
                 CoverImageUrl = request.CoverImageUrl,
                 ReadingMinutes = request.ReadingMinutes,
-                Category = request.Category,
+                CategoryId = request.CategoryId,
                 IsPublished = request.IsPublished,
                 CreatedAtUtc = DateTime.UtcNow
             };
 
             await _repository.AddAsync(post, ct);
-            return ToResponse(post);
+
+            // Reload with the Category navigation populated so CategoryTitle is correct.
+            var created = await _repository.GetByIdAsync(post.Id, ct) ?? post;
+            return ToResponse(created);
         }
 
         /// <returns>null if no post with that id exists.</returns>
@@ -55,11 +57,13 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.Title = request.Title.Trim();
             post.CoverImageUrl = request.CoverImageUrl;
             post.ReadingMinutes = request.ReadingMinutes;
-            post.Category = request.Category;
+            post.CategoryId = request.CategoryId;
             post.IsPublished = request.IsPublished;
 
             await _repository.UpdateAsync(post, ct);
-            return ToResponse(post);
+
+            var updated = await _repository.GetByIdAsync(post.Id, ct) ?? post;
+            return ToResponse(updated);
         }
 
         public async Task<BlogPostResponse?> TogglePublishAsync(Guid id, CancellationToken ct = default)
@@ -87,8 +91,8 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.Title,
             post.CoverImageUrl,
             post.ReadingMinutes,
-            post.Category,
-            post.Category.ToLabel(),
+            post.CategoryId,
+            post.Category?.Title ?? string.Empty,
             post.IsPublished,
             post.CreatedAtUtc,
             post.UpdatedAtUtc);

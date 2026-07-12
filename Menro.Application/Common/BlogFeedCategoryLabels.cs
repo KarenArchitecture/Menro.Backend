@@ -14,7 +14,6 @@ namespace Menro.Application.Common
             [BlogFeedCategory.Newest] = "جدیدترین‌ها",
             [BlogFeedCategory.MostPopular] = "محبوب‌ترین‌ها",
             [BlogFeedCategory.MostViewed] = "پربازدیدترین‌ها",
-            [BlogFeedCategory.Trending] = "داغ‌ترین‌ها",
         };
 
         public static string ToLabel(this BlogFeedCategory category) =>
