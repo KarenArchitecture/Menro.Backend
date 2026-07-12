@@ -1,5 +1,7 @@
-﻿using System.Linq.Expressions;
+﻿using System.Data;
+using System.Linq.Expressions;
 using Menro.Domain.Entities;
+using Menro.Domain.Entities.Blog;
 using Menro.Domain.Entities.Identity;
 using Menro.Domain.Entities.Music;
 using Menro.Infrastructure.Data.Configuration;
@@ -54,6 +56,13 @@ namespace Menro.Infrastructure.Data
         public DbSet<MusicPlayer> MusicPlayers { get; set; }
         public DbSet<TrackRequest> TrackRequests { get; set; }
 
+        /* ===================== BLOG ===================== */
+
+        public DbSet<BlogCategory> BlogCategories { get; set; }
+        public DbSet<BlogHero> BlogHeroes { get; set; }
+        public DbSet<BlogPost> BlogPosts { get; set; }
+        public DbSet<BlogPostTag> BlogPostTags { get; set; }
+        public DbSet<BlogTag> BlogTags { get; set; }
 
         /* ===================== SAVE ===================== */
 
