@@ -1,6 +1,5 @@
 ﻿using Menro.Application.Comments.Services.Interfaces;
 using Menro.Application.Common.Interfaces;
-using Menro.Application.DTO;
 using Menro.Application.Features.Comments.DTOs;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
@@ -20,9 +19,17 @@ namespace Menro.Application.Comments.Services.Implementations
             _fileUrlService = fileUrlService;
         }
 
-        public async Task<List<CommentDto>> GetCommentsByFoodIdAsync(int foodId, string? currentUserId)
+        public async Task<FoodCommentsResponseDto?> GetCommentsByFoodIdAsync(int foodId, string? currentUserId)
         {
+            var foodSummary = await _commentRepository.GetFoodSummaryAsync(foodId);
+            if (foodSummary == null) return null;
+
             var comments = await _commentRepository.GetApprovedCommentsByFoodIdAsync(foodId);
+            var approvedCount = await _commentRepository.GetApprovedCountByFoodIdAsync(foodId);
+
+            bool hasUserCommented = !string.IsNullOrEmpty(currentUserId) &&
+                await _commentRepository.UserAlreadyCommentedAsync(foodId, currentUserId);
+
             var result = new List<CommentDto>();
 
             foreach (var c in comments)
@@ -33,7 +40,6 @@ namespace Menro.Application.Comments.Services.Implementations
                 if (!string.IsNullOrEmpty(currentUserId))
                 {
                     liked = await _commentRepository.GetLikeAsync(c.Id, currentUserId, CommentLikeTarget.Comment) != null;
-
                     if (!string.IsNullOrEmpty(c.ReplyText))
                         replyLiked = await _commentRepository.GetLikeAsync(c.Id, currentUserId, CommentLikeTarget.Reply) != null;
                 }
@@ -41,11 +47,11 @@ namespace Menro.Application.Comments.Services.Implementations
                 result.Add(new CommentDto
                 {
                     Id = c.Id,
-                    FoodId = c.FoodId,
-                    FoodTitle = c.Food?.Name ?? string.Empty,
-                    FoodImageUrl = string.IsNullOrWhiteSpace(c.Food?.ImageUrl)
+                    UserName = c.User?.FullName ?? "کاربر مهمان",
+                    UserAvatarUrl = string.IsNullOrWhiteSpace(c.User?.ProfileImage)
                         ? null
-                        : _fileUrlService.BuildFoodImageUrl(c.Food.ImageUrl),
+                        : _fileUrlService.BuildProfileImageUrl(c.User.ProfileImage),
+                    CreatedAt = c.CreatedAt,
                     Rating = c.Rating,
                     Text = c.Text,
                     Likes = c.LikesCount,
@@ -62,7 +68,19 @@ namespace Menro.Application.Comments.Services.Implementations
                 });
             }
 
-            return result;
+            return new FoodCommentsResponseDto
+            {
+                FoodId = foodId,
+                FoodTitle = foodSummary.Title,
+                FoodImageUrl = string.IsNullOrWhiteSpace(foodSummary.ImageUrl)
+                    ? null
+                    : _fileUrlService.BuildFoodImageUrl(foodSummary.ImageUrl),
+                RestaurantName = foodSummary.RestaurantName,
+                RestaurantSlug = foodSummary.RestaurantSlug,
+                ApprovedCommentsCount = approvedCount,
+                HasUserCommented = hasUserCommented,
+                Comments = result
+            };
         }
     }
 }
