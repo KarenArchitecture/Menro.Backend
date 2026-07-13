@@ -1,6 +1,7 @@
-using Menro.Application.Common;
-using Menro.Application.DTOs.Blog;
+using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Blog.DTOs;
 using Menro.Domain.Entities.Blog;
+using Menro.Domain.Enums;
 using Menro.Domain.Interfaces.Blog;
 
 namespace Menro.Application.Features.Blog.Services.Implementations
@@ -8,17 +9,57 @@ namespace Menro.Application.Features.Blog.Services.Implementations
     public class BlogPostService : IBlogPostService
     {
         private readonly IBlogPostRepository _repository;
+        private readonly IFileUrlService _fileUrlService;
 
-        public BlogPostService(IBlogPostRepository repository)
+        public BlogPostService(IBlogPostRepository repository, IFileUrlService fileUrlService)
         {
             _repository = repository;
+            _fileUrlService = fileUrlService;
         }
 
-        public async Task<IReadOnlyList<BlogPostResponse>> GetAllAsync(
-            string? search, Guid? categoryId, CancellationToken ct = default)
+        public async Task<PagedResult<BlogPostResponse>> GetAllAsync(
+            string? search,
+            Guid? categoryId,
+            BlogPostSortOrder sort = BlogPostSortOrder.Newest,
+            bool publishedOnly = false,
+            int page = 1,
+            int pageSize = 20,
+            CancellationToken ct = default)
         {
             var posts = await _repository.GetAllAsync(search, categoryId, ct);
-            return posts.Select(ToResponse).ToList();
+
+            IEnumerable<BlogPost> query = posts;
+
+            if (publishedOnly)
+                query = query.Where(p => p.IsPublished);
+
+            query = sort switch
+            {
+                BlogPostSortOrder.MostPopular => query.OrderByDescending(p => p.LikeCount),
+                BlogPostSortOrder.MostViewed => query.OrderByDescending(p => p.ViewCount),
+                _ => query.OrderByDescending(p => p.CreatedAtUtc),
+            };
+
+            var materialized = query.ToList();
+            var totalCount = materialized.Count;
+
+            // Guard against bad/absent query params rather than trusting the caller.
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize < 1 ? 20 : Math.Min(pageSize, 100);
+
+            var pageItems = materialized
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(ToResponse)
+                .ToList();
+
+            return new PagedResult<BlogPostResponse>
+            {
+                Items = pageItems,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+            };
         }
 
         public async Task<BlogPostResponse?> GetByIdAsync(Guid id, CancellationToken ct = default)
@@ -33,6 +74,8 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             {
                 Id = Guid.NewGuid(),
                 Title = request.Title.Trim(),
+                // request.CoverImageUrl is actually just the file name returned by
+                // the /posts/cover-image upload endpoint - never a full URL. See ToResponse.
                 CoverImageUrl = request.CoverImageUrl,
                 ReadingMinutes = request.ReadingMinutes,
                 CategoryId = request.CategoryId,
@@ -42,12 +85,10 @@ namespace Menro.Application.Features.Blog.Services.Implementations
 
             await _repository.AddAsync(post, ct);
 
-            // Reload with the Category navigation populated so CategoryTitle is correct.
             var created = await _repository.GetByIdAsync(post.Id, ct) ?? post;
             return ToResponse(created);
         }
 
-        /// <returns>null if no post with that id exists.</returns>
         public async Task<BlogPostResponse?> UpdateAsync(
             Guid id, UpdateBlogPostRequest request, CancellationToken ct = default)
         {
@@ -76,7 +117,6 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return ToResponse(post);
         }
 
-        /// <returns>false if no post with that id exists.</returns>
         public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
         {
             var post = await _repository.GetByIdAsync(id, ct);
@@ -86,15 +126,19 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return true;
         }
 
-        private static BlogPostResponse ToResponse(BlogPost post) => new(
+        private BlogPostResponse ToResponse(BlogPost post) => new(
             post.Id,
             post.Title,
-            post.CoverImageUrl,
+            string.IsNullOrWhiteSpace(post.CoverImageUrl)
+                ? null
+                : _fileUrlService.BuildBlogPostImageUrl(post.CoverImageUrl),
             post.ReadingMinutes,
             post.CategoryId,
             post.Category?.Title ?? string.Empty,
             post.IsPublished,
             post.CreatedAtUtc,
-            post.UpdatedAtUtc);
+            post.UpdatedAtUtc,
+            post.ViewCount,
+            post.LikeCount);
     }
 }

@@ -1,4 +1,4 @@
-﻿using Menro.Application.DTOs.Blog;
+﻿using Menro.Application.Features.Blog.DTOs;
 
 namespace Menro.Application.Features.Blog.Services
 {

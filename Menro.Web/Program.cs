@@ -244,6 +244,8 @@ builder.Services.AddScoped<IDataSeeder, DemoFavoriteFoodSeeder>();
 
 builder.Services.AddScoped<IDataSeeder, DemoOrderSeeder>();
 
+builder.Services.AddScoped<IDataSeeder, DemoBlogSeeder>();
+
 #endregion
 
 #region API

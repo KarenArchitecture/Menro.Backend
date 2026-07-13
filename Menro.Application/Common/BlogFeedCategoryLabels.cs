@@ -9,14 +9,14 @@ namespace Menro.Application.Common
     /// </summary>
     public static class BlogFeedCategoryLabels
     {
-        private static readonly Dictionary<BlogFeedCategory, string> Labels = new()
+        private static readonly Dictionary<BlogPostSortOrder, string> Labels = new()
         {
-            [BlogFeedCategory.Newest] = "جدیدترین‌ها",
-            [BlogFeedCategory.MostPopular] = "محبوب‌ترین‌ها",
-            [BlogFeedCategory.MostViewed] = "پربازدیدترین‌ها",
+            [BlogPostSortOrder.Newest] = "جدیدترین‌ها",
+            [BlogPostSortOrder.MostPopular] = "محبوب‌ترین‌ها",
+            [BlogPostSortOrder.MostViewed] = "پربازدیدترین‌ها",
         };
 
-        public static string ToLabel(this BlogFeedCategory category) =>
+        public static string ToLabel(this BlogPostSortOrder category) =>
             Labels.TryGetValue(category, out var label) ? label : category.ToString();
     }
 }

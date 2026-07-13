@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Menro.Application.DTOs.Blog
+namespace Menro.Application.Features.Blog.DTOs
 {
     public record BlogPostResponse(
         Guid Id,
@@ -11,7 +11,9 @@ namespace Menro.Application.DTOs.Blog
         string CategoryTitle,
         bool IsPublished,
         DateTime CreatedAtUtc,
-        DateTime? UpdatedAtUtc);
+        DateTime? UpdatedAtUtc,
+        int ViewCount,
+        int LikeCount);
 
     public class CreateBlogPostRequest
     {

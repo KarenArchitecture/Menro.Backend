@@ -20,6 +20,9 @@ namespace Menro.Domain.Entities.Blog
 
         public DateTime? UpdatedAtUtc { get; set; }
 
+        public int ViewCount { get; set; } = 0;
+        public int LikeCount { get; set; } = 0;
+
         // Navigation for BlogPostTag join rows - lets BlogTagService compute
         // per-tag article counts (see CountByTagIdAsync) and lets
         // BlogPostTagConfiguration's WithMany(x => x.PostTags) resolve.

@@ -6,7 +6,7 @@ namespace Menro.Domain.Enums
     /// so they live as a fixed enum instead of a database-backed table.
     /// Every BlogPost must belong to exactly one of these.
     /// </summary>
-    public enum BlogFeedCategory
+    public enum BlogPostSortOrder
     {
         Newest = 1,       // جدیدترین‌ها
         MostPopular = 2,  // محبوب‌ترین‌ها

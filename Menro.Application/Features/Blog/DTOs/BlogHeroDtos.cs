@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Menro.Application.DTOs.Blog
+namespace Menro.Application.Features.Blog.DTOs
 {
     public record BlogHeroResponse(
         Guid Id,

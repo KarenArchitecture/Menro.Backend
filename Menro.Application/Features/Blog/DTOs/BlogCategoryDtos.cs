@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Menro.Application.DTOs.Blog
+namespace Menro.Application.Features.Blog.DTOs
 {
     public record BlogCategoryResponse(
         Guid Id,
@@ -12,11 +12,11 @@ namespace Menro.Application.DTOs.Blog
     public class CreateBlogCategoryRequest
     {
         [Required(ErrorMessage = "عنوان الزامی است.")]
-        [MaxLength(200)]
+        [MaxLength(30, ErrorMessage = "عنوان نباید بیشتر از ۳۰ کاراکتر باشد.")]
         public string Title { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "زیرعنوان الزامی است.")]
-        [MaxLength(300)]
+        [MaxLength(50, ErrorMessage = "زیرعنوان نباید بیشتر از ۵۰ کاراکتر باشد.")]
         public string Subtitle { get; set; } = string.Empty;
 
         [Required]
@@ -27,11 +27,11 @@ namespace Menro.Application.DTOs.Blog
     public class UpdateBlogCategoryRequest
     {
         [Required(ErrorMessage = "عنوان الزامی است.")]
-        [MaxLength(200)]
+        [MaxLength(30, ErrorMessage = "عنوان نباید بیشتر از ۳۰ کاراکتر باشد.")]
         public string Title { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "زیرعنوان الزامی است.")]
-        [MaxLength(300)]
+        [MaxLength(50, ErrorMessage = "زیرعنوان نباید بیشتر از ۵۰ کاراکتر باشد.")]
         public string Subtitle { get; set; } = string.Empty;
 
         [Required]

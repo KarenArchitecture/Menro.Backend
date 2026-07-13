@@ -1,5 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
-using Menro.Application.DTOs.Blog;
+using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Features.Blog.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,12 +21,17 @@ namespace Menro.Api.Controllers
         }
 
         // GET api/admin/blog/posts?search=...&categoryId=...
+        // GET api/admin/blog/posts?search=...&categoryId=...&page=1&pageSize=20
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<BlogPostResponse>>> GetAll(
-            [FromQuery] string? search, [FromQuery] Guid? categoryId, CancellationToken ct)
+        public async Task<ActionResult<PagedResult<BlogPostResponse>>> GetAll(
+            [FromQuery] string? search,
+            [FromQuery] Guid? categoryId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20,
+            CancellationToken ct = default)
         {
-            var posts = await _service.GetAllAsync(search, categoryId, ct);
-            return Ok(posts);
+            var result = await _service.GetAllAsync(search, categoryId, page: page, pageSize: pageSize, ct: ct);
+            return Ok(result);
         }
 
         [HttpGet("{id:guid}")]

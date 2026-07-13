@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Menro.Application.DTOs.Blog
+namespace Menro.Application.Features.Blog.DTOs
 {
     // ArticleCount is read-only/derived - it never appears on the create/update
     // requests below, only on the response.
