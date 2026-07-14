@@ -91,5 +91,8 @@ namespace Menro.Web.Services.Implementations
         public string BuildMusicCoverUrl(string fileName)
             => BuildFileUrl($"media/music/covers/{Normalize(fileName)}");
 
+        /* BLOG POSTS */
+        public string BuildBlogPostImageUrl(string fileName)
+            => BuildFileUrl($"img/blog/posts/{Normalize(fileName)}");
     }
 }

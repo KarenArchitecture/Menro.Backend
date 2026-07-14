@@ -249,6 +249,33 @@ namespace Menro.Web.Services
 
             return fileName;
         }
+
+
+        /*--------------------------------------------*/
+        /*               BLOG POST IMAGES             */
+        /*--------------------------------------------*/
+        public Task<string> UploadBlogPostImageAsync(IFormFile file, string? oldFileName = null)
+            => SaveFileAsync(file, Path.Combine("blog", "posts"), oldFileName);
+
+        public bool DeleteBlogPostImage(string fileName)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(fileName)) return false;
+
+                var uploadDir = Path.Combine(_env.WebRootPath, "img", "blog", "posts");
+                var path = Path.Combine(uploadDir, fileName);
+
+                if (!File.Exists(path)) return false;
+
+                File.Delete(path);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
 }
