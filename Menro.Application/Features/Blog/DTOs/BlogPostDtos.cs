@@ -13,7 +13,8 @@ namespace Menro.Application.Features.Blog.DTOs
         DateTime CreatedAtUtc,
         DateTime? UpdatedAtUtc,
         int ViewCount,
-        int LikeCount);
+        int LikeCount,
+        string PublishedDatePersian);
 
     public class CreateBlogPostRequest
     {

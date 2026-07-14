@@ -10,13 +10,15 @@ namespace Menro.Domain.Entities.Blog
 
         public string Name { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Whether this tag is featured as a "suggested tag" on the public blog
+        /// sidebar. Nullable for now (existing rows have no value yet); treated
+        /// as false when null.
+        /// </summary>
+        public bool? Suggested { get; set; }
+
         public DateTime CreatedAtUtc { get; set; }
 
-        /// <summary>
-        /// Join rows to BlogPost. Intentionally the ONLY source of the article
-        /// count - "تعداد مقاله" is never stored on the tag itself, it's always
-        /// derived by counting these at read time (see BlogTagRepository).
-        /// </summary>
         public ICollection<BlogPostTag> PostTags { get; set; } = new List<BlogPostTag>();
     }
 }

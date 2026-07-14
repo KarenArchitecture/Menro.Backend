@@ -29,13 +29,15 @@ namespace Menro.Infrastructure.Repositories
         }
 
         /// <summary>
-        /// Returns every tag along with its live article count. "تعداد مقاله"
-        /// is never read from a stored column - it's always this count.
+        /// Returns every tag, alphabetically sorted by name, along with its live
+        /// article count. "تعداد مقاله" is never read from a stored column -
+        /// it's always this count.
         /// </summary>
         public async Task<IReadOnlyList<(BlogTag Tag, int ArticleCount)>> GetAllWithArticleCountsAsync(
             CancellationToken ct = default)
         {
             var result = await _context.BlogTags
+                .OrderBy(t => t.Name)
                 .Select(t => new
                 {
                     Tag = t,
@@ -44,6 +46,27 @@ namespace Menro.Infrastructure.Repositories
                 .ToListAsync(ct);
 
             return result.Select(x => (x.Tag, x.ArticleCount)).ToList();
+        }
+
+        public async Task<IReadOnlyList<(BlogTag Tag, int ArticleCount)>> GetSuggestedWithArticleCountsAsync(
+            CancellationToken ct = default)
+        {
+            var result = await _context.BlogTags
+                .Where(t => t.Suggested == true)
+                .OrderBy(t => t.Name)
+                .Select(t => new { Tag = t, ArticleCount = t.PostTags.Count })
+                .ToListAsync(ct);
+
+            return result.Select(x => (x.Tag, x.ArticleCount)).ToList();
+        }
+
+        /// <summary>
+        /// Counts how many tags currently have Suggested == true. Used to enforce
+        /// the sidebar's max-suggested-tags limit before flipping a tag on.
+        /// </summary>
+        public async Task<int> CountSuggestedAsync(CancellationToken ct = default)
+        {
+            return await _context.BlogTags.CountAsync(t => t.Suggested == true, ct);
         }
 
         public async Task AddAsync(BlogTag tag, CancellationToken ct = default)

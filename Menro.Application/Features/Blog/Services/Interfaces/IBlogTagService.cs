@@ -7,6 +7,8 @@ namespace Menro.Application.Features.Blog.Services
         Task<IReadOnlyList<BlogTagResponse>> GetAllAsync(
             CancellationToken ct = default);
 
+        Task<IReadOnlyList<BlogTagResponse>> GetSuggestedAsync(CancellationToken ct = default);
+
         Task<BlogTagResponse> CreateAsync(
             CreateBlogTagRequest request,
             CancellationToken ct = default);
@@ -14,6 +16,10 @@ namespace Menro.Application.Features.Blog.Services
         Task<BlogTagResponse?> UpdateAsync(
             Guid id,
             UpdateBlogTagRequest request,
+            CancellationToken ct = default);
+
+        Task<BlogTagResponse?> ToggleSuggestedAsync(
+            Guid id, 
             CancellationToken ct = default);
 
         Task<bool> DeleteAsync(

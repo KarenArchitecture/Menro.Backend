@@ -16,6 +16,11 @@ namespace Menro.Domain.Interfaces.Blog
         Task<IReadOnlyList<(BlogTag Tag, int ArticleCount)>> GetAllWithArticleCountsAsync(
             CancellationToken ct = default);
 
+        Task<IReadOnlyList<(BlogTag Tag, int ArticleCount)>> GetSuggestedWithArticleCountsAsync(
+            CancellationToken ct = default);
+
+        Task<int> CountSuggestedAsync(CancellationToken ct = default);
+
         Task AddAsync(
             BlogTag tag,
             CancellationToken ct = default);

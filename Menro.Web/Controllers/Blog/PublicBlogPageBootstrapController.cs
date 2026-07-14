@@ -32,7 +32,7 @@ namespace Menro.Web.Controllers.Blog
         {
             var hero = await _heroService.GetAsync(ct);
             var categories = await _categoryService.GetAllAsync(ct);
-            var tags = await _tagService.GetAllAsync(ct);
+            var tags = await _tagService.GetSuggestedAsync(ct);
 
             return Ok(new BlogPageBootstrapResponse
             {

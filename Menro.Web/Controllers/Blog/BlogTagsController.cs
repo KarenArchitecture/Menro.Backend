@@ -53,6 +53,21 @@ namespace Menro.Api.Controllers
             }
         }
 
+        // Mirrors POST /api/admin/blog/posts/{id}/toggle-publish
+        [HttpPatch("{id:guid}/toggle-suggested")]
+        public async Task<ActionResult<BlogTagResponse>> ToggleSuggested(Guid id, CancellationToken ct)
+        {
+            try
+            {
+                var updated = await _service.ToggleSuggestedAsync(id, ct);
+                return updated is null ? NotFound() : Ok(updated);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+        }
+
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
         {

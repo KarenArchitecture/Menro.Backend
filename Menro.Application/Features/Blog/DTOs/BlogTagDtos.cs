@@ -7,13 +7,16 @@ namespace Menro.Application.Features.Blog.DTOs
     public record BlogTagResponse(
         Guid Id,
         string Name,
-        int ArticleCount);
+        int ArticleCount,
+        bool? Suggested);
 
     public class CreateBlogTagRequest
     {
         [Required(ErrorMessage = "نام برچسب الزامی است.")]
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
+
+        public bool? Suggested { get; set; }
     }
 
     public class UpdateBlogTagRequest
@@ -21,5 +24,7 @@ namespace Menro.Application.Features.Blog.DTOs
         [Required(ErrorMessage = "نام برچسب الزامی است.")]
         [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
+
+        public bool? Suggested { get; set; }
     }
 }

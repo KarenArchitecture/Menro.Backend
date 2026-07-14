@@ -1,5 +1,7 @@
+using Menro.Application.Common;
 using Menro.Application.Common.Interfaces;
 using Menro.Application.Features.Blog.DTOs;
+using Menro.Application.Helpers;
 using Menro.Domain.Entities.Blog;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces.Blog;
@@ -139,6 +141,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.CreatedAtUtc,
             post.UpdatedAtUtc,
             post.ViewCount,
-            post.LikeCount);
+            post.LikeCount,
+            PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
     }
 }
