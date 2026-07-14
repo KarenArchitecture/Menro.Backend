@@ -37,16 +37,21 @@ public class DemoBlogSeeder : IDataSeeder
         // 1) Display categories (BlogPost.CategoryId is a required FK,
         //    so we need at least a handful of these to assign posts to)
         // ------------------------------------------------------------
-        var categoryDefs = new (string Title, string Subtitle, string ColorHex)[]
+        // NOTE: Slug must be URL-friendly and Latin-only (see BlogCategory.Slug
+        // doc comment - normally generated from Title in BlogCategoryService.
+        // CreateAsync, which wasn't available here). Persian titles can't be
+        // auto-transliterated reliably, so explicit Latin slugs are supplied
+        // per category below instead.
+        var categoryDefs = new (string Title, string Subtitle, string Slug, string ColorHex)[]
         {
-            ("رستوران و فضای سرویس", "فضای فیزیکی، خدمات، جو", "#5A302F"),
-            ("منو و غذا", "چیدمان، انتخاب، تجربه طعم", "#664A25"),
-            ("رفتار و تجربه مشتری", "عادت‌ها، رضایت، وفاداری", "#2B314B"),
-            ("برند و بازاریابی", "ساخت برند، جذب، دیده‌شدن", "#274435"),
-            ("مدیریت و عملیات", "پشت‌صحنه، منابع، فرآیندها", "#454C21"),
-            ("تکنولوژی و ابزارها", "راهکارهای دیجیتال و هوشمند", "#58273E"),
-            ("فرهنگ و جامعه", "تأثیر اجتماعی، سبک زندگی", "#264648"),
-            ("نگاه و دیدگاه", "تحلیل، ترند، زاویه‌ی متفاوت", "#41224D"),
+            ("رستوران و فضای سرویس", "فضای فیزیکی، خدمات، جو", "restaurant-and-service-space", "#5A302F"),
+            ("منو و غذا", "چیدمان، انتخاب، تجربه طعم", "menu-and-food", "#664A25"),
+            ("رفتار و تجربه مشتری", "عادت‌ها، رضایت، وفاداری", "customer-behavior-and-experience", "#2B314B"),
+            ("برند و بازاریابی", "ساخت برند، جذب، دیده‌شدن", "brand-and-marketing", "#274435"),
+            ("مدیریت و عملیات", "پشت‌صحنه، منابع، فرآیندها", "management-and-operations", "#454C21"),
+            ("تکنولوژی و ابزارها", "راهکارهای دیجیتال و هوشمند", "technology-and-tools", "#58273E"),
+            ("فرهنگ و جامعه", "تأثیر اجتماعی، سبک زندگی", "culture-and-society", "#264648"),
+            ("نگاه و دیدگاه", "تحلیل، ترند، زاویه‌ی متفاوت", "perspective-and-insight", "#41224D"),
         };
 
         var categories = categoryDefs
@@ -55,6 +60,7 @@ public class DemoBlogSeeder : IDataSeeder
                 Id = Guid.NewGuid(),
                 Title = c.Title,
                 Subtitle = c.Subtitle,
+                Slug = c.Slug,
                 ColorHex = c.ColorHex,
                 SortOrder = i,
                 CreatedAtUtc = DateTime.UtcNow

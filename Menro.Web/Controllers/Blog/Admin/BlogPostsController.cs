@@ -3,7 +3,7 @@ using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Features.Blog.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Api.Controllers
+namespace Menro.Web.Controllers.Blog.Admin
 {
     [ApiController]
     [Route("api/admin/blog/posts")]
@@ -20,17 +20,18 @@ namespace Menro.Api.Controllers
             _fileUrlService = fileUrlService;
         }
 
-        // GET api/admin/blog/posts?search=...&categoryId=...
-        // GET api/admin/blog/posts?search=...&categoryId=...&page=1&pageSize=20
+        // GET api/admin/blog/posts?search=...&categoryId=...&tagId=...&page=1&pageSize=20
         [HttpGet]
         public async Task<ActionResult<PagedResult<BlogPostResponse>>> GetAll(
             [FromQuery] string? search,
             [FromQuery] Guid? categoryId,
+            [FromQuery] Guid? tagId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
             CancellationToken ct = default)
         {
-            var result = await _service.GetAllAsync(search, categoryId, page: page, pageSize: pageSize, ct: ct);
+            var result = await _service.GetAllAsync(
+                search, categoryId, tagId, page: page, pageSize: pageSize, ct: ct);
             return Ok(result);
         }
 

@@ -22,13 +22,14 @@ namespace Menro.Application.Features.Blog.Services.Implementations
         public async Task<PagedResult<BlogPostResponse>> GetAllAsync(
             string? search,
             Guid? categoryId,
+            Guid? tagId = null,
             BlogPostSortOrder sort = BlogPostSortOrder.Newest,
             bool publishedOnly = false,
             int page = 1,
             int pageSize = 20,
             CancellationToken ct = default)
         {
-            var posts = await _repository.GetAllAsync(search, categoryId, ct);
+            var posts = await _repository.GetAllAsync(search, categoryId, tagId, ct);
 
             IEnumerable<BlogPost> query = posts;
 

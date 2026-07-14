@@ -14,10 +14,17 @@ namespace Menro.Infrastructure.Data.Configuration
                 .IsRequired()
                 .HasMaxLength(100);
 
+            builder.Property(x => x.Slug)
+                .IsRequired()
+                .HasMaxLength(120);
+
             builder.Property(x => x.CreatedAtUtc)
                 .IsRequired();
 
             builder.HasIndex(x => x.Name)
+                .IsUnique();
+
+            builder.HasIndex(x => x.Slug)
                 .IsUnique();
 
             // Deliberately no "ArticleCount" column - it's derived from

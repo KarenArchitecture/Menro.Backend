@@ -2,7 +2,7 @@ using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Features.Blog.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Api.Controllers
+namespace Menro.Web.Controllers.Blog.Admin
 {
     [ApiController]
     [Route("api/admin/blog/display-categories")]

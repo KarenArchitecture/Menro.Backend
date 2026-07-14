@@ -2,7 +2,7 @@
 using Menro.Application.Features.Blog.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.Blog
+namespace Menro.Web.Controllers.Blog.Public
 {
     [ApiController]
     [Route("api/blog/page-bootstrap")]

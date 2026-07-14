@@ -18,6 +18,10 @@ namespace Menro.Infrastructure.Data.Configuration
                 .IsRequired()
                 .HasMaxLength(300);
 
+            builder.Property(x => x.Slug)
+                .IsRequired()
+                .HasMaxLength(80);
+
             builder.Property(x => x.ColorHex)
                 .IsRequired()
                 .HasMaxLength(7);
@@ -31,6 +35,9 @@ namespace Menro.Infrastructure.Data.Configuration
             // Not unique on purpose: two rows briefly share a SortOrder value
             // while a move-up/move-down swap is being persisted.
             builder.HasIndex(x => x.SortOrder);
+
+            builder.HasIndex(x => x.Slug)
+                .IsUnique();
         }
     }
 }

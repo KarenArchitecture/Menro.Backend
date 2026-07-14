@@ -6,6 +6,7 @@ namespace Menro.Application.Features.Blog.DTOs
         Guid Id,
         string Title,
         string Subtitle,
+        string Slug,
         string ColorHex,
         int SortOrder);
 

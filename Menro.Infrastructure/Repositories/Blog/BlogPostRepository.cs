@@ -28,6 +28,7 @@ namespace Menro.Infrastructure.Repositories
         public async Task<IReadOnlyList<BlogPost>> GetAllAsync(
             string? search,
             Guid? categoryId,
+            Guid? tagId = null,
             CancellationToken ct = default)
         {
             var query = _context.BlogPosts
@@ -39,6 +40,11 @@ namespace Menro.Infrastructure.Repositories
 
             if (categoryId.HasValue)
                 query = query.Where(p => p.CategoryId == categoryId.Value);
+
+            // NEW: tag filtering, mirrors the pattern already used in
+            // CountByTagIdAsync below.
+            if (tagId.HasValue)
+                query = query.Where(p => p.PostTags.Any(pt => pt.BlogTagId == tagId.Value));
 
             return await query
                 .OrderByDescending(p => p.CreatedAtUtc)

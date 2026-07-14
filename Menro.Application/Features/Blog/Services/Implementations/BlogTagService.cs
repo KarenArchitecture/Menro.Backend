@@ -1,6 +1,8 @@
 using Menro.Application.Features.Blog.DTOs;
+using Menro.Application.Helpers;
 using Menro.Domain.Entities.Blog;
 using Menro.Domain.Interfaces.Blog;
+using Microsoft.IdentityModel.Logging;
 
 namespace Menro.Application.Features.Blog.Services.Implementations
 {
@@ -23,7 +25,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
         {
             var tagsWithCounts = await _repository.GetAllWithArticleCountsAsync(ct);
             return tagsWithCounts
-                .Select(x => new BlogTagResponse(x.Tag.Id, x.Tag.Name, x.ArticleCount, x.Tag.Suggested))
+                .Select(x => new BlogTagResponse(x.Tag.Id, x.Tag.Name, x.Tag.Slug, x.ArticleCount, x.Tag.Suggested))
                 .ToList();
         }
 
@@ -31,8 +33,18 @@ namespace Menro.Application.Features.Blog.Services.Implementations
         {
             var tagsWithCounts = await _repository.GetSuggestedWithArticleCountsAsync(ct);
             return tagsWithCounts
-                .Select(x => new BlogTagResponse(x.Tag.Id, x.Tag.Name, x.ArticleCount, x.Tag.Suggested))
+                .Select(x => new BlogTagResponse(x.Tag.Id, x.Tag.Name, x.Tag.Slug, x.ArticleCount, x.Tag.Suggested))
                 .ToList();
+        }
+
+        // NEW - used by PublicBlogTaxonomyController to resolve /blog/tag/{slug}.
+        public async Task<BlogTagResponse?> GetBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            var tag = await _repository.GetBySlugAsync(slug, ct);
+            if (tag is null) return null;
+
+            var articleCount = tag.PostTags?.Count ?? 0;
+            return new BlogTagResponse(tag.Id, tag.Name, tag.Slug, articleCount, tag.Suggested);
         }
 
         public async Task<BlogTagResponse> CreateAsync(CreateBlogTagRequest request, CancellationToken ct = default)
@@ -55,12 +67,13 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             {
                 Id = Guid.NewGuid(),
                 Name = name,
+                Slug = await GenerateUniqueSlugAsync(name, ct),
                 Suggested = request.Suggested,
                 CreatedAtUtc = DateTime.UtcNow
             };
 
             await _repository.AddAsync(tag, ct);
-            return new BlogTagResponse(tag.Id, tag.Name, ArticleCount: 0, tag.Suggested);
+            return new BlogTagResponse(tag.Id, tag.Name, tag.Slug, ArticleCount: 0, tag.Suggested);
         }
 
         public async Task<BlogTagResponse?> UpdateAsync(
@@ -74,11 +87,13 @@ namespace Menro.Application.Features.Blog.Services.Implementations
                 throw new InvalidOperationException("این برچسب از قبل وجود دارد.");
 
             tag.Name = name;
+            // Slug is intentionally left untouched here so existing
+            // /blog/tag/{slug} links never break when the name is edited.
             tag.Suggested = request.Suggested;
             await _repository.UpdateAsync(tag, ct);
 
             var articleCount = tag.PostTags?.Count ?? 0;
-            return new BlogTagResponse(tag.Id, tag.Name, articleCount, tag.Suggested);
+            return new BlogTagResponse(tag.Id, tag.Name, tag.Slug, articleCount, tag.Suggested);
         }
 
         /// <summary>
@@ -103,7 +118,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             await _repository.UpdateAsync(tag, ct);
 
             var articleCount = tag.PostTags?.Count ?? 0;
-            return new BlogTagResponse(tag.Id, tag.Name, articleCount, tag.Suggested);
+            return new BlogTagResponse(tag.Id, tag.Name, tag.Slug, articleCount, tag.Suggested);
         }
 
         public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
@@ -113,6 +128,25 @@ namespace Menro.Application.Features.Blog.Services.Implementations
 
             await _repository.DeleteAsync(tag, ct);
             return true;
+        }
+
+        /// <summary>
+        /// Generates a slug from <paramref name="source"/> and appends
+        /// "-2", "-3", etc. if it collides with an existing one.
+        /// </summary>
+        private async Task<string> GenerateUniqueSlugAsync(string source, CancellationToken ct)
+        {
+            var baseSlug = SlugHelper.GenerateSlug(source);
+            var slug = baseSlug;
+            var suffix = 2;
+
+            while (await _repository.ExistsBySlugAsync(slug, ct))
+            {
+                slug = $"{baseSlug}-{suffix}";
+                suffix++;
+            }
+
+            return slug;
         }
     }
 }

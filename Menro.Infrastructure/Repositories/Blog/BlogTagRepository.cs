@@ -28,6 +28,18 @@ namespace Menro.Infrastructure.Repositories
             return await query.AnyAsync(ct);
         }
 
+        public async Task<BlogTag?> GetBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            return await _context.BlogTags
+                .FirstOrDefaultAsync(t => t.Slug == slug, ct);
+        }
+
+        public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            return await _context.BlogTags
+                .AnyAsync(t => t.Slug == slug, ct);
+        }
+
         /// <summary>
         /// Returns every tag, alphabetically sorted by name, along with its live
         /// article count. "تعداد مقاله" is never read from a stored column -

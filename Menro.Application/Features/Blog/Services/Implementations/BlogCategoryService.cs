@@ -1,6 +1,8 @@
 using Menro.Application.Features.Blog.DTOs;
+using Menro.Application.Helpers;
 using Menro.Domain.Entities.Blog;
 using Menro.Domain.Interfaces.Blog;
+using Microsoft.IdentityModel.Logging;
 
 namespace Menro.Application.Features.Blog.Services.Implementations
 {
@@ -25,6 +27,13 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return category is null ? null : ToResponse(category);
         }
 
+        // NEW - used by PublicBlogTaxonomyController to resolve /blog/category/{slug}.
+        public async Task<BlogCategoryResponse?> GetBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            var category = await _repository.GetBySlugAsync(slug, ct);
+            return category is null ? null : ToResponse(category);
+        }
+
         public async Task<BlogCategoryResponse> CreateAsync(
             CreateBlogCategoryRequest request, CancellationToken ct = default)
         {
@@ -33,6 +42,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
                 Id = Guid.NewGuid(),
                 Title = request.Title.Trim(),
                 Subtitle = request.Subtitle.Trim(),
+                Slug = await GenerateUniqueSlugAsync(request.Title, ct),
                 ColorHex = request.ColorHex,
                 SortOrder = await _repository.GetNextSortOrderAsync(ct),
                 CreatedAtUtc = DateTime.UtcNow
@@ -51,6 +61,8 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             category.Title = request.Title.Trim();
             category.Subtitle = request.Subtitle.Trim();
             category.ColorHex = request.ColorHex;
+            // Slug is intentionally left untouched here so existing
+            // /blog/category/{slug} links never break when the title is edited.
 
             await _repository.UpdateAsync(category, ct);
             return ToResponse(category);
@@ -89,10 +101,30 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return refreshed.Select(ToResponse).ToList();
         }
 
+        /// <summary>
+        /// Generates a slug from <paramref name="source"/> and appends
+        /// "-2", "-3", etc. if it collides with an existing one.
+        /// </summary>
+        private async Task<string> GenerateUniqueSlugAsync(string source, CancellationToken ct)
+        {
+            var baseSlug = SlugHelper.GenerateSlug(source);
+            var slug = baseSlug;
+            var suffix = 2;
+
+            while (await _repository.ExistsBySlugAsync(slug, ct))
+            {
+                slug = $"{baseSlug}-{suffix}";
+                suffix++;
+            }
+
+            return slug;
+        }
+
         private static BlogCategoryResponse ToResponse(BlogCategory category) => new(
             category.Id,
             category.Title,
             category.Subtitle,
+            category.Slug,
             category.ColorHex,
             category.SortOrder);
     }

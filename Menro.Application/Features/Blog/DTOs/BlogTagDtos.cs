@@ -7,6 +7,7 @@ namespace Menro.Application.Features.Blog.DTOs
     public record BlogTagResponse(
         Guid Id,
         string Name,
+        string Slug,
         int ArticleCount,
         bool? Suggested);
 

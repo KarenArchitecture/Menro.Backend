@@ -28,6 +28,18 @@ namespace Menro.Infrastructure.Repositories
                 .ToListAsync(ct);
         }
 
+        public async Task<BlogCategory?> GetBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            return await _context.BlogCategories
+                .FirstOrDefaultAsync(c => c.Slug == slug, ct);
+        }
+
+        public async Task<bool> ExistsBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            return await _context.BlogCategories
+                .AnyAsync(c => c.Slug == slug, ct);
+        }
+
         public async Task<int> GetNextSortOrderAsync(CancellationToken ct = default)
         {
             var max = await _context.BlogCategories.MaxAsync(c => (int?)c.SortOrder, ct);

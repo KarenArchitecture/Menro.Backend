@@ -4,21 +4,19 @@ namespace Menro.Domain.Interfaces.Blog
 {
     public interface IBlogPostRepository
     {
-        /// <summary>
-        /// Returns posts filtered by search text and optionally by display category.
-        /// Implementations should include the Category navigation so CategoryTitle
-        /// can be populated on the response DTO.
-        /// </summary>
-        Task<IReadOnlyList<BlogPost>> GetAllAsync(
-            string? search, Guid? categoryId, CancellationToken ct = default);
-
-        /// <summary>Should include the Category navigation.</summary>
         Task<BlogPost?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
+        // CHANGED: added `tagId` parameter (default null, so existing callers
+        // that don't care about tag-filtering keep compiling unchanged).
+        Task<IReadOnlyList<BlogPost>> GetAllAsync(
+            string? search,
+            Guid? categoryId,
+            Guid? tagId = null,
+            CancellationToken ct = default);
+
+        Task<int> CountByTagIdAsync(Guid tagId, CancellationToken ct = default);
         Task AddAsync(BlogPost post, CancellationToken ct = default);
-
         Task UpdateAsync(BlogPost post, CancellationToken ct = default);
-
         Task DeleteAsync(BlogPost post, CancellationToken ct = default);
     }
 }

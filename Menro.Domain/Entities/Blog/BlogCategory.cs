@@ -4,7 +4,9 @@ namespace Menro.Domain.Entities.Blog
 {
     /// <summary>
     /// A "display category" card shown under the hero, above the feed
-    /// ("دسته‌بندی‌های نمایشی" tab). Purely presentational - not linked to posts.
+    /// ("دسته‌بندی‌های نمایشی" tab). Also the real FK target for BlogPost.CategoryId
+    /// (the "purely presentational, not linked to posts" note that used to be
+    /// here was stale - see BlogPost.CategoryId).
     /// </summary>
     public class BlogCategory
     {
@@ -21,6 +23,16 @@ namespace Menro.Domain.Entities.Blog
 
         [MaxLength(50)]
         public string Subtitle { get; set; } = string.Empty;
+
+        /// <summary>
+        /// URL-friendly, Latin-only identifier generated once from Title at
+        /// creation time (see BlogCategoryService.CreateAsync). Deliberately
+        /// NOT regenerated when Title changes later, so public links to
+        /// /blog/category/{slug} keep working. Unique - see
+        /// BlogCategoryConfiguration.
+        /// </summary>
+        [MaxLength(80)]
+        public string Slug { get; set; } = string.Empty;
 
         /// <summary>Hex color string, e.g. "#5A302F".</summary>
         public string ColorHex { get; set; } = string.Empty;
