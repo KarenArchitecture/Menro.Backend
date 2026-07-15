@@ -2,7 +2,7 @@ using Menro.Application.Features.Landing.DTOs;
 using Menro.Application.Features.Landing.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.Landing.Admin
+namespace Menro.Web.Controllers.Landing
 {
     /// <summary>
     /// Admin-only endpoints backing LandingManagementSection.jsx:
