@@ -1,5 +1,4 @@
-﻿using Menro.Application.DTO;
-using Menro.Domain.Entities;
+﻿using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;

@@ -1,5 +1,5 @@
-using Menro.Application.Restaurants.DTOs;
-using Menro.Application.Restaurants.Services.Interfaces;
+using Menro.Application.Features.Restaurants.DTOs;
+using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Application.Common.SD;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

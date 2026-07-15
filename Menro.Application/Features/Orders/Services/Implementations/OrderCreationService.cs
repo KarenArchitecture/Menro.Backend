@@ -1,6 +1,6 @@
-﻿using Menro.Application.Features.Orders.DTOs;
+﻿using Menro.Application.Features.Foods.Services.Interfaces;
+using Menro.Application.Features.Orders.DTOs;
 using Menro.Application.Features.Orders.Services.Interfaces;
-using Menro.Application.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;

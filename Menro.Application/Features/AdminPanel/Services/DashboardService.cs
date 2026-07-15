@@ -1,9 +1,6 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Features.AdminPanel.DTOs;
-using Menro.Application.Features.Identity.Services;
 using Menro.Application.Features.Orders.Services.Interfaces;
-using Menro.Application.Restaurants.Services.Interfaces;
-using Microsoft.AspNetCore.Authentication;
 
 namespace Menro.Application.Features.AdminPanel.Services
 {

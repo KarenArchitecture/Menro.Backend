@@ -1,5 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
-using Menro.Application.Restaurants.Services.Interfaces;
+using Menro.Application.Features.Restaurants.Services.Interfaces;
 using System.Security.Claims;
 
 namespace Menro.Web.Services

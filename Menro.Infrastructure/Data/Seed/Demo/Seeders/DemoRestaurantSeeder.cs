@@ -1,9 +1,8 @@
 ﻿using Menro.Application.Common.SD;
 using Menro.Application.Extensions;
-using Menro.Application.Restaurants.Services.Interfaces;
+using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Enums;
-using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

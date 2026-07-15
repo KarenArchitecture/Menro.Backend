@@ -1,5 +1,4 @@
 ﻿using Menro.Application.Comments.Services.Interfaces;
-using Menro.Application.DTO;
 using Menro.Application.Features.Comments.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

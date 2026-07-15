@@ -27,6 +27,7 @@ using Menro.Infrastructure.Seed.Demo.Seeders;
 using Menro.Web.Hubs;
 using Menro.Web.Hubs.SignalR;
 using Microsoft.AspNetCore.SignalR;
+using Menro.Application.Common.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 

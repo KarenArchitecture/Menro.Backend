@@ -1,8 +1,8 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.SD;
-using Menro.Application.FoodCategories.Services.Interfaces;
-using Menro.Application.Foods.DTOs;
-using Menro.Application.Services.Interfaces;
+using Menro.Application.Features.FoodCategories.Services.Interfaces;
+using Menro.Application.Features.Foods.DTOs;
+using Menro.Application.Features.Foods.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;

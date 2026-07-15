@@ -1,6 +1,5 @@
 ﻿using Menro.Application.Comments.Services.Interfaces;
 using Menro.Application.Common.Interfaces;
-using Menro.Application.DTO;
 using Menro.Application.Features.Comments.DTOs;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;

@@ -1,5 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
-using Menro.Application.DTO;
+using Menro.Application.Features.Restaurants.DTOs;
 using Menro.Application.Features.ShowAll.DTOs;
 using Menro.Application.Features.ShowAll.Services.Interfaces;
 using Menro.Domain.Enums;

@@ -1,11 +1,5 @@
 ﻿using Menro.Application.Features.ShowAll.DTOs;
-using Menro.Application.Foods.DTOs;
-using Menro.Application.Orders.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Menro.Application.Features.Foods.DTOs;
 
 namespace Menro.Application.Features.ShowAll.Services.Interfaces
 {

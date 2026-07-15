@@ -1,10 +1,9 @@
-﻿using Menro.Application.DTO;
-using Menro.Application.Features.ShowAll.DTOs;
-using Menro.Application.Restaurants.Services.Interfaces;
-using Menro.Application.Restaurants.DTOs;
+﻿using Menro.Application.Features.ShowAll.DTOs;
+using Menro.Application.Features.Restaurants.Services.Interfaces;
+using Menro.Application.Features.Restaurants.DTOs;
 using Menro.Application.Features.Identity.Services;
-using Menro.Application.FoodCategories.Services.Interfaces;
-using Menro.Application.FoodCategories.DTOs;
+using Menro.Application.Features.FoodCategories.Services.Interfaces;
+using Menro.Application.Features.FoodCategories.DTOs;
 using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.SD;
 using Microsoft.AspNetCore.Authorization;
