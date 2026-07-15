@@ -94,5 +94,10 @@ namespace Menro.Web.Services.Implementations
         /* BLOG POSTS */
         public string BuildBlogPostImageUrl(string fileName)
             => BuildFileUrl($"img/blog/posts/{Normalize(fileName)}");
+
+
+        /* LANDING PAGE */
+        public string BuildLandingHeroImageUrl(string fileName)
+            => BuildFileUrl($"img/landing/hero/{Normalize(fileName)}");
     }
 }

@@ -25,8 +25,8 @@
         string BuildMusicFileUrl(string fileName);
         string BuildMusicCoverUrl(string fileName);
 
-        /* BLOG POSTS */
         string BuildBlogPostImageUrl(string fileName);
+        string BuildLandingHeroImageUrl(string fileName);
 
 
     }
