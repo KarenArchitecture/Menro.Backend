@@ -50,5 +50,10 @@ namespace Menro.Application.Common.Interfaces
         /* BLOG */
         Task<string> UploadBlogPostImageAsync(IFormFile file, string? oldFileName = null);
         bool DeleteBlogPostImage(string fileName);
+
+
+        /* LANDING */
+        Task<string> UploadLandingHeroImageAsync(IFormFile file, string? oldFileName = null);
+        bool DeleteLandingHeroImage(string fileName);
     }
 }

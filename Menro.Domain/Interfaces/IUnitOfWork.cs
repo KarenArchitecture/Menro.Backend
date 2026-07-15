@@ -1,4 +1,6 @@
-﻿using Menro.Domain.Interfaces.Music;
+﻿using Menro.Domain.Interfaces.Blog;
+using Menro.Domain.Interfaces.Landing;
+using Menro.Domain.Interfaces.Music;
 
 namespace Menro.Domain.Interfaces
 {
@@ -24,6 +26,18 @@ namespace Menro.Domain.Interfaces
         IPlaylistTrackRepository PlaylistTrack { get;}
         IMusicPlayerRepository MusicPlayer { get;}
         ITrackRequestRepository TrackRequest { get;}
+
+        // BLOG
+        IBlogHeroRepository BlogHero { get;}
+        IBlogPostRepository BlogPost { get;}
+        IBlogCategoryRepository BlogCategory { get;}
+        IBlogTagRepository BlogTag { get;}
+
+        // LANDING
+        ILandingGeneralRepository LandingGeneral { get;}
+        ILandingFaqRepository LandingFaq { get;}
+        ILandingReasonRepository LandingReason { get;}
+
         Task<int> SaveChangesAsync();
     }
 }

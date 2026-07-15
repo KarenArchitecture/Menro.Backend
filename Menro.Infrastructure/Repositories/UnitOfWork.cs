@@ -1,6 +1,9 @@
 ﻿using Menro.Domain.Interfaces;
+using Menro.Domain.Interfaces.Blog;
+using Menro.Domain.Interfaces.Landing;
 using Menro.Domain.Interfaces.Music;
 using Menro.Infrastructure.Data;
+using Menro.Infrastructure.Repositories.Landing;
 using Menro.Infrastructure.Repositories.Music;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -41,6 +44,16 @@ namespace Menro.Infrastructure.Repositories
         private IMusicPlayerRepository _musicPlayer;
         private ITrackRequestRepository _trackRequest;
 
+        // BLOG
+        private IBlogHeroRepository _blogHero;
+        private IBlogPostRepository _blogPost;
+        private IBlogCategoryRepository _blogCategory;
+        private IBlogTagRepository _blogTag;
+
+        // LANDING
+        private ILandingGeneralRepository _landingGeneral;
+        private ILandingFaqRepository _landingFaq;
+        private ILandingReasonRepository _landingReason;
 
         // public properties with lazy instantiation
         public IUserRepository User => _user ??= new UserRepository(_context);
@@ -63,6 +76,17 @@ namespace Menro.Infrastructure.Repositories
         public IPlaylistTrackRepository PlaylistTrack => _playlistTrack ??= new PlaylistTrackRepository(_context);
         public IMusicPlayerRepository MusicPlayer => _musicPlayer ??= new MusicPlayerRepository(_context);
         public ITrackRequestRepository TrackRequest => _trackRequest ??= new TrackRequestRepository(_context);
+
+        // BLOG
+        public IBlogHeroRepository BlogHero => _blogHero ??= new BlogHeroRepository(_context);
+        public IBlogPostRepository BlogPost => _blogPost ??= new BlogPostRepository(_context);
+        public IBlogCategoryRepository BlogCategory => _blogCategory ??= new BlogCategoryRepository(_context);
+        public IBlogTagRepository BlogTag => _blogTag ??= new BlogTagRepository(_context);
+
+        // LANDING
+        public ILandingGeneralRepository LandingGeneral => _landingGeneral ??= new LandingGeneralRepository(_context);
+        public ILandingFaqRepository LandingFaq => _landingFaq ??= new LandingFaqRepository(_context);
+        public ILandingReasonRepository LandingReason => _landingReason ??= new LandingReasonRepository(_context);
 
         // constructor
         public UnitOfWork(MenroDbContext context, IMemoryCache cache)

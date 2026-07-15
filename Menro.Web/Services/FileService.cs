@@ -276,6 +276,31 @@ namespace Menro.Web.Services
                 return false;
             }
         }
+
+
+        /*--------------------------------------------*/
+        /*                   LANDING                  */
+        /*--------------------------------------------*/
+
+        public Task<string> UploadLandingHeroImageAsync(IFormFile file, string? oldFileName = null)
+            => SaveFileAsync(file, Path.Combine("landing", "hero"), oldFileName);
+
+        public bool DeleteLandingHeroImage(string fileName)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(fileName)) return false;
+                var uploadDir = Path.Combine(_env.WebRootPath, "img", "landing", "hero");
+                var path = Path.Combine(uploadDir, fileName);
+                if (!File.Exists(path)) return false;
+                File.Delete(path);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
 }
