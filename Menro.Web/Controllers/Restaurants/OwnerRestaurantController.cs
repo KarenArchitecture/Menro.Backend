@@ -5,12 +5,11 @@ using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.Restaurants
 {
     [ApiController]
-    [Route("api/owner/restaurant")]
     [Authorize(Roles = SD.Role_Owner)]
-
+    [Route("api/owner/restaurant")]
     public class OwnerRestaurantController : ControllerBase
     {
         #region DI
@@ -35,7 +34,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // restaurant profile
         [HttpGet("profile")]
-        [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> GetProfile()
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
@@ -58,7 +56,6 @@ namespace Menro.Web.Controllers.AdminPanel
         }
 
         [HttpPut("profile")]
-        [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> UpdateProfile([FromForm] UpdateRestaurantProfileDto dto)
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();

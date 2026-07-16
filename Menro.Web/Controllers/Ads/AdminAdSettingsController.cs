@@ -5,16 +5,16 @@ using Menro.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.Ads
 {
     [ApiController]
-    [Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Owner}")]
-    [Route("api/admin/[controller]")]
+    [Authorize(Roles = $"{SD.Role_Admin}")]
+    [Route("api/admin/addSettings")]
 
-    public class AdSettingsController : ControllerBase
+    public class AdminAdSettingsController : ControllerBase
     {
         private readonly IAdSettingsService _service;
-        public AdSettingsController(IAdSettingsService service)
+        public AdminAdSettingsController(IAdSettingsService service)
         {
             _service = service;
         }

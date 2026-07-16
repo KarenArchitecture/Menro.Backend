@@ -6,18 +6,19 @@ using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Application.Features.ShowAll.DTOs;
 using Menro.Application.Features.ShowAll.Services.Interfaces;
 
-namespace Menro.Web.Controllers.User
+namespace Menro.Web.Controllers.Orders
 {
     [ApiController]
-    [Route("api/user/orders")]
     [Authorize]
-    public class OrderController : ControllerBase
+    [Route("api/user/orders")]
+    public class UserOrderController : ControllerBase
     {
+        #region DI
         private readonly IUserRecentOrderCardService _recentService;
         private readonly IRecentOrderBrowseService _recentBrowseService;
         private readonly ICurrentUserService _currentUserService;
 
-        public OrderController(
+        public UserOrderController(
             IUserRecentOrderCardService recentService,
             IRecentOrderBrowseService recentBrowseService,
             ICurrentUserService currentUserService)
@@ -26,6 +27,8 @@ namespace Menro.Web.Controllers.User
             _recentBrowseService = recentBrowseService;
             _currentUserService = currentUserService;
         }
+
+        #endregion
 
         // Homepage: fixed count
         [HttpGet("recent-foods")]

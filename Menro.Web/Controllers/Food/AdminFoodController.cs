@@ -5,14 +5,13 @@ using Menro.Application.Features.Foods.DTOs;
 using Menro.Application.Features.Foods.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.Food
 {
     [ApiController]
-    [Route("api/adminpanel/[controller]")]
+    [Route("api/admin/food")]
     [Authorize(Roles = SD.Role_Owner)]
-    public class FoodController : ControllerBase
+    public class AdminFoodController : ControllerBase
     {
         #region DI
         private readonly IFoodService _foodService;
@@ -20,7 +19,7 @@ namespace Menro.Web.Controllers.AdminPanel
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileService _fileService;
         private readonly IFileUrlService _fileUrlService;
-        public FoodController(IFoodService foodService,
+        public AdminFoodController(IFoodService foodService,
             ICustomFoodCategoryService cCatService,
             ICurrentUserService currentUserService,
             IFileService fileService,
@@ -49,11 +48,11 @@ namespace Menro.Web.Controllers.AdminPanel
             {
                 if (dto.Variants == null || dto.Variants.Count == 0)
                     return BadRequest(new { message = "حداقل یک نوع غذا باید تعریف شود" });
-                
+
                 var defaults = dto.Variants.Count(v => v.IsDefault);
                 if (defaults == 0)
                     return BadRequest(new { message = "حداقل یک نوع باید پیش فرض باشد" });
-                    
+
                 if (defaults > 1)
                     return BadRequest(new { message = "فقط یک نوع می‌تواند پیش فرض باشد" });
             }
@@ -61,7 +60,7 @@ namespace Menro.Web.Controllers.AdminPanel
             // گرفتن رستوران کاربر از سرویس کاربر جاری
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
             bool result = await _foodService.AddFoodAsync(dto, restaurantId);
-            if(!result)
+            if (!result)
                 return BadRequest(new { message = "خطای ناشناخته‌ای رخ داده است" });
             return Ok();
         }
@@ -88,7 +87,7 @@ namespace Menro.Web.Controllers.AdminPanel
             var food = await _foodService.GetFoodDetailsAsync(foodId, restaurantId.Value);
             if (food == null)
                 return NotFound();
-            if(food.ImageUrl is not null) food.ImageUrl = _fileUrlService.BuildFoodImageUrl(food.ImageUrl);
+            if (food.ImageUrl is not null) food.ImageUrl = _fileUrlService.BuildFoodImageUrl(food.ImageUrl);
             return Ok(food);
         }
 
@@ -115,7 +114,7 @@ namespace Menro.Web.Controllers.AdminPanel
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
 
             var ok = await _foodService.UpdateFoodAsync(dto);
-            if(!ok) return BadRequest(new { message = "خطای ناشناخته‌ای رخ داده" });
+            if (!ok) return BadRequest(new { message = "خطای ناشناخته‌ای رخ داده" });
 
             return Ok(new { success = true });
         }
@@ -132,7 +131,7 @@ namespace Menro.Web.Controllers.AdminPanel
 
             return Ok(new { message = "محصول با موفقیت حذف شد" });
         }
-        
+
 
         // ✅
         [HttpGet("categories")]
@@ -145,7 +144,6 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpPost("upload-food-image")]
-        [Authorize(Roles = SD.Role_Owner)]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> UploadFoodImage(
             [FromForm] UploadFoodImageDto dto)

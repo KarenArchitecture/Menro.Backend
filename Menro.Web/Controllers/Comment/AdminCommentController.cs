@@ -1,20 +1,21 @@
 ﻿using Menro.Application.Comments.Services.Interfaces;
+using Menro.Application.Common.SD;
 using Menro.Application.Features.Comments.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.Comment
 {
     [ApiController]
-    [Route("api/admin/[controller]")]
-    [Authorize(Roles = "Admin")]
-    public class CommentController : ControllerBase
+    [Route("api/admin/comment")]
+    [Authorize(Roles = SD.Role_Admin)]
+    public class AdminCommentController : ControllerBase
     {
         private readonly IGetCommentsForAdminService _getCommentsForAdminService;
         private readonly IApproveCommentService _approveCommentService;
         private readonly IRejectCommentService _rejectCommentService;
 
-        public CommentController(
+        public AdminCommentController(
             IGetCommentsForAdminService getCommentsForAdminService,
             IApproveCommentService approveCommentService,
             IRejectCommentService rejectCommentService)

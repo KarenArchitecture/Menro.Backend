@@ -1,5 +1,7 @@
+using Menro.Application.Common.SD;
 using Menro.Application.Features.Landing.DTOs;
 using Menro.Application.Features.Landing.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Landing
@@ -17,6 +19,7 @@ namespace Menro.Web.Controllers.Landing
     ///   - blog cards on the landing page (managed from the Blog admin tab)
     /// </summary>
     [ApiController]
+    [Authorize(Roles = SD.Role_Admin)]
     [Route("api/admin/landing")]
     public class AdminLandingController : ControllerBase
     {

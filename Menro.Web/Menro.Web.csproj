@@ -8,19 +8,15 @@
 
   <ItemGroup>
     <Compile Remove="Areas\**" />
-    <Compile Remove="Controllers\Admin\**" />
     <Compile Remove="Controllers\OwnerPanel\**" />
     <Compile Remove="Controllers\Owner\**" />
     <Content Remove="Areas\**" />
-    <Content Remove="Controllers\Admin\**" />
     <Content Remove="Controllers\OwnerPanel\**" />
     <Content Remove="Controllers\Owner\**" />
     <EmbeddedResource Remove="Areas\**" />
-    <EmbeddedResource Remove="Controllers\Admin\**" />
     <EmbeddedResource Remove="Controllers\OwnerPanel\**" />
     <EmbeddedResource Remove="Controllers\Owner\**" />
     <None Remove="Areas\**" />
-    <None Remove="Controllers\Admin\**" />
     <None Remove="Controllers\OwnerPanel\**" />
     <None Remove="Controllers\Owner\**" />
   </ItemGroup>

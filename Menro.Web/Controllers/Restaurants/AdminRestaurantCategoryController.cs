@@ -4,15 +4,15 @@ using Menro.Application.Common.SD;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.Restaurants
 {
     // Separate controller from AdminRestaurantController on purpose:
     // AdminRestaurantController manages individual restaurants (approve/reject/list),
     // this one manages the global "restaurant type" taxonomy
     // (e.g. کافه، فست‌فودی، ...) shown in RegisterRestaurantPage's dropdown.
     [ApiController]
-    [Route("api/admin/restaurant-categories")]
     [Authorize(Roles = SD.Role_Admin)]
+    [Route("api/admin/restaurant-categories")]
     public class AdminRestaurantCategoryController : ControllerBase
     {
         private readonly IRestaurantService _service;

@@ -24,13 +24,13 @@ namespace Menro.Web.Controllers.Landing
     /// </summary>
     [ApiController]
     [Route("api/landing")]
-    public class LandingController : ControllerBase
+    public class PublicLandingController : ControllerBase
     {
         private readonly ILandingGeneralService _generalService;
         private readonly ILandingReasonService _reasonService;
         private readonly ILandingFaqService _faqService;
 
-        public LandingController(
+        public PublicLandingController(
             ILandingGeneralService generalService,
             ILandingReasonService reasonService,
             ILandingFaqService faqService)

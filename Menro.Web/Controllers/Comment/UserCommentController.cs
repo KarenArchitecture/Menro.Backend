@@ -4,17 +4,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace Menro.Web.Controllers.User
+namespace Menro.Web.Controllers.Comment
 {
     [ApiController]
-    [Route("api/user/[controller]")]
-    public class CommentController : ControllerBase
+    [Route("api/user/comment")]
+    public class UserCommentController : ControllerBase
     {
         private readonly IGetFoodCommentsService _getFoodCommentsService;
         private readonly ICreateCommentService _createCommentService;
         private readonly IToggleCommentLikeService _toggleCommentLikeService;
 
-        public CommentController(
+        public UserCommentController(
             IGetFoodCommentsService getFoodCommentsService,
             ICreateCommentService createCommentService,
             IToggleCommentLikeService toggleCommentLikeService)

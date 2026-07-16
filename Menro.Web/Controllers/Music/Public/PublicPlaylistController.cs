@@ -1,9 +1,7 @@
 ﻿using Menro.Application.Common.Interfaces;
-using Menro.Application.Features.Identity.Services;
 using Menro.Application.Features.Music.DTOs.Public;
 using Menro.Application.Features.Music.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Music.Public
@@ -13,6 +11,7 @@ namespace Menro.Web.Controllers.Music.Public
     [Route("api/public/music")]
     public class PublicPlaylistController : ControllerBase
     {
+        #region DI
         private readonly IPublicMusicService _publicMusicService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileUrlService _fileUrlService;
@@ -26,6 +25,7 @@ namespace Menro.Web.Controllers.Music.Public
             _currentUserService = currentUserService;
             _fileUrlService = fileUrlService;
         }
+        #endregion
 
         [HttpGet("{restaurantId:int}")]
         public async Task<IActionResult> Get(int restaurantId)

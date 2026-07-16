@@ -4,18 +4,18 @@ using Menro.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.User
+namespace Menro.Web.Controllers.Favorites
 {
     [ApiController]
     [Route("api/user/favorites")]
     [Authorize]
-    public class FavoriteController : ControllerBase
+    public class FavoritesController : ControllerBase
     {
         private readonly IFavoriteFoodService _favoriteService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public FavoriteController(
+        public FavoritesController(
             IFavoriteFoodService favoriteService,
             ICurrentUserService currentUserService,
             IUnitOfWork unitOfWork)

@@ -8,15 +8,15 @@ using Menro.Application.Common.Interfaces;
 namespace Menro.Web.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/Icon")]
     [Authorize(Roles = $"{SD.Role_Owner},{SD.Role_Admin}")]
-    public class IconController : ControllerBase
+    public class AdminIconController : ControllerBase
     {
         #region DI
         private readonly IIconService _iconService;
         private readonly IFileService _fileService;
         private readonly IFileUrlService _fileUrlService;
-        public IconController(IIconService iconService, IFileService fileService, IFileUrlService fileUrlService)
+        public AdminIconController(IIconService iconService, IFileService fileService, IFileUrlService fileUrlService)
         {
             _iconService = iconService;
             _fileService = fileService;

@@ -2,16 +2,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.Public
+namespace Menro.Web.Controllers.Ads
 {
     [ApiController]
     [AllowAnonymous]
     [Route("api/public/restaurant")]
-    public class RestaurantPublicAdsController : ControllerBase
+    public class PublicRestaurantAdController : ControllerBase
     {
         private readonly IPublicRestaurantAdService _service;
 
-        public RestaurantPublicAdsController(IPublicRestaurantAdService service)
+        public PublicRestaurantAdController(IPublicRestaurantAdService service)
         {
             _service = service;
         }
@@ -31,7 +31,7 @@ namespace Menro.Web.Controllers.Public
         // GET: /api/public/restaurant/ad-banner/random?exclude=1,2,3
         [HttpGet("ad-banner/random")]
         public async Task<IActionResult> GetRandomBanner([FromQuery] string? exclude)
-        
+
         {
             var excludeAdIds = ParseExcludeIds(exclude);
 

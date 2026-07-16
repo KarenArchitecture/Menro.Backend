@@ -6,12 +6,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.Ads
 {
     [ApiController]
     [Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Owner}")]
     [Route("api/admin/ads")]
-    public class RestaurantAdsController : ControllerBase
+    public class AdminAdsController : ControllerBase
     {
         #region DI
 
@@ -20,7 +20,7 @@ namespace Menro.Web.Controllers.AdminPanel
         private readonly IFileService _fileService;
         private readonly IFileUrlService _fileUrlService;
 
-        public RestaurantAdsController(IRestaurantAdService service,
+        public AdminAdsController(IRestaurantAdService service,
             ICurrentUserService currentUserService,
             IFileService fileService,
             IFileUrlService fileUrlService)
@@ -34,11 +34,20 @@ namespace Menro.Web.Controllers.AdminPanel
         #endregion
 
         /* ad reservation by OWNER */
+        [HttpPost("upload-ad-image")]
+        [Consumes("multipart/form-data")]
+        [Authorize(Roles = SD.Role_Owner)]
+        public async Task<IActionResult> UploadAdImage([FromForm] UploadAdImageDto dto)
+        {
+            string fileName = await _fileService.UploadAdImageAsync(dto.File);
+
+            return Ok(fileName);
+        }
         [HttpPost("addAd")]
         [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> Create([FromBody] ReserveRestaurantAdDto dto)
         {
-            if(dto.ImageFileName == null)
+            if (dto.ImageFileName == null)
                 return BadRequest(new { message = "تصویر تبلیغ نباید خالی باشد" });
 
             int restaurantId = await _currentUserService.GetRestaurantIdAsync();
@@ -51,16 +60,6 @@ namespace Menro.Web.Controllers.AdminPanel
                 return BadRequest(new { message = "عملیات ناموفق" });
 
             return Ok();
-        }
-
-        [HttpPost("upload-ad-image")]
-        [Consumes("multipart/form-data")]
-        [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> UploadAdImage([FromForm] UploadAdImageDto dto)
-        {
-            string fileName = await _fileService.UploadAdImageAsync(dto.File);
-
-            return Ok(fileName);
         }
 
 

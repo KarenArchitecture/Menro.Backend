@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Menro.Web.Controllers.AdminPanel
 {
     [ApiController]
-    [Route("api/adminpanel/[controller]")]
+    [Route("api/admin/dashboard")]
     [Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Owner}")]
     public class DashboardController : ControllerBase
     {

@@ -1,10 +1,13 @@
+using Menro.Application.Common.SD;
 using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Features.Blog.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Blog.Admin
 {
     [ApiController]
+    [Authorize(Roles = SD.Role_Admin)] // add author role for later on
     [Route("api/admin/blog/hero")]
     public class BlogHeroController : ControllerBase
     {

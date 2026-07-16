@@ -6,11 +6,12 @@ using Menro.Application.Features.Music.Services.Interfaces;
 
 namespace Menro.Web.Controllers.Music.Admin
 {
-    [Authorize(Roles = SD.Role_Owner)]
     [ApiController]
+    [Authorize(Roles = SD.Role_Owner)]
     [Route("api/admin/music/requests")]
     public class TrackRequestController : ControllerBase
     {
+        #region DI
         private readonly ITrackRequestService _trackRequestService;
         private readonly ICurrentUserService _currentUserService;
 
@@ -21,6 +22,7 @@ namespace Menro.Web.Controllers.Music.Admin
             _currentUserService = currentUserService;
         }
 
+        #endregion
 
         [HttpGet]
         public async Task<IActionResult> GetPending()

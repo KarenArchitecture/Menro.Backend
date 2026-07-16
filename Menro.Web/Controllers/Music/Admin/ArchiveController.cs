@@ -9,8 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Music.Admin
 {
-    [Authorize]
     [ApiController]
+    [Authorize(Roles = SD.Role_Owner)]
     [Route("api/admin/music/archive")]
     public class ArchiveController : ControllerBase
     {

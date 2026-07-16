@@ -11,11 +11,11 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Menro.Application.Features.ShowAll.Services.Interfaces;
 
-namespace Menro.Web.Controllers.Public
+namespace Menro.Web.Controllers.Restaurants
 {
     [ApiController]
-    [Route("api/public/[controller]")]
-    public class RestaurantController : ControllerBase
+    [Route("api/public/restaurant")]
+    public class PublicRestaurantController : ControllerBase
     {
         #region Dependency Injection
 
@@ -29,7 +29,7 @@ namespace Menro.Web.Controllers.Public
         private readonly IRestaurantPageFoodCategoryService _restaurantPageFoodCategoryService;
         private readonly IFileUrlService _fileUrlService;
 
-        public RestaurantController(
+        public PublicRestaurantController(
             IRestaurantService restaurantService,
             IRandomRestaurantCardService randomRestaurantCardService,
             IRestaurantBrowseService restaurantBrowseService,
@@ -102,7 +102,7 @@ namespace Menro.Web.Controllers.Public
 
         // GET: /api/public/restaurant/categories
         [HttpGet("categories")]
-        public async Task<IActionResult> GetCategories()
+        public async Task<IActionResult> GetRestaurantCategories()
         {
             var categories = await _restaurantService.GetRestaurantCategoriesAsync();
             return Ok(categories);

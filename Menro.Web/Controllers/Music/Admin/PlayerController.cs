@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Music.Admin
 {
-    [Authorize(Roles = SD.Role_Owner)]
     [ApiController]
+    [Authorize(Roles = SD.Role_Owner)]
     [Route("api/admin/music/player")]
     public class PlayerController : ControllerBase
     {

@@ -6,7 +6,7 @@ using Menro.Application.Common.Interfaces;
 using Menro.Application.Features.FoodCategories.DTOs;
 
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.Food.FoodCategories
 {
     [ApiController]
     [Route("api/adminpanel/[controller]")]
@@ -32,7 +32,7 @@ namespace Menro.Web.Controllers.AdminPanel
 
         // ✅
         [HttpPost("add")]
-        public async Task<IActionResult> AddAsync (CreateCustomFoodCategoryDto dto)
+        public async Task<IActionResult> AddAsync(CreateCustomFoodCategoryDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
                 return BadRequest(new { message = "نام دسته‌بندی الزامی است." });

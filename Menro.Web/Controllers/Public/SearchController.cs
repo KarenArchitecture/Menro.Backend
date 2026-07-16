@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace Menro.Web.Controllers.Public
 {
     [ApiController]
-    [AllowAnonymous]
     [Route("api/public/search")]
     public class SearchController : ControllerBase
     {

@@ -5,10 +5,10 @@ using Menro.Application.Features.GlobalFoodCategories.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.Food.FoodCategories
 {
     [ApiController]
-    [Route("api/adminpanel/[controller]")]
+    [Route("api/adminpanel/globalFoodCategory")]
     [Authorize(Roles = SD.Role_Admin)]
     public class GlobalFoodCategoryController : ControllerBase
     {

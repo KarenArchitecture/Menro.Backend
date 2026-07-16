@@ -4,17 +4,17 @@ using Menro.Application.Features.Foods.DTOs;
 using Menro.Application.Foods.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.Public
+namespace Menro.Web.Controllers.Food
 {
     [ApiController]
-    [Route("api/public/[controller]")]
-    public class FoodController : ControllerBase
+    [Route("api/public/food")]
+    public class PublicFoodController : ControllerBase
     {
         private readonly IPopularFoodsService _popularFoodsService; // homepage groups
         private readonly IPopularFoodsBrowseService _popularFoodsBrowseService; // ✅ view-all browse
         private readonly IPublicFoodDetailsService _publicFoodDetailsService;
 
-        public FoodController(
+        public PublicFoodController(
             IPopularFoodsService popularFoodsService,
             IPopularFoodsBrowseService popularFoodsBrowseService,
             IPublicFoodDetailsService publicFoodDetailsService)

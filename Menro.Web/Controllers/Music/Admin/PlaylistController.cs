@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Music.Admin
 {
-    [Authorize]
     [ApiController]
+    [Authorize(Roles = SD.Role_Owner)]
     [Route("api/admin/music/playlist")]
     public class PlaylistController : ControllerBase
     {
@@ -29,7 +29,6 @@ namespace Menro.Web.Controllers.Music.Admin
 
 
         // add playlist
-        [Authorize(Roles = SD.Role_Owner)]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreatePlaylistDto dto)
         {
@@ -58,10 +57,7 @@ namespace Menro.Web.Controllers.Music.Admin
             }
         }
 
-
-
         // get all playlists
-        [Authorize(Roles = SD.Role_Owner)]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -73,7 +69,6 @@ namespace Menro.Web.Controllers.Music.Admin
         }
 
         // get playlist
-        [Authorize(Roles = SD.Role_Owner)]
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetById(Guid id)
         {
@@ -102,7 +97,6 @@ namespace Menro.Web.Controllers.Music.Admin
         }
 
         // rename playlist
-        [Authorize(Roles = SD.Role_Owner)]
         [HttpPut("{playlistId:guid}/rename")]
         public async Task<IActionResult> Rename(Guid playlistId, [FromBody] RenamePlaylistDto dto)
         {
@@ -134,9 +128,7 @@ namespace Menro.Web.Controllers.Music.Admin
             }
         }
 
-
         // set active tab on fetch playlists list
-        [Authorize(Roles = SD.Role_Owner)]
         [HttpPut("{playlistId:guid}/activate")]
         public async Task<IActionResult> Activate(Guid playlistId)
         {
@@ -172,7 +164,6 @@ namespace Menro.Web.Controllers.Music.Admin
         /*---------------*/
 
         // add track to playlist
-        [Authorize(Roles = SD.Role_Owner)]
         [HttpPost("{id:guid}/tracks")]
         public async Task<IActionResult> AddTrack(Guid id, [FromBody] AddPlaylistTrackDto dto)
         {
@@ -190,10 +181,7 @@ namespace Menro.Web.Controllers.Music.Admin
             return Ok();
         }
 
-
-
         // remove track from playlist
-        [Authorize(Roles = SD.Role_Owner)]
         [HttpDelete("{id:guid}/tracks/{playlistTrackId:guid}")]
         public async Task<IActionResult> RemoveTrack(Guid id /*(playlistId)*/, Guid playlistTrackId)
         {
@@ -212,7 +200,6 @@ namespace Menro.Web.Controllers.Music.Admin
         }
 
         // re-order track in playlist
-        [Authorize(Roles = SD.Role_Owner)]
         [HttpPut("{playlistId:guid}/tracks/{playlistTrackId:guid}/move")]
         public async Task<IActionResult> ReorderTrack(Guid playlistId, Guid playlistTrackId, [FromBody] ReorderPlaylistTrackDto dto)
         {

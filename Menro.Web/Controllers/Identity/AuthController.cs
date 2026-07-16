@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Menro.Application.Common.Interfaces;
 
-namespace Menro.Web.Controllers.Public
+namespace Menro.Web.Controllers.Identity
 {
     [ApiController]
     [Route("api/auth")]

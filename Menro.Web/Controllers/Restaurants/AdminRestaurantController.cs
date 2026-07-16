@@ -5,11 +5,11 @@ using Menro.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.Restaurants
 {
     [ApiController]
-    [Route("api/admin/restaurants")]
     [Authorize(Roles = SD.Role_Admin)]
+    [Route("api/admin/restaurants")]
     public class AdminRestaurantController : ControllerBase
     {
         private readonly IRestaurantService _service;

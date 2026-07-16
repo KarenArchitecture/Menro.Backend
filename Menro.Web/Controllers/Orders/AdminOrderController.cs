@@ -4,18 +4,18 @@ using Menro.Application.Features.Orders.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.AdminPanel
+namespace Menro.Web.Controllers.Orders
 {
     [ApiController]
-    [Route("api/admin/orders")]
     [Authorize(Roles = SD.Role_Owner)]
-    public class OrderController : ControllerBase
+    [Route("api/admin/orders")]
+    public class AdminOrderController : ControllerBase
     {
         private readonly IAdminOrderService _adminOrderService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileUrlService _fileUrlService;
 
-        public OrderController(IAdminOrderService adminOrderService,
+        public AdminOrderController(IAdminOrderService adminOrderService,
             ICurrentUserService currentUserService,
             IFileUrlService fileUrlService)
         {
