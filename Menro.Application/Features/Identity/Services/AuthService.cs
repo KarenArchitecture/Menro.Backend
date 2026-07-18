@@ -252,7 +252,7 @@ namespace Menro.Application.Features.Identity.Services
             return (newAccess, newRaw);
         }
 
-        // generate jwt token (access token)
+        // generate jwt tokens (access token)
         public string GenerateToken(Guid userId, string fullName, string email, List<string> roles)
         {
             var claims = new List<Claim>
@@ -280,96 +280,17 @@ namespace Menro.Application.Features.Identity.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        // 🔒 SECURITY FIX (new): mint a short-lived token that proves "an
-        // OTP was just correctly verified for this exact phone number".
-        // /reset-password requires this instead of trusting [Authorize] +
-        // a phone number in the request body, which is what previously
-        // let any logged-in user reset any other account's password.
         public string GeneratePasswordResetToken(string phoneNumber)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(PasswordResetPhoneClaim, phoneNumber),
-                new Claim(PasswordResetPurposeClaim, PasswordResetPurposeValue),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            };
+            => GeneratePurposeToken(phoneNumber, PasswordResetPurposeValue, PasswordResetTokenLifetime);
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _jwtSettings.Issuer,
-                audience: _jwtSettings.Audience,
-                claims: claims,
-                expires: DateTime.UtcNow.Add(PasswordResetTokenLifetime),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        // Validates a password-reset token AND that it was issued for the
-        // exact phone number the caller is now trying to reset. Both checks
-        // are required — a valid-but-mismatched-phone token must fail too,
-        // otherwise someone could reset their own phone's password (to get
-        // a legitimately-signed token) and then replay it against a
-        // different phone number.
         public bool ValidatePasswordResetToken(string token, string expectedPhoneNumber, out string error)
-        {
-            error = string.Empty;
+            => ValidatePurposeToken(token, expectedPhoneNumber, PasswordResetPurposeValue, out error);
 
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                error = "توکن بازیابی رمز عبور یافت نشد.";
-                return false;
-            }
+        public string GenerateRegistrationTicket(string phoneNumber)
+            => GeneratePurposeToken(phoneNumber, RegistrationPurposeValue, RegistrationTicketLifetime);
 
-            try
-            {
-                var handler = new JwtSecurityTokenHandler();
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
-
-                var validationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidIssuer = _jwtSettings.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = _jwtSettings.Audience,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = key,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero,
-                };
-
-                var principal = handler.ValidateToken(token, validationParameters, out _);
-
-                var purpose = principal.FindFirst(PasswordResetPurposeClaim)?.Value;
-                if (purpose != PasswordResetPurposeValue)
-                {
-                    error = "توکن برای این عملیات معتبر نیست.";
-                    return false;
-                }
-
-                var tokenPhone = principal.FindFirst(PasswordResetPhoneClaim)?.Value;
-                if (string.IsNullOrEmpty(tokenPhone) || tokenPhone != expectedPhoneNumber)
-                {
-                    error = "این توکن متعلق به این شماره تلفن نیست.";
-                    return false;
-                }
-
-                return true;
-            }
-            catch (SecurityTokenExpiredException)
-            {
-                error = "نشست بازیابی رمز منقضی شده؛ لطفاً دوباره کد تأیید را دریافت کنید.";
-                return false;
-            }
-            catch (Exception)
-            {
-                error = "توکن بازیابی رمز عبور نامعتبر است.";
-                return false;
-            }
-        }
+        public bool ValidateRegistrationTicket(string token, string expectedPhoneNumber, out string error)
+            => ValidatePurposeToken(token, expectedPhoneNumber, RegistrationPurposeValue, out error);
 
 
         /*--- utilities ---*/
@@ -413,6 +334,95 @@ namespace Menro.Application.Features.Identity.Services
                    p.StartsWith("0") && p.Length == 11 ? "+98" + p[1..] :
                    p.Length == 10 && p.StartsWith("9") ? "+98" + p :
                    throw new Exception("فرمت شماره موبایل معتبر نیست.");
+        }
+
+
+        /*--- Private Helpers ---*/
+
+        private const string RegistrationPurposeValue = "phone-registration";
+        private static readonly TimeSpan RegistrationTicketLifetime = TimeSpan.FromMinutes(10);
+
+        // 🔧 یک primitive مشترک: «این شماره همین الان با OTP تأیید شده، برای
+        // این هدف مشخص». هم reset-password و هم ثبت‌نام از همین استفاده می‌کنن،
+        // به‌جای این‌که هرکدوم منطق امضا/اعتبارسنجی JWT رو دوباره بنویسن.
+        private string GeneratePurposeToken(string phoneNumber, string purpose, TimeSpan lifetime)
+        {
+            var claims = new List<Claim>
+    {
+        new Claim(PasswordResetPhoneClaim, phoneNumber), // همون claim مشترک "phone"
+        new Claim(PasswordResetPurposeClaim, purpose),   // همون claim مشترک "purpose"
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+    };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _jwtSettings.Issuer,
+                audience: _jwtSettings.Audience,
+                claims: claims,
+                expires: DateTime.UtcNow.Add(lifetime),
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private bool ValidatePurposeToken(string token, string expectedPhoneNumber, string expectedPurpose, out string error)
+        {
+            error = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                error = "توکن یافت نشد.";
+                return false;
+            }
+
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = _jwtSettings.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = _jwtSettings.Audience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero,
+                };
+
+                var principal = handler.ValidateToken(token, validationParameters, out _);
+
+                var purpose = principal.FindFirst(PasswordResetPurposeClaim)?.Value;
+                if (purpose != expectedPurpose)
+                {
+                    error = "توکن برای این عملیات معتبر نیست.";
+                    return false;
+                }
+
+                var tokenPhone = principal.FindFirst(PasswordResetPhoneClaim)?.Value;
+                if (string.IsNullOrEmpty(tokenPhone) || tokenPhone != expectedPhoneNumber)
+                {
+                    error = "این توکن متعلق به این شماره تلفن نیست.";
+                    return false;
+                }
+
+                return true;
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                error = "نشست تأیید منقضی شده؛ لطفاً دوباره کد را دریافت کنید.";
+                return false;
+            }
+            catch (Exception)
+            {
+                error = "توکن نامعتبر است.";
+                return false;
+            }
         }
     }
 }

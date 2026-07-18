@@ -11,16 +11,20 @@ namespace Menro.Web.Controllers.Identity
     [Route("api/user")]
     public class UserController : ControllerBase
     {
+        #region DI
         private readonly IUserService _userService;
         private readonly ICurrentUserService _currentUserService;
         private readonly IFileUrlService _fileUrlService;
 
-        public UserController(IUserService userService, ICurrentUserService currentUserService, IFileUrlService fileUrlService)
+        public UserController(IUserService userService,
+            ICurrentUserService currentUserService,
+            IFileUrlService fileUrlService)
         {
             _userService = userService;
             _currentUserService = currentUserService;
             _fileUrlService = fileUrlService;
         }
+        #endregion
 
         [Authorize]
         [HttpGet("profile")]

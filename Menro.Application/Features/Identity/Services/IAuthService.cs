@@ -20,9 +20,8 @@ namespace Menro.Application.Features.Identity.Services
         Task<(string NewAccessToken, string NewRefreshToken)> RefreshAccessTokenAsync(string rawRefreshToken, string ip, string? userAgent);
         string GeneratePasswordResetToken(string phoneNumber);
         bool ValidatePasswordResetToken(string token, string expectedPhoneNumber, out string error);
+        string GenerateRegistrationTicket(string phoneNumber);                                  // 👈 جدید
+        bool ValidateRegistrationTicket(string token, string expectedPhoneNumber, out string error); // 👈 جدید
         Task<bool> LogoutAsync(string rawRefreshToken);
-
-
     }
-
 }

@@ -6,5 +6,6 @@
         public string Password { get; set; } // Optional
         public string PhoneNumber { get; set; }
         public string Email { get; set; } // Optional
+        public string RegistrationTicket { get; set; } = default!; // Required
     }
 }
