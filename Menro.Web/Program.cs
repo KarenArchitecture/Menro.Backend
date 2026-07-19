@@ -199,6 +199,7 @@ builder.Services.AddAutoRegisteredRepositories(
 // multi-layered services
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileUrlService, FileUrlService>();
+builder.Services.AddScoped<IMediaStorageProvider, LocalDiskMediaStorageProvider>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
 builder.Services.AddScoped<IMusicNotificationService, MusicNotificationService>(); 
