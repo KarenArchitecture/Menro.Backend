@@ -28,6 +28,7 @@ using Menro.Web.Hubs;
 using Menro.Web.Hubs.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Menro.Application.Common.Implementations;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -110,6 +111,12 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddSingleton(sp =>
     sp.GetRequiredService<
@@ -297,7 +304,11 @@ builder.Services.AddCors(options =>
                 "http://localhost:5173",
                 "https://localhost:5173",
                 "http://89.33.129.71",
-                "https://89.33.129.71"
+                "https://89.33.129.71",
+                "http://menro.ir",
+                "https://menro.ir",
+                "http://www.menro.ir",
+                "https://www.menro.ir"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -339,7 +350,7 @@ app.UseCors("AllowReactClient");
 app.UseStaticFiles();
 
 app.UseErrorHandlingMiddleware();
-
+app.UseForwardedHeaders();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -360,7 +371,9 @@ app.MapGet("/health", () =>
 .AllowAnonymous();
 
 //hubs
-app.MapHub<MusicHub>("/hubs/music");
+app.MapHub<MusicHub>("/hubs/music")
+    .RequireCors("AllowReactClient");
+
 
 #endregion
 
