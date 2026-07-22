@@ -3,6 +3,7 @@ using Menro.Domain.Entities;
 using Menro.Application.Features.GlobalFoodCategories.DTOs;
 using Menro.Application.Features.Icons.DTOs;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 
 
 namespace Menro.Application.Features.GlobalFoodCategories.Services
@@ -10,9 +11,11 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services
     public class GlobalFoodCategoryService : IGlobalFoodCategoryService
     {
         private readonly IGlobalFoodCategoryRepository _repository;
-        public GlobalFoodCategoryService(IGlobalFoodCategoryRepository repository)
+        private readonly IMediaStorageProvider _mediaStorage;
+        public GlobalFoodCategoryService(IGlobalFoodCategoryRepository repository, IMediaStorageProvider mediaStorage)
         {
             _repository = repository;
+            _mediaStorage = mediaStorage;
         }
 
         // modify for icon url/name
@@ -46,7 +49,7 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services
                     Id = x.Icon.Id,
                     FileName = x.Icon.FileName,
                     Label = x.Icon.Label,
-                    Url = x.Icon.FileName
+                    Url = _mediaStorage.GetUrl(MediaCategory.FoodCategoryIcon, x.Icon.FileName)
                 }
             }).ToList();
         }
@@ -63,7 +66,7 @@ namespace Menro.Application.Features.GlobalFoodCategories.Services
                     Id = category.Icon.Id,
                     FileName = category.Icon.FileName,
                     Label = category.Icon.Label,
-                    Url = category.Icon.FileName
+                    Url = _mediaStorage.GetUrl(MediaCategory.FoodCategoryIcon, category.Icon.FileName)
                 }
             };
         }

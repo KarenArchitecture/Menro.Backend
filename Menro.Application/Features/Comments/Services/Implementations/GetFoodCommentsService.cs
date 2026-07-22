@@ -1,5 +1,6 @@
 ﻿using Menro.Application.Comments.Services.Interfaces;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Comments.DTOs;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
@@ -9,14 +10,14 @@ namespace Menro.Application.Comments.Services.Implementations
     public class GetFoodCommentsService : IGetFoodCommentsService
     {
         private readonly ICommentRepository _commentRepository;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public GetFoodCommentsService(
             ICommentRepository commentRepository,
-            IFileUrlService fileUrlService)
+            IMediaStorageProvider mediaStorage)
         {
             _commentRepository = commentRepository;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         public async Task<List<CommentDto>> GetCommentsByFoodIdAsync(int foodId, string? currentUserId)
@@ -44,7 +45,7 @@ namespace Menro.Application.Comments.Services.Implementations
                     FoodTitle = c.Food?.Name ?? string.Empty,
                     FoodImageUrl = string.IsNullOrWhiteSpace(c.Food?.ImageUrl)
                         ? null
-                        : _fileUrlService.BuildFoodImageUrl(c.Food.ImageUrl),
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, c.Food.ImageUrl),
                     Rating = c.Rating,
                     Text = c.Text,
                     Likes = c.LikesCount,

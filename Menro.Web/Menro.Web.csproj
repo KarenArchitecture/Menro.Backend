@@ -10,19 +10,19 @@
     <Compile Remove="Areas\**" />
     <Compile Remove="Controllers\OwnerPanel\**" />
     <Compile Remove="Controllers\Owner\**" />
+    <Compile Remove="wwwroot\audio\**" />
     <Content Remove="Areas\**" />
     <Content Remove="Controllers\OwnerPanel\**" />
     <Content Remove="Controllers\Owner\**" />
+    <Content Remove="wwwroot\audio\**" />
     <EmbeddedResource Remove="Areas\**" />
     <EmbeddedResource Remove="Controllers\OwnerPanel\**" />
     <EmbeddedResource Remove="Controllers\Owner\**" />
+    <EmbeddedResource Remove="wwwroot\audio\**" />
     <None Remove="Areas\**" />
     <None Remove="Controllers\OwnerPanel\**" />
     <None Remove="Controllers\Owner\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="wwwroot\img\.picasaoriginals\ad-banner-1.jpg" />
+    <None Remove="wwwroot\audio\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,18 +49,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Menro.Application\Menro.Application.csproj" />
     <ProjectReference Include="..\Menro.Infrastructure\Menro.Infrastructure.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\img\adBanner\" />
-    <Folder Include="wwwroot\img\food\" />
-    <Folder Include="wwwroot\img\profile\" />
-    <Folder Include="wwwroot\audio\" />
-    <Folder Include="wwwroot\media\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="wwwroot\img\.picasaoriginals\.picasa.ini" />
   </ItemGroup>
 
 </Project>

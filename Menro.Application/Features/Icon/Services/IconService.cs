@@ -3,6 +3,8 @@ using Menro.Domain.Interfaces;
 using Menro.Application.Features.Icons.Interfaces;
 using Menro.Application.Features.Icons.DTOs;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
+using Microsoft.AspNetCore.Http;
 
 namespace Menro.Application.Features.Icons.Services
 {
@@ -10,10 +12,12 @@ namespace Menro.Application.Features.Icons.Services
     {
         #region DI
         private readonly IIconRepository _repo;
+        private readonly IMediaStorageProvider _mediaStorage;
 
-        public IconService(IIconRepository repo)
+        public IconService(IIconRepository repo, IMediaStorageProvider mediaStorage)
         {
             _repo = repo;
+            _mediaStorage = mediaStorage;
         }
         #endregion
         public async Task<List<GetIconDto>> GetAllAsync()
@@ -25,7 +29,7 @@ namespace Menro.Application.Features.Icons.Services
                 Id = x.Id,
                 FileName = x.FileName,
                 Label = x.Label,
-                Url = x.FileName
+                Url = _mediaStorage.GetUrl(MediaCategory.FoodCategoryIcon, x.FileName)
             }).ToList();
         }
         public async Task<GetIconDto?> GetByIdAsync(int id)
@@ -41,34 +45,51 @@ namespace Menro.Application.Features.Icons.Services
                 Url = icon.FileName
             };
         }
-        public async Task<bool> AddAsync(string label, string fileName)
+        public async Task<bool> AddAsync(string label, IFormFile icon)
         {
-            if (string.IsNullOrWhiteSpace(fileName))
-                throw new ArgumentException("File name is required.");
+            if (icon == null || icon.Length == 0)
+                throw new ArgumentException("فایلی برای آپلود ارسال نشده است.");
 
-            // duplicate file?
+            if (!icon.FileName.ToLower().EndsWith(".svg"))
+                throw new ArgumentException("فقط فایل‌های svg مجاز هستند.");
+
+            var desiredFileName = Path.GetFileName(icon.FileName);
+
+            // چک تکراری بودن قبل از آپلود، نه بعدش (جلوگیری از فایل orphan)
             var existingIcons = await _repo.GetAllAsync();
-            if (existingIcons.Any(i => i.FileName.ToLower() == fileName.ToLower()))
-                throw new InvalidOperationException("An icon with the same file name already exists.");
-            
-            label = label?.Trim() ?? "";
+            if (existingIcons.Any(i => i.FileName.Equals(desiredFileName, StringComparison.OrdinalIgnoreCase)))
+                throw new InvalidOperationException("آیکونی با همین نام از قبل وجود دارد.");
+
+            var result = await _mediaStorage.SaveAsync(MediaCategory.FoodCategoryIcon, icon);
 
             var entity = new Icon
             {
-                FileName = fileName,
-                Label = label
+                FileName = result.FileName,
+                Label = label?.Trim() ?? ""
             };
 
-            return await _repo.AddAsync(entity);
-            
+            var success = await _repo.AddAsync(entity);
+
+            if (!success)
+                _mediaStorage.Delete(MediaCategory.FoodCategoryIcon, result.FileName); // rollback
+
+            return success;
         }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var icon = await _repo.GetByIdAsync(id);
             if (icon == null)
                 throw new InvalidOperationException("Icon not found");
 
-            return await _repo.DeleteAsync(id);
+            var dbResult = await _repo.DeleteAsync(id);
+            if (!dbResult)
+                return false;
+
+            // delete icon file when deleting from db is successful
+            _mediaStorage.Delete(MediaCategory.FoodCategoryIcon, icon.FileName);
+
+            return true;
         }
     }
 }

@@ -18,6 +18,7 @@ namespace Menro.Web.Controllers.Blog.Public
     [Route("api/blog/posts")]
     public class PublicBlogPostsController : ControllerBase
     {
+        #region DI
         private readonly IBlogPostService _postService;
         private readonly IBlogCategoryService _categoryService;
         private readonly IBlogTagService _tagService;
@@ -31,6 +32,7 @@ namespace Menro.Web.Controllers.Blog.Public
             _categoryService = categoryService;
             _tagService = tagService;
         }
+        #endregion
 
         [HttpGet]
         public async Task<ActionResult<PagedResult<BlogPostResponse>>> GetAll(

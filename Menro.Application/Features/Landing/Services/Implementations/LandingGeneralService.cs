@@ -2,29 +2,31 @@ using Menro.Application.Features.Landing.DTOs;
 using Menro.Domain.Interfaces.Landing;
 using Menro.Application.Features.Landing.Services.Interfaces;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Microsoft.AspNetCore.Http;
 
 namespace Menro.Application.Features.Landing.Services.Implementations
 {
     public class LandingGeneralService : ILandingGeneralService
     {
-        private const int HeroHighlightMaxLength = 60;
-        private const int HeroTitleMaxLength = 60;
-        private const int SpotlightTitleMaxLength = 60;
-
+        #region DI
         private readonly ILandingGeneralRepository _repository;
-        private readonly IFileService _fileService;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public LandingGeneralService(
             ILandingGeneralRepository repository,
-            IFileService fileService,
-            IFileUrlService fileUrlService)
+            IMediaStorageProvider mediaStorage)
         {
             _repository = repository;
-            _fileService = fileService;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
+        #endregion
+
+        // < constants
+        private const int HeroHighlightMaxLength = 60;
+        private const int HeroTitleMaxLength = 60;
+        private const int SpotlightTitleMaxLength = 60;
+        // >
 
         public async Task<LandingGeneralResponse> GetAsync()
         {
@@ -48,7 +50,7 @@ namespace Menro.Application.Features.Landing.Services.Implementations
 
             if (isRemovingWithoutReplacement)
             {
-                _fileService.DeleteLandingHeroImage(entity.HeroImageFileName!);
+                _mediaStorage.Delete(MediaCategory.LandingHeroImage, entity.HeroImageFileName!);
             }
 
             entity.HeroHighlight = request.HeroHighlight.Trim();
@@ -68,11 +70,12 @@ namespace Menro.Application.Features.Landing.Services.Implementations
             if (file is null || file.Length == 0)
                 throw new ArgumentException("فایلی برای آپلود ارسال نشده است.", nameof(file));
 
-            // SaveFileAsync (inside UploadLandingHeroImageAsync) deletes oldFileName
-            // as part of the same call - same convention as blog post covers.
-            var fileName = await _fileService.UploadLandingHeroImageAsync(file, oldFileName);
-            var url = _fileUrlService.BuildLandingHeroImageUrl(fileName);
-            return new UploadLandingHeroImageResponse(fileName, url);
+            // SaveAsync deletes oldFileName as part of the same call -
+            // same convention as blog post covers.
+            var result = await _mediaStorage.SaveAsync(
+                MediaCategory.LandingHeroImage, file, oldFileName: oldFileName);
+
+            return new UploadLandingHeroImageResponse(result.FileName, result.Url);
         }
 
         private static void Validate(UpdateLandingGeneralRequest request)
@@ -106,7 +109,7 @@ namespace Menro.Application.Features.Landing.Services.Implementations
                 entity.Id,
                 string.IsNullOrWhiteSpace(entity.HeroImageFileName)
                     ? null
-                    : _fileUrlService.BuildLandingHeroImageUrl(entity.HeroImageFileName),
+                    : _mediaStorage.GetUrl(MediaCategory.LandingHeroImage, entity.HeroImageFileName),
                 entity.HeroHighlight,
                 entity.HeroTitle,
                 entity.SpotlightTitle);

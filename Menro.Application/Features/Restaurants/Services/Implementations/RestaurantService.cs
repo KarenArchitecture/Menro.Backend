@@ -5,19 +5,28 @@ using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Application.Extensions;
 using Menro.Application.Common.Interfaces;
 using Menro.Domain.Enums;
+using Menro.Application.Common.Media;
+using Microsoft.AspNetCore.Http;
 
 namespace Menro.Application.Features.Restaurants.Services.Implementations
 {
     public class RestaurantService : IRestaurantService
     {
+        #region DI
         private readonly IUnitOfWork _uow;
         private readonly IGlobalDateTimeService _globalDateTimeService;
-        public RestaurantService(IUnitOfWork uow,
-            IGlobalDateTimeService globalDateTimeService)
+        private readonly IMediaStorageProvider _mediaStorage;
+
+        public RestaurantService(
+            IUnitOfWork uow,
+            IGlobalDateTimeService globalDateTimeService,
+            IMediaStorageProvider mediaStorage)
         {
             _uow = uow;
             _globalDateTimeService = globalDateTimeService;
+            _mediaStorage = mediaStorage;
         }
+        #endregion
 
         public async Task<bool> AddRestaurantAsync(RegisterRestaurantDto dto, string ownerUserId)
         {
@@ -274,13 +283,20 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                 Description = r.Description,
                 PhoneNumber = r.ContactNumber,
                 BankAccountNumber = r.BankAccountNumber,
-
                 OpenTime = r.OpenTime.ToString(@"hh\:mm"),
                 CloseTime = r.CloseTime.ToString(@"hh\:mm"),
 
-                BannerImageUrl = r.BannerImageUrl,
-                ShopBannerImageUrl = r.ShopBannerImageUrl,
-                LogoImageUrl = r.LogoImageUrl,
+                BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl)
+                    ? null
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantHomeBanner, r.BannerImageUrl),
+
+                ShopBannerImageUrl = string.IsNullOrWhiteSpace(r.ShopBannerImageUrl)
+                    ? null
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantShopBanner, r.ShopBannerImageUrl),
+
+                LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl)
+                    ? null
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, r.LogoImageUrl),
 
                 SubscriptionType = r.Subscription?.SubscriptionPlan.Name,
                 SubscriptionDaysLeft = r.Subscription != null
@@ -291,7 +307,6 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
 
         public async Task UpdateRestaurantProfileAsync(UpdateRestaurantProfileDto dto)
         {
-            // دریافت رستوران + اطلاعات صاحب رستوران
             var restaurant = await _uow.Restaurant.GetByIdAsync(dto.Id);
             if (restaurant == null)
                 throw new Exception("Restaurant not found");
@@ -304,36 +319,53 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
             restaurant.Address = dto.Address;
             restaurant.Description = dto.Description;
             restaurant.BankAccountNumber = dto.BankAccountNumber;
-
-            /*----------------------------------------------
-             *      Update Restaurant Contact Number
-             *----------------------------------------------*/
-
             restaurant.ContactNumber = dto.PhoneNumber;
 
-            /*----------------------------------------------
-             *      Working hours (convert string → TimeSpan)
-             *----------------------------------------------*/
-            // dto.OpenTime => "09:00"
             restaurant.OpenTime = TimeSpan.Parse(dto.OpenTime);
             restaurant.CloseTime = TimeSpan.Parse(dto.CloseTime);
 
             /*----------------------------------------------
-             *      Update images only if new one was uploaded
+             *      Upload new images (only if provided)
              *----------------------------------------------*/
-            if (!string.IsNullOrEmpty(dto.HomeBannerFileName))
-                restaurant.BannerImageUrl = dto.HomeBannerFileName;
+            if (dto.HomeBanner != null)
+                restaurant.BannerImageUrl = await UploadHomeBannerAsync(restaurant.BannerImageUrl, dto.HomeBanner);
 
-            if (!string.IsNullOrEmpty(dto.ShopBannerFileName))
-                restaurant.ShopBannerImageUrl = dto.ShopBannerFileName;
+            if (dto.ShopBanner != null)
+                restaurant.ShopBannerImageUrl = await UploadShopBannerAsync(restaurant.ShopBannerImageUrl, dto.ShopBanner);
 
-            if (!string.IsNullOrEmpty(dto.LogoFileName))
-                restaurant.LogoImageUrl = dto.LogoFileName;
+            if (dto.Logo != null)
+                restaurant.LogoImageUrl = await UploadLogoAsync(restaurant.LogoImageUrl, dto.Logo);
 
             /*----------------------------------------------
              *      Save changes
              *----------------------------------------------*/
             await _uow.SaveChangesAsync();
+        }
+
+        /*----------------------------------------------
+         *      MEDIA UPLOAD HELPERS
+         *      هرکدوم صرفاً مسئول ذخیره‌ی یک نوع عکسه
+         *      (حذف فایل قدیم به‌صورت خودکار توسط provider انجام میشه)
+         *----------------------------------------------*/
+        private async Task<string> UploadHomeBannerAsync(string? oldFileName, IFormFile file)
+        {
+            var result = await _mediaStorage.SaveAsync(
+                MediaCategory.RestaurantHomeBanner, file, oldFileName: oldFileName);
+            return result.FileName;
+        }
+
+        private async Task<string> UploadShopBannerAsync(string? oldFileName, IFormFile file)
+        {
+            var result = await _mediaStorage.SaveAsync(
+                MediaCategory.RestaurantShopBanner, file, oldFileName: oldFileName);
+            return result.FileName;
+        }
+
+        private async Task<string> UploadLogoAsync(string? oldFileName, IFormFile file)
+        {
+            var result = await _mediaStorage.SaveAsync(
+                MediaCategory.RestaurantLogo, file, oldFileName: oldFileName);
+            return result.FileName;
         }
 
 

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Menro.Application.Features.Orders.DTOs;
+﻿using Menro.Application.Features.Orders.DTOs;
 using Menro.Application.Features.ShowAll.DTOs;
 using Menro.Application.Features.ShowAll.Services.Interfaces;
 using Menro.Domain.Entities;

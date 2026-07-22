@@ -14,12 +14,9 @@ namespace Menro.Web.Controllers.Food.FoodCategories
     {
         #region DI
         private readonly IGlobalFoodCategoryService _gCatService;
-        private readonly IFileUrlService _fileUrlService;
-        public GlobalFoodCategoryController(IGlobalFoodCategoryService gCatService,
-            IFileUrlService fileUrlService)
+        public GlobalFoodCategoryController(IGlobalFoodCategoryService gCatService)
         {
             _gCatService = gCatService;
-            _fileUrlService = fileUrlService;
         }
 
         #endregion
@@ -44,10 +41,6 @@ namespace Menro.Web.Controllers.Food.FoodCategories
         public async Task<IActionResult> GetAllAsync()
         {
             var list = await _gCatService.GetAllGlobalCategoriesAsync();
-            list.ForEach(cat =>
-            {
-                cat.Icon!.Url = _fileUrlService.BuildIconUrl(cat.Icon.Url);
-            });
             return Ok(list);
         }
 
@@ -58,7 +51,6 @@ namespace Menro.Web.Controllers.Food.FoodCategories
             try
             {
                 var cat = await _gCatService.GetGlobalCategoryAsync(catId);
-                cat.Icon!.Url = _fileUrlService.BuildIconUrl(cat.Icon.Url);
                 return Ok(cat);
             }
             catch (Exception ex)

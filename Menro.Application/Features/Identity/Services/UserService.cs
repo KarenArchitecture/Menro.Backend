@@ -1,5 +1,6 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Models;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Identity.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
@@ -23,15 +24,15 @@ namespace Menro.Application.Features.Identity.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly UserManager<User> _userManager;
-        private readonly IFileService _fileStorage;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public UserService(IUnitOfWork uow,
             UserManager<User> userManager,
-            IFileService fileStorage)
+            IMediaStorageProvider mediaStorage)
         {
             _uow = uow;
             _userManager = userManager;
-            _fileStorage = fileStorage;
+            _mediaStorage = mediaStorage;
         }
         public async Task<User> GetByIdAsync(string userId)
         {
@@ -211,8 +212,10 @@ namespace Menro.Application.Features.Identity.Services
                 Id = user.Id,
                 FullName = user.FullName,
                 PhoneNumber = user.PhoneNumber ?? "",
-                ProfileImageUrl = user.ProfileImage,
-                HasPassword = await _userManager.HasPasswordAsync(user)   
+                ProfileImageUrl = string.IsNullOrEmpty(user.ProfileImage)
+                    ? null
+                    : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage),
+                HasPassword = await _userManager.HasPasswordAsync(user)
             };
         }
 
@@ -225,10 +228,14 @@ namespace Menro.Application.Features.Identity.Services
                 user.FullName = dto.FullName;
 
                 if (dto.ProfileImage != null)
-                    user.ProfileImage = await _fileStorage.UploadProfileImageAsync(
+                {
+                    var result = await _mediaStorage.SaveAsync(
+                        MediaCategory.UserProfileImage,
                         dto.ProfileImage,
-                        user.ProfileImage
-                    );
+                        oldFileName: user.ProfileImage);
+
+                    user.ProfileImage = result.FileName;
+                }
 
                 await _userManager.UpdateAsync(user);
                 return true;
@@ -237,7 +244,6 @@ namespace Menro.Application.Features.Identity.Services
             {
                 return false;
             }
-
         }
     }
 }

@@ -1,9 +1,12 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Music.DTOs.Archive;
 using Menro.Application.Features.Music.DTOs.Player;
 using Menro.Application.Features.Music.Services.Interfaces;
+using Menro.Application.Helpers;
 using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 namespace Menro.Application.Features.Music.Services.Implementations
 {
@@ -11,35 +14,89 @@ namespace Menro.Application.Features.Music.Services.Implementations
     {
         private readonly IUnitOfWork _uow;
         private readonly IMusicNotificationService _musicNotificationService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
-        public MusicTrackService(IUnitOfWork uow, IMusicNotificationService musicNotificationService)
+        public MusicTrackService(
+            IUnitOfWork uow,
+            IMusicNotificationService musicNotificationService,
+            IMediaStorageProvider mediaStorage)
         {
             _uow = uow;
             _musicNotificationService = musicNotificationService;
+            _mediaStorage = mediaStorage;
         }
 
-
-        // add music
-        public async Task<MusicTrack> CreateAsync(int restaurantId, CreateMusicTrackDto dto)
+        // add music (upload + metadata extraction + persist, all in one place)
+        public async Task<MusicTrackListItemDto> CreateAsync(int restaurantId, IFormFile audioFile, IFormFile? coverFile)
         {
-            var track = new MusicTrack
+            if (audioFile == null || audioFile.Length == 0)
+                throw new ArgumentException("فایل موسیقی ارسال نشده است.");
+
+            string? audioFileName = null;
+            string? coverFileName = null;
+
+            try
             {
-                Id = Guid.NewGuid(),
-                RestaurantId = restaurantId,
+                // اعتبارسنجی فرمت/سایز اینجا انجام نمیشه؛ SaveAsync طبق MediaCategoryRegistry
+                // خودش InvalidOperationException با پیام مناسب می‌اندازه اگه فایل نامعتبر باشه.
+                var audioResult = await _mediaStorage.SaveAsync(MediaCategory.RestaurantMusicFile, audioFile);
+                audioFileName = audioResult.FileName;
 
-                Title = dto.Title,
-                Artist = dto.Artist,
-                Duration = dto.Duration,
+                var audioPath = _mediaStorage.GetPhysicalPath(MediaCategory.RestaurantMusicFile, audioFileName);
+                var metadata = AudioMetadataExtractor.Extract(audioPath);
 
-                AudioFileName = dto.AudioFileName,
-                CoverFileName = dto.CoverFileName,
+                if (coverFile != null)
+                {
+                    var coverResult = await _mediaStorage.SaveAsync(MediaCategory.RestaurantMusicCover, coverFile);
+                    coverFileName = coverResult.FileName;
+                }
+                else
+                {
+                    var coverBytes = AudioMetadataExtractor.ExtractCover(audioPath);
+                    if (coverBytes != null)
+                    {
+                        var coverResult = await _mediaStorage.SaveBytesAsync(
+                            MediaCategory.RestaurantMusicCover, coverBytes, ".jpg");
+                        coverFileName = coverResult.FileName;
+                    }
+                }
 
-            };
+                var track = new MusicTrack
+                {
+                    Id = Guid.NewGuid(),
+                    RestaurantId = restaurantId,
+                    Title = metadata.Title,
+                    Artist = metadata.Artist,
+                    Duration = metadata.Duration,
+                    AudioFileName = audioFileName,
+                    CoverFileName = coverFileName
+                };
 
-            await _uow.MusicTrack.AddAsync(track);
-            await _uow.SaveChangesAsync();
+                await _uow.MusicTrack.AddAsync(track);
+                await _uow.SaveChangesAsync();
 
-            return track;
+                return new MusicTrackListItemDto
+                {
+                    Id = track.Id,
+                    Title = track.Title,
+                    Artist = track.Artist,
+                    Duration = track.Duration,
+                    CoverFileName = coverFileName == null
+                        ? null
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, coverFileName)
+                };
+            }
+            catch
+            {
+                // rollback: هر خطایی (اعتبارسنجی، استخراج متادیتا، شکست DB) → پاک‌سازی فایل‌های آپلودشده
+                if (!string.IsNullOrWhiteSpace(audioFileName))
+                    _mediaStorage.Delete(MediaCategory.RestaurantMusicFile, audioFileName);
+
+                if (!string.IsNullOrWhiteSpace(coverFileName))
+                    _mediaStorage.Delete(MediaCategory.RestaurantMusicCover, coverFileName);
+
+                throw;
+            }
         }
 
         // get musics
@@ -53,12 +110,13 @@ namespace Menro.Application.Features.Music.Services.Implementations
                 Title = t.Title,
                 Artist = t.Artist,
                 Duration = t.Duration,
-                CoverFileName = t.CoverFileName,
+                CoverFileName = string.IsNullOrWhiteSpace(t.CoverFileName)
+                    ? null
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, t.CoverFileName)
             }).ToList();
         }
 
-
-        // get music
+        // get music metadata (NOT the audio bytes - AudioUrl points to the protected /stream endpoint)
         public async Task<MusicTrackDto?> GetByIdAsync(Guid trackId, int restaurantId)
         {
             var track = await _uow.MusicTrack.GetByIdAsync(trackId, restaurantId);
@@ -73,9 +131,24 @@ namespace Menro.Application.Features.Music.Services.Implementations
                 Artist = track.Artist,
                 Duration = track.Duration,
 
-                AudioUrl = track.AudioFileName,
-                CoverUrl = track.CoverFileName,
+                // فایل صوتی public نیست؛ آدرس endpoint محافظت‌شده داده میشه (مطلق، نه نسبی)
+                AudioUrl = $"{_mediaStorage.GetBaseUrl()}/api/admin/music/archive/{track.Id}/stream",
+
+                CoverUrl = string.IsNullOrWhiteSpace(track.CoverFileName)
+                    ? null
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, track.CoverFileName)
             };
+        }
+
+        // physical path used ONLY by the controller's stream action (PhysicalFile needs a path, not a URL)
+        public async Task<string?> GetAudioPhysicalPathAsync(Guid trackId, int restaurantId)
+        {
+            var track = await _uow.MusicTrack.GetByIdAsync(trackId, restaurantId);
+
+            if (track == null || string.IsNullOrWhiteSpace(track.AudioFileName))
+                return null;
+
+            return _mediaStorage.GetPhysicalPath(MediaCategory.RestaurantMusicFile, track.AudioFileName);
         }
 
         // remove music
@@ -90,28 +163,20 @@ namespace Menro.Application.Features.Music.Services.Implementations
             {
                 bool playbackChanged = false;
 
-                // 1. get player
                 var player = await _uow.MusicPlayer.GetByRestaurantIdAsync(restaurantId);
-
-                // 2. playlist dependencies
                 var playlistTracks = await _uow.PlaylistTrack.GetAllByMusicTrackId(trackId);
-
-                // 3. request dependencies
                 var trackRequests = await _uow.TrackRequest.GetAllByMusicTrackId(trackId);
 
-                // 4. if is set as current, update player
                 if (player?.CurrentPlaylistTrackId != null)
                 {
                     var currentPlaylistTrack = playlistTracks.FirstOrDefault(
-                        x => x.Id == player.CurrentPlaylistTrackId
-                    );
+                        x => x.Id == player.CurrentPlaylistTrackId);
 
                     if (currentPlaylistTrack != null)
                     {
                         var nextTrack = await _uow.PlaylistTrack.GetNextTrackAsync(
                             currentPlaylistTrack.PlaylistId,
-                            currentPlaylistTrack.SortOrder
-                        );
+                            currentPlaylistTrack.SortOrder);
 
                         if (nextTrack != null)
                         {
@@ -125,29 +190,27 @@ namespace Menro.Application.Features.Music.Services.Implementations
                         }
 
                         player.LastUpdatedAt = DateTime.UtcNow;
-
                         await _uow.MusicPlayer.UpdateAsync(player);
-
                         playbackChanged = true;
                     }
                 }
 
-                // 5. delete playlistTrack & trackRequest references
                 await _uow.PlaylistTrack.RemoveRange(playlistTracks);
                 await _uow.TrackRequest.RemoveRange(trackRequests);
 
-                // 6. delete track
                 _uow.MusicTrack.Remove(track);
-
                 await _uow.SaveChangesAsync();
 
-                // 7. notify playlist change (only if playlist actually affected)
-                if (playlistTracks.Any())
-                {
-                    await _musicNotificationService.NotifyPlaylistChanged(restaurantId);
-                }
+                // فایل‌های فیزیکی را همین‌جا (بعد از موفقیت حذف رکورد) پاک می‌کنیم
+                if (!string.IsNullOrWhiteSpace(track.AudioFileName))
+                    _mediaStorage.Delete(MediaCategory.RestaurantMusicFile, track.AudioFileName);
 
-                // 8. notify playback change (only if player state changed)
+                if (!string.IsNullOrWhiteSpace(track.CoverFileName))
+                    _mediaStorage.Delete(MediaCategory.RestaurantMusicCover, track.CoverFileName);
+
+                if (playlistTracks.Any())
+                    await _musicNotificationService.NotifyPlaylistChanged(restaurantId);
+
                 if (playbackChanged)
                 {
                     await _musicNotificationService.NotifyPlaybackChanged(
@@ -170,9 +233,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
         // rename music track title
         public async Task<bool> UpdateAsync(Guid trackId, int restaurantId, UpdateMusicTrackDto dto)
         {
-            var track = await _uow.MusicTrack.GetByIdAsync(
-                trackId,
-                restaurantId);
+            var track = await _uow.MusicTrack.GetByIdAsync(trackId, restaurantId);
 
             if (track == null)
                 return false;
@@ -180,7 +241,6 @@ namespace Menro.Application.Features.Music.Services.Implementations
             track.Title = dto.Title;
 
             await _uow.MusicTrack.UpdateAsync(track);
-
             await _uow.SaveChangesAsync();
 
             return true;

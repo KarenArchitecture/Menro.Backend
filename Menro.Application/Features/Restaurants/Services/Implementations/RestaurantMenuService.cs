@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Foods.DTOs;
 using Menro.Application.Features.Restaurants.DTOs;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
@@ -9,25 +10,23 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
     public class RestaurantMenuService : IRestaurantMenuService
     {
         private readonly IFoodRepository _foodRepo;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public RestaurantMenuService(
             IFoodRepository foodRepo,
-            IFileUrlService fileUrlService)
+            IMediaStorageProvider mediaStorage)
         {
             _foodRepo = foodRepo;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         public async Task<List<RestaurantMenuDto>> GetMenuBySlugAsync(string slug)
         {
-            // 1. گرفتن دیتا از Repository (خروجی Entity است)
             var foods = await _foodRepo.GetRestaurantMenuBySlugAsync(slug);
 
             if (foods == null || !foods.Any())
                 return new List<RestaurantMenuDto>();
 
-            // 2. گروه‌بندی و تبدیل به DTO در لایه Application
             var grouped = foods
                 .GroupBy(f => f.CustomFoodCategoryId ?? f.GlobalFoodCategoryId)
                 .OrderBy(g => g.Key)
@@ -35,18 +34,16 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                 {
                     var first = g.First();
 
-                    // تعیین عنوان دسته بندی
                     var categoryTitle = first.CustomFoodCategory?.Name
                                         ?? first.GlobalFoodCategory?.Name
                                         ?? "نامشخص";
 
-                    // تعیین آیکون دسته بندی
                     var iconFile = first.CustomFoodCategory?.Icon?.FileName
                                    ?? first.GlobalFoodCategory?.Icon?.FileName;
 
                     var svgIconUrl = string.IsNullOrWhiteSpace(iconFile)
                         ? string.Empty
-                        : _fileUrlService.BuildIconUrl(iconFile);
+                        : _mediaStorage.GetUrl(MediaCategory.FoodCategoryIcon, iconFile);
 
                     return new RestaurantMenuDto
                     {
@@ -57,7 +54,6 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
 
                         Foods = g.Select(f =>
                         {
-                            // منطق تعیین قیمت (بدون تغییر در منطق تیم شما)
                             var displayPrice = f.Price;
                             if (f.Variants != null && f.Variants.Any())
                             {
@@ -75,9 +71,8 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                                 Price = displayPrice,
                                 ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
                                     ? null
-                                    : _fileUrlService.BuildFoodImageUrl(f.ImageUrl),
+                                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl),
 
-                                // استفاده از فیلدهای NotMapped که حالا Ratings لود شده‌اند
                                 Rating = f.AverageRating,
                                 Voters = f.VotersCount,
 
@@ -91,6 +86,5 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
 
             return grouped;
         }
-
     }
 }

@@ -12,21 +12,18 @@ namespace Menro.Web.Controllers.Music.Admin
     [Route("api/admin/music/playlist")]
     public class PlaylistController : ControllerBase
     {
-
         #region DI
         private readonly IPlaylistService _playlistService;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IFileUrlService _fileUrlService;
-        public PlaylistController(IPlaylistService playlistService,
-            ICurrentUserService currentUserService,
-            IFileUrlService fileUrlService)
+
+        public PlaylistController(
+            IPlaylistService playlistService,
+            ICurrentUserService currentUserService)
         {
             _playlistService = playlistService;
             _currentUserService = currentUserService;
-            _fileUrlService = fileUrlService;
         }
         #endregion
-
 
         // add playlist
         [HttpPost]
@@ -38,22 +35,13 @@ namespace Menro.Web.Controllers.Music.Admin
             try
             {
                 var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+                var playlist = await _playlistService.CreateAsync(restaurantId, dto);
 
-                var playlist =
-                    await _playlistService.CreateAsync(restaurantId, dto);
-
-                return Ok(new
-                {
-                    playlist.Id,
-                    playlist.Name,
-                });
+                return Ok(new { playlist.Id, playlist.Name });
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new
-                {
-                    message = ex.Message
-                });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -62,9 +50,7 @@ namespace Menro.Web.Controllers.Music.Admin
         public async Task<IActionResult> GetAll()
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-
             var playlists = await _playlistService.GetAllAsync(restaurantId);
-
             return Ok(playlists);
         }
 
@@ -73,27 +59,9 @@ namespace Menro.Web.Controllers.Music.Admin
         public async Task<IActionResult> GetById(Guid id)
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-
             var playlist = await _playlistService.GetByIdAsync(id, restaurantId);
 
-            if (playlist == null)
-                return NotFound();
-
-            // url generation
-            foreach (var track in playlist.Tracks)
-            {
-                if (!string.IsNullOrEmpty(track.AudioUrl))
-                {
-                    track.AudioUrl = _fileUrlService.BuildMusicFileUrl(track.AudioUrl);
-                }
-
-                if (!string.IsNullOrEmpty(track.CoverUrl))
-                {
-                    track.CoverUrl = _fileUrlService.BuildMusicCoverUrl(track.CoverUrl);
-                }
-            }
-
-            return Ok(playlist);
+            return playlist == null ? NotFound() : Ok(playlist);
         }
 
         // rename playlist
@@ -106,25 +74,13 @@ namespace Menro.Web.Controllers.Music.Admin
             try
             {
                 var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-
                 var result = await _playlistService.RenameAsync(playlistId, restaurantId, dto);
 
-                if (!result)
-                {
-                    return NotFound(new
-                    {
-                        message = "پلی‌لیست یافت نشد."
-                    });
-                }
-
-                return Ok();
+                return result ? Ok() : NotFound(new { message = "پلی‌لیست یافت نشد." });
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new
-                {
-                    message = ex.Message
-                });
+                return BadRequest(new { message = ex.Message });
             }
         }
 
@@ -133,13 +89,9 @@ namespace Menro.Web.Controllers.Music.Admin
         public async Task<IActionResult> Activate(Guid playlistId)
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-
             var result = await _playlistService.SetActivePlaylistAsync(playlistId, restaurantId);
 
-            if (!result)
-                return NotFound();
-
-            return Ok();
+            return result ? Ok() : NotFound();
         }
 
         // delete playlist
@@ -147,70 +99,40 @@ namespace Menro.Web.Controllers.Music.Admin
         public async Task<IActionResult> DeletePlaylist(Guid playlistId)
         {
             int restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var result = await _playlistService.DeletePlaylistAsync(restaurantId, playlistId);
 
-            var result = await _playlistService.DeletePlaylistAsync(
-                restaurantId,
-                playlistId);
-
-            if (!result.IsSuccess)
-                return BadRequest(result.Error);
-
-            return Ok();
+            return result.IsSuccess ? Ok() : BadRequest(result.Error);
         }
-
 
         /*-----------------*/
         /* --- Tracks --- */
         /*---------------*/
 
-        // add track to playlist
         [HttpPost("{id:guid}/tracks")]
         public async Task<IActionResult> AddTrack(Guid id, [FromBody] AddPlaylistTrackDto dto)
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var result = await _playlistService.AddTrackAsync(id, restaurantId, dto.MusicTrackId);
 
-            var result = await _playlistService.AddTrackAsync(
-                id,
-                restaurantId,
-                dto.MusicTrackId
-            );
-
-            if (!result)
-                return BadRequest("Invalid playlist or track");
-
-            return Ok();
+            return result ? Ok() : BadRequest("Invalid playlist or track");
         }
 
-        // remove track from playlist
         [HttpDelete("{id:guid}/tracks/{playlistTrackId:guid}")]
-        public async Task<IActionResult> RemoveTrack(Guid id /*(playlistId)*/, Guid playlistTrackId)
+        public async Task<IActionResult> RemoveTrack(Guid id, Guid playlistTrackId)
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var result = await _playlistService.RemoveTrackAsync(id, restaurantId, playlistTrackId);
 
-            var result = await _playlistService.RemoveTrackAsync(
-                id,
-                restaurantId,
-                playlistTrackId
-            );
-
-            if (!result)
-                return NotFound();
-
-            return Ok();
+            return result ? Ok() : NotFound();
         }
 
-        // re-order track in playlist
         [HttpPut("{playlistId:guid}/tracks/{playlistTrackId:guid}/move")]
         public async Task<IActionResult> ReorderTrack(Guid playlistId, Guid playlistTrackId, [FromBody] ReorderPlaylistTrackDto dto)
         {
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-
             var result = await _playlistService.ReorderTrackAsync(playlistId, restaurantId, playlistTrackId, dto.Direction);
 
-            if (!result)
-                return NotFound();
-
-            return Ok();
+            return result ? Ok() : NotFound();
         }
     }
 }

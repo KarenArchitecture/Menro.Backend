@@ -6,21 +6,29 @@ using Menro.Domain.Entities.Music;
 using Menro.Domain.Interfaces;
 using Menro.Application.Features.Music.Services.Interfaces;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 
 namespace Menro.Application.Features.Music.Services.Implementations
 {
     public class PublicMusicService : IPublicMusicService
     {
+        #region DI
         private readonly IUnitOfWork _uow;
         private readonly IMusicPlayerService _musicPlayerService;
         private readonly IMusicNotificationService _notifier;
+        private readonly IMediaStorageProvider _mediaStorage;
         public PublicMusicService(
-            IUnitOfWork uow, IMusicPlayerService musicPlayerService, IMusicNotificationService notifier)
+            IUnitOfWork uow,
+            IMusicPlayerService musicPlayerService,
+            IMusicNotificationService notifier,
+            IMediaStorageProvider mediaStorage)
         {
             _uow = uow;
             _musicPlayerService = musicPlayerService;
             _notifier = notifier;
+            _mediaStorage = mediaStorage;
         }
+        #endregion
 
         public async Task<PublicMusicPageDto?> GetPageAsync(int restaurantId, string userId)
         {
@@ -77,8 +85,9 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
                         Subtitle = track.MusicTrack.Artist,
 
-                        ImageUrl = track.MusicTrack.CoverFileName,
-
+                        ImageUrl = string.IsNullOrWhiteSpace(track.MusicTrack.CoverFileName)
+                            ? null
+                            : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, track.MusicTrack.CoverFileName),
                         IsCurrentTrack =
                             player?.CurrentTrackId == track.Id,
 

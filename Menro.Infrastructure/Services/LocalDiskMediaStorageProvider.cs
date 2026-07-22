@@ -15,25 +15,51 @@ namespace Menro.Infrastructure.Services
         }
 
         public async Task<MediaSaveResult> SaveAsync(
-                    MediaCategory category, IFormFile file, string? ownerId = null,
-                    string? oldFileName = null, CancellationToken ct = default)
+            MediaCategory category, IFormFile file, string? ownerId = null,
+            string? oldFileName = null, CancellationToken ct = default)
         {
             var cfg = MediaCategoryRegistry.All[category];
             ValidateFile(file, cfg);
 
             var folder = ResolveFolder(cfg, ownerId);
-            var uploadDir = Path.Combine(_options.RootPath, folder); // 👈 دیگه WebRootPath نیست
+            var uploadDir = Path.Combine(_options.RootPath, folder);
             Directory.CreateDirectory(uploadDir);
 
             if (!string.IsNullOrEmpty(oldFileName))
                 TryDeletePhysical(Path.Combine(uploadDir, Path.GetFileName(oldFileName)));
 
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var fileName = $"{Guid.NewGuid()}{ext}";
+            string fileName;
+            if (cfg.PreserveOriginalFileName)
+            {
+                fileName = Path.GetFileName(file.FileName);
+                var existingPath = Path.Combine(uploadDir, fileName);
+                if (File.Exists(existingPath))
+                    throw new InvalidOperationException("فایلی با این نام از قبل وجود دارد.");
+            }
+            else
+            {
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                fileName = $"{Guid.NewGuid()}{ext}";
+            }
+
             var filePath = Path.Combine(uploadDir, fileName);
 
             await using var stream = new FileStream(filePath, FileMode.Create);
             await file.CopyToAsync(stream, ct);
+
+            return new MediaSaveResult(fileName, GetUrl(category, fileName, ownerId));
+        }
+
+        public async Task<MediaSaveResult> SaveBytesAsync(
+            MediaCategory category, byte[] bytes, string extension, string? ownerId = null, CancellationToken ct = default)
+        {
+            var cfg = MediaCategoryRegistry.All[category];
+            var folder = ResolveFolder(cfg, ownerId);
+            var uploadDir = Path.Combine(_options.RootPath, folder);
+            Directory.CreateDirectory(uploadDir);
+
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            await File.WriteAllBytesAsync(Path.Combine(uploadDir, fileName), bytes, ct);
 
             return new MediaSaveResult(fileName, GetUrl(category, fileName, ownerId));
         }
@@ -49,12 +75,22 @@ namespace Menro.Infrastructure.Services
         public string GetUrl(MediaCategory category, string fileName, string? ownerId = null)
         {
             var cfg = MediaCategoryRegistry.All[category];
-            if (!cfg.IsPublic) return string.Empty; // این نوع باید از اکشن کنترلر با auth سرو بشه
+            if (!cfg.IsPublic) return string.Empty;
             var folder = ResolveFolder(cfg, ownerId);
             var cleanPath = $"{folder}/{Path.GetFileName(fileName)}".Replace("\\", "/");
             return string.IsNullOrWhiteSpace(_options.BaseUrl) ? "/" + cleanPath : $"{_options.BaseUrl}/{cleanPath}";
         }
+        public string GetBaseUrl() => _options.BaseUrl;
 
+        public string GetPhysicalPath(MediaCategory category, string fileName, string? ownerId = null)
+        {
+            var cfg = MediaCategoryRegistry.All[category];
+            var folder = ResolveFolder(cfg, ownerId);
+            return Path.Combine(_options.RootPath, folder, Path.GetFileName(fileName));
+        }
+
+
+        /* --- HELPERS --- */
         private static string ResolveFolder(MediaCategoryConfig cfg, string? ownerId)
             => cfg.IsEntityScoped
                 ? cfg.FolderTemplate.Replace("{ownerId}", ownerId)
@@ -69,8 +105,17 @@ namespace Menro.Infrastructure.Services
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!cfg.AllowedExtensions.Contains(ext))
                 throw new InvalidOperationException("نوع فایل مجاز نیست.");
+        }
+        private static void ValidateBytes(byte[] data, string fileExtension, MediaCategoryConfig cfg)
+        {
+            if (data == null || data.Length == 0)
+                throw new InvalidOperationException("فایل خالی است.");
+            if (data.Length > cfg.MaxSizeBytes)
+                throw new InvalidOperationException("حجم فایل بیش از حد مجاز است.");
 
-            // TODO: بررسی magic bytes برای تطابق واقعی نوع فایل با پسوند اعلامی
+            var ext = (fileExtension.StartsWith('.') ? fileExtension : $".{fileExtension}").ToLowerInvariant();
+            if (!cfg.AllowedExtensions.Contains(ext))
+                throw new InvalidOperationException("نوع فایل مجاز نیست.");
         }
 
         private static bool TryDeletePhysical(string path)

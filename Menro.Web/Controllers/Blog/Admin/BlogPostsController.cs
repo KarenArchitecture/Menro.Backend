@@ -12,16 +12,14 @@ namespace Menro.Web.Controllers.Blog.Admin
     [Route("api/admin/blog/posts")]
     public class BlogPostsController : ControllerBase
     {
+        #region DI
         private readonly IBlogPostService _service;
-        private readonly IFileService _fileService;
-        private readonly IFileUrlService _fileUrlService;
 
-        public BlogPostsController(IBlogPostService service, IFileService fileService, IFileUrlService fileUrlService)
+        public BlogPostsController(IBlogPostService service)
         {
             _service = service;
-            _fileService = fileService;
-            _fileUrlService = fileUrlService;
         }
+        #endregion
 
         // GET api/admin/blog/posts?search=...&categoryId=...&tagId=...&page=1&pageSize=20
         [HttpGet]
@@ -56,10 +54,8 @@ namespace Menro.Web.Controllers.Blog.Admin
             if (file is null || file.Length == 0)
                 return BadRequest("فایلی ارسال نشده است.");
 
-            var fileName = await _fileService.UploadBlogPostImageAsync(file, oldFileName);
-            var url = _fileUrlService.BuildBlogPostImageUrl(fileName);
-
-            return Ok(new { fileName, url });
+            var result = await _service.UploadCoverImageAsync(file, oldFileName, ct);
+            return Ok(new { fileName = result.FileName, url = result.Url });
         }
 
         // POST api/admin/blog/posts

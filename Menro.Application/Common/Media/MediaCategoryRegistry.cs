@@ -7,85 +7,93 @@
             {
                 [MediaCategory.FoodCategoryIcon] = new()
                 {
-                    FolderTemplate = "icons",
+                    FolderTemplate = "media/icons",
                     AllowedExtensions = new[] { ".svg" },
                     MaxSizeBytes = 100 * 1024,
                     IsEntityScoped = false,
+                    PreserveOriginalFileName = true,
                 },
                 [MediaCategory.UserProfileImage] = new()
                 {
-                    FolderTemplate = "img/users/{ownerId}/profile",
+                    FolderTemplate = "media/img/profile",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 5 * 1024 * 1024,
-                    IsEntityScoped = true,
+                    IsEntityScoped = false,
                 },
                 [MediaCategory.RestaurantLogo] = new()
                 {
-                    FolderTemplate = "img/restaurants/{ownerId}/logo",
+                    FolderTemplate = "media/img/restaurant/logo",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 5 * 1024 * 1024,
-                    IsEntityScoped = true,
+                    IsEntityScoped = false,
+                },
+                [MediaCategory.RestaurantCard] = new()
+                {
+                    FolderTemplate = "media/img/restaurant/card",
+                    AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
+                    MaxSizeBytes = 4 * 1024 * 1024,
+                    IsEntityScoped = false,
                 },
                 [MediaCategory.RestaurantHomeBanner] = new()
                 {
-                    FolderTemplate = "img/restaurants/{ownerId}/banners/home",
+                    FolderTemplate = "media/img/restaurant/home",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 8 * 1024 * 1024,
-                    IsEntityScoped = true,
+                    IsEntityScoped = false,
                 },
                 [MediaCategory.RestaurantShopBanner] = new()
                 {
-                    FolderTemplate = "img/restaurants/{ownerId}/banners/shop",
+                    FolderTemplate = "media/img/restaurant/shop",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 8 * 1024 * 1024,
-                    IsEntityScoped = true,
+                    IsEntityScoped = false,
                 },
                 [MediaCategory.RestaurantFoodImage] = new()
                 {
-                    FolderTemplate = "img/restaurants/{ownerId}/food",
+                    FolderTemplate = "media/img/food",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 4 * 1024 * 1024,
-                    IsEntityScoped = true,
+                    IsEntityScoped = false,
                 },
                 [MediaCategory.RestaurantAdBanner] = new()
                 {
-                    FolderTemplate = "img/ads/banner",
+                    FolderTemplate = "media/img/ads/banner",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 4 * 1024 * 1024,
-                    IsEntityScoped = false, // تبلیغات مرکزی، توسط ادمین مدیریت می‌شه
+                    IsEntityScoped = false,
                 },
                 [MediaCategory.RestaurantAdCarousel] = new()
                 {
-                    FolderTemplate = "img/ads/carousel",
+                    FolderTemplate = "media/img/ads/carousel",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 4 * 1024 * 1024,
                     IsEntityScoped = false,
                 },
                 [MediaCategory.RestaurantMusicFile] = new()
                 {
-                    FolderTemplate = "media/restaurants/{ownerId}/music/files",
-                    AllowedExtensions = new[] { ".mp3", ".wav", ".m4a" },
+                    FolderTemplate = "media/music/files",
+                    AllowedExtensions = new[] { ".mp3", ".wav", ".m4a", ".ogg" },
                     MaxSizeBytes = 25 * 1024 * 1024,
-                    IsEntityScoped = true,
-                    IsPublic = false, // نه مستقیم public، از پشت یک اکشن کنترلر با auth سرو بشه
+                    IsEntityScoped = false,
+                    IsPublic = false,
                 },
                 [MediaCategory.RestaurantMusicCover] = new()
                 {
-                    FolderTemplate = "media/restaurants/{ownerId}/music/covers",
+                    FolderTemplate = "media/music/covers",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 2 * 1024 * 1024,
-                    IsEntityScoped = true,
+                    IsEntityScoped = false,
                 },
                 [MediaCategory.BlogPostImage] = new()
                 {
-                    FolderTemplate = "img/blog/posts",
+                    FolderTemplate = "media/img/blog/posts",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 6 * 1024 * 1024,
                     IsEntityScoped = false,
                 },
                 [MediaCategory.LandingHeroImage] = new()
                 {
-                    FolderTemplate = "img/landing/hero",
+                    FolderTemplate = "media/img/landing/hero",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 8 * 1024 * 1024,
                     IsEntityScoped = false,

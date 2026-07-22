@@ -14,15 +14,12 @@ namespace Menro.Web.Controllers.Identity
         #region DI
         private readonly IUserService _userService;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IFileUrlService _fileUrlService;
 
         public UserController(IUserService userService,
-            ICurrentUserService currentUserService,
-            IFileUrlService fileUrlService)
+            ICurrentUserService currentUserService)
         {
             _userService = userService;
             _currentUserService = currentUserService;
-            _fileUrlService = fileUrlService;
         }
         #endregion
 
@@ -32,15 +29,6 @@ namespace Menro.Web.Controllers.Identity
         {
             var userId = _currentUserService.GetUserId()!;
             var profile = await _userService.GetProfileAsync(userId);
-            // NOTE: GetProfileAsync must populate profile.HasPassword (see
-            // UserProfileDto) — e.g. via UserManager<User>.HasPasswordAsync,
-            // so the client can tell "change password" apart from
-            // "set password for the first time".
-
-            // mount profile image
-            if (!string.IsNullOrEmpty(profile.ProfileImageUrl))
-                profile.ProfileImageUrl = _fileUrlService.BuildProfileImageUrl(profile.ProfileImageUrl);
-
             return Ok(profile);
         }
 
