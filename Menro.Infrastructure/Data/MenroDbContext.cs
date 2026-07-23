@@ -26,6 +26,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<FoodVariant> FoodVariants { get; set; }
         public DbSet<FoodAddon> FoodAddons { get; set; }
         public DbSet<FavoriteFood> FavoriteFoods { get; set; }
+        public DbSet<FoodCombo> FoodCombos { get; set; }
 
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<RestaurantCategory> RestaurantCategories { get; set; }
@@ -107,6 +108,8 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<GlobalFoodCategory>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<FoodVariant>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<FoodAddon>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<FoodCombo>()
+                .HasQueryFilter(x => !x.Food.IsDeleted && !x.ComboFood.IsDeleted);
             modelBuilder.Entity<Comment>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<CommentLike>()
                 .HasQueryFilter(x => !x.Comment.IsDeleted);
@@ -156,6 +159,18 @@ namespace Menro.Infrastructure.Data
                 .HasMany(f => f.Ratings)
                 .WithOne(r => r.Food)
                 .HasForeignKey(r => r.FoodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FoodCombo>()
+                .HasOne(fc => fc.Food)
+                .WithMany()
+                .HasForeignKey(fc => fc.FoodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FoodCombo>()
+                .HasOne(fc => fc.ComboFood)
+                .WithMany()
+                .HasForeignKey(fc => fc.ComboFoodId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<FavoriteFood>()
@@ -260,6 +275,10 @@ namespace Menro.Infrastructure.Data
 
             modelBuilder.Entity<CustomFoodCategory>()
                 .HasIndex(x => new { x.RestaurantId, x.Name })
+                .IsUnique();
+
+            modelBuilder.Entity<FoodCombo>()
+                .HasIndex(x => new { x.FoodId, x.ComboFoodId })
                 .IsUnique();
 
             modelBuilder.Entity<FavoriteFood>()
