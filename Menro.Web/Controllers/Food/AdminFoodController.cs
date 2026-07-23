@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Common.SD;
 using Menro.Application.Features.FoodCategories.Services.Interfaces;
 using Menro.Application.Features.Foods.DTOs;
@@ -17,19 +18,14 @@ namespace Menro.Web.Controllers.Food
         private readonly IFoodService _foodService;
         private readonly ICustomFoodCategoryService _cCatService;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IFileService _fileService;
-        private readonly IFileUrlService _fileUrlService;
+
         public AdminFoodController(IFoodService foodService,
             ICustomFoodCategoryService cCatService,
-            ICurrentUserService currentUserService,
-            IFileService fileService,
-            IFileUrlService fileUrlService)
+            ICurrentUserService currentUserService)
         {
             _foodService = foodService;
             _cCatService = cCatService;
             _currentUserService = currentUserService;
-            _fileService = fileService;
-            _fileUrlService = fileUrlService;
         }
 
 
@@ -87,7 +83,6 @@ namespace Menro.Web.Controllers.Food
             var food = await _foodService.GetFoodDetailsAsync(foodId, restaurantId.Value);
             if (food == null)
                 return NotFound();
-            if (food.ImageUrl is not null) food.ImageUrl = _fileUrlService.BuildFoodImageUrl(food.ImageUrl);
             return Ok(food);
         }
 
@@ -148,36 +143,18 @@ namespace Menro.Web.Controllers.Food
         public async Task<IActionResult> UploadFoodImage(
             [FromForm] UploadFoodImageDto dto)
         {
-            var file = dto.File;
-
-            if (file == null || file.Length == 0)
-                return BadRequest("هیچ فایلی ارسال نشده است.");
-
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-
-            if (!allowedExtensions.Contains(ext))
-                return BadRequest("فرمت فایل مجاز نیست.");
-
-            if (file.Length > 2 * 1024 * 1024)
-                return BadRequest("حجم فایل نباید بیش از 2 مگابایت باشد.");
-
             try
             {
-                var fileName = await _fileService.UploadFoodImageAsync(file);
-
-                return Ok(new
-                {
-                    fileName
-                });
+                var result = await _foodService.UploadFoodImageAsync(dto.File);
+                return Ok(new { fileName = result });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
-                {
-                    message = "خطا در ذخیره‌سازی فایل",
-                    error = ex.Message
-                });
+                return StatusCode(500, new { message = "خطا در ذخیره‌سازی فایل", error = ex.Message });
             }
         }
     }

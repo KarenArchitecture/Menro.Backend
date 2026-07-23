@@ -17,7 +17,7 @@ namespace Menro.Web.Controllers.Restaurants
     [Route("api/public/restaurant")]
     public class PublicRestaurantController : ControllerBase
     {
-        #region Dependency Injection
+        #region DI
 
         private readonly IRestaurantService _restaurantService;
         private readonly IRandomRestaurantCardService _randomRestaurantCardService;
@@ -27,7 +27,6 @@ namespace Menro.Web.Controllers.Restaurants
         private readonly IUserService _userService;
         private readonly IRestaurantMenuService _menuService;
         private readonly IRestaurantPageFoodCategoryService _restaurantPageFoodCategoryService;
-        private readonly IFileUrlService _fileUrlService;
 
         public PublicRestaurantController(
             IRestaurantService restaurantService,
@@ -36,8 +35,7 @@ namespace Menro.Web.Controllers.Restaurants
             IRestaurantBannerService restaurantBannerService,
             IUserService userService,
             IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService,
-            IRestaurantMenuService menuService,
-            IFileUrlService fileUrlService)
+            IRestaurantMenuService menuService)
         {
             _restaurantService = restaurantService;
             _randomRestaurantCardService = randomRestaurantCardService;
@@ -47,7 +45,6 @@ namespace Menro.Web.Controllers.Restaurants
             _userService = userService;
             _menuService = menuService;
             _restaurantPageFoodCategoryService = restaurantPageFoodCategoryService;
-            _fileUrlService = fileUrlService;
         }
 
         #endregion
@@ -133,12 +130,6 @@ namespace Menro.Web.Controllers.Restaurants
                 return BadRequest("Slug cannot be empty.");
 
             var categories = await _restaurantPageFoodCategoryService.GetRestaurantCategoriesAsync(slug, ct);
-
-            // Build icon url (if you store svg path/key)
-            categories.ForEach(cat =>
-            {
-                cat.SvgIcon = _fileUrlService.BuildIconUrl(cat.SvgIcon);
-            });
 
             if (categories == null || categories.Count == 0)
                 return NotFound("هیچ دسته‌ای برای این رستوران یافت نشد.");

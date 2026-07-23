@@ -12,7 +12,7 @@
 
         public string? CoverUrl { get; set; }
 
-        public string AudioUrl { get; set; }
+        public string? AudioUrl { get; set; }
 
         public TimeSpan Duration { get; set; }
 

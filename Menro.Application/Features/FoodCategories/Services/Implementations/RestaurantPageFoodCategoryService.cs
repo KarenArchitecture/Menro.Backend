@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.FoodCategories.DTOs;
 using Menro.Application.Features.FoodCategories.Services.Interfaces;
 using Menro.Domain.Interfaces;
@@ -12,14 +13,14 @@ namespace Menro.Application.Features.FoodCategories.Services.Implementations
     public class RestaurantPageFoodCategoryService : IRestaurantPageFoodCategoryService
     {
         private readonly ICustomFoodCategoryRepository _customCategoryRepo;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public RestaurantPageFoodCategoryService(
             ICustomFoodCategoryRepository customCategoryRepo,
-            IFileUrlService fileUrlService)
+            IMediaStorageProvider mediaStorage)
         {
             _customCategoryRepo = customCategoryRepo;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         /// <summary>
@@ -35,12 +36,9 @@ namespace Menro.Application.Features.FoodCategories.Services.Implementations
                     c.Icon?.FileName ??
                     c.GlobalCategory?.Icon?.FileName ?? string.Empty;
 
-                //var svgIcon = string.IsNullOrEmpty(iconFileName)
-                //    ? string.Empty
-                //    : _fileUrlService.BuildIconUrl(iconFileName);
                 var svgIcon = string.IsNullOrEmpty(iconFileName)
-                      ? string.Empty
-                      : iconFileName; // RO => AB: building url is Menro.Web layer's concern
+                    ? string.Empty
+                    : _mediaStorage.GetUrl(MediaCategory.FoodCategoryIcon, iconFileName);
 
 
                 return new RestaurantFoodCategoryDto

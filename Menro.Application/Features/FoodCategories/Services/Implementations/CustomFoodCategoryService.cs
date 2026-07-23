@@ -3,6 +3,8 @@ using Menro.Application.Features.FoodCategories.Services.Interfaces;
 using Menro.Domain.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Application.Features.Icons.DTOs;
+using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 
 namespace Menro.Application.Features.FoodCategories.Services.Implementations
 {
@@ -11,13 +13,16 @@ namespace Menro.Application.Features.FoodCategories.Services.Implementations
         #region DI
         private readonly ICustomFoodCategoryRepository _cCatRepository;
         private readonly IGlobalFoodCategoryRepository _gCatRepository;
+        private readonly IMediaStorageProvider _mediaStorage;
+
         public CustomFoodCategoryService(
             ICustomFoodCategoryRepository cCatRepository,
-            IGlobalFoodCategoryRepository gCatRepository
-            )
+            IGlobalFoodCategoryRepository gCatRepository,
+            IMediaStorageProvider mediaStorage)
         {
             _cCatRepository = cCatRepository;
             _gCatRepository = gCatRepository;
+            _mediaStorage = mediaStorage;
         }
         #endregion
         public async Task<bool> AddCategoryAsync (CreateCustomFoodCategoryDto dto, int restaurantId)
@@ -81,7 +86,7 @@ namespace Menro.Application.Features.FoodCategories.Services.Implementations
                     Id = category.Icon.Id,
                     FileName = category.Icon.FileName,
                     Label = category.Icon.Label,
-                    Url = category.Icon.FileName
+                    Url = _mediaStorage.GetUrl(MediaCategory.FoodCategoryIcon, category.Icon.FileName)
                 }
 
             }).ToList();
@@ -109,7 +114,7 @@ namespace Menro.Application.Features.FoodCategories.Services.Implementations
                     Id = category.Icon.Id,
                     FileName = category.Icon.FileName,
                     Label = category.Icon.Label,
-                    Url = category.Icon.FileName
+                    Url = _mediaStorage.GetUrl(MediaCategory.FoodCategoryIcon, category.Icon.FileName)
                 }
             };
             return catDto;

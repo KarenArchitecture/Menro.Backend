@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Restaurants.DTOs;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Domain.Interfaces;
@@ -8,22 +9,23 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
 {
     public class RestaurantBannerService : IRestaurantBannerService
     {
+        #region DI
         private readonly IRestaurantRepository _restaurantRepository;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
         private readonly IMemoryCache _cache;
-
         private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
 
         public RestaurantBannerService(
             IRestaurantRepository restaurantRepository,
-            IFileUrlService fileUrlService,
+            IMediaStorageProvider mediaStorage,
             IMemoryCache cache)
         {
             _restaurantRepository = restaurantRepository;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
             _cache = cache;
         }
 
+        #endregion
         public async Task<RestaurantBannerDto?> GetBannerBySlugAsync(string slug)
         {
             string cacheKey = $"restaurant_banner_{slug}";
@@ -41,7 +43,7 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                 Name = restaurant.Name,
                 BannerImageUrl = string.IsNullOrWhiteSpace(restaurant.ShopBannerImageUrl)
                     ? null
-                    : _fileUrlService.BuildRestaurantShopBannerUrl(restaurant.ShopBannerImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantShopBanner, restaurant.ShopBannerImageUrl),
                 AverageRating = restaurant.Ratings?.Any() == true
                     ? Math.Round(restaurant.Ratings.Average(r => r.Score), 1)
                     : 0.0,

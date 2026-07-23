@@ -1,6 +1,7 @@
 ﻿using Menro.Application.Features.Orders.DTOs;
 using Menro.Domain.Interfaces;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Domain.Enums;
 
@@ -8,14 +9,20 @@ namespace Menro.Application.Features.Orders.Services.Implementations
 {
     public class AdminOrderService : IAdminOrderService
     {
+        #region DI
         private readonly IOrderRepository _orderRepository;
         private readonly IGlobalDateTimeService _dateTimeService;
+        private readonly IMediaStorageProvider _mediaStorage;
+
         public AdminOrderService(IOrderRepository orderRepository,
-            IGlobalDateTimeService dateTimeService)
+            IGlobalDateTimeService dateTimeService,
+            IMediaStorageProvider mediaStorage)
         {
             _orderRepository = orderRepository;
             _dateTimeService = dateTimeService;
+            _mediaStorage = mediaStorage;
         }
+        #endregion
 
         /* dashboard stats */
 
@@ -139,7 +146,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                     Name = oi.TitleSnapshot,
                     Qty = oi.Quantity,
                     Price = oi.UnitPrice,
-                    ImageUrl = oi.Food.ImageUrl,
+                    ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, oi.Food.ImageUrl),
 
                     Addons = oi.Extras.Select(ex => new AdminOrderItemAddonDto
                     {

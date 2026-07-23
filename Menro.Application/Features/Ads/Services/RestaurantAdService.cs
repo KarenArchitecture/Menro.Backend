@@ -2,24 +2,35 @@
 using Menro.Domain.Interfaces;
 using Menro.Application.Features.Ads.DTOs;
 using Menro.Application.Common.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Menro.Domain.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace Menro.Application.Features.Ads.Services
 {
     public class RestaurantAdService : IRestaurantAdService
     {
+        #region DI
         private readonly IRestaurantAdRepository _repository;
         private readonly IGlobalDateTimeService _globalDateTimeService;
         private readonly IRestaurantRepository _restaurantRepository;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public RestaurantAdService(IRestaurantAdRepository repository,
             IGlobalDateTimeService globalDateTimeService,
-            IRestaurantRepository restaurantRepository)
+            IRestaurantRepository restaurantRepository,
+            IMediaStorageProvider mediaStorage)
         {
             _repository = repository;
             _globalDateTimeService = globalDateTimeService;
             _restaurantRepository = restaurantRepository;
+            _mediaStorage = mediaStorage;
+        }
+        #endregion
+
+        public async Task<string> UploadAdImageAsync(IFormFile file, AdPlacementType placementType)
+        {
+            var result = await _mediaStorage.SaveAsync(AdMediaCategoryResolver.Resolve(placementType), file);
+            return result.FileName;
         }
 
         public async Task<bool> CreateAsync(ReserveRestaurantAdDto dto)
@@ -71,7 +82,7 @@ namespace Menro.Application.Features.Ads.Services
                 Id = a.Id,
                 PlacementType = a.PlacementType,
                 BillingType = a.BillingType,
-                ImageUrl = a.ImageFileName,
+                ImageUrl = _mediaStorage.GetUrl(AdMediaCategoryResolver.Resolve(a.PlacementType), a.ImageFileName),
                 PurchasedUnits = a.PurchasedUnits,
                 ConsumedUnits = a.ConsumedUnits,
                 StartDate = a.StartDate,
@@ -95,7 +106,7 @@ namespace Menro.Application.Features.Ads.Services
                 Cost = ad.Cost,
                 PurchasedUnits = ad.PurchasedUnits,
                 TargetUrl = ad.TargetUrl ?? "--no link--",
-                ImageUrl = ad.ImageFileName,
+                ImageUrl = _mediaStorage.GetUrl(AdMediaCategoryResolver.Resolve(ad.PlacementType), ad.ImageFileName),
                 CommercialText = ad.CommercialText ?? "--no commercial text--",
                 CreatedAt = ad.StartDate,
                 CreatedAtShamsi = _globalDateTimeService.ToPersianDateTimeString(ad.CreatedAt)
@@ -138,7 +149,7 @@ namespace Menro.Application.Features.Ads.Services
                 Cost = ad.Cost,
                 PurchasedUnits = ad.PurchasedUnits,
                 TargetUrl = ad.TargetUrl,
-                ImageUrl = ad.ImageFileName,
+                ImageUrl = _mediaStorage.GetUrl(AdMediaCategoryResolver.Resolve(ad.PlacementType), ad.ImageFileName),
                 CommercialText = ad.CommercialText,
                 CreatedAt = ad.CreatedAt,
                 CreatedAtShamsi = _globalDateTimeService.ConvertToPersian(ad.CreatedAt),
@@ -146,7 +157,6 @@ namespace Menro.Application.Features.Ads.Services
                 AdminNotes = ad.AdminNotes ?? ""
             }).ToList();
         }
-
 
 
     }

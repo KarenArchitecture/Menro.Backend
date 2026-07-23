@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Common.Models;
 using Menro.Application.Features.Music.DTOs.Player;
 using Menro.Application.Features.Music.DTOs.Playlist;
@@ -14,12 +15,18 @@ namespace Menro.Application.Features.Music.Services.Implementations
         private readonly IUnitOfWork _uow;
         private readonly IMusicPlayerService _musicPlayerService;
         private readonly IMusicNotificationService _notification;
+        private readonly IMediaStorageProvider _mediaStorage;
 
-        public PlaylistService(IUnitOfWork uow, IMusicPlayerService musicPlayerService, IMusicNotificationService notification)
+        public PlaylistService(
+            IUnitOfWork uow,
+            IMusicPlayerService musicPlayerService,
+            IMusicNotificationService notification,
+            IMediaStorageProvider mediaStorage)
         {
             _uow = uow;
             _musicPlayerService = musicPlayerService;
             _notification = notification;
+            _mediaStorage = mediaStorage;
         }
         #endregion
 
@@ -71,8 +78,8 @@ namespace Menro.Application.Features.Music.Services.Implementations
         {
             var playlist = await _uow.Playlist.GetByIdAsync(playlistId);
 
-        if (playlist == null || playlist.RestaurantId != restaurantId)
-            return null;
+            if (playlist == null || playlist.RestaurantId != restaurantId)
+                return null;
 
             return new PlaylistDto
             {
@@ -85,15 +92,22 @@ namespace Menro.Application.Features.Music.Services.Implementations
                     MusicTrackId = t.MusicTrackId,
                     Title = t.MusicTrack.Title,
                     Artist = t.MusicTrack.Artist,
-                    CoverUrl = t.MusicTrack.CoverFileName,
-                    AudioUrl = t.MusicTrack.AudioFileName,
+
+                    // فایل صوتی public نیست؛ آدرس همون endpoint محافظت‌شده‌ی archive
+                    AudioUrl = string.IsNullOrWhiteSpace(t.MusicTrack.AudioFileName)
+                        ? null
+                        : $"{_mediaStorage.GetBaseUrl()}/api/admin/music/archive/{t.MusicTrackId}/stream",
+
+                    CoverUrl = string.IsNullOrWhiteSpace(t.MusicTrack.CoverFileName)
+                        ? null
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, t.MusicTrack.CoverFileName),
+
                     Duration = t.MusicTrack.Duration,
                     SortOrder = t.SortOrder,
                     IsRequestedTrack = t.IsRequestedTrack
                 }).ToList()
             };
         }
-
         // rename playlist
         public async Task<bool> RenameAsync(Guid playlistId, int restaurantId, RenamePlaylistDto dto)
     {

@@ -19,7 +19,6 @@ using Menro.Infrastructure.Repositories;
 using Menro.Infrastructure.Services;
 using Menro.Web.Middleware;
 using Menro.Web.Services;
-using Menro.Web.Services.Implementations;
 using Menro.Infrastructure.Data.Seed.Core.Seeders;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Menro.Infrastructure.Data.Seed.Demo.Seeders;
@@ -29,6 +28,7 @@ using Menro.Web.Hubs.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Menro.Application.Common.Implementations;
 using Microsoft.AspNetCore.HttpOverrides;
+using Menro.Application.Common.Media;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -167,7 +167,8 @@ builder.Services.AddAuthentication(options =>
                 context.HttpContext.Request.Path;
 
             if (!string.IsNullOrEmpty(accessToken) &&
-                path.StartsWithSegments("/hubs/music"))
+                (path.StartsWithSegments("/hubs/music") ||
+                 path.StartsWithSegments("/api/admin/music/archive")))
             {
                 context.Token = accessToken;
             }
@@ -205,8 +206,12 @@ builder.Services.AddAutoRegisteredRepositories(
 
 // multi-layered services
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddScoped<IFileUrlService, FileUrlService>();
-builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.Configure<MediaStorageOptions>(options =>
+{
+    options.RootPath = builder.Environment.WebRootPath;
+    options.BaseUrl = builder.Configuration["AppSettings:BaseUrl"]?.TrimEnd('/') ?? "";
+});
+builder.Services.AddSingleton<IMediaStorageProvider, LocalDiskMediaStorageProvider>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
 builder.Services.AddScoped<IMusicNotificationService, MusicNotificationService>(); 
 

@@ -9,7 +9,7 @@ namespace Menro.Web.Controllers.Ads
 {
     [ApiController]
     [Authorize(Roles = $"{SD.Role_Admin}")]
-    [Route("api/admin/addSettings")]
+    [Route("api/admin/adSettings")]
 
     public class AdminAdSettingsController : ControllerBase
     {

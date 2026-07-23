@@ -14,16 +14,13 @@ namespace Menro.Web.Controllers.Music.Public
         #region DI
         private readonly IPublicMusicService _publicMusicService;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IFileUrlService _fileUrlService;
 
         public PublicPlaylistController(
             IPublicMusicService publicMusicService,
-            ICurrentUserService currentUserService,
-            IFileUrlService fileUrlService)
+            ICurrentUserService currentUserService)
         {
             _publicMusicService = publicMusicService;
             _currentUserService = currentUserService;
-            _fileUrlService = fileUrlService;
         }
         #endregion
 
@@ -36,15 +33,6 @@ namespace Menro.Web.Controllers.Music.Public
 
             if (result is null)
                 return NotFound();
-
-            result.Tracks = result.Tracks
-                .Select(t =>
-                {
-                    t.ImageUrl = string.IsNullOrWhiteSpace(t.ImageUrl) ? null: _fileUrlService.BuildMusicCoverUrl(t.ImageUrl);
-
-                    return t;
-                })
-                .ToList();
 
             return Ok(result);
         }

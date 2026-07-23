@@ -19,9 +19,5 @@ namespace Menro.Application.Features.Restaurants.DTOs
         public IFormFile? HomeBanner { get; set; }
         public IFormFile? ShopBanner { get; set; }
         public IFormFile? Logo { get; set; }
-
-        public string? HomeBannerFileName { get; set; }
-        public string? ShopBannerFileName { get; set; }
-        public string? LogoFileName { get; set; }
     }
 }

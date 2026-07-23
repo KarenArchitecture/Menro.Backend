@@ -14,23 +14,15 @@ namespace Menro.Web.Controllers.Ads
     public class AdminAdsController : ControllerBase
     {
         #region DI
-
         private readonly IRestaurantAdService _service;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IFileService _fileService;
-        private readonly IFileUrlService _fileUrlService;
 
         public AdminAdsController(IRestaurantAdService service,
-            ICurrentUserService currentUserService,
-            IFileService fileService,
-            IFileUrlService fileUrlService)
+            ICurrentUserService currentUserService)
         {
             _service = service;
             _currentUserService = currentUserService;
-            _fileService = fileService;
-            _fileUrlService = fileUrlService;
         }
-
         #endregion
 
         /* ad reservation by OWNER */
@@ -39,10 +31,10 @@ namespace Menro.Web.Controllers.Ads
         [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> UploadAdImage([FromForm] UploadAdImageDto dto)
         {
-            string fileName = await _fileService.UploadAdImageAsync(dto.File);
-
+            string fileName = await _service.UploadAdImageAsync(dto.File, dto.PlacementType);
             return Ok(fileName);
         }
+
         [HttpPost("addAd")]
         [Authorize(Roles = SD.Role_Owner)]
         public async Task<IActionResult> Create([FromBody] ReserveRestaurantAdDto dto)
@@ -69,11 +61,6 @@ namespace Menro.Web.Controllers.Ads
         public async Task<IActionResult> GetPendingAds()
         {
             var list = await _service.GetPendingAdsAsync();
-            list.ForEach(ad =>
-            {
-                ad.ImageUrl = _fileUrlService.BuildAdImageUrl(ad.ImageUrl);
-            });
-
             return Ok(list);
         }
 
@@ -82,12 +69,6 @@ namespace Menro.Web.Controllers.Ads
         public async Task<IActionResult> GetHistory()
         {
             var list = await _service.GetHistoryAsync();
-
-            list.ForEach(ad =>
-            {
-                ad.ImageUrl = _fileUrlService.BuildAdImageUrl(ad.ImageUrl);
-            });
-
             return Ok(list);
         }
 

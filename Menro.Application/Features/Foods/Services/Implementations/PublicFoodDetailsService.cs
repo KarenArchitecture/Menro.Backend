@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Foods.DTOs;
 using Menro.Application.Foods.Services.Interfaces;
 using Menro.Domain.Interfaces;
@@ -8,14 +9,14 @@ namespace Menro.Application.Foods.Services.Implementations
     public class PublicFoodDetailsService : IPublicFoodDetailsService
     {
         private readonly IFoodRepository _foodRepository;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public PublicFoodDetailsService(
             IFoodRepository foodRepository,
-            IFileUrlService fileUrlService)
+            IMediaStorageProvider mediaStorage)
         {
             _foodRepository = foodRepository;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         public async Task<PublicFoodDetailDto?> GetFoodDetailsAsync(int foodId)
@@ -31,7 +32,7 @@ namespace Menro.Application.Foods.Services.Implementations
                 BasePrice = f.Price,
                 ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
                     ? string.Empty
-                    : _fileUrlService.BuildFoodImageUrl(f.ImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl),
                 AverageRating = f.AverageRating,
                 VotersCount = f.VotersCount
             };

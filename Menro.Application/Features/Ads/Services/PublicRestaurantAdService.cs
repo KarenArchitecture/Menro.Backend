@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Ads.DTOs;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
@@ -8,12 +9,12 @@ namespace Menro.Application.Features.Ads.Services
     public class PublicRestaurantAdService : IPublicRestaurantAdService
     {
         private readonly IRestaurantAdRepository _adsRepository;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
-        public PublicRestaurantAdService(IRestaurantAdRepository adsRepository, IFileUrlService fileUrlService)
+        public PublicRestaurantAdService(IRestaurantAdRepository adsRepository, IMediaStorageProvider mediaStorage)
         {
             _adsRepository = adsRepository;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         // -----------------------------
@@ -41,7 +42,7 @@ namespace Menro.Application.Features.Ads.Services
                     RestaurantId = a.RestaurantId,
                     RestaurantName = a.Restaurant.Name,
                     Slug = a.Restaurant.Slug,
-                    ImageUrl = _fileUrlService.BuildAdImageUrl(a.ImageFileName),
+                    ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantAdCarousel, a.ImageFileName),
                     TargetUrl = NormalizeTargetUrl(a.TargetUrl)
                 });
             }
@@ -71,7 +72,7 @@ namespace Menro.Application.Features.Ads.Services
                 RestaurantId = ad.RestaurantId,
                 RestaurantName = ad.Restaurant.Name,
                 Slug = ad.Restaurant.Slug,
-                ImageUrl = _fileUrlService.BuildAdImageUrl(ad.ImageFileName),
+                ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantAdBanner, ad.ImageFileName),
                 CommercialText = ad.CommercialText,
                 TargetUrl = NormalizeTargetUrl(ad.TargetUrl)
             };

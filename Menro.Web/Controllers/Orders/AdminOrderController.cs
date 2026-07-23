@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Common.SD;
 using Menro.Application.Features.Orders.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -13,15 +14,15 @@ namespace Menro.Web.Controllers.Orders
     {
         private readonly IAdminOrderService _adminOrderService;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public AdminOrderController(IAdminOrderService adminOrderService,
             ICurrentUserService currentUserService,
-            IFileUrlService fileUrlService)
+            IMediaStorageProvider mediaStorage)
         {
             _adminOrderService = adminOrderService;
             _currentUserService = currentUserService;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         // pendings
@@ -52,7 +53,7 @@ namespace Menro.Web.Controllers.Orders
 
             foreach (var item in dto.Items)
                 if (item.ImageUrl is not null)
-                    item.ImageUrl = _fileUrlService.BuildFoodImageUrl(item.ImageUrl);
+                    item.ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, item.ImageUrl);
 
             return Ok(dto);
         }

@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Restaurants.DTOs;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Domain.Interfaces;
@@ -8,14 +9,14 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
     public class RandomRestaurantCardService : IRandomRestaurantCardService
     {
         private readonly IRestaurantRepository _restaurantRepository;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public RandomRestaurantCardService(
             IRestaurantRepository restaurantRepository,
-            IFileUrlService fileUrlService)
+            IMediaStorageProvider mediaStorage)
         {
             _restaurantRepository = restaurantRepository;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         public async Task<List<RestaurantCardDto>> GetRandomRestaurantCardsAsync(int count = 8)
@@ -52,24 +53,18 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                 {
                     Id = r.Id,
                     Name = r.Name,
-
                     Category = r.RestaurantCategory?.Name ?? "بدون دسته‌بندی",
-
                     BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl)
-                        ? _fileUrlService.BuildRestaurantHomeBannerUrl("res-card-1.png")
-                        : _fileUrlService.BuildRestaurantHomeBannerUrl(r.BannerImageUrl),
-
+                        ? _mediaStorage.GetUrl(MediaCategory.RestaurantHomeBanner, "res-card-1.png")
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantHomeBanner, r.BannerImageUrl),
                     LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl)
-                        ? _fileUrlService.BuildRestaurantLogoUrl("logo-green.png")
-                        : _fileUrlService.BuildRestaurantLogoUrl(r.LogoImageUrl),
-
+                        ? _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, "logo-green.png")
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, r.LogoImageUrl),
                     Rating = rating,
                     Voters = voters,
                     Discount = discount,
-
                     OpenTime = r.OpenTime.ToString(@"hh\:mm"),
                     CloseTime = r.CloseTime.ToString(@"hh\:mm"),
-
                     IsOpen = isOpen,
                     Slug = r.Slug
                 };

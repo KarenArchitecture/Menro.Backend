@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Restaurants.DTOs;
 using Menro.Application.Features.ShowAll.DTOs;
 using Menro.Application.Features.ShowAll.Services.Interfaces;
@@ -10,14 +11,14 @@ namespace Menro.Application.Features.ShowAll.Services.Implementations
     public class RestaurantBrowseService : IRestaurantBrowseService
     {
         private readonly IRestaurantRepository _restaurantRepository;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public RestaurantBrowseService(
             IRestaurantRepository restaurantRepository,
-            IFileUrlService fileUrlService)
+            IMediaStorageProvider mediaStorage)
         {
             _restaurantRepository = restaurantRepository;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         public async Task<PagedResultDto<RestaurantCardDto>> GetRestaurantsPageAsync(
@@ -73,12 +74,12 @@ namespace Menro.Application.Features.ShowAll.Services.Implementations
                         ?? "بدون دسته‌بندی",
 
                     BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl)
-                        ? _fileUrlService.BuildImageUrl("res-card-1.png")
-                        : _fileUrlService.BuildImageUrl(r.BannerImageUrl),
+                        ? _mediaStorage.GetUrl(MediaCategory.RestaurantCard, "res-card-1.png")
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantCard, r.BannerImageUrl),
 
                     LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl)
-                        ? _fileUrlService.BuildRestaurantLogoUrl("logo-green.png")
-                        : _fileUrlService.BuildRestaurantLogoUrl(r.LogoImageUrl),
+                        ? _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, "logo-green.png")
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, r.LogoImageUrl),
 
                     Rating = avgRating,
 

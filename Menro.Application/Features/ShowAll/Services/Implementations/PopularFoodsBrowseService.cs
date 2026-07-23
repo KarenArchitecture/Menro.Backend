@@ -3,11 +3,6 @@ using Menro.Application.Features.ShowAll.Services.Interfaces;
 using Menro.Application.Features.Foods.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Menro.Application.Features.ShowAll.Services.Implementations
 {

@@ -3,24 +3,34 @@ using Menro.Domain.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Application.Common.Interfaces;
 using Menro.Application.Features.Foods.Services.Interfaces;
+using Menro.Application.Common.Media;
+using Microsoft.AspNetCore.Http;
 
 namespace Menro.Application.Features.Foods.Services.Implementations
 {
     public class FoodService : IFoodService
     {
+        #region DI
         private readonly IFoodRepository _repository;
         private readonly ICustomFoodCategoryRepository _cCategoryRepository;
-        private readonly IFileService _fileService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
         public FoodService(IFoodRepository repository,
             ICustomFoodCategoryRepository cCategoryRepository,
-            IFileService fileService)
+            IMediaStorageProvider mediaStorage)
         {
             _repository = repository;
             _cCategoryRepository = cCategoryRepository;
-            _fileService = fileService;
+            _mediaStorage = mediaStorage;
         }
 
+        #endregion
+
+        public async Task<string> UploadFoodImageAsync(IFormFile file)
+        {
+            var result = await _mediaStorage.SaveAsync(MediaCategory.RestaurantFoodImage, file);
+            return result.FileName;
+        }
         public async Task<bool> AddFoodAsync(CreateFoodDto dto, int restaurantId)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
@@ -102,7 +112,9 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                 Ingredients = food.Ingredients,
                 Price = food.Price,
                 ImageName = food.ImageUrl,
-                ImageUrl = food.ImageUrl,
+                ImageUrl = food.ImageUrl == null
+                    ? null
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, food.ImageUrl),
                 FoodCategoryId = food.CustomFoodCategoryId!.Value,
                 HasVariants = food.Variants.Any(),
                 Variants = (food.Variants ?? Enumerable.Empty<FoodVariant>())
@@ -147,9 +159,8 @@ namespace Menro.Application.Features.Foods.Services.Implementations
             // new image ?? replace
             if (dto.ImageName != null && food.ImageUrl != dto.ImageName)
             {
-                // if there was already an image in food => delete and replace
                 if (!string.IsNullOrEmpty(food.ImageUrl))
-                    _fileService.DeleteFoodImage(food.ImageUrl);
+                    _mediaStorage.Delete(MediaCategory.RestaurantFoodImage, food.ImageUrl);
                 food.ImageUrl = dto.ImageName;
             }
             food.CustomFoodCategoryId = dto.FoodCategoryId;
