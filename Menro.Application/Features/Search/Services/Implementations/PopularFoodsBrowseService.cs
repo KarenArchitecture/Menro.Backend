@@ -1,10 +1,10 @@
-﻿using Menro.Application.Features.ShowAll.DTOs;
-using Menro.Application.Features.ShowAll.Services.Interfaces;
-using Menro.Application.Features.Foods.DTOs;
+﻿using Menro.Application.Features.Foods.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
+using Menro.Application.Features.Search.Services.Interfaces;
+using Menro.Application.Features.Search.DTOs;
 
-namespace Menro.Application.Features.ShowAll.Services.Implementations
+namespace Menro.Application.Features.Search.Services.Implementations
 {
     public class PopularFoodsBrowseService : IPopularFoodsBrowseService
     {

@@ -1,12 +1,12 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Media;
 using Menro.Application.Features.Restaurants.DTOs;
-using Menro.Application.Features.ShowAll.DTOs;
-using Menro.Application.Features.ShowAll.Services.Interfaces;
+using Menro.Application.Features.Search.DTOs;
+using Menro.Application.Features.Search.Services.Interfaces;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 
-namespace Menro.Application.Features.ShowAll.Services.Implementations
+namespace Menro.Application.Features.Search.Services.Implementations
 {
     public class RestaurantBrowseService : IRestaurantBrowseService
     {

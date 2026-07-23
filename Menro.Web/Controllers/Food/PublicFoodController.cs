@@ -1,8 +1,8 @@
-﻿using Menro.Application.Features.ShowAll.DTOs;
-using Menro.Application.Features.ShowAll.Services.Interfaces;
-using Menro.Application.Features.Foods.DTOs;
+﻿using Menro.Application.Features.Foods.DTOs;
 using Menro.Application.Foods.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Menro.Application.Features.Search.Services.Interfaces;
+using Menro.Application.Features.Search.DTOs;
 
 namespace Menro.Web.Controllers.Food
 {

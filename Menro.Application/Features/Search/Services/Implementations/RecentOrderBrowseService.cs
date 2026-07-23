@@ -1,10 +1,10 @@
 ﻿using Menro.Application.Features.Orders.DTOs;
-using Menro.Application.Features.ShowAll.DTOs;
-using Menro.Application.Features.ShowAll.Services.Interfaces;
+using Menro.Application.Features.Search.DTOs;
+using Menro.Application.Features.Search.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 
-namespace Menro.Application.Features.ShowAll.Services.Implementations
+namespace Menro.Application.Features.Search.Services.Implementations
 {
     public class RecentOrderBrowseService : IRecentOrderBrowseService
     {
