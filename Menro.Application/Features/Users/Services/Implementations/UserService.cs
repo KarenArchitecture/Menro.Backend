@@ -1,7 +1,8 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Models;
 using Menro.Application.Common.Media;
-using Menro.Application.Features.Identity.DTOs;
+using Menro.Application.Features.Users.Services.Interfaces;
+using Menro.Application.Features.Users.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -11,7 +12,7 @@ using static Menro.Application.Common.SD.SD;
 
 
 
-namespace Menro.Application.Features.Identity.Services
+namespace Menro.Application.Features.Users.Services.Implementations
 {
     /*
     * شرح وظایف:

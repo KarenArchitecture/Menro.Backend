@@ -1,4 +1,4 @@
-﻿namespace Menro.Application.Features.Identity.DTOs
+﻿namespace Menro.Application.Features.Users.DTOs
 {
     // UserProfileDto.cs
     public class UserProfileDto

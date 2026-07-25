@@ -1,10 +1,10 @@
 ﻿using Menro.Application.Common.Interfaces;
-using Menro.Application.Features.Identity.DTOs;
-using Menro.Application.Features.Identity.Services;
+using Menro.Application.Features.Users.DTOs;
+using Menro.Application.Features.Users.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Menro.Web.Controllers.Identity
+namespace Menro.Web.Controllers.Users
 {
     [ApiController]
     [Authorize]

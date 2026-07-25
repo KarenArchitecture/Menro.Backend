@@ -9,6 +9,7 @@ using Menro.Domain.Entities;
 using Menro.Application.Common.Models;
 using Menro.Application.Common.Interfaces;
 using Menro.Domain.Entities.Identity;
+using Menro.Application.Features.Users.Services.Interfaces;
 
 
 

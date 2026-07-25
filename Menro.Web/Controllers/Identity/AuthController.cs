@@ -4,6 +4,7 @@ using Menro.Application.Features.Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Users.Services.Interfaces;
 
 namespace Menro.Web.Controllers.Identity
 {

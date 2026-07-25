@@ -3,8 +3,6 @@ using Menro.Application.Features.Icons.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Menro.Application.Common.SD;
-using Menro.Application.Common.Interfaces;
-using Menro.Application.Common.Media;
 
 namespace Menro.Web.Controllers
 {

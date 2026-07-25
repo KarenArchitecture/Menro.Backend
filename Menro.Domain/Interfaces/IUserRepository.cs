@@ -35,5 +35,34 @@ namespace Menro.Domain.Interfaces
         /// Checks whether a user exists with the specified email.
         /// </summary>
         Task<bool> ExistsByEmailAsync(string email);
+
+        /* ============================================================
+           ADMIN's User management
+           Both search methods return raw User entities with Restaurants/
+           Orders/FavoriteFoods eagerly loaded (Include). Counting them,
+           mapping to DTOs, and any other shaping is the service's job.
+        ============================================================ */
+
+        /// <summary>
+        /// Searches users by free-text (FullName/Email/PhoneNumber/UserName, OR),
+        /// optional role name, and optional suspension status, paged.
+        /// </summary>
+        Task<(List<User> Items, int TotalCount)> SearchUsersAsync(
+            string? search, string? role, string? status, int page, int pageSize);
+
+        /// <summary>
+        /// Retrieves a single user with Restaurants/Orders/FavoriteFoods loaded.
+        /// </summary>
+        Task<User?> GetByIdWithDetailsAsync(string id);
+
+        /// <summary>
+        /// Bulk-loads role names for a set of user ids in a single query.
+        /// </summary>
+        Task<Dictionary<string, List<string>>> GetRolesForUserIdsAsync(IEnumerable<string> userIds);
+
+        /// <summary>
+        /// Every role name that exists in the system.
+        /// </summary>
+        Task<List<string>> GetAllRoleNamesAsync();
     }
 }
