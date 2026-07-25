@@ -226,8 +226,7 @@ namespace Menro.Infrastructure.Repositories
             return await _context.Foods
                 .Where(f =>
                     f.RestaurantId == restaurantId &&
-                    !f.IsDeleted &&
-                    f.IsAvailable)
+                    !f.IsDeleted)
                 .Include(f => f.CustomFoodCategory)
                 .Include(f => f.Variants.Where(v => !v.IsDeleted))
                 .OrderByDescending(f => f.CreatedAt)

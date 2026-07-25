@@ -69,13 +69,14 @@ namespace Menro.Infrastructure.Repositories
 
             return category;
         }
-        
+
         /// <summary>
-                 /// Returns a category by its name.
-                 /// </summary>
+        /// Returns a category by its name.
+        /// </summary>
         public async Task<CustomFoodCategory?> GetByNameAsync(int restaurantId, string catName)
         {
             return await _context.CustomFoodCategories
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(c =>
                     c.RestaurantId == restaurantId &&
@@ -135,6 +136,7 @@ namespace Menro.Infrastructure.Repositories
         public async Task<bool> ExistsByNameAsync(int restaurantId, string catName)
         {
             return await _context.CustomFoodCategories
+                .IgnoreQueryFilters()
                 .AnyAsync(c => c.RestaurantId == restaurantId && c.Name == catName);
         }
 
@@ -144,6 +146,7 @@ namespace Menro.Infrastructure.Repositories
         public async Task<bool> IsSoftDeleted(int restaurantId, string catName)
         {
             return await _context.CustomFoodCategories
+                .IgnoreQueryFilters()
                 .AnyAsync(c => c.RestaurantId == restaurantId && c.Name == catName && c.IsDeleted);
         }
 
@@ -157,17 +160,15 @@ namespace Menro.Infrastructure.Repositories
         public async Task<bool> DeleteAsync(int catId)
         {
             var cat = await _context.CustomFoodCategories
+                .IgnoreQueryFilters()
                 .Include(c => c.Foods)
                 .FirstOrDefaultAsync(c => c.Id == catId);
-
             if (cat is null)
                 return false;
-
             if (cat.Foods.Count == 0)
                 _context.CustomFoodCategories.Remove(cat);
             else
                 cat.IsDeleted = true;
-
             await _context.SaveChangesAsync();
             return true;
         }
@@ -178,18 +179,17 @@ namespace Menro.Infrastructure.Repositories
         public async Task<bool> UpdateCategoryAsync(CustomFoodCategory category)
         {
             if (category == null) return false;
-
             var existing = await _context.CustomFoodCategories
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(x => x.Id == category.Id);
-
             if (existing == null)
                 return false;
 
-            // فقط scalar properties
             existing.Name = category.Name;
             existing.IconId = category.IconId;
             existing.GlobalCategoryId = category.GlobalCategoryId;
             existing.IsAvailable = category.IsAvailable;
+            existing.IsDeleted = category.IsDeleted;
 
             return await _context.SaveChangesAsync() > 0;
         }

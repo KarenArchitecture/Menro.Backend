@@ -68,16 +68,15 @@ namespace Menro.Infrastructure.Repositories
         public async Task<bool> DeleteCategoryAsync(int id)
         {
             var cat = await _context.GlobalFoodCategories
+                .IgnoreQueryFilters()
                 .Include(c => c.Foods)
                 .FirstOrDefaultAsync(c => c.Id == id);
             if (cat is null)
                 return false;
-
             if (cat.Foods.Count == 0)
                 _context.GlobalFoodCategories.Remove(cat);
             else
                 cat.IsDeleted = true;
-
             await _context.SaveChangesAsync();
             return true;
         }

@@ -15,12 +15,10 @@ namespace Menro.Web.Controllers
     {
         #region DI
         private readonly IIconService _iconService;
-        private readonly IMediaStorageProvider _mediaStorage;
 
-        public AdminIconController(IIconService iconService, IMediaStorageProvider mediaStorage)
+        public AdminIconController(IIconService iconService)
         {
             _iconService = iconService;
-            _mediaStorage = mediaStorage;
         }
         #endregion
 

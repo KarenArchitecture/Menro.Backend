@@ -94,8 +94,11 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                     Id = f.Id,
                     Name = f.Name,
                     Price = displayPrice,
-                    FoodCategoryName = f.CustomFoodCategory!.Name,
+                    FoodCategoryName = f.CustomFoodCategory?.Name ?? "بدون دسته‌بندی",
                     IsAvailable = f.IsAvailable,
+                    ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
+                    ? null :
+                    _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl),
                 };
 
             }).ToList();
@@ -156,13 +159,22 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                 : dto.Ingredients.Trim();
 
 
-            // new image ?? replace
-            if (dto.ImageName != null && food.ImageUrl != dto.ImageName)
+            // new image / removed / no change
+            if (string.IsNullOrEmpty(dto.ImageName))
+            {
+                if (!string.IsNullOrEmpty(food.ImageUrl))
+                    _mediaStorage.Delete(MediaCategory.RestaurantFoodImage, food.ImageUrl);
+                food.ImageUrl = string.Empty;
+            }
+            else if (food.ImageUrl != dto.ImageName)
             {
                 if (!string.IsNullOrEmpty(food.ImageUrl))
                     _mediaStorage.Delete(MediaCategory.RestaurantFoodImage, food.ImageUrl);
                 food.ImageUrl = dto.ImageName;
             }
+
+            /*--*/
+
             food.CustomFoodCategoryId = dto.FoodCategoryId;
             food.Price = dto.HasVariants ? 0 : dto.Price;
 
@@ -292,6 +304,20 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                     }
                 }
             }
+
+            return await _repository.UpdateFoodAsync(food);
+        }
+
+        public async Task<bool> ToggleFoodStatusAsync(int foodId, int restaurantId)
+        {
+            var food = await _repository.GetFoodAsync(foodId);
+
+            if (food == null)
+                return false;
+
+            if (food.RestaurantId != restaurantId)
+                return false;
+            food.IsAvailable = !food.IsAvailable;
 
             return await _repository.UpdateFoodAsync(food);
         }

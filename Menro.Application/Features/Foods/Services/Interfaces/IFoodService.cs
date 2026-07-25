@@ -10,6 +10,7 @@ namespace Menro.Application.Features.Foods.Services.Interfaces
         Task<FoodDetailsDto?> GetFoodDetailsAsync(int foodId, int restaurantId);
         Task<bool> AddFoodAsync(CreateFoodDto dto, int restaurantId);
         Task<bool> UpdateFoodAsync(UpdateFoodDto dto);
+        Task<bool> ToggleFoodStatusAsync(int foodId, int restaurantId);
         Task<bool> DeleteFoodAsync(int foodId);
 
     }

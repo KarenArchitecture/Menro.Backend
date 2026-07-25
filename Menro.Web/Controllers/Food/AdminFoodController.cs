@@ -114,6 +114,18 @@ namespace Menro.Web.Controllers.Food
             return Ok(new { success = true });
         }
 
+        [HttpPatch("toggle-status/{foodId:int}")]
+        public async Task<IActionResult> ToggleStatus(int foodId)
+        {
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var result = await _foodService.ToggleFoodStatusAsync(foodId, restaurantId);
+
+            if (!result)
+                return NotFound();
+
+            return Ok();
+        }
+
         // ✅
         [HttpDelete("{foodId:int}")]
         public async Task<IActionResult> DeleteAsync(int foodId)
