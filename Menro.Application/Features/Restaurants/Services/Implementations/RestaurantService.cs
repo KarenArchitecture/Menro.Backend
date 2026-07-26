@@ -325,17 +325,22 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
             restaurant.CloseTime = TimeSpan.Parse(dto.CloseTime);
 
             /*----------------------------------------------
-             *      Upload new images (only if provided)
+             *      Update / remove images
              *----------------------------------------------*/
             if (dto.HomeBanner != null)
-                restaurant.BannerImageUrl = await UploadHomeBannerAsync(restaurant.BannerImageUrl, dto.HomeBanner);
+                restaurant.BannerImageUrl = await UploadImageAsync(MediaCategory.RestaurantHomeBanner, restaurant.BannerImageUrl, dto.HomeBanner);
+            else if (dto.RemoveHomeBanner)
+                restaurant.BannerImageUrl = RemoveImage(MediaCategory.RestaurantHomeBanner, restaurant.BannerImageUrl);
 
             if (dto.ShopBanner != null)
-                restaurant.ShopBannerImageUrl = await UploadShopBannerAsync(restaurant.ShopBannerImageUrl, dto.ShopBanner);
+                restaurant.ShopBannerImageUrl = await UploadImageAsync(MediaCategory.RestaurantShopBanner, restaurant.ShopBannerImageUrl, dto.ShopBanner);
+            else if (dto.RemoveShopBanner)
+                restaurant.ShopBannerImageUrl = RemoveImage(MediaCategory.RestaurantShopBanner, restaurant.ShopBannerImageUrl);
 
             if (dto.Logo != null)
-                restaurant.LogoImageUrl = await UploadLogoAsync(restaurant.LogoImageUrl, dto.Logo);
-
+                restaurant.LogoImageUrl = await UploadImageAsync(MediaCategory.RestaurantLogo, restaurant.LogoImageUrl, dto.Logo);
+            else if (dto.RemoveLogo)
+                restaurant.LogoImageUrl = RemoveImage(MediaCategory.RestaurantLogo, restaurant.LogoImageUrl);
             /*----------------------------------------------
              *      Save changes
              *----------------------------------------------*/
@@ -347,25 +352,17 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
          *      هرکدوم صرفاً مسئول ذخیره‌ی یک نوع عکسه
          *      (حذف فایل قدیم به‌صورت خودکار توسط provider انجام میشه)
          *----------------------------------------------*/
-        private async Task<string> UploadHomeBannerAsync(string? oldFileName, IFormFile file)
+        private async Task<string> UploadImageAsync(MediaCategory category, string? oldFileName, IFormFile file)
         {
-            var result = await _mediaStorage.SaveAsync(
-                MediaCategory.RestaurantHomeBanner, file, oldFileName: oldFileName);
+            var result = await _mediaStorage.SaveAsync(category, file, oldFileName: oldFileName);
             return result.FileName;
         }
 
-        private async Task<string> UploadShopBannerAsync(string? oldFileName, IFormFile file)
+        private string? RemoveImage(MediaCategory category, string? oldFileName)
         {
-            var result = await _mediaStorage.SaveAsync(
-                MediaCategory.RestaurantShopBanner, file, oldFileName: oldFileName);
-            return result.FileName;
-        }
-
-        private async Task<string> UploadLogoAsync(string? oldFileName, IFormFile file)
-        {
-            var result = await _mediaStorage.SaveAsync(
-                MediaCategory.RestaurantLogo, file, oldFileName: oldFileName);
-            return result.FileName;
+            if (!string.IsNullOrEmpty(oldFileName))
+                _mediaStorage.Delete(category, oldFileName);
+            return null;
         }
 
 

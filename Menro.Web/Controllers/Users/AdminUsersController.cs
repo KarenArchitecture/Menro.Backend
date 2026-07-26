@@ -6,13 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Users
 {
-    /// <summary>
-    /// Endpoints consumed by adminUsersAxios (baseURL: /admin/users) and
-    /// UserManagementSection.jsx.
-    /// </summary>
     [ApiController]
     [Route("api/admin/users")]
-    [Authorize(Roles = SD.Role_Admin)] // adjust to match the actual admin role name in the system
+    [Authorize(Roles = SD.Role_Admin)]
     public class AdminUsersController : ControllerBase
     {
         private readonly IUserManagementService _userManagementService;
@@ -57,14 +53,14 @@ namespace Menro.Web.Controllers.Users
         }
 
         [HttpPut("{id}/roles")]
-        public async Task<ActionResult<UserDetailDto>> UpdateRoles(
+        public async Task<ActionResult<List<string>>> UpdateRoles(
             string id, [FromBody] UpdateUserRolesDto dto)
         {
             try
             {
-                var updated = await _userManagementService.UpdateUserRolesAsync(
+                var updatedRoles = await _userManagementService.UpdateUserRolesAsync(
                     id, dto.Roles ?? new List<string>());
-                return Ok(updated);
+                return Ok(updatedRoles);
             }
             catch (InvalidOperationException ex)
             {

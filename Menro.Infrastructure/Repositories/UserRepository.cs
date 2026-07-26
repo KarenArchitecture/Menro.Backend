@@ -70,7 +70,7 @@ namespace Menro.Infrastructure.Repositories
         /// can count them without an extra roundtrip per user.
         /// </summary>
         public async Task<(List<User> Items, int TotalCount)> SearchUsersAsync(
-            string? search, string? role, string? status, int page, int pageSize)
+            string? search, string? role, int page, int pageSize)
         {
             var query = _context.Users.AsQueryable();
 
@@ -93,32 +93,19 @@ namespace Menro.Infrastructure.Repositories
                 query = query.Where(u => userIdsInRole.Contains(u.Id));
             }
 
-            var now = DateTimeOffset.UtcNow;
-            query = status switch
-            {
-                "active" => query.Where(u => u.LockoutEnd == null || u.LockoutEnd <= now),
-                "suspended" => query.Where(u => u.LockoutEnd != null && u.LockoutEnd > now),
-                _ => query
-            };
-
             var totalCount = await query.CountAsync();
 
             var items = await query
                 .OrderBy(u => u.FullName)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Include(u => u.Restaurants)
-                .Include(u => u.Orders)
-                .Include(u => u.FavoriteFoods)
                 .ToListAsync();
 
             return (items, totalCount);
-        }
-
-        /// <summary>
-        /// Retrieves a single user with Restaurants/Orders/FavoriteFoods loaded,
-        /// for refreshing the "مشاهده اطلاعات کاربر" modal.
-        /// </summary>
+        }        /// <summary>
+                 /// Retrieves a single user with Restaurants/Orders/FavoriteFoods loaded,
+                 /// for refreshing the "مشاهده اطلاعات کاربر" modal.
+                 /// </summary>
         public async Task<User?> GetByIdWithDetailsAsync(string id)
         {
             return await _context.Users

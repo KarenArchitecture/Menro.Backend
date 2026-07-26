@@ -33,7 +33,7 @@ namespace Menro.Application.Features.Users.Services.Implementations
             var pageSize = query.PageSize < 1 ? 20 : query.PageSize;
 
             var (items, totalCount) = await _userRepository.SearchUsersAsync(
-                query.Search, query.Role, status: null, page, pageSize);
+                query.Search, query.Role, page, pageSize);
 
             var rolesByUserId = await _userRepository.GetRolesForUserIdsAsync(
                 items.Select(u => u.Id));
@@ -68,7 +68,7 @@ namespace Menro.Application.Features.Users.Services.Implementations
             return MapToDetail(user, roles);
         }
 
-        public async Task<UserDetailDto> UpdateUserRolesAsync(string id, List<string> roles)
+        public async Task<List<string>> UpdateUserRolesAsync(string id, List<string> roles)
         {
             var user = await _userRepository.GetByIdWithDetailsAsync(id);
             if (user is null)
@@ -82,7 +82,7 @@ namespace Menro.Application.Features.Users.Services.Implementations
             if (rolesToRemove.Count > 0)
             {
                 var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
-                if (!removeResult.Succeeded)
+                //if (!removeResult.Succeeded)
                     throw new InvalidOperationException(
                         string.Join(" ", removeResult.Errors.Select(e => e.Description)));
             }
@@ -93,27 +93,20 @@ namespace Menro.Application.Features.Users.Services.Implementations
                 if (!addResult.Succeeded)
                     throw new InvalidOperationException(
                         string.Join(" ", addResult.Errors.Select(e => e.Description)));
-                _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage);
             }
 
-            var updatedRoles = await _userManager.GetRolesAsync(user);
-            return MapToDetail(user, updatedRoles);
+            return (await _userManager.GetRolesAsync(user)).ToList();
         }
 
         private UserListItemDto MapToListItem(User user, IList<string> roles) => new()
         {
             Id = user.Id,
             FullName = user.FullName,
-            UserName = user.UserName,
-            ProfileImageUrl = _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage),
-            Email = user.Email,
-            PhoneNumber = user.PhoneNumber,
-            EmailConfirmed = user.EmailConfirmed,
-            PhoneNumberConfirmed = user.PhoneNumberConfirmed,
+            ProfileImageUrl = string.IsNullOrWhiteSpace(user.ProfileImage)
+                ? null
+                : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage),
+            PhoneNumber = NormalizePhoneNumber(user.PhoneNumber),
             Roles = roles.ToList(),
-            RestaurantsCount = user.Restaurants?.Count ?? 0,
-            OrdersCount = user.Orders?.Count ?? 0,
-            FavoriteFoodsCount = user.FavoriteFoods?.Count ?? 0,
         };
 
         private UserDetailDto MapToDetail(User user, IList<string> roles) => new()
@@ -121,9 +114,11 @@ namespace Menro.Application.Features.Users.Services.Implementations
             Id = user.Id,
             FullName = user.FullName,
             UserName = user.UserName,
-            ProfileImageUrl = _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage),
+            ProfileImageUrl = string.IsNullOrWhiteSpace(user.ProfileImage)
+                ? null
+                : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage),
             Email = user.Email,
-            PhoneNumber = user.PhoneNumber,
+            PhoneNumber = NormalizePhoneNumber(user.PhoneNumber),
             EmailConfirmed = user.EmailConfirmed,
             PhoneNumberConfirmed = user.PhoneNumberConfirmed,
             Roles = roles.ToList(),
@@ -131,5 +126,21 @@ namespace Menro.Application.Features.Users.Services.Implementations
             OrdersCount = user.Orders?.Count ?? 0,
             FavoriteFoodsCount = user.FavoriteFoods?.Count ?? 0,
         };
+
+        private static string? NormalizePhoneNumber(string? phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+                return phoneNumber;
+
+            var p = phoneNumber.Trim().Replace(" ", "").Replace("-", "");
+
+            if (p.StartsWith("+98")) return "0" + p[3..];
+            if (p.StartsWith("0098")) return "0" + p[4..];
+            if (p.StartsWith("98")) return "0" + p[2..];
+            if (p.StartsWith("0")) return p;
+            if (p.StartsWith("9")) return "0" + p;
+
+            return phoneNumber;
+        }
     }
 }

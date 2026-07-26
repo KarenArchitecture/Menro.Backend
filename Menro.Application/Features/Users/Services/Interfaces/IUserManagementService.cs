@@ -10,6 +10,6 @@ namespace Menro.Application.Features.Users.Services.Interfaces
 
         Task<UserDetailDto?> GetUserByIdAsync(string id);
 
-        Task<UserDetailDto> UpdateUserRolesAsync(string id, List<string> roles);
+        Task<List<string>> UpdateUserRolesAsync(string id, List<string> roles);
     }
 }

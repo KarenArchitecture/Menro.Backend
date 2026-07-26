@@ -48,7 +48,7 @@ namespace Menro.Domain.Interfaces
         /// optional role name, and optional suspension status, paged.
         /// </summary>
         Task<(List<User> Items, int TotalCount)> SearchUsersAsync(
-            string? search, string? role, string? status, int page, int pageSize);
+            string? search, string? role, int page, int pageSize);
 
         /// <summary>
         /// Retrieves a single user with Restaurants/Orders/FavoriteFoods loaded.

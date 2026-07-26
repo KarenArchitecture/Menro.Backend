@@ -4,6 +4,15 @@
     {
         public string Id { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
+        public string? ProfileImageUrl { get; set; }
+        public string? PhoneNumber { get; set; }
+        public List<string> Roles { get; set; } = new();
+    }
+
+    public class UserDetailDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
         public string? UserName { get; set; }
         public string? ProfileImageUrl { get; set; }
         public string? Email { get; set; }
@@ -14,11 +23,6 @@
         public int RestaurantsCount { get; set; }
         public int OrdersCount { get; set; }
         public int FavoriteFoodsCount { get; set; }
-    }
-
-    // چیزی بیشتر از لیست نداره؛ فقط برای دقت معنایی مودال "مشاهده اطلاعات کاربر" جداست.
-    public class UserDetailDto : UserListItemDto
-    {
     }
 
     public class UserQueryParameters

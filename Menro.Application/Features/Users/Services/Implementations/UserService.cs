@@ -92,7 +92,8 @@ namespace Menro.Application.Features.Users.Services.Implementations
                 FullName = fullName,
                 Email = safeEmail,
                 PhoneNumber = phoneNumber,
-                UserName = safeEmail
+                UserName = safeEmail,
+                
             };
 
             IdentityResult result;
@@ -236,6 +237,11 @@ namespace Menro.Application.Features.Users.Services.Implementations
                         oldFileName: user.ProfileImage);
 
                     user.ProfileImage = result.FileName;
+                }
+                else if (dto.RemoveProfileImage && !string.IsNullOrEmpty(user.ProfileImage))
+                {
+                    _mediaStorage.Delete(MediaCategory.UserProfileImage, user.ProfileImage);
+                    user.ProfileImage = null;
                 }
 
                 await _userManager.UpdateAsync(user);
