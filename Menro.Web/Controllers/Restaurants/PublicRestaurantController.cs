@@ -1,15 +1,14 @@
 ﻿using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Application.Features.Restaurants.DTOs;
-using Menro.Application.Features.Identity.Services;
 using Menro.Application.Features.FoodCategories.Services.Interfaces;
 using Menro.Application.Features.FoodCategories.DTOs;
-using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.SD;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Menro.Application.Features.Search.Services.Interfaces;
 using Menro.Application.Features.Search.DTOs;
+using Menro.Application.Features.Users.Services.Interfaces;
 
 namespace Menro.Web.Controllers.Restaurants
 {

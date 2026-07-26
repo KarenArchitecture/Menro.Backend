@@ -1,9 +1,9 @@
 ﻿using Menro.Application.Common.Models;
-using Menro.Application.Features.Identity.DTOs;
 using Menro.Domain.Entities;
+using Menro.Application.Features.Users.DTOs;
 using Microsoft.AspNetCore.Identity;
 
-namespace Menro.Application.Features.Identity.Services
+namespace Menro.Application.Features.Users.Services.Interfaces
 {
     public interface IUserService
     {

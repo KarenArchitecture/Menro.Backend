@@ -1,4 +1,4 @@
-namespace Menro.Application.Features.Identity.DTOs
+namespace Menro.Application.Features.Users.DTOs
 {
     // Used only for accounts that don't have a password yet (e.g. OTP-only
     // accounts). Deliberately has no CurrentPassword field — unlike

@@ -1,7 +1,8 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Models;
 using Menro.Application.Common.Media;
-using Menro.Application.Features.Identity.DTOs;
+using Menro.Application.Features.Users.Services.Interfaces;
+using Menro.Application.Features.Users.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -11,7 +12,7 @@ using static Menro.Application.Common.SD.SD;
 
 
 
-namespace Menro.Application.Features.Identity.Services
+namespace Menro.Application.Features.Users.Services.Implementations
 {
     /*
     * شرح وظایف:
@@ -91,7 +92,8 @@ namespace Menro.Application.Features.Identity.Services
                 FullName = fullName,
                 Email = safeEmail,
                 PhoneNumber = phoneNumber,
-                UserName = safeEmail
+                UserName = safeEmail,
+                
             };
 
             IdentityResult result;
@@ -235,6 +237,11 @@ namespace Menro.Application.Features.Identity.Services
                         oldFileName: user.ProfileImage);
 
                     user.ProfileImage = result.FileName;
+                }
+                else if (dto.RemoveProfileImage && !string.IsNullOrEmpty(user.ProfileImage))
+                {
+                    _mediaStorage.Delete(MediaCategory.UserProfileImage, user.ProfileImage);
+                    user.ProfileImage = null;
                 }
 
                 await _userManager.UpdateAsync(user);
