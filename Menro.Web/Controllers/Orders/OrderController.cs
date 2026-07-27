@@ -8,7 +8,7 @@ namespace Menro.Web.Controllers.Orders
 {
     [ApiController]
     [Route("api/public/orders")]
-    public class OrdersController : ControllerBase
+    public class OrdersController : ApiControllerBase
     {
         #region DI
         private readonly IOrderCreationService _orderCreationService;

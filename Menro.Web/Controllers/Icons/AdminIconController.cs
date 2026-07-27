@@ -9,7 +9,7 @@ namespace Menro.Web.Controllers
     [ApiController]
     [Route("api/Icon")]
     [Authorize(Roles = $"{SD.Role_Owner},{SD.Role_Admin}")]
-    public class AdminIconController : ControllerBase
+    public class AdminIconController : ApiControllerBase
     {
         #region DI
         private readonly IIconService _iconService;

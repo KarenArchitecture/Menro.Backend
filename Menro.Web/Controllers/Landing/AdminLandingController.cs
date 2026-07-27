@@ -21,7 +21,7 @@ namespace Menro.Web.Controllers.Landing
     [ApiController]
     [Authorize(Roles = SD.Role_Admin)]
     [Route("api/admin/landing")]
-    public class AdminLandingController : ControllerBase
+    public class AdminLandingController : ApiControllerBase
     {
         private readonly ILandingGeneralService _generalService;
         private readonly ILandingReasonService _reasonService;

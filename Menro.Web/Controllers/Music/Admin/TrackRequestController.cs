@@ -9,7 +9,7 @@ namespace Menro.Web.Controllers.Music.Admin
     [ApiController]
     [Authorize(Roles = SD.Role_Owner)]
     [Route("api/admin/music/requests")]
-    public class TrackRequestController : ControllerBase
+    public class TrackRequestController : ApiControllerBase
     {
         #region DI
         private readonly ITrackRequestService _trackRequestService;

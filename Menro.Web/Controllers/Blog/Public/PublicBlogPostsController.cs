@@ -16,7 +16,7 @@ namespace Menro.Web.Controllers.Blog.Public
     // for now.
     [ApiController]
     [Route("api/blog/posts")]
-    public class PublicBlogPostsController : ControllerBase
+    public class PublicBlogPostsController : ApiControllerBase
     {
         #region DI
         private readonly IBlogPostService _postService;

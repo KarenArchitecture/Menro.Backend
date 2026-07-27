@@ -12,7 +12,7 @@ namespace Menro.Web.Controllers.Food
     [ApiController]
     [Route("api/admin/food")]
     [Authorize(Roles = SD.Role_Owner)]
-    public class AdminFoodController : ControllerBase
+    public class AdminFoodController : ApiControllerBase
     {
         #region DI
         private readonly IFoodService _foodService;

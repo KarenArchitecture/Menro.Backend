@@ -11,7 +11,7 @@ namespace Menro.Web.Controllers.Ads
     [Authorize(Roles = $"{SD.Role_Admin}")]
     [Route("api/admin/adSettings")]
 
-    public class AdminAdSettingsController : ControllerBase
+    public class AdminAdSettingsController : ApiControllerBase
     {
         private readonly IAdSettingsService _service;
         public AdminAdSettingsController(IAdSettingsService service)

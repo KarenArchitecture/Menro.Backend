@@ -10,7 +10,7 @@ namespace Menro.Web.Controllers.Restaurants
     [ApiController]
     [Authorize(Roles = SD.Role_Owner)]
     [Route("api/owner/restaurant")]
-    public class OwnerRestaurantController : ControllerBase
+    public class OwnerRestaurantController : ApiControllerBase
     {
         #region DI
         private readonly IRestaurantService _service;

@@ -14,7 +14,7 @@ namespace Menro.Web.Controllers.Restaurants
 {
     [ApiController]
     [Route("api/public/restaurant")]
-    public class PublicRestaurantController : ControllerBase
+    public class PublicRestaurantController : ApiControllerBase
     {
         #region DI
 

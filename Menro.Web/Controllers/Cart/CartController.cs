@@ -7,7 +7,7 @@ namespace Menro.Web.Controllers.Cart
 {
     [ApiController]
     [Route("api/public/cart")]
-    public class CartController : ControllerBase
+    public class CartController : ApiControllerBase
     {
         #region DI
         private readonly ICartService _cartService;

@@ -8,7 +8,7 @@ namespace Menro.Web.Controllers.AdminPanel
     [ApiController]
     [Route("api/admin/dashboard")]
     [Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Owner}")]
-    public class DashboardController : ControllerBase
+    public class DashboardController : ApiControllerBase
     {
         private readonly IDashboardService _dashboardService;
 

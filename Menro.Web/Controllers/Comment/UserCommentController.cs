@@ -8,7 +8,7 @@ namespace Menro.Web.Controllers.Comment
 {
     [ApiController]
     [Route("api/user/comment")]
-    public class UserCommentController : ControllerBase
+    public class UserCommentController : ApiControllerBase
     {
         private readonly IGetFoodCommentsService _getFoodCommentsService;
         private readonly ICreateCommentService _createCommentService;

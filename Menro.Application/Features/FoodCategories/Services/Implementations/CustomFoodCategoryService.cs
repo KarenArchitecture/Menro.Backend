@@ -5,6 +5,7 @@ using Menro.Domain.Entities;
 using Menro.Application.Features.Icons.DTOs;
 using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Media;
+using Menro.Application.Common.Models;
 
 namespace Menro.Application.Features.FoodCategories.Services.Implementations
 {
@@ -25,13 +26,12 @@ namespace Menro.Application.Features.FoodCategories.Services.Implementations
             _mediaStorage = mediaStorage;
         }
         #endregion
-        public async Task<bool> AddCategoryAsync (CreateCustomFoodCategoryDto dto, int restaurantId)
+        public async Task<Result> AddCategoryAsync(CreateCustomFoodCategoryDto dto, int restaurantId)
         {
-            if (dto is null) return false; // invalid model
+            if (dto is null || restaurantId == 0)
+                return Result.Failure("اطلاعات ارسالی نامعتبر است.", ErrorCode.Invalid);
 
             var name = (dto.Name ?? string.Empty).Trim();
-
-            if (restaurantId == null || restaurantId == 0) return false; // invalid restaurantId
 
             if (await _cCatRepository.ExistsByNameAsync(restaurantId, name))
             {
@@ -41,12 +41,12 @@ namespace Menro.Application.Features.FoodCategories.Services.Implementations
                     sDeletedCat.IsDeleted = false;
                     sDeletedCat.IsAvailable = true;
                     sDeletedCat.IconId = dto.IconId ?? sDeletedCat.IconId;
-                    await _cCatRepository.UpdateCategoryAsync(sDeletedCat); // return this
-                    return true;
+                    await _cCatRepository.UpdateCategoryAsync(sDeletedCat);
+                    return Result.Success();
                 }
-                return false; // duplicate
+                return Result.Failure("این دسته‌بندی از قبل وجود دارد.", ErrorCode.Duplicate);
             }
-            
+
             var customCategory = new CustomFoodCategory
             {
                 Name = name,
@@ -56,14 +56,18 @@ namespace Menro.Application.Features.FoodCategories.Services.Implementations
                 IsDeleted = false,
                 GlobalCategoryId = dto.GlobalCategoryId ?? null
             };
-            return await _cCatRepository.CreateAsync(customCategory);
+
+            var created = await _cCatRepository.CreateAsync(customCategory);
+            return created
+                ? Result.Success()
+                : Result.Failure("افزودن دسته‌بندی موفق نبود.", ErrorCode.Failure);
         }
-        public async Task<bool> AddFromGlobalAsync(int globalCategoryId, int restaurantId)
+
+        public async Task<Result> AddFromGlobalAsync(int globalCategoryId, int restaurantId)
         {
             var globalCat = await _gCatRepository.GetByIdAsync(globalCategoryId);
-
             if (globalCat == null)
-                throw new Exception("Global category not found");
+                return Result.Failure("دسته‌بندی عمومی موردنظر یافت نشد.", ErrorCode.NotFound);
 
             var customCat = new CreateCustomFoodCategoryDto
             {
@@ -71,6 +75,7 @@ namespace Menro.Application.Features.FoodCategories.Services.Implementations
                 IconId = globalCat.IconId ?? null,
                 GlobalCategoryId = globalCat.Id
             };
+
             return await AddCategoryAsync(customCat, restaurantId);
         }
         public async Task<List<GetCustomCategoryDto>> GetAllCustomFoodCategoriesAsync(int restaurantId)
@@ -119,17 +124,31 @@ namespace Menro.Application.Features.FoodCategories.Services.Implementations
             };
             return catDto;
         }
-        public async Task<bool> UpdateCategoryAsync(UpdateCustomFoodCategoryDto dto)
+        public async Task<Result> UpdateCategoryAsync(UpdateCustomFoodCategoryDto dto)
         {
             var category = await _cCatRepository.GetByIdAsync(dto.Id);
-
             if (category == null)
-                return false;
+                return Result.Failure("دسته‌بندی موردنظر یافت نشد.", ErrorCode.NotFound);
 
-            category.Name = dto.Name;
+            var newName = (dto.Name ?? string.Empty).Trim();
+
+            // فقط وقتی اسم واقعاً عوض شده چک تکراری بودن رو انجام بده
+            // (وگرنه ذخیره‌ی بدون تغییر اسم هم duplicate حساب می‌شه)
+            if (!string.Equals(category.Name, newName, StringComparison.Ordinal))
+            {
+                if (await _cCatRepository.ExistsByNameAsync(category.RestaurantId, newName))
+                    return Result.Failure(
+                        "این نام قبلاً برای دسته‌بندی دیگری استفاده شده است.",
+                        ErrorCode.Duplicate);
+            }
+
+            category.Name = newName;
             category.IconId = dto.IconId;
 
-            return await _cCatRepository.UpdateCategoryAsync(category);
+            var updated = await _cCatRepository.UpdateCategoryAsync(category);
+            return updated
+                ? Result.Success()
+                : Result.Failure("ذخیره تغییرات موفق نبود.", ErrorCode.Failure);
         }
         public async Task<bool> DeleteCustomCategoryAsync(int catId)
         {

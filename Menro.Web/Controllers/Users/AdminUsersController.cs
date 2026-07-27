@@ -9,7 +9,7 @@ namespace Menro.Web.Controllers.Users
     [ApiController]
     [Route("api/admin/users")]
     [Authorize(Roles = SD.Role_Admin)]
-    public class AdminUsersController : ControllerBase
+    public class AdminUsersController : ApiControllerBase
     {
         private readonly IUserManagementService _userManagementService;
         public AdminUsersController(IUserManagementService userManagementService)

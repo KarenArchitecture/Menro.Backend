@@ -13,7 +13,7 @@ namespace Menro.Web.Controllers.Restaurants
     [ApiController]
     [Authorize(Roles = SD.Role_Admin)]
     [Route("api/admin/restaurant-categories")]
-    public class AdminRestaurantCategoryController : ControllerBase
+    public class AdminRestaurantCategoryController : ApiControllerBase
     {
         private readonly IRestaurantService _service;
 

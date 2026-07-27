@@ -10,7 +10,7 @@ namespace Menro.Web.Controllers.Blog.Admin
     [ApiController]
     [Authorize(Roles = SD.Role_Admin)] // add author role for later on
     [Route("api/admin/blog/posts")]
-    public class BlogPostsController : ControllerBase
+    public class BlogPostsController : ApiControllerBase
     {
         #region DI
         private readonly IBlogPostService _service;

@@ -9,7 +9,7 @@ namespace Menro.Web.Controllers.Comment
     [ApiController]
     [Route("api/admin/comment")]
     [Authorize(Roles = SD.Role_Admin)]
-    public class AdminCommentController : ControllerBase
+    public class AdminCommentController : ApiControllerBase
     {
         private readonly IGetCommentsForAdminService _getCommentsForAdminService;
         private readonly IApproveCommentService _approveCommentService;

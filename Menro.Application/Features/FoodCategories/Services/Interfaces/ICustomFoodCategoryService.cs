@@ -1,4 +1,5 @@
-﻿using Menro.Application.Features.FoodCategories.DTOs;
+﻿using Menro.Application.Common.Models;
+using Menro.Application.Features.FoodCategories.DTOs;
 
 namespace Menro.Application.Features.FoodCategories.Services.Interfaces
 {
@@ -7,10 +8,10 @@ namespace Menro.Application.Features.FoodCategories.Services.Interfaces
         Task<List<FoodCategorySelectListDto>> GetCustomFoodCategoriesAsync(int restaurantId);
         Task<List<GetCustomCategoryDto>> GetAllCustomFoodCategoriesAsync(int restaurantId);
         Task<GetCustomCategoryDto> GetCategoryAsync(int catId);
-        Task<bool> AddCategoryAsync(CreateCustomFoodCategoryDto dto, int restaurantId);
-        Task<bool> AddFromGlobalAsync(int globalCategoryId, int restaurantId);
+        Task<Result> AddCategoryAsync(CreateCustomFoodCategoryDto dto, int restaurantId);
+        Task<Result> AddFromGlobalAsync(int globalCategoryId, int restaurantId);
         Task<bool> DeleteCustomCategoryAsync(int catId);
-        Task<bool> UpdateCategoryAsync(UpdateCustomFoodCategoryDto dto);
+        Task<Result> UpdateCategoryAsync(UpdateCustomFoodCategoryDto dto);
 
     }
 }

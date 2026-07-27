@@ -10,7 +10,7 @@ namespace Menro.Web.Controllers.Orders
     [ApiController]
     [Authorize(Roles = SD.Role_Owner)]
     [Route("api/admin/orders")]
-    public class AdminOrderController : ControllerBase
+    public class AdminOrderController : ApiControllerBase
     {
         private readonly IAdminOrderService _adminOrderService;
         private readonly ICurrentUserService _currentUserService;

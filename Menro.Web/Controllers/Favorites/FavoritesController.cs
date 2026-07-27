@@ -9,7 +9,7 @@ namespace Menro.Web.Controllers.Favorites
     [ApiController]
     [Route("api/user/favorites")]
     [Authorize]
-    public class FavoritesController : ControllerBase
+    public class FavoritesController : ApiControllerBase
     {
         private readonly IFavoriteFoodService _favoriteService;
         private readonly ICurrentUserService _currentUserService;

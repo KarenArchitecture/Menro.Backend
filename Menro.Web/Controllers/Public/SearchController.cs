@@ -6,7 +6,7 @@ namespace Menro.Web.Controllers.Public
 {
     [ApiController]
     [Route("api/public/search")]
-    public class SearchController : ControllerBase
+    public class SearchController : ApiControllerBase
     {
         private readonly IPublicSearchService _service;
 

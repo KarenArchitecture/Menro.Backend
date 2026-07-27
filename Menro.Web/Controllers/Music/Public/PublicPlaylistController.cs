@@ -9,7 +9,7 @@ namespace Menro.Web.Controllers.Music.Public
     [ApiController]
     [Authorize]
     [Route("api/public/music")]
-    public class PublicPlaylistController : ControllerBase
+    public class PublicPlaylistController : ApiControllerBase
     {
         #region DI
         private readonly IPublicMusicService _publicMusicService;

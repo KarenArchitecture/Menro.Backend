@@ -6,7 +6,7 @@ namespace Menro.Web.Controllers.Blog.Public
 {
     [ApiController]
     [Route("api/blog/page-bootstrap")]
-    public class PublicBlogPageBootstrapController : ControllerBase
+    public class PublicBlogPageBootstrapController : ApiControllerBase
     {
         #region DI
 

@@ -10,7 +10,7 @@ namespace Menro.Web.Controllers.Music.Admin
     [ApiController]
     [Authorize(Roles = SD.Role_Owner)]
     [Route("api/admin/music/playlist")]
-    public class PlaylistController : ControllerBase
+    public class PlaylistController : ApiControllerBase
     {
         #region DI
         private readonly IPlaylistService _playlistService;

@@ -11,7 +11,7 @@ namespace Menro.Web.Controllers.Orders
     [ApiController]
     [Authorize]
     [Route("api/user/orders")]
-    public class UserOrderController : ControllerBase
+    public class UserOrderController : ApiControllerBase
     {
         #region DI
         private readonly IUserRecentOrderCardService _recentService;

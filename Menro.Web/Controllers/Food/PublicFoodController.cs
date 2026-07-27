@@ -8,7 +8,7 @@ namespace Menro.Web.Controllers.Food
 {
     [ApiController]
     [Route("api/public/food")]
-    public class PublicFoodController : ControllerBase
+    public class PublicFoodController : ApiControllerBase
     {
         private readonly IPopularFoodsService _popularFoodsService; // homepage groups
         private readonly IPopularFoodsBrowseService _popularFoodsBrowseService; // ✅ view-all browse

@@ -11,7 +11,7 @@ namespace Menro.Web.Controllers.Ads
     [ApiController]
     [Authorize(Roles = $"{SD.Role_Admin},{SD.Role_Owner}")]
     [Route("api/admin/ads")]
-    public class AdminAdsController : ControllerBase
+    public class AdminAdsController : ApiControllerBase
     {
         #region DI
         private readonly IRestaurantAdService _service;

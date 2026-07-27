@@ -9,7 +9,7 @@ namespace Menro.Web.Controllers.Blog.Admin
     [ApiController]
     [Authorize(Roles = SD.Role_Admin)] // add author role for later on
     [Route("api/admin/blog/sidebar-tags")]
-    public class BlogTagsController : ControllerBase
+    public class BlogTagsController : ApiControllerBase
     {
         private readonly IBlogTagService _service;
 

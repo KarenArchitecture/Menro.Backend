@@ -9,7 +9,7 @@ namespace Menro.Web.Controllers.Users
     [ApiController]
     [Authorize]
     [Route("api/user")]
-    public class UserController : ControllerBase
+    public class UserController : ApiControllerBase
     {
         #region DI
         private readonly IUserService _userService;

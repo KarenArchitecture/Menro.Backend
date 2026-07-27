@@ -44,6 +44,14 @@ namespace Menro.Infrastructure.Repositories
             return cat;
         }
 
+        public async Task<bool> ExistsByNameAsync(string name)
+        {
+            return await _context.GlobalFoodCategories
+                .IgnoreQueryFilters()
+                .AnyAsync(c => c.Name == name);
+        }
+
+
         public async Task<bool> CreateAsync(GlobalFoodCategory category)
         {
             try

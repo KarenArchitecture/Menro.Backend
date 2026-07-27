@@ -11,7 +11,7 @@ namespace Menro.Web.Controllers.Blog.Public
     // the same slug for filtering.
     [ApiController]
     [Route("api/blog")]
-    public class PublicBlogTaxonomyController : ControllerBase
+    public class PublicBlogTaxonomyController : ApiControllerBase
     {
         private readonly IBlogCategoryService _categoryService;
         private readonly IBlogTagService _tagService;

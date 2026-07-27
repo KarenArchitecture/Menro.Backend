@@ -10,7 +10,7 @@ namespace Menro.Web.Controllers.Food.FoodCategories
     [ApiController]
     [Route("api/adminpanel/globalFoodCategory")]
     [Authorize(Roles = SD.Role_Admin)]
-    public class GlobalFoodCategoryController : ControllerBase
+    public class GlobalFoodCategoryController : ApiControllerBase
     {
         #region DI
         private readonly IGlobalFoodCategoryService _gCatService;
@@ -29,10 +29,8 @@ namespace Menro.Web.Controllers.Food.FoodCategories
                 return BadRequest(new { message = "نام دسته‌بندی الزامی است." });
 
             var result = await _gCatService.AddGlobalCategoryAsync(dto);
-            if (!result)
-                return BadRequest(new { message = "افزودن دسته‌بندی موفق نبود (ممکن است تکراری باشد)." });
 
-            return Ok(new { message = "دسته‌بندی با موفقیت اضافه شد." });
+            return FromResult(result, "دسته‌بندی با موفقیت اضافه شد.");
         }
 
         // ✅
@@ -63,15 +61,8 @@ namespace Menro.Web.Controllers.Food.FoodCategories
         [HttpPut("update")]
         public async Task<IActionResult> UpdateAsync([FromBody] UpdateGlobalCategoryDto dto)
         {
-            try
-            {
-                await _gCatService.UpdateGlobalCategoryAsync(dto);
-                return Ok(new { message = "Global category updated successfully" });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var result = await _gCatService.UpdateGlobalCategoryAsync(dto);
+            return FromResult(result, "دسته‌بندی با موفقیت ویرایش شد.");
         }
 
         // ✅

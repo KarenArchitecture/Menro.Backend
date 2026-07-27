@@ -7,7 +7,7 @@ namespace Menro.Web.Controllers.Ads
     [ApiController]
     [AllowAnonymous]
     [Route("api/public/restaurant")]
-    public class PublicRestaurantAdController : ControllerBase
+    public class PublicRestaurantAdController : ApiControllerBase
     {
         private readonly IPublicRestaurantAdService _service;
 
