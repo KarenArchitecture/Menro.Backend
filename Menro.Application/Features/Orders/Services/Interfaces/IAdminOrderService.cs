@@ -6,9 +6,9 @@ namespace Menro.Application.Features.Orders.Services.Interfaces
     public interface IAdminOrderService
     {
         Task<List<MonthlySalesDto>> GetMonthlySalesRawAsync(int? restaurantId = null);
-        Task<decimal> GetTotalRevenueAsync(int? restaurantId = null);
+        Task<int> GetTotalRevenueAsync(int? restaurantId = null);
         Task<int> GetRecentOrdersCountAsync(int? restaurantId = null, int daysBack = 30);
-        Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId = null, int daysBack = 0);
+        Task<int> GetRecentOrdersRevenueAsync(int? restaurantId = null, int daysBack = 0);
 
 
         /* order management */

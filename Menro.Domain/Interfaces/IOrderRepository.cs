@@ -18,6 +18,8 @@ namespace Menro.Domain.Interfaces
 
         Task<Order?> GetOrderWithDetailsAsync(int orderId, CancellationToken ct = default);
 
+        Task<Order?> GetPublicOrderDetailsAsync(int orderId, CancellationToken ct = default);
+
 
         /* ============================================================
            💰 AdminPanel
@@ -25,13 +27,13 @@ namespace Menro.Domain.Interfaces
 
         /* dashboard stats */
 
-        Task<decimal> GetTotalRevenueAsync(int? restaurantId = null, CancellationToken ct = default);
+        Task<int> GetTotalRevenueAsync(int? restaurantId = null, CancellationToken ct = default);
 
         Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, DateTime from, DateTime to, CancellationToken ct = default);
 
         Task<int> GetRecentOrdersCountAsync(int? restaurantId, DateTime since, CancellationToken ct = default);
 
-        Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since, CancellationToken ct = default);
+        Task<int> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since, CancellationToken ct = default);
 
         /* order management */
 
@@ -60,5 +62,7 @@ namespace Menro.Domain.Interfaces
             string? cursor,
             CancellationToken ct = default
         );
+
+        Task<List<Order>> GetUserOrdersAsync(string userId, CancellationToken ct = default);
     }
 }

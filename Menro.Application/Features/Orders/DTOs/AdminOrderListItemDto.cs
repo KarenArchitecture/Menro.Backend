@@ -10,7 +10,7 @@ namespace Menro.Application.Features.Orders.DTOs
 
         public int? TableNumber { get; set; }
 
-        public decimal TotalPrice { get; set; }
+        public int TotalPrice { get; set; }
         public OrderStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
     }

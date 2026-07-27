@@ -14,12 +14,14 @@
         public FoodVariant? FoodVariant { get; set; }
 
         public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
+        public int UnitPrice { get; set; }
 
         public string TitleSnapshot { get; set; } = string.Empty;
 
         // ✅ اگر Variant انتخاب شده بود، اسمش هم ثابت بماند
         public string? VariantTitleSnapshot { get; set; }
+
+        public string? ImageUrlSnapshot { get; set; }
 
         public ICollection<OrderItemExtra> Extras { get; set; } = new List<OrderItemExtra>();
     }

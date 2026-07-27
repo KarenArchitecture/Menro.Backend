@@ -26,6 +26,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<FoodVariant> FoodVariants { get; set; }
         public DbSet<FoodAddon> FoodAddons { get; set; }
         public DbSet<FavoriteFood> FavoriteFoods { get; set; }
+        public DbSet<FoodCombo> FoodCombos { get; set; }
 
         public DbSet<Restaurant> Restaurants { get; set; }
         public DbSet<RestaurantCategory> RestaurantCategories { get; set; }
@@ -43,6 +44,10 @@ namespace Menro.Infrastructure.Data
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<OrderItemExtra> OrderItemExtras { get; set; }
+
+        public DbSet<Cart> Carts => Set<Cart>();
+        public DbSet<CartItem> CartItems => Set<CartItem>();
+        public DbSet<CartItemExtra> CartItemExtras => Set<CartItemExtra>();
 
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         
@@ -107,6 +112,8 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<GlobalFoodCategory>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<FoodVariant>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<FoodAddon>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<FoodCombo>()
+                .HasQueryFilter(x => !x.Food.IsDeleted && !x.ComboFood.IsDeleted);
             modelBuilder.Entity<Comment>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<CommentLike>()
                 .HasQueryFilter(x => !x.Comment.IsDeleted);
@@ -158,6 +165,18 @@ namespace Menro.Infrastructure.Data
                 .HasForeignKey(r => r.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<FoodCombo>()
+                .HasOne(fc => fc.Food)
+                .WithMany()
+                .HasForeignKey(fc => fc.FoodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FoodCombo>()
+                .HasOne(fc => fc.ComboFood)
+                .WithMany()
+                .HasForeignKey(fc => fc.ComboFoodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<FavoriteFood>()
                 .HasOne(x => x.User)
                 .WithMany(x => x.FavoriteFoods)
@@ -171,15 +190,39 @@ namespace Menro.Infrastructure.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Restaurant>()
-                .HasMany(r => r.Ratings)
-                .WithOne(r => r.Restaurant)
-                .HasForeignKey(r => r.RestaurantId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Restaurant>()
                 .HasMany(r => r.Advertisements)
                 .WithOne(a => a.Restaurant)
                 .HasForeignKey(a => a.RestaurantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.Cart)
+                .WithMany(c => c.Items)
+                .HasForeignKey(ci => ci.CartId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.Food)
+                .WithMany()
+                .HasForeignKey(ci => ci.FoodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CartItem>()
+                .HasOne(ci => ci.FoodVariant)
+                .WithMany()
+                .HasForeignKey(ci => ci.FoodVariantId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CartItemExtra>()
+                .HasOne(cie => cie.CartItem)
+                .WithMany(ci => ci.Extras)
+                .HasForeignKey(cie => cie.CartItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CartItemExtra>()
+                .HasOne(cie => cie.FoodAddon)
+                .WithMany()
+                .HasForeignKey(cie => cie.FoodAddonId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Order>()
@@ -193,20 +236,6 @@ namespace Menro.Infrastructure.Data
                 .WithMany(f => f.OrderItems)
                 .HasForeignKey(i => i.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Subscription>()
-                .HasOne(s => s.Restaurant)
-                .WithOne(r => r.Subscription)
-                .HasForeignKey<Subscription>(s => s.RestaurantId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<OrderItem>()
-                .Property(x => x.UnitPrice)
-                .HasColumnType("decimal(18,2)");
-
-            modelBuilder.Entity<Order>()
-                .Property(x => x.TotalPrice)
-                .HasColumnType("decimal(18,2)");
 
             modelBuilder.Entity<Discount>()
                 .Property(x => x.Value)
@@ -260,6 +289,10 @@ namespace Menro.Infrastructure.Data
 
             modelBuilder.Entity<CustomFoodCategory>()
                 .HasIndex(x => new { x.RestaurantId, x.Name })
+                .IsUnique();
+
+            modelBuilder.Entity<FoodCombo>()
+                .HasIndex(x => new { x.FoodId, x.ComboFoodId })
                 .IsUnique();
 
             modelBuilder.Entity<FavoriteFood>()

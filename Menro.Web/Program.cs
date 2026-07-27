@@ -219,6 +219,8 @@ builder.Services.AddSingleton<IGlobalDateTimeService, GlobalDateTimeService>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+builder.Services.AddHostedService<CartCleanupHostedService>();
+
 builder.Services.AddMemoryCache();
 
 builder.Services.AddSignalR();
@@ -246,6 +248,8 @@ builder.Services.AddScoped<IDataSeeder, DemoRestaurantSeeder>();
 builder.Services.AddScoped<IDataSeeder, DemoRestaurantAdSeeder>();
 
 builder.Services.AddScoped<IDataSeeder, DemoVariantSeeder>();
+
+builder.Services.AddScoped<IDataSeeder, FoodDefaultVariantSeeder>();
 
 builder.Services.AddScoped<IDataSeeder, DemoDiscountSeeder>();
 
@@ -320,6 +324,10 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
+
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICartIdentityAccessor, CartIdentityAccessor>();
 #endregion
 
 var app = builder.Build();

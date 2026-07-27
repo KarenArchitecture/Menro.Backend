@@ -16,21 +16,22 @@ namespace Menro.Web.Controllers.Orders
         #region DI
         private readonly IUserRecentOrderCardService _recentService;
         private readonly IRecentOrderBrowseService _recentBrowseService;
+        private readonly IOrderHistoryService _orderHistoryService;
         private readonly ICurrentUserService _currentUserService;
 
         public UserOrderController(
             IUserRecentOrderCardService recentService,
             IRecentOrderBrowseService recentBrowseService,
+            IOrderHistoryService orderHistoryService,
             ICurrentUserService currentUserService)
         {
             _recentService = recentService;
             _recentBrowseService = recentBrowseService;
+            _orderHistoryService = orderHistoryService;
             _currentUserService = currentUserService;
         }
-
         #endregion
 
-        // Homepage: fixed count
         [HttpGet("recent-foods")]
         [ProducesResponseType(typeof(List<RecentOrdersFoodCardDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -43,15 +44,10 @@ namespace Menro.Web.Controllers.Orders
                 return Unauthorized();
 
             count = Math.Clamp(count, 1, 32);
-
-            // NOTE: your current IUserRecentOrderCardService signature doesn't accept ct.
-            // That's OK; ct is still valuable for the browse endpoint.
             var items = await _recentService.GetUserRecentOrderedFoodsAsync(userId, count);
-
             return Ok(items ?? new List<RecentOrdersFoodCardDto>());
         }
 
-        // View All (lazy-load): cursor-based
         [HttpGet("recent-foods/browse")]
         [ProducesResponseType(typeof(PagedResultDto<RecentOrdersFoodCardDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -65,7 +61,6 @@ namespace Menro.Web.Controllers.Orders
                 return Unauthorized();
 
             take = Math.Clamp(take, 1, 24);
-
             var result = await _recentBrowseService.BrowseRecentOrderedFoodsAsync(userId, take, cursor, ct);
 
             return Ok(result ?? new PagedResultDto<RecentOrdersFoodCardDto>
@@ -74,6 +69,20 @@ namespace Menro.Web.Controllers.Orders
                 NextCursor = null,
                 HasMore = false
             });
+        }
+
+        // Order history for /orders page
+        [HttpGet("history")]
+        [ProducesResponseType(typeof(List<UserOrderListItemDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<List<UserOrderListItemDto>>> GetHistory()
+        {
+            var userId = _currentUserService.GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var orders = await _orderHistoryService.GetUserOrdersAsync(userId);
+            return Ok(orders);
         }
     }
 }

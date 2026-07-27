@@ -63,23 +63,48 @@ namespace Menro.Infrastructure.Repositories
                 .FirstOrDefaultAsync(o => o.Id == orderId, ct);
         }
 
+        public async Task<Order?> GetPublicOrderDetailsAsync(int orderId, CancellationToken ct = default)
+        {
+            return await _context.Orders
+                .AsNoTracking()
+                .Where(o => o.Id == orderId)
+                .Include(o => o.Restaurant)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Food)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.FoodVariant)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Extras)
+                        .ThenInclude(e => e.FoodAddon)
+                .FirstOrDefaultAsync(o => o.Id == orderId, ct);
+        }
 
         /* ============================================================
            💰 AdminPanel
         ============================================================ */
 
-        public async Task<decimal> GetTotalRevenueAsync(int? restaurantId = null, CancellationToken ct = default)
+        public async Task<int> GetTotalRevenueAsync(int? restaurantId = null, CancellationToken ct = default)
         {
-            var query = _context.Orders
-                .Where(o => o.Status == OrderStatus.Completed);
-
+            var query = _context.Orders.Where(o => o.Status == OrderStatus.Completed);
             if (restaurantId.HasValue)
             {
                 int id = restaurantId.Value;
                 query = query.Where(o => o.RestaurantId == id);
             }
-
             return await query.SumAsync(o => o.TotalPrice, ct);
+        }
+
+        public async Task<int> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since, CancellationToken ct = default)
+        {
+            var query = _context.Orders.AsQueryable();
+            if (restaurantId.HasValue)
+            {
+                int id = restaurantId.Value;
+                query = query.Where(o => o.RestaurantId == id);
+            }
+            return await query
+                .Where(o => o.CreatedAt >= since && o.Status == OrderStatus.Completed)
+                .SumAsync(o => o.TotalPrice, ct);
         }
 
         public async Task<List<Order>> GetCompletedOrdersAsync(int? restaurantId, DateTime from, DateTime to, CancellationToken ct = default)
@@ -112,21 +137,6 @@ namespace Menro.Infrastructure.Repositories
             }
 
             return await query.CountAsync(o => o.CreatedAt >= since, ct);
-        }
-
-        public async Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId, DateTime since, CancellationToken ct = default)
-        {
-            var query = _context.Orders.AsQueryable();
-
-            if (restaurantId.HasValue)
-            {
-                int id = restaurantId.Value;
-                query = query.Where(o => o.RestaurantId == id);
-            }
-
-            return await query
-                .Where(o => o.CreatedAt >= since && o.Status == OrderStatus.Completed)
-                .SumAsync(o => (decimal?)o.TotalPrice ?? 0m, ct);
         }
 
         public async Task<List<Order>> GetActiveOrdersAsync(int restaurantId, CancellationToken ct = default)
@@ -361,6 +371,16 @@ namespace Menro.Infrastructure.Repositories
             return (result, nextCursor, hasMore);
         }
 
+        public async Task<List<Order>> GetUserOrdersAsync(string userId, CancellationToken ct = default)
+        {
+            return await _context.Orders
+                .AsNoTracking()
+                .Where(o => o.UserId == userId)
+                .Include(o => o.Restaurant)
+                .Include(o => o.OrderItems)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync(ct);
+        }
 
         /* ============================================================
            🔄 CACHE INVALIDATION

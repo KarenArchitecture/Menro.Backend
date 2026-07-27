@@ -5,5 +5,6 @@ namespace Menro.Application.Features.Orders.Services.Interfaces
     public interface IOrderCreationService
     {
         Task<int> CreateOrderAsync(string? userId, CreateOrderDto dto);
+        Task<CheckoutResultDto> CheckoutFromCartAsync(CheckoutRequestDto dto, CancellationToken ct = default);
     }
 }
