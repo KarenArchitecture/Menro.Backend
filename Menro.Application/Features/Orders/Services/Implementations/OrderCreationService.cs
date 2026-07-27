@@ -1,4 +1,5 @@
-﻿using Menro.Application.Features.Foods.Services.Interfaces;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Foods.Services.Interfaces;
 using Menro.Application.Features.Orders.DTOs;
 using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Domain.Entities;
@@ -11,24 +12,21 @@ namespace Menro.Application.Features.Orders.Services.Implementations
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFoodService _foodService;
+        private readonly ICartIdentityAccessor _cartIdentityAccessor;
 
-        public OrderCreationService(IUnitOfWork unitOfWork,
-            IFoodService foodService)
+        public OrderCreationService(
+            IUnitOfWork unitOfWork,
+            IFoodService foodService,
+            ICartIdentityAccessor cartIdentityAccessor)
         {
             _unitOfWork = unitOfWork;
             _foodService = foodService;
-
+            _cartIdentityAccessor = cartIdentityAccessor;
         }
 
-        /* ============================================================
-           Helper: build snapshot title for history display
-           (e.g. "کباب - بزرگ (سس تند + نوشابه)")
-        ============================================================ */
         private string BuildTitleSnapshot(Food food, FoodVariant? variant, IEnumerable<FoodAddon>? addons)
         {
-            string baseTitle = variant == null
-                ? food.Name
-                : $"{food.Name} - {variant.Name}";
+            string baseTitle = variant == null ? food.Name : $"{food.Name} - {variant.Name}";
 
             if (addons != null)
             {
@@ -44,7 +42,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
         }
 
         /* ============================================================
-           Main: Create Order
+           Legacy path: create order directly from a client-submitted DTO.
         ============================================================ */
         public async Task<int> CreateOrderAsync(string? userId, CreateOrderDto dto)
         {
@@ -54,9 +52,6 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             if (dto.Items == null || dto.Items.Count == 0)
                 throw new Exception("Order must contain at least one item.");
 
-            /* -------------------------------
-               Create root Order entity
-            -------------------------------- */
             var order = new Domain.Entities.Order
             {
                 RestaurantId = dto.RestaurantId,
@@ -66,69 +61,47 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                 OrderItems = new List<OrderItem>()
             };
 
-            order.RestaurantOrderNumber =
-                await _unitOfWork.Order.GetNextRestaurantOrderNumberAsync(dto.RestaurantId);
+            order.RestaurantOrderNumber = await _unitOfWork.Order.GetNextRestaurantOrderNumberAsync(dto.RestaurantId);
 
-            // 🔹 Attach user only if logged-in
             if (!string.IsNullOrWhiteSpace(userId))
-            {
                 order.UserId = userId;
-            }
 
-            decimal totalPrice = 0;
+            int totalPrice = 0;
 
-            /* -------------------------------
-               Process each order item
-            --------------------------------*/
             foreach (var item in dto.Items)
             {
                 if (item.Quantity <= 0)
                     throw new Exception("Item quantity must be at least 1.");
 
-                // We expect FoodId to be present for ALL items.
-                // For variant items, frontend should send BOTH FoodId and VariantId.
                 if (!item.FoodId.HasValue)
                     throw new Exception("FoodId is required for each order item.");
 
-                var food = await _unitOfWork.Food.GetFoodWithVariantsAsync(item.FoodId.Value);
-                if (food == null)
-                    throw new Exception("Food not found.");
+                var food = await _unitOfWork.Food.GetFoodWithVariantsAsync(item.FoodId.Value)
+                    ?? throw new Exception("Food not found.");
 
-
-                /* ---------------- Variant ---------------- */
                 FoodVariant? variant = null;
                 if (item.VariantId.HasValue)
                 {
-                    variant = food.Variants.FirstOrDefault(v => v.Id == item.VariantId.Value);
-                    if (variant == null)
-                        throw new Exception("Food variant not found.");
+                    variant = food.Variants.FirstOrDefault(v => v.Id == item.VariantId.Value)
+                        ?? throw new Exception("Food variant not found.");
                 }
 
-                /* ---------------- Addons ----------------- */
                 List<FoodAddon> selectedAddons = new();
                 var extraIds = item.ExtraIds ?? new List<int>();
 
                 if (extraIds.Count > 0 && variant != null)
-                {
-                    // addons belong to this variant
-                    selectedAddons = variant.Addons
-                        .Where(a => extraIds.Contains(a.Id))
-                        .ToList();
-                }
+                    selectedAddons = variant.Addons.Where(a => extraIds.Contains(a.Id)).ToList();
 
-                /* ---------------- Server-side pricing ---------------- */
-                decimal basePrice = variant?.Price ?? food.Price;
-                decimal addonsTotal = selectedAddons.Sum(a => a.ExtraPrice);
-                decimal serverUnitPrice = basePrice + addonsTotal;
+                int basePrice = variant?.Price ?? food.Price;
+                int addonsTotal = selectedAddons.Sum(a => a.ExtraPrice);
+                int serverUnitPrice = basePrice + addonsTotal;
 
-                // Protect against frontend tampering
                 if (serverUnitPrice != item.UnitPrice)
                     throw new Exception("Price mismatch detected. Please refresh and try again.");
 
-                decimal lineTotal = serverUnitPrice * item.Quantity;
+                int lineTotal = serverUnitPrice * item.Quantity;
                 totalPrice += lineTotal;
 
-                /* ---------------- Build OrderItem ---------------- */
                 var orderItem = new OrderItem
                 {
                     FoodId = food.Id,
@@ -136,6 +109,8 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                     Quantity = item.Quantity,
                     UnitPrice = serverUnitPrice,
                     TitleSnapshot = BuildTitleSnapshot(food, variant, selectedAddons),
+                    VariantTitleSnapshot = variant?.Name,
+                    ImageUrlSnapshot = food.ImageUrl,
                     Extras = new List<OrderItemExtra>()
                 };
 
@@ -144,27 +119,118 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                     orderItem.Extras.Add(new OrderItemExtra
                     {
                         FoodAddonId = addon.Id,
-                        ExtraPrice = addon.ExtraPrice
+                        AddonTitleSnapshot = addon.Name,
+                        ExtraPrice = addon.ExtraPrice,
+                        Quantity = 1
                     });
                 }
 
                 order.OrderItems.Add(orderItem);
             }
 
-            /* ---------------- Finalize total ---------------- */
             order.TotalPrice = totalPrice;
 
-            /* ---------------- Save Order ---------------- */
             await _unitOfWork.Order.AddOrderAsync(order);
             await _unitOfWork.SaveChangesAsync();
 
-            // 🔹 Invalidate recent-orders cache only for logged-in users
             if (!string.IsNullOrWhiteSpace(userId))
-            {
                 _unitOfWork.Order.InvalidateUserRecentOrders(userId);
-            }
 
             return order.Id;
+        }
+
+        /* ============================================================
+           Main path: checkout the live server-side Cart into an Order.
+        ============================================================ */
+        public async Task<CheckoutResultDto> CheckoutFromCartAsync(CheckoutRequestDto dto, CancellationToken ct = default)
+        {
+            var userId = _cartIdentityAccessor.UserId;
+            var guestToken = string.IsNullOrWhiteSpace(userId) ? _cartIdentityAccessor.GuestToken : null;
+
+            var cart = await _unitOfWork.Cart.GetActiveCartAsync(userId, guestToken, ct);
+
+            if (cart == null || cart.Items.Count == 0)
+                throw new Exception("سبد خرید شما خالی است.");
+
+            if (cart.UpdatedAt < DateTime.UtcNow - TimeSpan.FromHours(2))
+            {
+                await _unitOfWork.Cart.RemoveCartAsync(cart, ct);
+                await _unitOfWork.Cart.SaveChangesAsync(ct);
+                throw new Exception("سبد خرید شما منقضی شده است، لطفا دوباره تلاش کنید.");
+            }
+
+            var order = new Domain.Entities.Order
+            {
+                RestaurantId = cart.RestaurantId,
+                TableNumber = dto.TableNumber,
+                CreatedAt = DateTime.UtcNow,
+                Status = OrderStatus.Pending,
+                OrderItems = new List<OrderItem>()
+            };
+            order.RestaurantOrderNumber = await _unitOfWork.Order.GetNextRestaurantOrderNumberAsync(cart.RestaurantId, ct);
+
+            if (!string.IsNullOrWhiteSpace(userId))
+                order.UserId = userId;
+
+            int totalPrice = 0;
+
+            foreach (var cartItem in cart.Items)
+            {
+                var food = await _unitOfWork.Food.GetFoodWithVariantsAsync(cartItem.FoodId)
+                    ?? throw new Exception("یکی از غذاهای سبد خرید دیگر موجود نیست.");
+
+                var variant = food.Variants.FirstOrDefault(v => v.Id == cartItem.FoodVariantId)
+                    ?? throw new Exception("یکی از انواع غذای سبد خرید دیگر موجود نیست.");
+
+                var extras = new List<OrderItemExtra>();
+                var selectedAddons = new List<FoodAddon>();
+                int addonsTotal = 0;
+
+                foreach (var e in cartItem.Extras)
+                {
+                    var addon = variant.Addons.FirstOrDefault(a => a.Id == e.FoodAddonId);
+                    if (addon == null) continue;
+
+                    selectedAddons.Add(addon);
+                    addonsTotal += addon.ExtraPrice * e.Quantity;
+
+                    extras.Add(new OrderItemExtra
+                    {
+                        FoodAddonId = addon.Id,
+                        AddonTitleSnapshot = addon.Name,
+                        ExtraPrice = addon.ExtraPrice,
+                        Quantity = e.Quantity
+                    });
+                }
+
+                int unitPrice = variant.Price + addonsTotal;
+                totalPrice += unitPrice * cartItem.Quantity;
+
+                order.OrderItems.Add(new OrderItem
+                {
+                    FoodId = food.Id,
+                    FoodVariantId = variant.Id,
+                    Quantity = cartItem.Quantity,
+                    UnitPrice = unitPrice,
+                    TitleSnapshot = BuildTitleSnapshot(food, variant, selectedAddons),
+                    VariantTitleSnapshot = variant.Name,
+                    ImageUrlSnapshot = food.ImageUrl,
+                    Extras = extras
+                });
+            }
+
+            order.TotalPrice = totalPrice;
+
+            await _unitOfWork.Order.AddOrderAsync(order, ct);
+            await _unitOfWork.Order.SaveChangesAsync(ct);
+
+            await _unitOfWork.Cart.RemoveCartAsync(cart, ct);
+            await _unitOfWork.Cart.SaveChangesAsync(ct);
+
+            if (!string.IsNullOrWhiteSpace(userId))
+                _unitOfWork.Order.InvalidateUserRecentOrders(userId);
+
+            return new CheckoutResultDto { OrderId = order.Id, SuccessType = "checkout" };
         }
     }
 }

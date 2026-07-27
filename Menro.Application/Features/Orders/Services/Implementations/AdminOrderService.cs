@@ -19,7 +19,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
 
         /* dashboard stats */
 
-        public async Task<decimal> GetTotalRevenueAsync(int? restaurantId = null)
+        public async Task<int> GetTotalRevenueAsync(int? restaurantId = null)
         {
             return await _orderRepository.GetTotalRevenueAsync(restaurantId);
         }
@@ -74,7 +74,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
 
             return await _orderRepository.GetRecentOrdersCountAsync(restaurantId, since);
         }
-        public async Task<decimal> GetRecentOrdersRevenueAsync(int? restaurantId = null, int daysBack = 0)
+        public async Task<int> GetRecentOrdersRevenueAsync(int? restaurantId = null, int daysBack = 0)
         {
             DateTime since;
 
@@ -139,7 +139,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                     Name = oi.TitleSnapshot,
                     Qty = oi.Quantity,
                     Price = oi.UnitPrice,
-                    ImageUrl = oi.Food.ImageUrl,
+                    ImageUrl = oi.ImageUrlSnapshot ?? oi.Food?.ImageUrl,
 
                     Addons = oi.Extras.Select(ex => new AdminOrderItemAddonDto
                     {

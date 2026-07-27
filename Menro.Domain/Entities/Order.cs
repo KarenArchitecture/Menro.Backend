@@ -14,7 +14,7 @@ namespace Menro.Domain.Entities
         public int? RestaurantId { get; set; }
         public Restaurant? Restaurant { get; set; }
 
-        public decimal TotalPrice { get; set; }
+        public int TotalPrice { get; set; }
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

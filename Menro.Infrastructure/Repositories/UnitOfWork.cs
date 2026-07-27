@@ -11,17 +11,8 @@ namespace Menro.Infrastructure.Repositories
 {
     public class UnitOfWork : IUnitOfWork, IDisposable
     {
-
-        /*
-        ✅ مزایای نسخه جدید:
-        ساختار قبلی کامل حفظ شده
-        ریپازیتوری‌ها فقط وقتی ساخته می‌شن که نیاز باشه
-        هیچ تزریق تکراری یا اضافه نداری
-        آماده‌ی استفاده برای همون سرویس‌هایی که قبلاً نوشتی
-        */
         private readonly MenroDbContext _context;
 
-        // private fields for lazy initialization
         private IUserRepository _user;
         private IFoodRepository _food;
         private ICustomFoodCategoryRepository _foodCategory;
@@ -32,6 +23,7 @@ namespace Menro.Infrastructure.Repositories
         private ISubscriptionRepository _subscription;
         private ISubscriptionPlanRepository _subscriptionPlan;
         private IOtpRepository _otp;
+        private ICartRepository _cart;
         private IOrderRepository _order;
         private IOrderItemRepository _orderItem;
         private IRefreshTokenRepository _refreshToken;
@@ -55,7 +47,6 @@ namespace Menro.Infrastructure.Repositories
         private ILandingFaqRepository _landingFaq;
         private ILandingReasonRepository _landingReason;
 
-        // public properties with lazy instantiation
         public IUserRepository User => _user ??= new UserRepository(_context);
         public IFoodRepository Food => _food ??= new FoodRepository(_context);
         public ICustomFoodCategoryRepository FoodCategory => _foodCategory ??= new CustomFoodCategoryRepository(_context, _cache);
@@ -66,10 +57,11 @@ namespace Menro.Infrastructure.Repositories
         public ISubscriptionRepository Subscription => _subscription ??= new SubscriptionRepository(_context);
         public ISubscriptionPlanRepository SubscriptionPlan => _subscriptionPlan ??= new SubscriptionPlanRepository(_context);
         public IOtpRepository Otp => _otp ??= new OtpRepository(_context);
+        public ICartRepository Cart => _cart ??= new CartRepository(_context);
         public IOrderRepository Order => _order ??= new OrderRepository(_context, _cache);
         public IOrderItemRepository OrderItem => _orderItem ??= new OrderItemRepository(_context);
         public IRefreshTokenRepository RefreshToken => _refreshToken ??= new RefreshTokenRepository(_context);
-        
+
         // MUSIC
         public IMusicTrackRepository MusicTrack => _musicTrack ??= new MusicTrackRepository(_context);
         public IPlaylistRepository Playlist => _playlist ??= new PlaylistRepository(_context);
@@ -88,29 +80,21 @@ namespace Menro.Infrastructure.Repositories
         public ILandingFaqRepository LandingFaq => _landingFaq ??= new LandingFaqRepository(_context);
         public ILandingReasonRepository LandingReason => _landingReason ??= new LandingReasonRepository(_context);
 
-        // constructor
         public UnitOfWork(MenroDbContext context, IMemoryCache cache)
         {
             _context = context;
             _cache = cache;
         }
 
-        public async Task<int> SaveChangesAsync()
-        {
-            return await _context.SaveChangesAsync();
-        }
+        public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
 
-        // IDisposable implementation
         private bool disposed = false;
 
         protected virtual void Dispose(bool disposing)
         {
             if (!disposed)
             {
-                if (disposing)
-                {
-                    _context.Dispose();
-                }
+                if (disposing) _context.Dispose();
                 disposed = true;
             }
         }

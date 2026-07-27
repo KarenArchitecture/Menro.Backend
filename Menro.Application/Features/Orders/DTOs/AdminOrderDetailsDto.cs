@@ -11,7 +11,7 @@ namespace Menro.Application.Features.Orders.DTOs
         public OrderStatus Status { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
 
-        public decimal TotalPrice { get; set; }
+        public int TotalPrice { get; set; }
 
         public List<AdminOrderItemDto> Items { get; set; } = new();
     }
