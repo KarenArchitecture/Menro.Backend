@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Cart.DTOs;
 using Menro.Application.Features.Cart.Services.Interfaces;
 using Menro.Domain.Entities;
@@ -12,13 +13,13 @@ namespace Menro.Application.Features.Cart.Services.Implementations
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICartIdentityAccessor _identity;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
-        public CartService(IUnitOfWork unitOfWork, ICartIdentityAccessor identity, IFileUrlService fileUrlService)
+        public CartService(IUnitOfWork unitOfWork, ICartIdentityAccessor identity, IMediaStorageProvider mediaStorage)
         {
             _unitOfWork = unitOfWork;
             _identity = identity;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         private (string? userId, string? guestToken) ResolveIdentity()
@@ -219,7 +220,7 @@ namespace Menro.Application.Features.Cart.Services.Implementations
                     Id = item.Id,
                     FoodId = food.Id,
                     FoodName = food.Name,
-                    ImageUrl = string.IsNullOrWhiteSpace(food.ImageUrl) ? null : _fileUrlService.BuildFoodImageUrl(food.ImageUrl),
+                    ImageUrl = string.IsNullOrWhiteSpace(food.ImageUrl) ? null : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, food.ImageUrl),
                     VariantId = variant.Id,
                     VariantName = variant.Name,
                     IsDefaultVariant = variant.IsDefault == true,

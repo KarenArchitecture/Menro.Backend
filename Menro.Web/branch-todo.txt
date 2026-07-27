@@ -1,2 +1,0 @@
-﻿✔ replace all file and fileUrl service references with LocalDiskMediaStorageProvider methods 
-. fix and recheck all of media upload endpoints and pick a right strategy (2 steps for upload and create or all in one step)

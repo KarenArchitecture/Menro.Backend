@@ -1,25 +1,28 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.Orders.DTOs;
 using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Menro.Application.Features.Orders.Services.Implementations
 {
     public class OrderHistoryService : IOrderHistoryService
     {
         private readonly IOrderRepository _orderRepository;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
-        public OrderHistoryService(IOrderRepository orderRepository, IFileUrlService fileUrlService)
+
+        public OrderHistoryService(IOrderRepository orderRepository, IMediaStorageProvider mediaStorage)
         {
             _orderRepository = orderRepository;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         private string? BuildItemImageUrl(string? snapshot, string? liveImage)
         {
             var raw = !string.IsNullOrWhiteSpace(snapshot) ? snapshot : liveImage;
-            return string.IsNullOrWhiteSpace(raw) ? null : _fileUrlService.BuildFoodImageUrl(raw);
+            return string.IsNullOrWhiteSpace(raw) ? null : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, raw);
         }
 
         public async Task<List<UserOrderListItemDto>> GetUserOrdersAsync(string userId)
@@ -33,7 +36,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                 RestaurantName = o.Restaurant?.Name ?? "",
                 RestaurantLogoUrl = string.IsNullOrWhiteSpace(o.Restaurant?.LogoImageUrl)
                     ? null
-                    : _fileUrlService.BuildRestaurantLogoUrl(o.Restaurant.LogoImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, o.Restaurant.LogoImageUrl),
                 TableNumber = o.TableNumber,
                 CreatedAt = o.CreatedAt,
                 TotalPrice = o.TotalPrice,

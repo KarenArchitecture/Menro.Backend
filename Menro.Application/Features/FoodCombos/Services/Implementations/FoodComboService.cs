@@ -1,5 +1,6 @@
 ﻿// Application/Features/FoodCombos/Services/Implementations/FoodComboService.cs
 using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
 using Menro.Application.Features.FoodCombos.DTOs;
 using Menro.Application.Features.FoodCombos.Services.Interfaces;
 using Menro.Domain.Interfaces;
@@ -9,12 +10,12 @@ namespace Menro.Application.Features.FoodCombos.Services.Implementations
     public class FoodComboService : IFoodComboService
     {
         private readonly IFoodComboRepository _comboRepository;
-        private readonly IFileUrlService _fileUrlService;
+        private readonly IMediaStorageProvider _mediaStorage;
 
-        public FoodComboService(IFoodComboRepository comboRepository, IFileUrlService fileUrlService)
+        public FoodComboService(IFoodComboRepository comboRepository, IMediaStorageProvider mediaStorage)
         {
             _comboRepository = comboRepository;
-            _fileUrlService = fileUrlService;
+            _mediaStorage = mediaStorage;
         }
 
         public async Task<List<int>> GetComboFoodIdsAsync(int foodId, int restaurantId)
@@ -59,7 +60,7 @@ namespace Menro.Application.Features.FoodCombos.Services.Implementations
                 Name = f.Name,
                 ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
                     ? null
-                    : _fileUrlService.BuildFoodImageUrl(f.ImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl),
                 Price = f.Price,
                 Rating = f.AverageRating,
                 VotersCount = f.VotersCount,

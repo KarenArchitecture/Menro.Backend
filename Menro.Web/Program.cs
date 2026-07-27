@@ -19,6 +19,7 @@ using Menro.Infrastructure.Repositories;
 using Menro.Infrastructure.Services;
 using Menro.Web.Middleware;
 using Menro.Web.Services;
+using Menro.Web.Services.HostedServices;
 using Menro.Infrastructure.Data.Seed.Core.Seeders;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Menro.Infrastructure.Data.Seed.Demo.Seeders;
@@ -89,8 +90,11 @@ builder.Services.AddDbContext<MenroDbContext>(options =>
                 errorNumbersToAdd: null);
         });
 
-    options.EnableSensitiveDataLogging();
-    options.EnableDetailedErrors();
+    if (isDevelopment)
+    {
+        options.EnableSensitiveDataLogging();
+        options.EnableDetailedErrors();
+    }
 });
 
 builder.Services.AddIdentity<User, IdentityRole>(options =>
