@@ -115,7 +115,7 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                 Ingredients = food.Ingredients,
                 Price = food.Price,
                 ImageName = food.ImageUrl,
-                ImageUrl = food.ImageUrl == null
+                ImageUrl = string.IsNullOrWhiteSpace(food.ImageUrl)
                     ? null
                     : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, food.ImageUrl),
                 FoodCategoryId = food.CustomFoodCategoryId!.Value,
