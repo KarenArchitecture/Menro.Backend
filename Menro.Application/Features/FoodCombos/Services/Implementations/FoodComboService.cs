@@ -53,14 +53,13 @@ namespace Menro.Application.Features.FoodCombos.Services.Implementations
         public async Task<List<PublicComboFoodDto>> GetPublicCombosAsync(int foodId)
         {
             var foods = await _comboRepository.GetComboFoodsAsync(foodId);
-
             return foods.Select(f => new PublicComboFoodDto
             {
                 Id = f.Id,
                 Name = f.Name,
                 ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
                     ? null
-                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl, f.Id.ToString(), MediaVariant.Thumbnail),
                 Price = f.Price,
                 Rating = f.AverageRating,
                 VotersCount = f.VotersCount,
@@ -79,7 +78,6 @@ namespace Menro.Application.Features.FoodCombos.Services.Implementations
                 }).ToList()
             }).ToList();
         }
-
         public async Task<Dictionary<int, int>> GetComboCountsAsync(int restaurantId)
         {
             return await _comboRepository.GetComboCountsByRestaurantAsync(restaurantId);

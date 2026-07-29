@@ -36,22 +36,12 @@
                     ThumbnailWidth = 150,
                     ResizedWidth = 500,
                 },
-                [MediaCategory.RestaurantCard] = new()
-                {
-                    FolderTemplate = "media/img/restaurant/card",
-                    AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
-                    MaxSizeBytes = 4 * 1024 * 1024,
-                    IsEntityScoped = true,
-                    ThumbnailWidth = 300,
-                    ResizedWidth = 900,
-                },
                 [MediaCategory.RestaurantHomeBanner] = new()
                 {
                     FolderTemplate = "media/img/restaurant/home",
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 8 * 1024 * 1024,
                     IsEntityScoped = true,
-                    // banners are shown full-width in a single view, not lists -> no thumbnail needed
                     ResizedWidth = 1600,
                 },
                 [MediaCategory.RestaurantShopBanner] = new()
@@ -119,8 +109,8 @@
                     AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
                     MaxSizeBytes = 6 * 1024 * 1024,
                     IsEntityScoped = true,
-                    ThumbnailWidth = 300,   // blog list
-                    ResizedWidth = 1200,    // post detail
+                    ThumbnailWidth = 300,
+                    ResizedWidth = 1200,
                 },
 
                 // global / site-wide -> flat storage

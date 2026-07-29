@@ -1,4 +1,6 @@
-﻿namespace Menro.Application.Features.Foods.DTOs
+﻿using Microsoft.AspNetCore.Http;
+
+namespace Menro.Application.Features.Foods.DTOs
 {
     public class CreateFoodDto
     {
@@ -6,7 +8,7 @@
         public string? Ingredients { get; set; }
         public int Price { get; set; }
 
-        public string? ImageName { get; set; }
+        public IFormFile? ImageFile { get; set; }
 
         public int FoodCategoryId { get; set; }
         public bool HasVariants { get; set; }

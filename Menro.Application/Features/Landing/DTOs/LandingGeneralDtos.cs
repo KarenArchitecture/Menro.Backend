@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace Menro.Application.Features.Landing.DTOs
 {
     /// <summary>
@@ -22,7 +24,9 @@ namespace Menro.Application.Features.Landing.DTOs
         string HeroHighlight,
         string HeroTitle,
         string SpotlightTitle,
-        string? HeroImageFileName);
+        string? HeroImageFileName,
+        IFormFile? HeroImage,
+        bool RemoveHeroImage = false);
 
     /// <summary>
     /// POST /api/admin/landing/general/hero-image response.

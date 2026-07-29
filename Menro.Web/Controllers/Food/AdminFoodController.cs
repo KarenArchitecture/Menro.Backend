@@ -1,5 +1,4 @@
 ﻿using Menro.Application.Common.Interfaces;
-using Menro.Application.Common.Media;
 using Menro.Application.Common.SD;
 using Menro.Application.Features.FoodCategories.Services.Interfaces;
 using Menro.Application.Features.Foods.DTOs;
@@ -27,19 +26,15 @@ namespace Menro.Web.Controllers.Food
             _cCatService = cCatService;
             _currentUserService = currentUserService;
         }
-
-
         #endregion
 
-
-
-        // ✅
         [HttpPost("add")]
-        public async Task<IActionResult> AddAsync([FromBody] CreateFoodDto dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> AddAsync([FromForm] CreateFoodDto dto)
         {
-            // validations
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
             if (dto.HasVariants)
             {
                 if (dto.Variants == null || dto.Variants.Count == 0)
@@ -53,16 +48,21 @@ namespace Menro.Web.Controllers.Food
                     return BadRequest(new { message = "فقط یک نوع می‌تواند پیش فرض باشد" });
             }
 
-            // گرفتن رستوران کاربر از سرویس کاربر جاری
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-            bool result = await _foodService.AddFoodAsync(dto, restaurantId);
-            if (!result)
-                return BadRequest(new { message = "خطای ناشناخته‌ای رخ داده است" });
-            return Ok();
+
+            try
+            {
+                bool result = await _foodService.AddFoodAsync(dto, restaurantId);
+                if (!result)
+                    return BadRequest(new { message = "خطای ناشناخته‌ای رخ داده است" });
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-
-        // ✅
         [HttpGet("read-all")]
         public async Task<IActionResult> GetAllAsync()
         {
@@ -75,7 +75,6 @@ namespace Menro.Web.Controllers.Food
             return BadRequest("User is not a restaurant owner.");
         }
 
-        // ✅
         [HttpGet("{foodId:int}")]
         public async Task<IActionResult> GetAsync(int foodId)
         {
@@ -86,9 +85,10 @@ namespace Menro.Web.Controllers.Food
             return Ok(food);
         }
 
-        // ✅
+        // حالا multipart: فیلدها + عکس (اختیاری) در یک فراخوانی، مثل add
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateAsync([FromBody] UpdateFoodDto dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateAsync([FromForm] UpdateFoodDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -106,12 +106,16 @@ namespace Menro.Web.Controllers.Food
                     return BadRequest(new { message = "فقط یک نوع می‌تواند پیش فرض باشد" });
             }
 
-            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
-
-            var ok = await _foodService.UpdateFoodAsync(dto);
-            if (!ok) return BadRequest(new { message = "خطای ناشناخته‌ای رخ داده" });
-
-            return Ok(new { success = true });
+            try
+            {
+                var ok = await _foodService.UpdateFoodAsync(dto);
+                if (!ok) return BadRequest(new { message = "خطای ناشناخته‌ای رخ داده" });
+                return Ok(new { success = true });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPatch("toggle-status/{foodId:int}")]
@@ -126,21 +130,16 @@ namespace Menro.Web.Controllers.Food
             return Ok();
         }
 
-        // ✅
         [HttpDelete("{foodId:int}")]
         public async Task<IActionResult> DeleteAsync(int foodId)
         {
             var success = await _foodService.DeleteFoodAsync(foodId);
             if (!success)
-            {
                 return NotFound(new { message = "محصول یافت نشد" });
-            }
 
             return Ok(new { message = "محصول با موفقیت حذف شد" });
         }
 
-
-        // ✅
         [HttpGet("categories")]
         public async Task<IActionResult> GetCategoriesAsync()
         {
@@ -149,25 +148,6 @@ namespace Menro.Web.Controllers.Food
             return Ok(categories);
         }
 
-        // ✅
-        [HttpPost("upload-food-image")]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> UploadFoodImage(
-            [FromForm] UploadFoodImageDto dto)
-        {
-            try
-            {
-                var result = await _foodService.UploadFoodImageAsync(dto.File);
-                return Ok(new { fileName = result });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "خطا در ذخیره‌سازی فایل", error = ex.Message });
-            }
-        }
+        // اکشن UploadFoodImage کامل حذف شد - دیگه لازم نیست
     }
 }

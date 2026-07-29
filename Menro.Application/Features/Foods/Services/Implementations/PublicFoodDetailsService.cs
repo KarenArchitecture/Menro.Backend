@@ -32,7 +32,7 @@ namespace Menro.Application.Foods.Services.Implementations
                 BasePrice = f.Price,
                 ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
                     ? string.Empty
-                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl, entityId: f.Id.ToString(), variant: MediaVariant.Resized),
                 AverageRating = f.AverageRating,
                 VotersCount = f.VotersCount
             };

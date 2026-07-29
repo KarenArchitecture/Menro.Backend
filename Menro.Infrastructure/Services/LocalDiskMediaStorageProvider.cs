@@ -34,9 +34,6 @@ namespace Menro.Infrastructure.Services
 
             ValidateContent(fileBytes, cfg);
 
-            if (!string.IsNullOrEmpty(oldFileName))
-                DeleteAllVariants(cfg, oldFileName, entityId);
-
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             string fileName;
             if (cfg.PreserveOriginalFileName)
@@ -52,6 +49,9 @@ namespace Menro.Infrastructure.Services
             }
 
             await WriteVariantsAsync(cfg, fileBytes, fileName, ext, entityId, ct);
+
+            if (!string.IsNullOrEmpty(oldFileName))
+                DeleteAllVariants(cfg, oldFileName, entityId);
 
             return new MediaSaveResult(fileName, GetUrl(category, fileName, entityId));
         }

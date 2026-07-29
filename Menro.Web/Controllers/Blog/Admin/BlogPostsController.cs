@@ -14,14 +14,12 @@ namespace Menro.Web.Controllers.Blog.Admin
     {
         #region DI
         private readonly IBlogPostService _service;
-
         public BlogPostsController(IBlogPostService service)
         {
             _service = service;
         }
         #endregion
 
-        // GET api/admin/blog/posts?search=...&categoryId=...&tagId=...&page=1&pageSize=20
         [HttpGet]
         public async Task<ActionResult<PagedResult<BlogPostResponse>>> GetAll(
             [FromQuery] string? search,
@@ -43,40 +41,26 @@ namespace Menro.Web.Controllers.Blog.Admin
             return post is null ? NotFound() : Ok(post);
         }
 
-        // POST api/admin/blog/posts/cover-image
-        [HttpPost("cover-image")]
-        [Consumes("multipart/form-data")]
-        public async Task<ActionResult<object>> UploadCoverImage(
-            [FromForm] IFormFile file,
-            [FromForm] string? oldFileName,
-            CancellationToken ct)
-        {
-            if (file is null || file.Length == 0)
-                return BadRequest("فایلی ارسال نشده است.");
-
-            var result = await _service.UploadCoverImageAsync(file, oldFileName, ct);
-            return Ok(new { fileName = result.FileName, url = result.Url });
-        }
-
-        // POST api/admin/blog/posts
+        // POST api/admin/blog/posts - multipart: فیلدها + عکس (اختیاری) با هم
         [HttpPost]
+        [Consumes("multipart/form-data")]
         public async Task<ActionResult<BlogPostResponse>> Create(
-            [FromBody] CreateBlogPostRequest request, CancellationToken ct)
+            [FromForm] CreateBlogPostRequest request, CancellationToken ct)
         {
             var created = await _service.CreateAsync(request, ct);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
+        // PUT api/admin/blog/posts/{id} - multipart: فیلدها + عکس (اختیاری) + RemoveImage با هم
         [HttpPut("{id:guid}")]
+        [Consumes("multipart/form-data")]
         public async Task<ActionResult<BlogPostResponse>> Update(
-            Guid id, [FromBody] UpdateBlogPostRequest request, CancellationToken ct)
+            Guid id, [FromForm] UpdateBlogPostRequest request, CancellationToken ct)
         {
             var updated = await _service.UpdateAsync(id, request, ct);
             return updated is null ? NotFound() : Ok(updated);
         }
 
-        // PATCH api/admin/blog/posts/{id}/publish - toggles published/draft, mirrors
-        // the click-to-toggle status chip in the admin table.
         [HttpPatch("{id:guid}/publish")]
         public async Task<ActionResult<BlogPostResponse>> TogglePublish(Guid id, CancellationToken ct)
         {

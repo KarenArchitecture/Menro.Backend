@@ -216,7 +216,7 @@ namespace Menro.Application.Features.Users.Services.Implementations
                 PhoneNumber = user.PhoneNumber ?? "",
                 ProfileImageUrl = string.IsNullOrEmpty(user.ProfileImage)
                     ? null
-                    : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage),
+                    : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage, entityId: user.Id, variant: MediaVariant.Resized),
                 HasPassword = await _userManager.HasPasswordAsync(user)
             };
         }
@@ -231,16 +231,12 @@ namespace Menro.Application.Features.Users.Services.Implementations
 
                 if (dto.ProfileImage != null)
                 {
-                    var result = await _mediaStorage.SaveAsync(
-                        MediaCategory.UserProfileImage,
-                        dto.ProfileImage,
-                        oldFileName: user.ProfileImage);
-
+                    var result = await _mediaStorage.SaveAsync(MediaCategory.UserProfileImage, dto.ProfileImage, entityId: userId, oldFileName: user.ProfileImage);
                     user.ProfileImage = result.FileName;
                 }
                 else if (dto.RemoveProfileImage && !string.IsNullOrEmpty(user.ProfileImage))
                 {
-                    _mediaStorage.Delete(MediaCategory.UserProfileImage, user.ProfileImage);
+                    _mediaStorage.Delete(MediaCategory.UserProfileImage, user.ProfileImage, entityId: userId);
                     user.ProfileImage = null;
                 }
 

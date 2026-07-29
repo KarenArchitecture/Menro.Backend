@@ -39,45 +39,38 @@ namespace Menro.Application.Features.Landing.Services.Implementations
             Validate(request);
 
             var entity = await _repository.GetOrCreateAsync();
+            string? newFileName = null;
 
-            // If the admin removed the image (saved with an empty file name)
-            // without uploading a replacement, clean up the orphaned file.
-            // Replacement uploads are already handled at upload time - see
-            // UploadHeroImageAsync below - so we don't double-delete here.
-            var isRemovingWithoutReplacement =
-                !string.IsNullOrWhiteSpace(entity.HeroImageFileName) &&
-                string.IsNullOrWhiteSpace(request.HeroImageFileName);
-
-            if (isRemovingWithoutReplacement)
+            if (request.HeroImage is { Length: > 0 })
             {
-                _mediaStorage.Delete(MediaCategory.LandingHeroImage, entity.HeroImageFileName!);
+                var result = await _mediaStorage.SaveAsync(MediaCategory.LandingHeroImage, request.HeroImage, oldFileName: entity.HeroImageFileName);
+                newFileName = result.FileName;
+                entity.HeroImageFileName = newFileName;
+            }
+            else if (request.RemoveHeroImage && !string.IsNullOrWhiteSpace(entity.HeroImageFileName))
+            {
+                _mediaStorage.Delete(MediaCategory.LandingHeroImage, entity.HeroImageFileName);
+                entity.HeroImageFileName = null;
             }
 
             entity.HeroHighlight = request.HeroHighlight.Trim();
             entity.HeroTitle = request.HeroTitle.Trim();
             entity.SpotlightTitle = request.SpotlightTitle.Trim();
-            entity.HeroImageFileName = string.IsNullOrWhiteSpace(request.HeroImageFileName)
-                ? null
-                : request.HeroImageFileName;
             entity.UpdatedAtUtc = DateTime.UtcNow;
 
-            await _repository.UpdateAsync(entity);
+            try
+            {
+                await _repository.UpdateAsync(entity);
+            }
+            catch
+            {
+                if (newFileName != null)
+                    _mediaStorage.Delete(MediaCategory.LandingHeroImage, newFileName);
+                throw;
+            }
+
             return MapToResponse(entity);
         }
-
-        public async Task<UploadLandingHeroImageResponse> UploadHeroImageAsync(IFormFile file, string? oldFileName)
-        {
-            if (file is null || file.Length == 0)
-                throw new ArgumentException("فایلی برای آپلود ارسال نشده است.", nameof(file));
-
-            // SaveAsync deletes oldFileName as part of the same call -
-            // same convention as blog post covers.
-            var result = await _mediaStorage.SaveAsync(
-                MediaCategory.LandingHeroImage, file, oldFileName: oldFileName);
-
-            return new UploadLandingHeroImageResponse(result.FileName, result.Url);
-        }
-
         private static void Validate(UpdateLandingGeneralRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.HeroHighlight))

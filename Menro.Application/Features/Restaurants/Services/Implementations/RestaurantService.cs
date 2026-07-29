@@ -268,11 +268,12 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
         }
 
         // restaurant profile
-
         public async Task<RestaurantProfileDto?> GetRestaurantProfileAsync(int id)
         {
             var r = await _uow.Restaurant.GetRestaurantProfileAsync(id);
             if (r == null) return null;
+
+            var entityId = r.Id.ToString();
 
             return new RestaurantProfileDto
             {
@@ -288,15 +289,15 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
 
                 BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl)
                     ? null
-                    : _mediaStorage.GetUrl(MediaCategory.RestaurantHomeBanner, r.BannerImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantHomeBanner, r.BannerImageUrl, entityId, MediaVariant.Resized),
 
                 ShopBannerImageUrl = string.IsNullOrWhiteSpace(r.ShopBannerImageUrl)
                     ? null
-                    : _mediaStorage.GetUrl(MediaCategory.RestaurantShopBanner, r.ShopBannerImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantShopBanner, r.ShopBannerImageUrl, entityId, MediaVariant.Resized),
 
                 LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl)
                     ? null
-                    : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, r.LogoImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, r.LogoImageUrl, entityId, MediaVariant.Resized),
 
                 SubscriptionType = r.Subscription?.SubscriptionPlan.Name,
                 SubscriptionDaysLeft = r.Subscription != null
@@ -311,9 +312,8 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
             if (restaurant == null)
                 throw new Exception("Restaurant not found");
 
-            /*----------------------------------------------
-             *      Update simple fields
-             *----------------------------------------------*/
+            var entityId = restaurant.Id.ToString();
+
             restaurant.Name = dto.Name;
             restaurant.RestaurantCategoryId = dto.RestaurantCategoryId;
             restaurant.Address = dto.Address;
@@ -324,44 +324,38 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
             restaurant.OpenTime = TimeSpan.Parse(dto.OpenTime);
             restaurant.CloseTime = TimeSpan.Parse(dto.CloseTime);
 
-            /*----------------------------------------------
-             *      Update / remove images
-             *----------------------------------------------*/
             if (dto.HomeBanner != null)
-                restaurant.BannerImageUrl = await UploadImageAsync(MediaCategory.RestaurantHomeBanner, restaurant.BannerImageUrl, dto.HomeBanner);
+                restaurant.BannerImageUrl = await UploadImageAsync(MediaCategory.RestaurantHomeBanner, entityId, restaurant.BannerImageUrl, dto.HomeBanner);
             else if (dto.RemoveHomeBanner)
-                restaurant.BannerImageUrl = RemoveImage(MediaCategory.RestaurantHomeBanner, restaurant.BannerImageUrl);
+                restaurant.BannerImageUrl = RemoveImage(MediaCategory.RestaurantHomeBanner, entityId, restaurant.BannerImageUrl);
 
             if (dto.ShopBanner != null)
-                restaurant.ShopBannerImageUrl = await UploadImageAsync(MediaCategory.RestaurantShopBanner, restaurant.ShopBannerImageUrl, dto.ShopBanner);
+                restaurant.ShopBannerImageUrl = await UploadImageAsync(MediaCategory.RestaurantShopBanner, entityId, restaurant.ShopBannerImageUrl, dto.ShopBanner);
             else if (dto.RemoveShopBanner)
-                restaurant.ShopBannerImageUrl = RemoveImage(MediaCategory.RestaurantShopBanner, restaurant.ShopBannerImageUrl);
+                restaurant.ShopBannerImageUrl = RemoveImage(MediaCategory.RestaurantShopBanner, entityId, restaurant.ShopBannerImageUrl);
 
             if (dto.Logo != null)
-                restaurant.LogoImageUrl = await UploadImageAsync(MediaCategory.RestaurantLogo, restaurant.LogoImageUrl, dto.Logo);
+                restaurant.LogoImageUrl = await UploadImageAsync(MediaCategory.RestaurantLogo, entityId, restaurant.LogoImageUrl, dto.Logo);
             else if (dto.RemoveLogo)
-                restaurant.LogoImageUrl = RemoveImage(MediaCategory.RestaurantLogo, restaurant.LogoImageUrl);
-            /*----------------------------------------------
-             *      Save changes
-             *----------------------------------------------*/
+                restaurant.LogoImageUrl = RemoveImage(MediaCategory.RestaurantLogo, entityId, restaurant.LogoImageUrl);
+
             await _uow.SaveChangesAsync();
         }
-
         /*----------------------------------------------
          *      MEDIA UPLOAD HELPERS
          *      هرکدوم صرفاً مسئول ذخیره‌ی یک نوع عکسه
          *      (حذف فایل قدیم به‌صورت خودکار توسط provider انجام میشه)
          *----------------------------------------------*/
-        private async Task<string> UploadImageAsync(MediaCategory category, string? oldFileName, IFormFile file)
+        private async Task<string> UploadImageAsync(MediaCategory category, string entityId, string? oldFileName, IFormFile file)
         {
-            var result = await _mediaStorage.SaveAsync(category, file, oldFileName: oldFileName);
+            var result = await _mediaStorage.SaveAsync(category, file, entityId, oldFileName: oldFileName);
             return result.FileName;
         }
 
-        private string? RemoveImage(MediaCategory category, string? oldFileName)
+        private string? RemoveImage(MediaCategory category, string entityId, string? oldFileName)
         {
             if (!string.IsNullOrEmpty(oldFileName))
-                _mediaStorage.Delete(category, oldFileName);
+                _mediaStorage.Delete(category, oldFileName, entityId);
             return null;
         }
 

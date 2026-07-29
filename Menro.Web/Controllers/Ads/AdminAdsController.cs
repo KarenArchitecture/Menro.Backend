@@ -25,21 +25,12 @@ namespace Menro.Web.Controllers.Ads
         }
         #endregion
 
-        /* ad reservation by OWNER */
-        [HttpPost("upload-ad-image")]
+        [HttpPost("addAd")]
         [Consumes("multipart/form-data")]
         [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> UploadAdImage([FromForm] UploadAdImageDto dto)
+        public async Task<IActionResult> Create([FromForm] ReserveRestaurantAdDto dto)
         {
-            string fileName = await _service.UploadAdImageAsync(dto.File, dto.PlacementType);
-            return Ok(fileName);
-        }
-
-        [HttpPost("addAd")]
-        [Authorize(Roles = SD.Role_Owner)]
-        public async Task<IActionResult> Create([FromBody] ReserveRestaurantAdDto dto)
-        {
-            if (dto.ImageFileName == null)
+            if (dto.Image == null || dto.Image.Length == 0)
                 return BadRequest(new { message = "تصویر تبلیغ نباید خالی باشد" });
 
             int restaurantId = await _currentUserService.GetRestaurantIdAsync();
@@ -47,11 +38,18 @@ namespace Menro.Web.Controllers.Ads
                 return BadRequest(new { message = "مشخصات رستوران متقاضی یافت نشد" });
             dto.RestaurantId = restaurantId;
 
-            bool resutl = await _service.CreateAsync(dto);
-            if (!resutl)
-                return BadRequest(new { message = "عملیات ناموفق" });
+            try
+            {
+                bool result = await _service.CreateAsync(dto);
+                if (!result)
+                    return BadRequest(new { message = "رستوران مورد نظر یافت نشد" });
 
-            return Ok();
+                return Ok();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
 

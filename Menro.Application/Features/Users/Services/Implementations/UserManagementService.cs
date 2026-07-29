@@ -82,9 +82,8 @@ namespace Menro.Application.Features.Users.Services.Implementations
             if (rolesToRemove.Count > 0)
             {
                 var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
-                //if (!removeResult.Succeeded)
-                    throw new InvalidOperationException(
-                        string.Join(" ", removeResult.Errors.Select(e => e.Description)));
+                if (!removeResult.Succeeded)
+                    throw new InvalidOperationException(string.Join(" ", removeResult.Errors.Select(e => e.Description)));
             }
 
             if (rolesToAdd.Count > 0)
@@ -102,9 +101,9 @@ namespace Menro.Application.Features.Users.Services.Implementations
         {
             Id = user.Id,
             FullName = user.FullName,
-            ProfileImageUrl = string.IsNullOrWhiteSpace(user.ProfileImage)
-                ? null
-                : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage),
+            ProfileImageUrl = string.IsNullOrWhiteSpace(user.ProfileImage) 
+            ? null 
+            : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage, entityId: user.Id, variant: MediaVariant.Thumbnail),
             PhoneNumber = NormalizePhoneNumber(user.PhoneNumber),
             Roles = roles.ToList(),
         };
@@ -115,8 +114,8 @@ namespace Menro.Application.Features.Users.Services.Implementations
             FullName = user.FullName,
             UserName = user.UserName,
             ProfileImageUrl = string.IsNullOrWhiteSpace(user.ProfileImage)
-                ? null
-                : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage),
+            ? null 
+            : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage, entityId: user.Id, variant: MediaVariant.Resized),
             Email = user.Email,
             PhoneNumber = NormalizePhoneNumber(user.PhoneNumber),
             EmailConfirmed = user.EmailConfirmed,

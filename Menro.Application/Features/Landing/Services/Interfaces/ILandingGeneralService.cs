@@ -14,6 +14,5 @@ namespace Menro.Application.Features.Landing.Services.Interfaces
         /// provided - deletes the previous one, same convention as
         /// BlogPostsController's cover image upload.
         /// </summary>
-        Task<UploadLandingHeroImageResponse> UploadHeroImageAsync(IFormFile file, string? oldFileName);
     }
 }

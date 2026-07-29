@@ -42,7 +42,7 @@ namespace Menro.Application.Features.Ads.Services
                     RestaurantId = a.RestaurantId,
                     RestaurantName = a.Restaurant.Name,
                     Slug = a.Restaurant.Slug,
-                    ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantAdCarousel, a.ImageFileName),
+                    ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantAdCarousel, a.ImageFileName, a.RestaurantId.ToString()),
                     TargetUrl = NormalizeTargetUrl(a.TargetUrl)
                 });
             }
@@ -72,7 +72,7 @@ namespace Menro.Application.Features.Ads.Services
                 RestaurantId = ad.RestaurantId,
                 RestaurantName = ad.Restaurant.Name,
                 Slug = ad.Restaurant.Slug,
-                ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantAdBanner, ad.ImageFileName),
+                ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantAdBanner, ad.ImageFileName, ad.RestaurantId.ToString()),
                 CommercialText = ad.CommercialText,
                 TargetUrl = NormalizeTargetUrl(ad.TargetUrl)
             };

@@ -23,25 +23,20 @@ namespace Menro.Application.Features.Foods.Services.Implementations
             _cCategoryRepository = cCategoryRepository;
             _mediaStorage = mediaStorage;
         }
-
         #endregion
 
-        public async Task<string> UploadFoodImageAsync(IFormFile file)
-        {
-            var result = await _mediaStorage.SaveAsync(MediaCategory.RestaurantFoodImage, file);
-            return result.FileName;
-        }
         public async Task<bool> AddFoodAsync(CreateFoodDto dto, int restaurantId)
         {
             if (dto is null) throw new ArgumentNullException(nameof(dto));
 
             int? gCat = _cCategoryRepository.GetByIdAsync(dto.FoodCategoryId).Result.GlobalCategoryId;
+
             var food = new Food
             {
                 Name = dto.Name.Trim(),
                 Ingredients = string.IsNullOrWhiteSpace(dto.Ingredients) ? null : dto.Ingredients.Trim(),
                 Price = dto.HasVariants ? 0 : dto.Price,
-                ImageUrl = dto.ImageName ?? string.Empty,
+                ImageUrl = string.Empty,
                 CustomFoodCategoryId = dto.FoodCategoryId,
                 GlobalFoodCategoryId = gCat,
                 RestaurantId = restaurantId,
@@ -53,7 +48,6 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                         Name = v.Name.Trim(),
                         Price = v.Price,
                         IsDefault = v.IsDefault,
-
                         Addons = v.Addons?.Select(a => new FoodAddon
                         {
                             Name = a.Name.Trim(),
@@ -63,8 +57,26 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                     : new List<FoodVariant>()
             };
 
-            return await _repository.AddFoodAsync(food);
+            // مرحله ۱: ساخت رکورد بدون عکس - برای گرفتن Id واقعی (auto-increment)
+            var created = await _repository.AddFoodAsync(food);
 
+            if (dto.ImageFile is null || dto.ImageFile.Length == 0)
+                return true;
+
+            var entityId = created.Id.ToString();
+            try
+            {
+                var uploadResult = await _mediaStorage.SaveAsync(MediaCategory.RestaurantFoodImage, dto.ImageFile, entityId);
+                created.ImageUrl = uploadResult.FileName;
+                await _repository.UpdateFoodAsync(created); // اگه اینجا exception بده، catch پایین می‌گیرتش
+                return true;
+            }
+            catch
+            {
+                // rollback واقعی: غذایی که هیچ‌وقت از دید کاربر "کامل" نبوده، کاملاً حذف بشه (نه soft delete)
+                await _repository.RemoveFoodHardAsync(created.Id);
+                throw;
+            }
         }
 
         public async Task<List<FoodsListItemDto>> GetFoodsListAsync(int restaurantId)
@@ -73,20 +85,15 @@ namespace Menro.Application.Features.Foods.Services.Implementations
 
             return foods.Select(f =>
             {
-                // قیمت نمایش داده شده
                 int displayPrice;
-
                 if (!f.Variants.Any())
                 {
                     displayPrice = f.Price;
                 }
                 else
                 {
-                    var defaultVariant = f.Variants
-                        .FirstOrDefault(v => v.IsDefault == true);
-
-                    displayPrice = defaultVariant?.Price
-                        ?? f.Variants.First().Price; // fallback
+                    var defaultVariant = f.Variants.FirstOrDefault(v => v.IsDefault == true);
+                    displayPrice = defaultVariant?.Price ?? f.Variants.First().Price;
                 }
 
                 return new FoodsListItemDto
@@ -97,12 +104,12 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                     FoodCategoryName = f.CustomFoodCategory?.Name ?? "بدون دسته‌بندی",
                     IsAvailable = f.IsAvailable,
                     ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
-                    ? null :
-                    _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl),
+                        ? null
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl, f.Id.ToString(), MediaVariant.Thumbnail),
                 };
-
             }).ToList();
         }
+
         public async Task<FoodDetailsDto?> GetFoodDetailsAsync(int foodId, int restaurantId)
         {
             var food = await _repository.GetFoodForAdminAsync(foodId);
@@ -117,30 +124,31 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                 ImageName = food.ImageUrl,
                 ImageUrl = string.IsNullOrWhiteSpace(food.ImageUrl)
                     ? null
-                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, food.ImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, food.ImageUrl, food.Id.ToString(), MediaVariant.Resized),
                 FoodCategoryId = food.CustomFoodCategoryId!.Value,
                 HasVariants = food.Variants.Any(),
                 Variants = (food.Variants ?? Enumerable.Empty<FoodVariant>())
-                .Select(v => new FoodVariantDetailsDto
-                {
-                    Id = v.Id,
-                    Name = v.Name,
-                    Price = v.Price,
-                    IsDefault = v.IsDefault,
-                    Addons = (v.Addons ?? Enumerable.Empty<FoodAddon>())
-                        .Select(a => new FoodAddonDetailsDto
-                        {
-                            Id = a.Id,
-                            Name = a.Name,
-                            ExtraPrice = a.ExtraPrice
-                        })
-                        .ToList()
-                })
-                .ToList()
+                    .Select(v => new FoodVariantDetailsDto
+                    {
+                        Id = v.Id,
+                        Name = v.Name,
+                        Price = v.Price,
+                        IsDefault = v.IsDefault,
+                        Addons = (v.Addons ?? Enumerable.Empty<FoodAddon>())
+                            .Select(a => new FoodAddonDetailsDto
+                            {
+                                Id = a.Id,
+                                Name = a.Name,
+                                ExtraPrice = a.ExtraPrice
+                            })
+                            .ToList()
+                    })
+                    .ToList()
             };
 
             return dto;
         }
+
         public async Task<bool> UpdateFoodAsync(UpdateFoodDto dto)
         {
             if (dto is null)
@@ -150,57 +158,54 @@ namespace Menro.Application.Features.Foods.Services.Implementations
             if (food == null)
                 throw new KeyNotFoundException("غذا یافت نشد.");
 
-            // -----------------------------
-            // Update main food fields
-            // -----------------------------
             food.Name = dto.Name.Trim();
             food.Ingredients = string.IsNullOrWhiteSpace(dto.Ingredients)
                 ? null
                 : dto.Ingredients.Trim();
 
-
-            // new image / removed / no change
-            if (string.IsNullOrEmpty(dto.ImageName))
+            // -----------------------------
+            // Image: remove / replace / unchanged
+            // -----------------------------
+            if (dto.RemoveImage)
             {
                 if (!string.IsNullOrEmpty(food.ImageUrl))
-                    _mediaStorage.Delete(MediaCategory.RestaurantFoodImage, food.ImageUrl);
+                    _mediaStorage.Delete(MediaCategory.RestaurantFoodImage, food.ImageUrl, food.Id.ToString());
                 food.ImageUrl = string.Empty;
             }
-            else if (food.ImageUrl != dto.ImageName)
+            else if (dto.ImageFile is not null && dto.ImageFile.Length > 0)
             {
-                if (!string.IsNullOrEmpty(food.ImageUrl))
-                    _mediaStorage.Delete(MediaCategory.RestaurantFoodImage, food.ImageUrl);
-                food.ImageUrl = dto.ImageName;
-            }
+                // SaveAsync خودش قبل از نوشتن فایل جدید، نسخه‌ی قدیمی (همه‌ی وریانت‌هاش) رو پاک می‌کنه
+                var uploadResult = await _mediaStorage.SaveAsync(
+                    MediaCategory.RestaurantFoodImage,
+                    dto.ImageFile,
+                    food.Id.ToString(),
+                    oldFileName: string.IsNullOrEmpty(food.ImageUrl) ? null : food.ImageUrl);
 
-            /*--*/
+                food.ImageUrl = uploadResult.FileName;
+            }
+            // else: نه ImageFile اومده نه RemoveImage - عکس فعلی دست‌نخورده می‌مونه
 
             food.CustomFoodCategoryId = dto.FoodCategoryId;
             food.Price = dto.HasVariants ? 0 : dto.Price;
 
             // -----------------------------
-            // Handle Variants
+            // Handle Variants (دست‌نخورده)
             // -----------------------------
             if (!dto.HasVariants)
             {
-                // اگر قبلاً variant داشت → همه را soft delete کن
                 foreach (var v in food.Variants)
                 {
                     v.IsDeleted = true;
                     v.IsAvailable = false;
-
                     foreach (var a in v.Addons)
                         a.IsDeleted = true;
                 }
-
                 return await _repository.UpdateFoodAsync(food);
             }
 
             if (dto.Variants is null || !dto.Variants.Any())
                 throw new Exception("حداقل یک نوع غذا باید مشخص شود.");
 
-
-            // --- Step 1: حذف Variant هایی که در dto نیستند (✅ soft delete)
             var dtoVariantIds = dto.Variants
                 .Where(v => v.Id.HasValue)
                 .Select(v => v.Id!.Value)
@@ -208,27 +213,22 @@ namespace Menro.Application.Features.Foods.Services.Implementations
 
             var variantsToRemove = food.Variants
                 .Where(v => !dtoVariantIds.Contains(v.Id) && !v.IsDeleted)
-                .ToList(); // ToList برای safe remove
+                .ToList();
 
             foreach (var v in variantsToRemove)
             {
                 v.IsDeleted = true;
                 v.IsAvailable = false;
-
                 foreach (var a in v.Addons)
                     a.IsDeleted = true;
             }
 
-
-            // --- Step 2: Add/Update Variants
             foreach (var vDto in dto.Variants)
             {
                 var existing = food.Variants.FirstOrDefault(v => v.Id == vDto.Id);
 
-                // add new variants
                 if (existing == null)
                 {
-                    // --- Add new Variant ---
                     var newVariant = new FoodVariant
                     {
                         Name = vDto.Name.Trim(),
@@ -239,7 +239,6 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                         Addons = new List<FoodAddon>()
                     };
 
-                    // Add Addons
                     foreach (var aDto in vDto.Addons ?? Enumerable.Empty<FoodAddonDto>())
                     {
                         newVariant.Addons.Add(new FoodAddon
@@ -252,26 +251,19 @@ namespace Menro.Application.Features.Foods.Services.Implementations
 
                     food.Variants.Add(newVariant);
                 }
-                // update existing variants
                 else
                 {
                     existing.Name = vDto.Name.Trim();
                     existing.Price = vDto.Price;
                     existing.IsDefault = vDto.IsDefault;
-
-                    existing.IsDeleted = false;   // ✅ restore اگر قبلاً soft delete شده بود
+                    existing.IsDeleted = false;
                     existing.IsAvailable = true;
-
-                    // -----------------------------
-                    // Sync Addons (Add/Update/Delete)
-                    // -----------------------------
 
                     var dtoAddonIds = (vDto.Addons ?? new List<FoodAddonDto>())
                         .Where(a => a.Id.HasValue)
                         .Select(a => a.Id!.Value)
                         .ToHashSet();
 
-                    // Delete removed addons (✅ soft delete)
                     var addonsToRemove = existing.Addons
                         .Where(a => !dtoAddonIds.Contains(a.Id) && !a.IsDeleted)
                         .ToList();
@@ -279,12 +271,10 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                     foreach (var a in addonsToRemove)
                         a.IsDeleted = true;
 
-                    // Add or update addons
                     foreach (var aDto in vDto.Addons ?? Enumerable.Empty<FoodAddonDto>())
                     {
                         var existingAddon = existing.Addons.FirstOrDefault(a => a.Id == aDto.Id);
 
-                        // add new addons
                         if (existingAddon == null)
                         {
                             existing.Addons.Add(new FoodAddon
@@ -294,12 +284,11 @@ namespace Menro.Application.Features.Foods.Services.Implementations
                                 IsDeleted = false
                             });
                         }
-                        // update existing addons
                         else
                         {
                             existingAddon.Name = aDto.Name.Trim();
                             existingAddon.ExtraPrice = aDto.ExtraPrice;
-                            existingAddon.IsDeleted = false; // ✅ restore
+                            existingAddon.IsDeleted = false;
                         }
                     }
                 }
@@ -311,14 +300,10 @@ namespace Menro.Application.Features.Foods.Services.Implementations
         public async Task<bool> ToggleFoodStatusAsync(int foodId, int restaurantId)
         {
             var food = await _repository.GetFoodAsync(foodId);
+            if (food == null) return false;
+            if (food.RestaurantId != restaurantId) return false;
 
-            if (food == null)
-                return false;
-
-            if (food.RestaurantId != restaurantId)
-                return false;
             food.IsAvailable = !food.IsAvailable;
-
             return await _repository.UpdateFoodAsync(food);
         }
 

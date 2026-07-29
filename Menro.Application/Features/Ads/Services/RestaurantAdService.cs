@@ -27,51 +27,47 @@ namespace Menro.Application.Features.Ads.Services
         }
         #endregion
 
-        public async Task<string> UploadAdImageAsync(IFormFile file, AdPlacementType placementType)
+        public async Task<string> UploadAdImageAsync(IFormFile file, AdPlacementType placementType, int restaurantId)
         {
-            var result = await _mediaStorage.SaveAsync(AdMediaCategoryResolver.Resolve(placementType), file);
+            var result = await _mediaStorage.SaveAsync(AdMediaCategoryResolver.Resolve(placementType), file, restaurantId.ToString());
             return result.FileName;
         }
 
         public async Task<bool> CreateAsync(ReserveRestaurantAdDto dto)
         {
+            Restaurant? restaurant = await _restaurantRepository.GetByIdAsync(dto.RestaurantId);
+            if (restaurant == null) return false;
+
+            var category = AdMediaCategoryResolver.Resolve(dto.PlacementType);
+            var uploadResult = await _mediaStorage.SaveAsync(category, dto.Image, dto.RestaurantId.ToString());
+
+            var ad = new RestaurantAd
+            {
+                RestaurantId = dto.RestaurantId,
+                PlacementType = dto.PlacementType,
+                BillingType = dto.BillingType,
+                ImageFileName = uploadResult.FileName,
+                TargetUrl = restaurant.Slug,
+                CommercialText = dto.CommercialText,
+                PurchasedUnits = dto.PurchasedUnits,
+                Cost = dto.Cost,
+                Status = AdStatus.Pending,
+                StartDate = DateTime.UtcNow,
+            };
+
+            ad.EndDate = dto.BillingType == AdBillingType.PerDay ? ad.StartDate.AddDays(dto.PurchasedUnits) : ad.StartDate.AddMonths(6);
+
             try
             {
-                Restaurant? restaurant = await _restaurantRepository.GetByIdAsync(dto.RestaurantId);
-                if (restaurant == null) return false;
-
-                var ad = new RestaurantAd
-                {
-                    RestaurantId = dto.RestaurantId,
-                    PlacementType = dto.PlacementType,
-                    BillingType = dto.BillingType,
-                    ImageFileName = dto.ImageFileName,
-                    TargetUrl = restaurant.Slug,
-                    CommercialText = dto.CommercialText,
-                    PurchasedUnits = dto.PurchasedUnits,
-                    Cost = dto.Cost,
-                    Status = AdStatus.Pending,
-                };
-
-                ad.StartDate = DateTime.UtcNow;
-
-                if (dto.BillingType == AdBillingType.PerDay)
-                {
-                    ad.EndDate = ad.StartDate.AddDays(dto.PurchasedUnits);
-                }
-                else
-                {
-                    // هر نوع تبلیغات دیگری، تا حداکثر شش ماه اعتبار دارد
-                    ad.EndDate = ad.StartDate.AddMonths(6);
-                }
-
                 await _repository.AddAdAsync(ad);
-                return true;
             }
-            catch (Exception)
+            catch
             {
-                return false;
+                _mediaStorage.Delete(category, uploadResult.FileName, dto.RestaurantId.ToString());
+                throw;
             }
+
+            return true;
         }
         public async Task<List<RestaurantAdListItemDto>> GetByRestaurantAsync(int restaurantId)
         {
@@ -82,7 +78,7 @@ namespace Menro.Application.Features.Ads.Services
                 Id = a.Id,
                 PlacementType = a.PlacementType,
                 BillingType = a.BillingType,
-                ImageUrl = _mediaStorage.GetUrl(AdMediaCategoryResolver.Resolve(a.PlacementType), a.ImageFileName),
+                ImageUrl = _mediaStorage.GetUrl(AdMediaCategoryResolver.Resolve(a.PlacementType), a.ImageFileName, a.RestaurantId.ToString()),
                 PurchasedUnits = a.PurchasedUnits,
                 ConsumedUnits = a.ConsumedUnits,
                 StartDate = a.StartDate,
@@ -106,7 +102,7 @@ namespace Menro.Application.Features.Ads.Services
                 Cost = ad.Cost,
                 PurchasedUnits = ad.PurchasedUnits,
                 TargetUrl = ad.TargetUrl ?? "--no link--",
-                ImageUrl = _mediaStorage.GetUrl(AdMediaCategoryResolver.Resolve(ad.PlacementType), ad.ImageFileName),
+                ImageUrl = _mediaStorage.GetUrl(AdMediaCategoryResolver.Resolve(ad.PlacementType), ad.ImageFileName, ad.RestaurantId.ToString()),
                 CommercialText = ad.CommercialText ?? "--no commercial text--",
                 CreatedAt = ad.StartDate,
                 CreatedAtShamsi = _globalDateTimeService.ToPersianDateTimeString(ad.CreatedAt)
@@ -149,7 +145,7 @@ namespace Menro.Application.Features.Ads.Services
                 Cost = ad.Cost,
                 PurchasedUnits = ad.PurchasedUnits,
                 TargetUrl = ad.TargetUrl,
-                ImageUrl = _mediaStorage.GetUrl(AdMediaCategoryResolver.Resolve(ad.PlacementType), ad.ImageFileName),
+                ImageUrl = _mediaStorage.GetUrl(AdMediaCategoryResolver.Resolve(ad.PlacementType), ad.ImageFileName, ad.RestaurantId.ToString()),
                 CommercialText = ad.CommercialText,
                 CreatedAt = ad.CreatedAt,
                 CreatedAtShamsi = _globalDateTimeService.ConvertToPersian(ad.CreatedAt),

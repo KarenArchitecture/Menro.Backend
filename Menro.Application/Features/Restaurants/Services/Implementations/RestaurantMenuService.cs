@@ -71,8 +71,7 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                                 Price = displayPrice,
                                 ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
                                     ? null
-                                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl),
-
+                                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl, f.Id.ToString(), MediaVariant.Thumbnail),
                                 Rating = f.AverageRating,
                                 Voters = f.VotersCount,
 
