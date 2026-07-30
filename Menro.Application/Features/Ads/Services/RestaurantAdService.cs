@@ -154,6 +154,67 @@ namespace Menro.Application.Features.Ads.Services
             }).ToList();
         }
 
+        // my ads
+        public async Task<List<MyAdItemDto>> GetMyPendingAdsAsync(int restaurantId)
+        {
+            var ads = await _repository.GetByRestaurantAsync(restaurantId);
+
+            return ads
+                .Where(a => a.Status == AdStatus.Pending)
+                .OrderByDescending(a => a.CreatedAt)
+                .Select(MapToMyAdItemDto)
+                .ToList();
+        }
+
+        public async Task<List<MyAdItemDto>> GetMyActiveAdsAsync(int restaurantId)
+        {
+            var now = DateTime.UtcNow;
+            var ads = await _repository.GetByRestaurantAsync(restaurantId);
+
+            return ads
+                .Where(a => a.Status == AdStatus.Approved
+                         && a.EndDate >= now
+                         && a.ConsumedUnits < a.PurchasedUnits)
+                .OrderBy(a => a.EndDate) // زودتر تمام‌شونده‌ها اول
+                .Select(MapToMyAdItemDto)
+                .ToList();
+        }
+
+        public async Task<List<MyAdItemDto>> GetMyHistoryAdsAsync(int restaurantId)
+        {
+            var now = DateTime.UtcNow;
+            var ads = await _repository.GetByRestaurantAsync(restaurantId);
+
+            return ads
+                .Where(a => a.Status == AdStatus.Rejected
+                         || (a.Status == AdStatus.Approved
+                             && (a.EndDate < now || a.ConsumedUnits >= a.PurchasedUnits)))
+                .OrderByDescending(a => a.CreatedAt)
+                .Select(MapToMyAdItemDto)
+                .ToList();
+        }
+
+        private MyAdItemDto MapToMyAdItemDto(RestaurantAd ad) => new MyAdItemDto
+        {
+            Id = ad.Id,
+            Placement = ad.PlacementType.ToString(),
+            Billing = ad.BillingType.ToString(),
+            Cost = ad.Cost,
+            PurchasedUnits = ad.PurchasedUnits,
+            ConsumedUnits = ad.ConsumedUnits,
+            ImageUrl = _mediaStorage.GetUrl(
+                AdMediaCategoryResolver.Resolve(ad.PlacementType), ad.ImageFileName, ad.RestaurantId.ToString()),
+            CommercialText = ad.CommercialText,
+            TargetUrl = ad.TargetUrl,
+            Status = ad.Status.ToString(),
+            AdminNotes = ad.AdminNotes,
+            CreatedAt = ad.CreatedAt,
+            CreatedAtShamsi = _globalDateTimeService.ToPersianDateTimeString(ad.CreatedAt),
+            StartDate = ad.StartDate,
+            EndDate = ad.EndDate,
+            StartDateShamsi = _globalDateTimeService.ToPersianDateTimeString(ad.StartDate),
+            EndDateShamsi = _globalDateTimeService.ToPersianDateTimeString(ad.EndDate),
+        };
 
     }
 }
