@@ -70,6 +70,50 @@ namespace Menro.Infrastructure.Repositories
             return await _context.Comments.AnyAsync(c => c.FoodId == foodId && c.UserId == userId);
         }
 
+        public async Task<int> GetApprovedCountByFoodIdAsync(int foodId)
+        {
+            return await _context.Comments
+                .CountAsync(c => c.FoodId == foodId && c.Status == CommentStatus.Approved);
+        }
+
+        public async Task<FoodSummaryResult?> GetFoodSummaryAsync(int foodId)
+        {
+            var food = await _context.Foods
+                .AsNoTracking()
+                .Include(f => f.Restaurant)
+                .FirstOrDefaultAsync(f => f.Id == foodId);
+
+            if (food == null) return null;
+
+            return new FoodSummaryResult
+            {
+                Title = food.Name,
+                ImageUrl = food.ImageUrl,
+                RestaurantName = food.Restaurant?.Name ?? string.Empty,
+                RestaurantSlug = food.Restaurant?.Slug ?? string.Empty
+            };
+        }
+
+        public async Task<List<Comment>> GetByUserIdAsync(string userId)
+        {
+            return await _context.Comments
+                .Where(c => c.UserId == userId)
+                .Include(c => c.Food)
+                    .ThenInclude(f => f.Restaurant)
+                .OrderByDescending(c => c.CreatedAt)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<Dictionary<int, int>> GetApprovedCountsByFoodIdsAsync(IEnumerable<int> foodIds)
+        {
+            return await _context.Comments
+                .Where(c => foodIds.Contains(c.FoodId) && c.Status == CommentStatus.Approved)
+                .GroupBy(c => c.FoodId)
+                .Select(g => new { FoodId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.FoodId, x => x.Count);
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
