@@ -3,20 +3,37 @@ using Menro.Application.Common.Media;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using SkiaSharp;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace Menro.Infrastructure.Services
 {
     public class LocalDiskMediaStorageProvider : IMediaStorageProvider
     {
-        private const int JpegQuality = 85;
 
+        #region DI
         private readonly MediaStorageOptions _options;
 
         public LocalDiskMediaStorageProvider(IOptions<MediaStorageOptions> options)
         {
             _options = options.Value;
         }
+        #endregion
 
+        #region configs
+        private const int WebpQuality = 85;
+        private const int MaxImagePixels = 40_000_000;
+        // دسته‌های تصویری همیشه صرف‌نظر از فرمت آپلودی، به webp نرمالایز می‌شن.
+        // دسته‌های غیرتصویری (svg، صدا) دست‌نخورده با همون پسوند آپلودی ذخیره می‌شن.
+        private static string ResolveStorageExtension(MediaCategoryConfig cfg, string uploadedExt)
+            => cfg.IsImageProcessed ? ".webp" : uploadedExt;
+        private static readonly HashSet<string> DisallowedSvgElements = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "script", "foreignObject", "iframe", "embed", "object", "use",
+        };
+        #endregion
+
+        #region Main
         public async Task<MediaSaveResult> SaveAsync(
             MediaCategory category, IFormFile file, string? entityId = null,
             string? oldFileName = null, CancellationToken ct = default)
@@ -34,7 +51,9 @@ namespace Menro.Infrastructure.Services
 
             ValidateContent(fileBytes, cfg);
 
-            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var uploadedExt = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var storageExt = ResolveStorageExtension(cfg, uploadedExt);
+
             string fileName;
             if (cfg.PreserveOriginalFileName)
             {
@@ -45,32 +64,31 @@ namespace Menro.Infrastructure.Services
             }
             else
             {
-                fileName = $"{Guid.NewGuid()}{ext}";
+                fileName = $"{Guid.NewGuid()}{storageExt}";
             }
 
-            await WriteVariantsAsync(cfg, fileBytes, fileName, ext, entityId, ct);
+            await WriteVariantsAsync(cfg, fileBytes, fileName, entityId, ct);
 
             if (!string.IsNullOrEmpty(oldFileName))
                 DeleteAllVariants(cfg, oldFileName, entityId);
 
             return new MediaSaveResult(fileName, GetUrl(category, fileName, entityId));
         }
-
         public async Task<MediaSaveResult> SaveBytesAsync(
             MediaCategory category, byte[] bytes, string extension, string? entityId = null, CancellationToken ct = default)
         {
             var cfg = MediaCategoryRegistry.All[category];
-            var ext = (extension.StartsWith('.') ? extension : $".{extension}").ToLowerInvariant();
+            var uploadedExt = (extension.StartsWith('.') ? extension : $".{extension}").ToLowerInvariant();
 
-            ValidateBytesMeta(bytes, ext, cfg);
+            ValidateBytesMeta(bytes, uploadedExt, cfg);
             ValidateContent(bytes, cfg);
 
-            var fileName = $"{Guid.NewGuid()}{ext}";
-            await WriteVariantsAsync(cfg, bytes, fileName, ext, entityId, ct);
+            var storageExt = ResolveStorageExtension(cfg, uploadedExt);
+            var fileName = $"{Guid.NewGuid()}{storageExt}";
+            await WriteVariantsAsync(cfg, bytes, fileName, entityId, ct);
 
             return new MediaSaveResult(fileName, GetUrl(category, fileName, entityId));
         }
-
         public bool Delete(MediaCategory category, string fileName, string? entityId = null)
         {
             var cfg = MediaCategoryRegistry.All[category];
@@ -95,6 +113,9 @@ namespace Menro.Infrastructure.Services
             return Path.Combine(_options.RootPath, folder, Path.GetFileName(fileName));
         }
 
+        #endregion
+
+        #region Folder resolution
         /* --- FOLDER RESOLUTION --- */
 
         // layout: {FolderTemplate}[/{entityId}][/original|resized|thumbnail]/{fileName}
@@ -132,39 +153,45 @@ namespace Menro.Infrastructure.Services
             return dir;
         }
 
+
+        #endregion
+
+        #region Write Pipeline
         /* --- WRITE PIPELINE --- */
 
-        private async Task WriteVariantsAsync(MediaCategoryConfig cfg, byte[] bytes, string fileName, string ext, string? entityId, CancellationToken ct)
+        private async Task WriteVariantsAsync(MediaCategoryConfig cfg, byte[] bytes, string fileName, string? entityId, CancellationToken ct)
         {
-            var originalDir = EnsureDir(cfg, entityId, MediaVariant.Original);
-            await File.WriteAllBytesAsync(Path.Combine(originalDir, fileName), bytes, ct);
+            if (!cfg.IsImageProcessed)
+            {
+                var originalDir = EnsureDir(cfg, entityId, MediaVariant.Original);
+                await File.WriteAllBytesAsync(Path.Combine(originalDir, fileName), bytes, ct);
+                return;
+            }
 
-            if (!cfg.IsImageProcessed) return;
-
-            // already validated as a decodable image in ValidateContent, but we need the
-            // decoded bitmap again here to actually generate the resized/thumbnail files.
+            // دسته‌های تصویری در همه‌ی واریانت‌ها (از جمله Original) به webp نرمالایز می‌شن،
+            // صرف‌نظر از فرمتی که آپلود شده - برای یکدست بودن فرمت روی دیسک و صرفه‌جویی حجم در همه‌ی سایزها.
             using var bitmap = SKBitmap.Decode(bytes);
             if (bitmap == null)
                 throw new InvalidOperationException("فایل تصویر معتبر نیست.");
 
-            var format = ExtensionToFormat(ext);
+            var originalDir2 = EnsureDir(cfg, entityId, MediaVariant.Original);
+            SaveVariant(bitmap, bitmap.Width, Path.Combine(originalDir2, fileName));
 
             if (cfg.ResizedWidth.HasValue)
             {
                 var dir = EnsureDir(cfg, entityId, MediaVariant.Resized);
-                SaveVariant(bitmap, cfg.ResizedWidth.Value, format, Path.Combine(dir, fileName));
+                SaveVariant(bitmap, cfg.ResizedWidth.Value, Path.Combine(dir, fileName));
             }
 
             if (cfg.ThumbnailWidth.HasValue)
             {
                 var dir = EnsureDir(cfg, entityId, MediaVariant.Thumbnail);
-                SaveVariant(bitmap, cfg.ThumbnailWidth.Value, format, Path.Combine(dir, fileName));
+                SaveVariant(bitmap, cfg.ThumbnailWidth.Value, Path.Combine(dir, fileName));
             }
         }
-
-        private static void SaveVariant(SKBitmap source, int targetWidth, SKEncodedImageFormat format, string outputPath)
+        private static void SaveVariant(SKBitmap source, int targetWidth, string outputPath)
         {
-            // never upscale: if the original is already smaller than the target, just re-encode as-is
+            // هیچ‌وقت آپ‌اسکیل نکن: اگه اصل تصویر از تارگت کوچیک‌تره، همون سایز اصلی رو دوباره encode کن
             var width = Math.Min(targetWidth, source.Width);
             var height = (int)Math.Round(source.Height * (width / (double)source.Width));
 
@@ -172,18 +199,13 @@ namespace Menro.Infrastructure.Services
             using var resized = source.Resize(new SKImageInfo(width, height), samplingOptions)
                 ?? throw new InvalidOperationException("خطا در تغییر اندازه‌ی تصویر.");
             using var image = SKImage.FromBitmap(resized);
-            using var data = image.Encode(format, JpegQuality);
+            using var data = image.Encode(SKEncodedImageFormat.Webp, WebpQuality);
             using var fs = File.Create(outputPath);
             data.SaveTo(fs);
         }
+        #endregion
 
-        private static SKEncodedImageFormat ExtensionToFormat(string ext) => ext switch
-        {
-            ".png" => SKEncodedImageFormat.Png,
-            ".webp" => SKEncodedImageFormat.Webp,
-            _ => SKEncodedImageFormat.Jpeg
-        };
-
+        #region Delete
         /* --- DELETE --- */
 
         private bool DeleteAllVariants(MediaCategoryConfig cfg, string fileName, string? entityId)
@@ -211,7 +233,9 @@ namespace Menro.Infrastructure.Services
             }
             catch { return false; }
         }
+        #endregion
 
+        #region Validation
         /* --- VALIDATION: metadata (size / claimed extension) --- */
 
         private static void ValidateFileMeta(IFormFile file, MediaCategoryConfig cfg)
@@ -244,8 +268,13 @@ namespace Menro.Infrastructure.Services
         {
             if (cfg.IsImageProcessed)
             {
-                // SKBitmap.Decode returns null for anything that isn't a real, well-formed
-                // raster image -> this alone rejects renamed exe/script/corrupt files.
+                using var codec = SKCodec.Create(new SKMemoryStream(bytes));
+                if (codec == null)
+                    throw new InvalidOperationException("فایل ارسالی یک تصویر معتبر نیست.");
+
+                if ((long)codec.Info.Width * codec.Info.Height > MaxImagePixels)
+                    throw new InvalidOperationException("ابعاد تصویر بیش از حد مجاز است.");
+
                 using var bmp = SKBitmap.Decode(bytes);
                 if (bmp == null)
                     throw new InvalidOperationException("فایل ارسالی یک تصویر معتبر نیست.");
@@ -260,7 +289,6 @@ namespace Menro.Infrastructure.Services
 
             ValidateAudioSignature(bytes);
         }
-
         private static void ValidateSvg(byte[] bytes)
         {
             string content;
@@ -271,17 +299,39 @@ namespace Menro.Infrastructure.Services
             if (!trimmed.Contains("<svg", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException("فایل SVG معتبر نیست.");
 
-            // SVG can carry embedded JS -> block common XSS vectors
-            if (content.Contains("<script", StringComparison.OrdinalIgnoreCase) ||
-                content.Contains("javascript:", StringComparison.OrdinalIgnoreCase) ||
-                content.Contains("onload=", StringComparison.OrdinalIgnoreCase) ||
-                content.Contains("onerror=", StringComparison.OrdinalIgnoreCase) ||
-                content.Contains("<foreignObject", StringComparison.OrdinalIgnoreCase))
+            XDocument doc;
+            try
             {
-                throw new InvalidOperationException("فایل SVG شامل محتوای غیرمجاز است.");
+                using var stringReader = new StringReader(content);
+                using var xmlReader = XmlReader.Create(stringReader, new XmlReaderSettings
+                {
+                    DtdProcessing = DtdProcessing.Prohibit,
+                    XmlResolver = null,
+                });
+                doc = XDocument.Load(xmlReader);
+            }
+            catch
+            {
+                throw new InvalidOperationException("فایل SVG معتبر نیست یا ساختار XML آن مخدوش است.");
+            }
+
+            foreach (var element in doc.Descendants())
+            {
+                if (DisallowedSvgElements.Contains(element.Name.LocalName))
+                    throw new InvalidOperationException("فایل SVG شامل محتوای غیرمجاز است.");
+
+                foreach (var attr in element.Attributes())
+                {
+                    if (attr.Name.LocalName.StartsWith("on", StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidOperationException("فایل SVG شامل محتوای غیرمجاز است.");
+
+                    var value = attr.Value ?? string.Empty;
+                    if (value.Contains("javascript:", StringComparison.OrdinalIgnoreCase) ||
+                        value.Contains("data:text/html", StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidOperationException("فایل SVG شامل محتوای غیرمجاز است.");
+                }
             }
         }
-
         private static readonly (byte[] Signature, int Offset)[] KnownAudioSignatures =
         {
             (new byte[] { 0x49, 0x44, 0x33 }, 0),             // MP3 with ID3 tag ("ID3")
@@ -305,5 +355,6 @@ namespace Menro.Infrastructure.Services
             if (!matchesKnown && !isBareMp3Frame)
                 throw new InvalidOperationException("فایل صوتی معتبر نیست یا فرمت آن پشتیبانی نمی‌شود.");
         }
+        #endregion
     }
 }
