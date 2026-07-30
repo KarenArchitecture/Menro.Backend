@@ -80,7 +80,7 @@ namespace Menro.Domain.Interfaces
         /// <summary>
         /// Adds a new food entity.
         /// </summary>
-        Task<bool> AddFoodAsync(Food food);
+        Task<Food> AddFoodAsync(Food food);
 
         /// <summary>
         /// Returns all available foods for a restaurant (for admin panel).
@@ -98,6 +98,7 @@ namespace Menro.Domain.Interfaces
         /// Updates an existing food record.
         /// </summary>
         Task<bool> UpdateFoodAsync(Food food);
+        Task RemoveFoodHardAsync(int foodId);
 
         /// <summary>
         /// Deletes a food record permanently.

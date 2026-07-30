@@ -87,7 +87,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
                         ImageUrl = string.IsNullOrWhiteSpace(track.MusicTrack.CoverFileName)
                             ? null
-                            : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, track.MusicTrack.CoverFileName),
+                            : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, track.MusicTrack.CoverFileName, restaurantId.ToString(), MediaVariant.Thumbnail),
                         IsCurrentTrack =
                             player?.CurrentTrackId == track.Id,
 

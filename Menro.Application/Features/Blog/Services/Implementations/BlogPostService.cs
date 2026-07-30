@@ -1,4 +1,4 @@
-using Menro.Application.Common.Interfaces;
+﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Media;
 using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Helpers;
@@ -20,7 +20,6 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             _mediaStorage = mediaStorage;
         }
 
-        // get blog posts with filteration
         public async Task<PagedResult<BlogPostResponse>> GetAllAsync(
             string? search,
             Guid? categoryId,
@@ -66,44 +65,53 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             };
         }
 
-        // get blog post
         public async Task<BlogPostResponse?> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
             var post = await _repository.GetByIdAsync(id, ct);
             return post is null ? null : ToResponse(post);
         }
 
-        // upload blog post image
-        public async Task<MediaSaveResult> UploadCoverImageAsync(
-            IFormFile file, string? oldFileName, CancellationToken ct = default)
-        {
-            return await _mediaStorage.SaveAsync(
-                MediaCategory.BlogPostImage, file, oldFileName: oldFileName, ct: ct);
-        }
-
-        // add blog post
+        // add blog post - combined upload + create
         public async Task<BlogPostResponse> CreateAsync(CreateBlogPostRequest request, CancellationToken ct = default)
         {
-            var post = new BlogPost
+            var id = Guid.NewGuid();
+            var entityId = id.ToString();
+            string? coverFileName = null;
+
+            try
             {
-                Id = Guid.NewGuid(),
-                Title = request.Title.Trim(),
-                // request.CoverImageUrl is actually just the file name returned by
-                // the /posts/cover-image upload endpoint - never a full URL. See ToResponse.
-                CoverImageUrl = request.CoverImageUrl,
-                ReadingMinutes = request.ReadingMinutes,
-                CategoryId = request.CategoryId,
-                IsPublished = request.IsPublished,
-                CreatedAtUtc = DateTime.UtcNow
-            };
+                if (request.CoverImage is not null && request.CoverImage.Length > 0)
+                {
+                    var uploadResult = await _mediaStorage.SaveAsync(
+                        MediaCategory.BlogPostImage, request.CoverImage, entityId, ct: ct);
+                    coverFileName = uploadResult.FileName;
+                }
 
-            await _repository.AddAsync(post, ct);
+                var post = new BlogPost
+                {
+                    Id = id,
+                    Title = request.Title.Trim(),
+                    CoverImageUrl = coverFileName,
+                    ReadingMinutes = request.ReadingMinutes,
+                    CategoryId = request.CategoryId,
+                    IsPublished = request.IsPublished,
+                    CreatedAtUtc = DateTime.UtcNow
+                };
 
-            var created = await _repository.GetByIdAsync(post.Id, ct) ?? post;
-            return ToResponse(created);
+                await _repository.AddAsync(post, ct);
+
+                var created = await _repository.GetByIdAsync(post.Id, ct) ?? post;
+                return ToResponse(created);
+            }
+            catch
+            {
+                if (!string.IsNullOrWhiteSpace(coverFileName))
+                    _mediaStorage.Delete(MediaCategory.BlogPostImage, coverFileName, entityId);
+                throw;
+            }
         }
 
-        // update blog post
+        // update blog post - combined update + image replace/remove در یک فراخوانی
         public async Task<BlogPostResponse?> UpdateAsync(
             Guid id, UpdateBlogPostRequest request, CancellationToken ct = default)
         {
@@ -111,10 +119,31 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             if (post is null) return null;
 
             post.Title = request.Title.Trim();
-            post.CoverImageUrl = request.CoverImageUrl;
             post.ReadingMinutes = request.ReadingMinutes;
             post.CategoryId = request.CategoryId;
             post.IsPublished = request.IsPublished;
+
+            var entityId = id.ToString();
+
+            if (request.RemoveImage)
+            {
+                if (!string.IsNullOrWhiteSpace(post.CoverImageUrl))
+                    _mediaStorage.Delete(MediaCategory.BlogPostImage, post.CoverImageUrl, entityId);
+                post.CoverImageUrl = null;
+            }
+            else if (request.CoverImage is not null && request.CoverImage.Length > 0)
+            {
+                // SaveAsync خودش نسخه‌ی قدیمی (همه‌ی وریانت‌هاش) رو قبل از نوشتن جدید پاک می‌کنه
+                var uploadResult = await _mediaStorage.SaveAsync(
+                    MediaCategory.BlogPostImage,
+                    request.CoverImage,
+                    entityId,
+                    oldFileName: post.CoverImageUrl,
+                    ct: ct);
+
+                post.CoverImageUrl = uploadResult.FileName;
+            }
+            // else: نه CoverImage اومده نه RemoveImage - عکس فعلی دست‌نخورده می‌مونه
 
             await _repository.UpdateAsync(post, ct);
 
@@ -122,7 +151,6 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return ToResponse(updated);
         }
 
-        // publish / draft blog post
         public async Task<BlogPostResponse?> TogglePublishAsync(Guid id, CancellationToken ct = default)
         {
             var post = await _repository.GetByIdAsync(id, ct);
@@ -133,7 +161,6 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return ToResponse(post);
         }
 
-        // delete blog post
         public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
         {
             var post = await _repository.GetByIdAsync(id, ct);
@@ -142,7 +169,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             await _repository.DeleteAsync(post, ct);
 
             if (!string.IsNullOrWhiteSpace(post.CoverImageUrl))
-                _mediaStorage.Delete(MediaCategory.BlogPostImage, post.CoverImageUrl);
+                _mediaStorage.Delete(MediaCategory.BlogPostImage, post.CoverImageUrl, id.ToString());
 
             return true;
         }
@@ -152,7 +179,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.Title,
             string.IsNullOrWhiteSpace(post.CoverImageUrl)
                 ? null
-                : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl),
+                : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl, post.Id.ToString(), MediaVariant.Thumbnail),
             post.ReadingMinutes,
             post.CategoryId,
             post.Category?.Title ?? string.Empty,

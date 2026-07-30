@@ -49,29 +49,11 @@ namespace Menro.Web.Controllers.Landing
         }
 
         [HttpPut("general")]
-        public async Task<ActionResult<LandingGeneralResponse>> UpdateGeneral(
-            [FromBody] UpdateLandingGeneralRequest request)
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB
+        public async Task<ActionResult<LandingGeneralResponse>> UpdateGeneral([FromForm] UpdateLandingGeneralRequest request)
         {
             var result = await _generalService.UpdateAsync(request);
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Uploads a new hero image. Pass the currently-stored file name as
-        /// <paramref name="oldFileName"/> when replacing an existing image so
-        /// the old file gets cleaned up from disk - same convention as
-        /// POST /api/admin/blog/posts/cover-image.
-        /// </summary>
-        [HttpPost("general/hero-image")]
-        [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB
-        public async Task<ActionResult<UploadLandingHeroImageResponse>> UploadHeroImage(
-            IFormFile file,
-            [FromQuery] string? oldFileName)
-        {
-            if (file is null || file.Length == 0)
-                return BadRequest("فایلی برای آپلود ارسال نشده است.");
-
-            var result = await _generalService.UploadHeroImageAsync(file, oldFileName);
             return Ok(result);
         }
 

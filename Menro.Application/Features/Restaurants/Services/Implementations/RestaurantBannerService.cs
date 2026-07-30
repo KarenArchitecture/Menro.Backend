@@ -29,7 +29,6 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
         public async Task<RestaurantBannerDto?> GetBannerBySlugAsync(string slug)
         {
             string cacheKey = $"restaurant_banner_{slug}";
-
             if (_cache.TryGetValue(cacheKey, out RestaurantBannerDto? cached) && cached is not null)
                 return cached;
 
@@ -37,13 +36,15 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
             if (restaurant == null)
                 return null;
 
+            var entityId = restaurant.Id.ToString();
+
             var dto = new RestaurantBannerDto
             {
                 Id = restaurant.Id,
                 Name = restaurant.Name,
                 BannerImageUrl = string.IsNullOrWhiteSpace(restaurant.ShopBannerImageUrl)
                     ? null
-                    : _mediaStorage.GetUrl(MediaCategory.RestaurantShopBanner, restaurant.ShopBannerImageUrl),
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantShopBanner, restaurant.ShopBannerImageUrl, entityId, MediaVariant.Resized),
                 AverageRating = restaurant.Ratings?.Any() == true
                     ? Math.Round(restaurant.Ratings.Average(r => r.Score), 1)
                     : 0.0,

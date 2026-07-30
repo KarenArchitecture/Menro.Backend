@@ -220,7 +220,9 @@ namespace Menro.Application.Features.Cart.Services.Implementations
                     Id = item.Id,
                     FoodId = food.Id,
                     FoodName = food.Name,
-                    ImageUrl = string.IsNullOrWhiteSpace(food.ImageUrl) ? null : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, food.ImageUrl),
+                    ImageUrl = string.IsNullOrWhiteSpace(food.ImageUrl)
+                        ? null
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, food.ImageUrl, food.Id.ToString(), MediaVariant.Resized),
                     VariantId = variant.Id,
                     VariantName = variant.Name,
                     IsDefaultVariant = variant.IsDefault == true,

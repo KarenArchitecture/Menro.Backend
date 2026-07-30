@@ -26,28 +26,26 @@ namespace Menro.Application.Features.Music.Services.Implementations
             _mediaStorage = mediaStorage;
         }
 
-        // add music (upload + metadata extraction + persist, all in one place)
         public async Task<MusicTrackListItemDto> CreateAsync(int restaurantId, IFormFile audioFile, IFormFile? coverFile)
         {
             if (audioFile == null || audioFile.Length == 0)
                 throw new ArgumentException("فایل موسیقی ارسال نشده است.");
 
+            var entityId = restaurantId.ToString();
+
             string? audioFileName = null;
             string? coverFileName = null;
-
             try
             {
                 // اعتبارسنجی فرمت/سایز اینجا انجام نمیشه؛ SaveAsync طبق MediaCategoryRegistry
                 // خودش InvalidOperationException با پیام مناسب می‌اندازه اگه فایل نامعتبر باشه.
-                var audioResult = await _mediaStorage.SaveAsync(MediaCategory.RestaurantMusicFile, audioFile);
+                var audioResult = await _mediaStorage.SaveAsync(MediaCategory.RestaurantMusicFile, audioFile, entityId);
                 audioFileName = audioResult.FileName;
-
-                var audioPath = _mediaStorage.GetPhysicalPath(MediaCategory.RestaurantMusicFile, audioFileName);
+                var audioPath = _mediaStorage.GetPhysicalPath(MediaCategory.RestaurantMusicFile, audioFileName, entityId);
                 var metadata = AudioMetadataExtractor.Extract(audioPath);
-
                 if (coverFile != null)
                 {
-                    var coverResult = await _mediaStorage.SaveAsync(MediaCategory.RestaurantMusicCover, coverFile);
+                    var coverResult = await _mediaStorage.SaveAsync(MediaCategory.RestaurantMusicCover, coverFile, entityId);
                     coverFileName = coverResult.FileName;
                 }
                 else
@@ -56,11 +54,10 @@ namespace Menro.Application.Features.Music.Services.Implementations
                     if (coverBytes != null)
                     {
                         var coverResult = await _mediaStorage.SaveBytesAsync(
-                            MediaCategory.RestaurantMusicCover, coverBytes, ".jpg");
+                            MediaCategory.RestaurantMusicCover, coverBytes, ".jpg", entityId);
                         coverFileName = coverResult.FileName;
                     }
                 }
-
                 var track = new MusicTrack
                 {
                     Id = Guid.NewGuid(),
@@ -71,10 +68,8 @@ namespace Menro.Application.Features.Music.Services.Implementations
                     AudioFileName = audioFileName,
                     CoverFileName = coverFileName
                 };
-
                 await _uow.MusicTrack.AddAsync(track);
                 await _uow.SaveChangesAsync();
-
                 return new MusicTrackListItemDto
                 {
                     Id = track.Id,
@@ -83,27 +78,24 @@ namespace Menro.Application.Features.Music.Services.Implementations
                     Duration = track.Duration,
                     CoverFileName = coverFileName == null
                         ? null
-                        : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, coverFileName)
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, coverFileName, entityId, MediaVariant.Thumbnail)
                 };
             }
             catch
             {
                 // rollback: هر خطایی (اعتبارسنجی، استخراج متادیتا، شکست DB) → پاک‌سازی فایل‌های آپلودشده
                 if (!string.IsNullOrWhiteSpace(audioFileName))
-                    _mediaStorage.Delete(MediaCategory.RestaurantMusicFile, audioFileName);
-
+                    _mediaStorage.Delete(MediaCategory.RestaurantMusicFile, audioFileName, entityId);
                 if (!string.IsNullOrWhiteSpace(coverFileName))
-                    _mediaStorage.Delete(MediaCategory.RestaurantMusicCover, coverFileName);
-
+                    _mediaStorage.Delete(MediaCategory.RestaurantMusicCover, coverFileName, entityId);
                 throw;
             }
         }
 
-        // get musics
         public async Task<List<MusicTrackListItemDto>> GetAllAsync(int restaurantId)
         {
             var tracks = await _uow.MusicTrack.GetAllByRestaurantIdAsync(restaurantId);
-
+            var entityId = restaurantId.ToString();
             return tracks.Select(t => new MusicTrackListItemDto
             {
                 Id = t.Id,
@@ -112,7 +104,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
                 Duration = t.Duration,
                 CoverFileName = string.IsNullOrWhiteSpace(t.CoverFileName)
                     ? null
-                    : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, t.CoverFileName)
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, t.CoverFileName, entityId, MediaVariant.Thumbnail)
             }).ToList();
         }
 
@@ -124,6 +116,8 @@ namespace Menro.Application.Features.Music.Services.Implementations
             if (track == null)
                 return null;
 
+            var entityId = restaurantId.ToString();
+
             return new MusicTrackDto
             {
                 Id = track.Id,
@@ -131,15 +125,13 @@ namespace Menro.Application.Features.Music.Services.Implementations
                 Artist = track.Artist,
                 Duration = track.Duration,
 
-                // فایل صوتی public نیست؛ آدرس endpoint محافظت‌شده داده میشه (مطلق، نه نسبی)
                 AudioUrl = $"{_mediaStorage.GetBaseUrl()}/api/admin/music/archive/{track.Id}/stream",
 
                 CoverUrl = string.IsNullOrWhiteSpace(track.CoverFileName)
                     ? null
-                    : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, track.CoverFileName)
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, track.CoverFileName, entityId, MediaVariant.Thumbnail)
             };
         }
-
         // physical path used ONLY by the controller's stream action (PhysicalFile needs a path, not a URL)
         public async Task<string?> GetAudioPhysicalPathAsync(Guid trackId, int restaurantId)
         {
@@ -148,7 +140,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
             if (track == null || string.IsNullOrWhiteSpace(track.AudioFileName))
                 return null;
 
-            return _mediaStorage.GetPhysicalPath(MediaCategory.RestaurantMusicFile, track.AudioFileName);
+            return _mediaStorage.GetPhysicalPath(MediaCategory.RestaurantMusicFile, track.AudioFileName, restaurantId.ToString());
         }
 
         // remove music
@@ -201,12 +193,11 @@ namespace Menro.Application.Features.Music.Services.Implementations
                 _uow.MusicTrack.Remove(track);
                 await _uow.SaveChangesAsync();
 
-                // فایل‌های فیزیکی را همین‌جا (بعد از موفقیت حذف رکورد) پاک می‌کنیم
                 if (!string.IsNullOrWhiteSpace(track.AudioFileName))
-                    _mediaStorage.Delete(MediaCategory.RestaurantMusicFile, track.AudioFileName);
+                    _mediaStorage.Delete(MediaCategory.RestaurantMusicFile, track.AudioFileName, restaurantId.ToString());
 
                 if (!string.IsNullOrWhiteSpace(track.CoverFileName))
-                    _mediaStorage.Delete(MediaCategory.RestaurantMusicCover, track.CoverFileName);
+                    _mediaStorage.Delete(MediaCategory.RestaurantMusicCover, track.CoverFileName, restaurantId.ToString());
 
                 if (playlistTracks.Any())
                     await _musicNotificationService.NotifyPlaylistChanged(restaurantId);

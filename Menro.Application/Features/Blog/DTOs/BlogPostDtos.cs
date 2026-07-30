@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
 namespace Menro.Application.Features.Blog.DTOs
@@ -22,8 +23,7 @@ namespace Menro.Application.Features.Blog.DTOs
         [MaxLength(300)]
         public string Title { get; set; } = string.Empty;
 
-        [MaxLength(500)]
-        public string? CoverImageUrl { get; set; }
+        public IFormFile? CoverImage { get; set; }
 
         [Range(1, int.MaxValue, ErrorMessage = "زمان مطالعه باید بزرگ‌تر از صفر باشد.")]
         public int ReadingMinutes { get; set; }
@@ -40,8 +40,8 @@ namespace Menro.Application.Features.Blog.DTOs
         [MaxLength(300)]
         public string Title { get; set; } = string.Empty;
 
-        [MaxLength(500)]
-        public string? CoverImageUrl { get; set; }
+        public IFormFile? CoverImage { get; set; }
+        public bool RemoveImage { get; set; }
 
         [Range(1, int.MaxValue, ErrorMessage = "زمان مطالعه باید بزرگ‌تر از صفر باشد.")]
         public int ReadingMinutes { get; set; }

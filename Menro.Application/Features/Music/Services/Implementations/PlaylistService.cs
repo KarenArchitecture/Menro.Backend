@@ -81,6 +81,8 @@ namespace Menro.Application.Features.Music.Services.Implementations
             if (playlist == null || playlist.RestaurantId != restaurantId)
                 return null;
 
+            var entityId = restaurantId.ToString();
+
             return new PlaylistDto
             {
                 Id = playlist.Id,
@@ -93,21 +95,21 @@ namespace Menro.Application.Features.Music.Services.Implementations
                     Title = t.MusicTrack.Title,
                     Artist = t.MusicTrack.Artist,
 
-                    // فایل صوتی public نیست؛ آدرس همون endpoint محافظت‌شده‌ی archive
                     AudioUrl = string.IsNullOrWhiteSpace(t.MusicTrack.AudioFileName)
                         ? null
                         : $"{_mediaStorage.GetBaseUrl()}/api/admin/music/archive/{t.MusicTrackId}/stream",
 
                     CoverUrl = string.IsNullOrWhiteSpace(t.MusicTrack.CoverFileName)
                         ? null
-                        : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, t.MusicTrack.CoverFileName),
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantMusicCover, t.MusicTrack.CoverFileName, entityId, MediaVariant.Thumbnail),
 
                     Duration = t.MusicTrack.Duration,
                     SortOrder = t.SortOrder,
                     IsRequestedTrack = t.IsRequestedTrack
                 }).ToList()
             };
-        }
+        }        
+        
         // rename playlist
         public async Task<bool> RenameAsync(Guid playlistId, int restaurantId, RenamePlaylistDto dto)
     {

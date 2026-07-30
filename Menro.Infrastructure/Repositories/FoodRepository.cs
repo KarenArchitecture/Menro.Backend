@@ -248,19 +248,13 @@ namespace Menro.Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<bool> AddFoodAsync(Food food)
+        public async Task<Food> AddFoodAsync(Food food)
         {
-            try
-            {
-                await _context.Foods.AddAsync(food);
-                await _context.SaveAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            await _context.Foods.AddAsync(food);
+            await _context.SaveChangesAsync();
+            return food;
         }
+
 
         /// <summary>
         /// Used for update scenarios: load full graph (including soft-deleted children)
@@ -294,16 +288,27 @@ namespace Menro.Infrastructure.Repositories
 
         public async Task<bool> UpdateFoodAsync(Food food)
         {
-            try
-            {
-                _context.Foods.Update(food);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            _context.Foods.Update(food);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+
+        // used ONLY for rollback of a food created moments earlier in the same
+        // request whose image upload failed - a true hard delete, not the public
+        // soft-delete used by DeleteFoodAsync, because this row never "existed"
+        // from the user's perspective.
+        public async Task RemoveFoodHardAsync(int foodId)
+        {
+            var food = await _context.Foods
+                .Include(f => f.Variants)
+                    .ThenInclude(v => v.Addons)
+                .FirstOrDefaultAsync(f => f.Id == foodId);
+
+            if (food == null) return;
+
+            _context.Foods.Remove(food);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<bool> DeleteFoodAsync(int foodId)

@@ -26,7 +26,6 @@ namespace Menro.Application.Features.Search.Services.Implementations
             int? cursorId = null)
         {
             take = Math.Clamp(take, 1, 50);
-
             if (cursorId.HasValue && cursorId.Value <= 0)
                 cursorId = null;
 
@@ -34,7 +33,6 @@ namespace Menro.Application.Features.Search.Services.Implementations
                 .GetActiveApprovedWithDetailsPageAsync(take, cursorId);
 
             var hasMore = list.Count > take;
-
             var slice = hasMore
                 ? list.Take(take).ToList()
                 : list;
@@ -44,12 +42,12 @@ namespace Menro.Application.Features.Search.Services.Implementations
 
             var items = slice.Select(r =>
             {
+                var entityId = r.Id.ToString();
+
                 double avgRating = r.Ratings?.Any() == true
                     ? Math.Round(r.Ratings.Average(rt => rt.Score), 1)
                     : 0;
-
                 int voters = r.Ratings?.Count ?? 0;
-
                 int? discountPercent = r.Discounts?
                     .Where(d =>
                         d.IsActive &&
@@ -60,7 +58,6 @@ namespace Menro.Application.Features.Search.Services.Implementations
                     .Select(d => (int?)d.Value)
                     .DefaultIfEmpty(null)
                     .Max();
-
                 bool isOpen = r.OpenTime <= r.CloseTime
                     ? nowTime >= r.OpenTime && nowTime < r.CloseTime
                     : nowTime >= r.OpenTime || nowTime < r.CloseTime;
@@ -69,30 +66,20 @@ namespace Menro.Application.Features.Search.Services.Implementations
                 {
                     Id = r.Id,
                     Name = r.Name,
-
                     Category = r.RestaurantCategory?.Name
                         ?? "بدون دسته‌بندی",
-
-                    BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl)
-                        ? _mediaStorage.GetUrl(MediaCategory.RestaurantCard, "res-card-1.png")
-                        : _mediaStorage.GetUrl(MediaCategory.RestaurantCard, r.BannerImageUrl),
-
+                    BannerImageUrl = string.IsNullOrWhiteSpace(r.ShopBannerImageUrl)
+                        ? null
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantShopBanner, r.ShopBannerImageUrl, entityId, MediaVariant.Resized),
                     LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl)
-                        ? _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, "logo-green.png")
-                        : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, r.LogoImageUrl),
-
+                        ? null
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, r.LogoImageUrl, entityId, MediaVariant.Thumbnail),
                     Rating = avgRating,
-
                     Voters = voters,
-
                     Discount = discountPercent,
-
                     OpenTime = r.OpenTime.ToString(@"hh\:mm"),
-
                     CloseTime = r.CloseTime.ToString(@"hh\:mm"),
-
                     IsOpen = isOpen,
-
                     Slug = r.Slug
                 };
             }).ToList();

@@ -23,7 +23,6 @@ namespace Menro.Application.Features.Blog.Services
             CancellationToken ct = default);
 
         Task<BlogPostResponse?> GetByIdAsync(Guid id, CancellationToken ct = default);
-        Task<MediaSaveResult> UploadCoverImageAsync(IFormFile file, string? oldFileName, CancellationToken ct = default);
         Task<BlogPostResponse> CreateAsync(CreateBlogPostRequest request, CancellationToken ct = default);
         Task<BlogPostResponse?> UpdateAsync(Guid id, UpdateBlogPostRequest request, CancellationToken ct = default);
         Task<BlogPostResponse?> TogglePublishAsync(Guid id, CancellationToken ct = default);
