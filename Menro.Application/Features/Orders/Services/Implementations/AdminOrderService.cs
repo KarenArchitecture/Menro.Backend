@@ -146,7 +146,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                     Name = oi.TitleSnapshot,
                     Qty = oi.Quantity,
                     Price = oi.UnitPrice,
-                    ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, oi.Food.ImageUrl),
+                    ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, oi.Food.ImageUrl, oi.FoodId.ToString(), MediaVariant.Resized),
 
                     Addons = oi.Extras.Select(ex => new AdminOrderItemAddonDto
                     {

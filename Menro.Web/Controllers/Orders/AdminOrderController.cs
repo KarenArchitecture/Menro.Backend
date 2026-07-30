@@ -14,15 +14,12 @@ namespace Menro.Web.Controllers.Orders
     {
         private readonly IAdminOrderService _adminOrderService;
         private readonly ICurrentUserService _currentUserService;
-        private readonly IMediaStorageProvider _mediaStorage;
 
         public AdminOrderController(IAdminOrderService adminOrderService,
-            ICurrentUserService currentUserService,
-            IMediaStorageProvider mediaStorage)
+            ICurrentUserService currentUserService)
         {
             _adminOrderService = adminOrderService;
             _currentUserService = currentUserService;
-            _mediaStorage = mediaStorage;
         }
 
         // pendings
@@ -50,11 +47,6 @@ namespace Menro.Web.Controllers.Orders
             var restaurantId = await _currentUserService.GetRestaurantIdAsync();
             var dto = await _adminOrderService.GetOrderDetailsAsync(restaurantId, id);
             if (dto == null) return NotFound();
-
-            foreach (var item in dto.Items)
-                if (item.ImageUrl is not null)
-                    item.ImageUrl = _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, item.ImageUrl);
-
             return Ok(dto);
         }
 
