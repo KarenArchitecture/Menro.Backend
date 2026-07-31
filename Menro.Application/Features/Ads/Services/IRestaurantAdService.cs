@@ -12,5 +12,11 @@ namespace Menro.Application.Features.Ads.Services
         Task<bool> ApproveAdAsync(int adId);
         Task<bool> RejectAdAsync(RejectAdDto dto);
         Task<List<HistoryAdDto>> GetHistoryAsync();
+
+
+        // my ads
+        Task<List<RestaurantAdItemDto>> GetMyPendingAdsAsync(int restaurantId);
+        Task<List<RestaurantAdItemDto>> GetMyActiveAdsAsync(int restaurantId);
+        Task<List<RestaurantAdItemDto>> GetMyHistoryAdsAsync(int restaurantId);
     }
 }
