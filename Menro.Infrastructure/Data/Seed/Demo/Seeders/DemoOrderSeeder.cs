@@ -66,7 +66,11 @@ public class DemoOrderSeeder : IDataSeeder
 
         var restaurantInfos = await _db.Restaurants
             .Where(x => x.IsActive && !x.IsDeleted)
-            .Select(x => new { x.Id, x.TableCount })
+            .Select(x => new
+            {
+                x.Id,
+                TableLabels = x.Tables.Select(t => t.Label).ToList()
+            })
             .ToListAsync();
 
         if (restaurantInfos.Count == 0)
@@ -97,9 +101,9 @@ public class DemoOrderSeeder : IDataSeeder
                 int totalAmount = 0;
                 var orderItems = new List<OrderItem>();
 
-                int? tableNumber = (_rand.NextDouble() < 0.30 || info.TableCount <= 0)
+                string? tableLabel = (_rand.NextDouble() < 0.30 || info.TableLabels.Count == 0)
                     ? null
-                    : _rand.Next(1, info.TableCount + 1);
+                    : info.TableLabels[_rand.Next(info.TableLabels.Count)];
 
                 foreach (var food in foods)
                 {
@@ -165,7 +169,7 @@ public class DemoOrderSeeder : IDataSeeder
                     UserId = customer.Id,
                     RestaurantId = info.Id,
                     RestaurantOrderNumber = lastNumber + 1,
-                    TableNumber = tableNumber,
+                    TableLabel = tableLabel,
                     Status = StatusPool[_rand.Next(StatusPool.Length)],
                     CreatedAt = DateTime.UtcNow.AddDays(-dayOffset++).AddHours(-_rand.Next(0, 20)),
                     TotalPrice = totalAmount,

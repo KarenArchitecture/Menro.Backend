@@ -6,7 +6,7 @@ namespace Menro.Application.Features.Orders.DTOs
     {
         public long Id { get; set; }
         public int RestaurantOrderNumber { get; set; }
-        public int? TableNumber { get; set; }
+        public string? TableLabel { get; set; }
 
         public OrderStatus Status { get; set; }
         public DateTimeOffset CreatedAt { get; set; }

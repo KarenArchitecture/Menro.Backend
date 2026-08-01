@@ -9,6 +9,7 @@ namespace Menro.Application.Features.Restaurants.Services.Interfaces
         Task<bool> AddRestaurantAsync(RegisterRestaurantDto dto, string ownerUserId);
         Task<List<RestaurantCategoryDto>> GetRestaurantCategoriesAsync();
         Task<string> GenerateUniqueSlugAsync(string name);
+        Task<bool> IsSlugAvailableAsync(string slug, int excludeRestaurantId);
         Task<Restaurant?> GetRestaurantByIdAsync(int id);
         Task<int> GetRestaurantIdByUserIdAsync(string userId);
         Task<string> GetRestaurantName(int restaurantId);

@@ -45,8 +45,7 @@ namespace Menro.Domain.Interfaces
         ============================================================ */
         Task<Restaurant?> GetRestaurantBannerBySlugAsync(string slug);
 
-        Task<bool> SlugExistsAsync(string slug);
-
+        Task<bool> SlugExistsAsync(string slug, int? excludeRestaurantId = null);
         Task<int> GetRestaurantIdByUserIdAsync(string userId);
 
         /* ============================================================

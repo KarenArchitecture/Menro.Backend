@@ -164,9 +164,12 @@ namespace Menro.Infrastructure.Repositories
             return restaurant;
         }
 
-        public async Task<bool> SlugExistsAsync(string slug)
+        public async Task<bool> SlugExistsAsync(string slug, int? excludeRestaurantId = null)
         {
-            return await _context.Restaurants.AnyAsync(r => r.Slug == slug);
+            var query = _context.Restaurants.Where(r => r.Slug == slug);
+            if (excludeRestaurantId.HasValue)
+                query = query.Where(r => r.Id != excludeRestaurantId.Value);
+            return await query.AnyAsync();
         }
 
         public async Task<int> GetRestaurantIdByUserIdAsync(string userId)

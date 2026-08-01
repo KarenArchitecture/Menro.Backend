@@ -106,7 +106,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             {
                 Id = o.Id,
                 RestaurantOrderNumber = o.RestaurantOrderNumber,
-                TableNumber = o.TableNumber,
+                TableLabel = o.TableLabel,
                 TotalPrice = o.TotalPrice,
                 Status = o.Status,
                 CreatedAt = o.CreatedAt
@@ -121,7 +121,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             {
                 Id = o.Id,
                 RestaurantOrderNumber = o.RestaurantOrderNumber,
-                TableNumber = o.TableNumber,
+                TableLabel = o.TableLabel,
                 TotalPrice = o.TotalPrice,
                 Status = o.Status,
                 CreatedAt = o.CreatedAt
@@ -136,7 +136,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             {
                 Id = order.Id,
                 RestaurantOrderNumber = order.RestaurantOrderNumber,
-                TableNumber = order.TableNumber,
+                TableLabel = order.TableLabel,
                 Status = order.Status,
                 CreatedAt = new DateTimeOffset(DateTime.SpecifyKind(order.CreatedAt, DateTimeKind.Utc)),
                 TotalPrice = order.TotalPrice,

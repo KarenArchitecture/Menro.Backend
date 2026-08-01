@@ -49,7 +49,7 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                     ? Math.Round(restaurant.Ratings.Average(r => r.Score), 1)
                     : 0.0,
                 VotersCount = restaurant.Ratings?.Count ?? 0,
-                TableCount = restaurant.TableCount
+                TableCount = restaurant.Tables.Count
             };
 
             _cache.Set(cacheKey, dto, CacheDuration);

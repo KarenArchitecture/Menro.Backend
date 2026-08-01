@@ -37,7 +37,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                 RestaurantLogoUrl = string.IsNullOrWhiteSpace(o.Restaurant?.LogoImageUrl)
                     ? null
                     : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, o.Restaurant.LogoImageUrl),
-                TableNumber = o.TableNumber,
+                TableLabel = o.TableLabel,
                 CreatedAt = o.CreatedAt,
                 TotalPrice = o.TotalPrice,
                 Status = o.Status,
@@ -59,7 +59,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                 Id = order.Id,
                 RestaurantOrderNumber = order.RestaurantOrderNumber,
                 RestaurantName = order.Restaurant?.Name ?? "",
-                TableNumber = order.TableNumber,
+                TableLabel = order.TableLabel,
                 CreatedAt = order.CreatedAt,
                 TotalPrice = order.TotalPrice,
                 Status = order.Status,

@@ -125,12 +125,19 @@ public class AdminSeeder : IDataSeeder
                 ShopBannerImageUrl = "/img/ad-banner-1.jpg",
                 LogoImageUrl = "/img/logo-orange.png",
 
-                TableCount = 10,
                 Status = Domain.Enums.RestaurantStatus.Approved,
                 IsActive = true,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow
             };
+
+            for (int i = 1; i <= 10; i++)
+            {
+                adminRestaurant.Tables.Add(new RestaurantTable
+                {
+                    Label = $"میز {i}"
+                });
+            }
 
             await _db.Restaurants.AddAsync(adminRestaurant);
         }
@@ -167,12 +174,19 @@ public class AdminSeeder : IDataSeeder
                 ShopBannerImageUrl = "/img/ad-banner-1.jpg",
                 LogoImageUrl = "/img/logo-orange.png",
 
-                TableCount = 8,
                 Status = Domain.Enums.RestaurantStatus.Approved,
                 IsActive = true,
                 IsDeleted = false,
                 CreatedAt = DateTime.UtcNow
             };
+
+            for (int i = 1; i <= 8; i++)
+            {
+                ownerRestaurant.Tables.Add(new RestaurantTable
+                {
+                    Label = $"میز {i}"
+                });
+            }
 
             await _db.Restaurants.AddAsync(ownerRestaurant);
         }

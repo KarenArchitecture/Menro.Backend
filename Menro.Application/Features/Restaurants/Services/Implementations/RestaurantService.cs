@@ -7,6 +7,7 @@ using Menro.Application.Common.Interfaces;
 using Menro.Domain.Enums;
 using Menro.Application.Common.Media;
 using Microsoft.AspNetCore.Http;
+using Menro.Application.Helpers;
 
 namespace Menro.Application.Features.Restaurants.Services.Implementations
 {
@@ -181,6 +182,16 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
             return slug;
         }
 
+        public async Task<bool> IsSlugAvailableAsync(string slug, int excludeRestaurantId)
+        {
+            var normalized = SlugHelper.NormalizeAscii(slug);
+            if (string.IsNullOrEmpty(normalized))
+                return false;
+
+            var exists = await _uow.Restaurant.SlugExistsAsync(normalized, excludeRestaurantId);
+            return !exists;
+        }
+
         public async Task<int> GetRestaurantIdByUserIdAsync(string userId)
         {
             return await _uow.Restaurant.GetRestaurantIdByUserIdAsync(userId);
@@ -279,11 +290,14 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
             {
                 Id = r.Id,
                 Name = r.Name,
+                Slug = r.Slug,
                 RestaurantCategoryId = r.RestaurantCategoryId,
                 Address = r.Address,
+                NationalCode = r.NationalCode,
                 Description = r.Description,
                 PhoneNumber = r.ContactNumber,
                 BankAccountNumber = r.BankAccountNumber,
+                ShebaNumber = r.ShebaNumber,
                 OpenTime = r.OpenTime.ToString(@"hh\:mm"),
                 CloseTime = r.CloseTime.ToString(@"hh\:mm"),
 
@@ -314,10 +328,27 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
 
             var entityId = restaurant.Id.ToString();
 
+            if (!string.IsNullOrWhiteSpace(dto.Slug))
+            {
+                var normalizedSlug = SlugHelper.NormalizeAscii(dto.Slug);
+
+                if (!string.Equals(normalizedSlug, restaurant.Slug, StringComparison.OrdinalIgnoreCase))
+                {
+                    var isAvailable = await IsSlugAvailableAsync(normalizedSlug, restaurant.Id);
+                    if (!isAvailable)
+                        throw new InvalidOperationException("این اسلاگ قبلاً استفاده شده است.");
+
+                    restaurant.Slug = normalizedSlug;
+                }
+            }
+
             restaurant.Name = dto.Name;
+
             restaurant.RestaurantCategoryId = dto.RestaurantCategoryId;
             restaurant.Address = dto.Address;
             restaurant.Description = dto.Description;
+            restaurant.NationalCode = dto.NationalCode;
+            restaurant.ShebaNumber = dto.ShebaNumber;
             restaurant.BankAccountNumber = dto.BankAccountNumber;
             restaurant.ContactNumber = dto.PhoneNumber;
 
@@ -341,6 +372,7 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
 
             await _uow.SaveChangesAsync();
         }
+
         /*----------------------------------------------
          *      MEDIA UPLOAD HELPERS
          *      هرکدوم صرفاً مسئول ذخیره‌ی یک نوع عکسه

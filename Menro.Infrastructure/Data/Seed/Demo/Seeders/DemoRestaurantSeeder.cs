@@ -60,6 +60,19 @@ public class DemoRestaurantSeeder : IDataSeeder
             "شیرینی‌سرای گل"
         };
 
+        var tableLabels = new[]
+        {
+            "میز ۱",
+            "میز ۲",
+            "میز ۳",
+            "میز خانواده ۱",
+            "میز خانواده ۲",
+            "میز کنار پنجره",
+            "میز وی‌آی‌پی ۱",
+            "میز تراس ۱",
+            "میز تراس ۲"
+        };
+
         var restaurants = new List<Restaurant>();
 
         for (int i = 1; i <= restaurantNames.Length; i++)
@@ -137,8 +150,6 @@ public class DemoRestaurantSeeder : IDataSeeder
                 ShopBannerImageUrl = "/img/ad-banner-1.jpg",
                 LogoImageUrl = "/img/logo-orange.png",
 
-                TableCount = _rand.Next(6, 20),
-
                 Status = RestaurantStatus.Approved,
 
                 IsActive = true,
@@ -146,6 +157,20 @@ public class DemoRestaurantSeeder : IDataSeeder
 
                 CreatedAt = DateTime.UtcNow.AddDays(-i)
             };
+
+            int tableCount = _rand.Next(6, 20);
+
+            for (int t = 1; t <= tableCount; t++)
+            {
+                string label = t <= tableLabels.Length
+                    ? tableLabels[t - 1]
+                    : $"میز {t}";
+
+                restaurant.Tables.Add(new RestaurantTable
+                {
+                    Label = label
+                });
+            }
 
             restaurants.Add(restaurant);
         }
