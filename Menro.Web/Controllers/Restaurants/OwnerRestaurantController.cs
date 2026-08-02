@@ -46,6 +46,18 @@ namespace Menro.Web.Controllers.Restaurants
             return Ok(new { message = "Updated successfully" });
         }
 
+        [HttpGet("check-slug")]
+        public async Task<IActionResult> CheckSlugAvailability([FromQuery] string slug)
+        {
+            if (string.IsNullOrWhiteSpace(slug))
+                return BadRequest(new { message = "اسلاگ نمی‌تواند خالی باشد." });
+
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var isAvailable = await _service.IsSlugAvailableAsync(slug, restaurantId);
+
+            return Ok(new { available = isAvailable });
+        }
+
         [HttpGet("context")]
         public async Task<IActionResult> Get()
         {

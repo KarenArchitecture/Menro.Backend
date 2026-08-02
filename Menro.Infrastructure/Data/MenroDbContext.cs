@@ -29,6 +29,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<FoodCombo> FoodCombos { get; set; }
 
         public DbSet<Restaurant> Restaurants { get; set; }
+        public DbSet<RestaurantTable> RestaurantTables { get; set; }
         public DbSet<RestaurantCategory> RestaurantCategories { get; set; }
         public DbSet<RestaurantRating> RestaurantRatings { get; set; }
         public DbSet<RestaurantAd> RestaurantAds { get; set; }
@@ -50,7 +51,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<CartItemExtra> CartItemExtras => Set<CartItemExtra>();
 
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-        
+
         public DbSet<Comment> Comments { get; set; }
         public DbSet<CommentLike> CommentLikes { get; set; }
 
@@ -107,6 +108,7 @@ namespace Menro.Infrastructure.Data
         {
             modelBuilder.Entity<Food>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<Restaurant>().HasQueryFilter(x => !x.IsDeleted);
+            modelBuilder.Entity<RestaurantTable>().HasQueryFilter(x => !x.IsDeleted);
 
             modelBuilder.Entity<CustomFoodCategory>().HasQueryFilter(x => !x.IsDeleted);
             modelBuilder.Entity<GlobalFoodCategory>().HasQueryFilter(x => !x.IsDeleted);
@@ -240,12 +242,6 @@ namespace Menro.Infrastructure.Data
             modelBuilder.Entity<Discount>()
                 .Property(x => x.Value)
                 .HasColumnType("decimal(18,2)");
-
-            modelBuilder.Entity<Restaurant>()
-                .HasMany(r => r.Advertisements)
-                .WithOne(a => a.Restaurant)
-                .HasForeignKey(a => a.RestaurantId)
-                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Subscription>()
                 .HasOne(s => s.Restaurant)

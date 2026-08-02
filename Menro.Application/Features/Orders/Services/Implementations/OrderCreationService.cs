@@ -55,7 +55,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             var order = new Domain.Entities.Order
             {
                 RestaurantId = dto.RestaurantId,
-                TableNumber = dto.TableNumber,
+                TableLabel = dto.TableLabel,
                 CreatedAt = DateTime.UtcNow,
                 Status = OrderStatus.Pending,
                 OrderItems = new List<OrderItem>()
@@ -162,7 +162,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             var order = new Domain.Entities.Order
             {
                 RestaurantId = cart.RestaurantId,
-                TableNumber = dto.TableNumber,
+                TableLabel = dto.TableLabel,
                 CreatedAt = DateTime.UtcNow,
                 Status = OrderStatus.Pending,
                 OrderItems = new List<OrderItem>()

@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.SD;
+using Menro.Application.Common.Models;
 using Menro.Application.Features.Restaurants.DTOs;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Domain.Enums;
@@ -12,11 +13,22 @@ namespace Menro.Web.Controllers.Restaurants
     [Route("api/admin/restaurants")]
     public class AdminRestaurantController : ApiControllerBase
     {
-        private readonly IRestaurantService _service;
+        private readonly IAdminRestaurantService _service;
 
-        public AdminRestaurantController(IRestaurantService service)
+        public AdminRestaurantController(IAdminRestaurantService service)
         {
             _service = service;
+        }
+
+        [HttpGet("overview")]
+        public async Task<IActionResult> GetRestaurantsOverview(
+            [FromQuery] string? search,
+            [FromQuery] int? categoryId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            var result = await _service.GetRestaurantsOverviewAsync(search, categoryId, page, pageSize);
+            return Ok(result);
         }
 
         [HttpGet]
@@ -26,7 +38,7 @@ namespace Menro.Web.Controllers.Restaurants
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetRestaurantDetailsForAdmin(int id)
         {
             var result = await _service.GetRestaurantDetailsForAdminAsync(id);

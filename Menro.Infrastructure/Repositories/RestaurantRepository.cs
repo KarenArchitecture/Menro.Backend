@@ -164,9 +164,12 @@ namespace Menro.Infrastructure.Repositories
             return restaurant;
         }
 
-        public async Task<bool> SlugExistsAsync(string slug)
+        public async Task<bool> SlugExistsAsync(string slug, int? excludeRestaurantId = null)
         {
-            return await _context.Restaurants.AnyAsync(r => r.Slug == slug);
+            var query = _context.Restaurants.Where(r => r.Slug == slug);
+            if (excludeRestaurantId.HasValue)
+                query = query.Where(r => r.Id != excludeRestaurantId.Value);
+            return await query.AnyAsync();
         }
 
         public async Task<int> GetRestaurantIdByUserIdAsync(string userId)
@@ -191,6 +194,8 @@ namespace Menro.Infrastructure.Repositories
         public void InvalidateRestaurantIdByUser(string userId) => _cache.Remove($"RestaurantIdByUser:{userId}");
         public void InvalidateBannerIds() => _cache.Remove("LiveBannerIds");
 
+
+        // admin panel =>
         public async Task<List<Restaurant>> GetRestaurantsListForAdminAsync(RestaurantStatus status)
         {
             var query = _context.Restaurants
@@ -215,10 +220,23 @@ namespace Menro.Infrastructure.Repositories
             return await _context.Restaurants
                 .Include(r => r.OwnerUser)
                 .Include(r => r.RestaurantCategory)
-                .Include(r => r.Discounts)   // optional consistency
+                //.Include(r => r.Ratings)
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
-
+        public IQueryable<Restaurant> QueryForAdmin(RestaurantStatus? status, string? search, int? categoryId = null)
+        {
+            var query = _context.Restaurants.AsQueryable();
+            if (status.HasValue)
+                query = query.Where(r => r.Status == status.Value);
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                query = query.Where(r => r.Name.Contains(term) || r.ContactNumber.Contains(term));
+            }
+            if (categoryId.HasValue)
+                query = query.Where(r => r.RestaurantCategoryId == categoryId.Value);
+            return query;
+        }
         public async Task<Restaurant?> GetRestaurantProfileAsync(int restaurantId)
         {
             return await _context.Restaurants

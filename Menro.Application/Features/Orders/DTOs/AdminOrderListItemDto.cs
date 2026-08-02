@@ -8,7 +8,7 @@ namespace Menro.Application.Features.Orders.DTOs
 
         public int RestaurantOrderNumber { get; set; }
 
-        public int? TableNumber { get; set; }
+        public string? TableLabel { get; set; }
 
         public int TotalPrice { get; set; }
         public OrderStatus Status { get; set; }

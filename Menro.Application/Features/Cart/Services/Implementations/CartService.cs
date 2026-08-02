@@ -174,7 +174,7 @@ namespace Menro.Application.Features.Cart.Services.Implementations
                 RestaurantId = cart.RestaurantId,
                 RestaurantName = cart.Restaurant?.Name,
                 RestaurantSlug = cart.Restaurant?.Slug,
-                TableCount = cart.Restaurant?.TableCount ?? 0,
+                TableCount = cart.Restaurant?.Tables.Count ?? 0,
                 ExpiresAt = cart.UpdatedAt + CartLifetime
             };
 

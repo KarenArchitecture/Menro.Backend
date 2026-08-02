@@ -83,5 +83,23 @@ namespace Menro.Application.Helpers
 
             return sb.ToString().Normalize(NormalizationForm.FormC);
         }
+
+        /// <summary>
+        /// Light-weight normalize for slugs the user types manually in Latin
+        /// already (lowercase, trim, spaces/underscores -> hyphen, invalid chars
+        /// stripped). No transliteration — unlike GenerateSlug, this does NOT
+        /// fall back to "n-a"; an all-invalid input just becomes an empty string.
+        /// </summary>
+        public static string NormalizeAscii(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return string.Empty;
+
+            var text = input.Trim().ToLowerInvariant();
+            text = Regex.Replace(text, @"[\s_]+", "-");
+            text = InvalidCharsRegex.Replace(text, "");
+            text = MultiDashRegex.Replace(text, "-").Trim('-');
+            return text;
+        }
     }
 }

@@ -6,10 +6,13 @@
 
         public string Name { get; set; } = "";
         public int RestaurantCategoryId { get; set; }
+        public string? Slug { get; set; }
         public string Address { get; set; } = "";
         public string Description { get; set; } = "";
 
         public string PhoneNumber { get; set; } = "";
+        public string NationalCode { get; set; } = "";
+        public string? ShebaNumber { get; set; }
         public string BankAccountNumber { get; set; } = "";
 
         public string OpenTime { get; set; } = "";   // "12:00"
