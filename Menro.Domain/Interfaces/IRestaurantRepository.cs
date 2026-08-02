@@ -68,6 +68,7 @@ namespace Menro.Domain.Interfaces
         // admin panel => restaurant management tab
         Task<List<Restaurant>> GetRestaurantsListForAdminAsync(RestaurantStatus status);
         Task<Restaurant?> GetRestaurantDetailsForAdminAsync(int id);
+        IQueryable<Restaurant> QueryForAdmin(RestaurantStatus? status, string? search, int? categoryId = null);
 
         // restaurant profile
         Task<Restaurant?> GetRestaurantProfileAsync(int restaurantId);

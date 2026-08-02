@@ -4,7 +4,6 @@ using Menro.Domain.Entities;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Application.Extensions;
 using Menro.Application.Common.Interfaces;
-using Menro.Domain.Enums;
 using Menro.Application.Common.Media;
 using Microsoft.AspNetCore.Http;
 using Menro.Application.Helpers;
@@ -15,16 +14,13 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
     {
         #region DI
         private readonly IUnitOfWork _uow;
-        private readonly IGlobalDateTimeService _globalDateTimeService;
         private readonly IMediaStorageProvider _mediaStorage;
 
         public RestaurantService(
             IUnitOfWork uow,
-            IGlobalDateTimeService globalDateTimeService,
             IMediaStorageProvider mediaStorage)
         {
             _uow = uow;
-            _globalDateTimeService = globalDateTimeService;
             _mediaStorage = mediaStorage;
         }
         #endregion
@@ -199,83 +195,6 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
         public async Task<string> GetRestaurantName(int restaurantId)
         {
             return await _uow.Restaurant.GetRestaurantName(restaurantId);
-        }
-
-
-        // admin panel => restaurant management tab
-        public async Task<List<RestaurantListForAdminDto>> GetRestaurantsListForAdminAsync(RestaurantStatus status)
-        {
-            var restaurants = await _uow.Restaurant.GetRestaurantsListForAdminAsync(status);
-
-            return restaurants.Select(r => new RestaurantListForAdminDto
-            {
-                Id = r.Id,
-                Name = r.Name,
-                PhoneNumber = r.OwnerUser.PhoneNumber ?? "",
-                OwnerName = r.OwnerUser.FullName ?? "",
-                Status = (int)r.Status,
-                CreatedAt = _globalDateTimeService.ToPersianDateTimeString(r.CreatedAt),
-            }).ToList();
-        }
-
-
-        public async Task<RestaurantDetailsForAdminDto?> GetRestaurantDetailsForAdminAsync(int id)
-        {
-            var r = await _uow.Restaurant.GetRestaurantDetailsForAdminAsync(id);
-            if (r == null) return null;
-
-            // formatting working hours
-            string openTime = r.OpenTime.ToString(@"hh\:mm");
-            string closeTime = r.CloseTime.ToString(@"hh\:mm");
-            string workingHours = $"{openTime} تا {closeTime}";
-
-            return new RestaurantDetailsForAdminDto
-            {
-                Id = r.Id,
-                Name = r.Name,
-                Description = r.Description ?? "",
-                Address = r.Address ?? "",
-
-                Type = r.RestaurantCategory?.Name ?? "",
-
-                WorkingHours = workingHours,
-
-                OwnerName = r.OwnerUser?.FullName ?? "",
-                OwnerPhoneNumber = r.OwnerUser?.PhoneNumber ?? "",
-
-                OwnerNationalId = r.NationalCode ?? "",
-                OwnerBankAccount = r.BankAccountNumber ?? "",
-
-                Status = (int)r.Status,
-                RejectReason = r.RejectReason ?? "",
-                CreatedAt = _globalDateTimeService.ToPersianDateTimeString(r.CreatedAt),
-
-            };
-        }
-
-
-        public async Task<bool> ApproveRestaurantAsync(int restaurantId, bool approve)
-        {
-            var restaurant = await _uow.Restaurant.GetByIdAsync(restaurantId);
-            if (restaurant == null) return false;
-            restaurant.Status = RestaurantStatus.Approved;
-            await _uow.Restaurant.SaveChangesAsync();
-            return true;
-        }
-        public async Task<bool> UpdateRestaurantStatusAsync(int restaurantId, RestaurantStatus status, string? rejectReason)
-        {
-            var restaurant = await _uow.Restaurant.GetByIdAsync(restaurantId);
-            if (restaurant == null) return false;
-
-            restaurant.Status = status;
-
-            if (status == RestaurantStatus.Rejected)
-                restaurant.RejectReason = rejectReason?.Trim();
-            else
-                restaurant.RejectReason = null;
-
-            await _uow.Restaurant.SaveChangesAsync();
-            return true;
         }
 
         // restaurant profile

@@ -15,18 +15,13 @@ namespace Menro.Application.Features.Restaurants.Services.Interfaces
         Task<string> GetRestaurantName(int restaurantId);
 
 
-        // admin panel => restaurant management tab
-        Task<List<RestaurantListForAdminDto>> GetRestaurantsListForAdminAsync(RestaurantStatus status);
-        Task<RestaurantDetailsForAdminDto?> GetRestaurantDetailsForAdminAsync(int id);
 
-        Task<bool> ApproveRestaurantAsync(int restaurantId, bool approve);
-        Task<bool> UpdateRestaurantStatusAsync(int restaurantId, RestaurantStatus status, string? rejectReason);
+        // owner methods
         Task<RestaurantProfileDto?> GetRestaurantProfileAsync(int id);
         Task UpdateRestaurantProfileAsync(UpdateRestaurantProfileDto dto);
 
 
         // admin panel => restaurant category management tab
-
         Task<RestaurantCategoryDto?> GetRestaurantCategoryByIdAsync(int id);
         Task<(bool Success, string? Error)> CreateRestaurantCategoryAsync(CreateRestaurantCategoryDto dto);
         Task<(bool Success, string? Error)> UpdateRestaurantCategoryAsync(UpdateRestaurantCategoryDto dto);
