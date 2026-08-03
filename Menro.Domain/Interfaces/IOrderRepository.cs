@@ -57,11 +57,7 @@ namespace Menro.Domain.Interfaces
         void InvalidateUserRecentOrders(string userId);
 
         Task<(List<Food> Foods, string? NextCursor, bool HasMore)> GetUserRecentlyOrderedFoodsCursorAsync(
-            string userId,
-            int take,
-            string? cursor,
-            CancellationToken ct = default
-        );
+            string userId, int take, string? cursor, CancellationToken ct = default);
 
         Task<List<Order>> GetUserOrdersAsync(string userId, CancellationToken ct = default);
     }

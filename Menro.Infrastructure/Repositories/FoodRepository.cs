@@ -245,6 +245,7 @@ namespace Menro.Infrastructure.Repositories
                     f.IsAvailable &&
                     !f.IsDeleted)
                 .Include(f => f.Restaurant)
+                .Include(f => f.Ratings)   // <-- add this line
                 .ToListAsync();
         }
 

@@ -35,33 +35,39 @@ public class DemoCustomerSeeder : IDataSeeder
 
     public async Task SeedAsync()
     {
-        foreach (var (phone, name) in Customers)
+        foreach (var (rawPhone, name) in Customers)
         {
+            var phone = ToE164(rawPhone);
+
             var customer = await _db.Users.FirstOrDefaultAsync(x => x.PhoneNumber == phone);
 
             if (customer == null)
             {
                 customer = new User
                 {
-                    UserName = phone,
+                    UserName = rawPhone,
                     PhoneNumber = phone,
                     PhoneNumberConfirmed = true,
                     FullName = name
                 };
 
                 var result = await _userManager.CreateAsync(customer, Password);
+
                 if (!result.Succeeded)
                     throw new Exception(string.Join(", ", result.Errors.Select(x => x.Description)));
             }
 
             var roles = await _userManager.GetRolesAsync(customer);
+
             if (!roles.Contains(SD.Role_Customer))
                 await _userManager.AddToRoleAsync(customer, SD.Role_Customer);
 
             var hasPassword = await _userManager.HasPasswordAsync(customer);
+
             if (!hasPassword)
             {
                 var result = await _userManager.AddPasswordAsync(customer, Password);
+
                 if (!result.Succeeded)
                     throw new Exception(string.Join(", ", result.Errors.Select(x => x.Description)));
             }
@@ -69,4 +75,10 @@ public class DemoCustomerSeeder : IDataSeeder
 
         Console.WriteLine($"[Seed] {Customers.Length} demo customers synced (password: {Password}).");
     }
+
+    // 🔧 Local, self-contained conversion — deliberately NOT the shared
+    // Utilities class. AuthController always normalizes login input to
+    // "+98..." before looking the user up, so the PhoneNumber stored here
+    // must already be in that form or login will never find a match.
+    private static string ToE164(string rawPhone) => "+98" + rawPhone[1..];
 }

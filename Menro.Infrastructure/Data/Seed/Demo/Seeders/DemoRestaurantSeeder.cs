@@ -65,38 +65,36 @@ public class DemoRestaurantSeeder : IDataSeeder
         for (int i = 1; i <= restaurantNames.Length; i++)
         {
             string email = $"owner{i}@menro.com";
+            var rawPhone = $"0912100{i:D4}";              // e.g. 09121000001 .. 09121000012 (11 digits)
+            var e164Phone = ToE164(rawPhone);
 
             var existingUser = await _userManager.Users
                 .FirstOrDefaultAsync(x => x.Email == email);
 
             User owner;
 
+
             if (existingUser == null)
             {
                 owner = new User
                 {
-                    UserName = $"0912{345678 + i}",
+                    UserName = rawPhone,
                     Email = email,
                     FullName = $"صاحب رستوران {i}",
-                    PhoneNumber = $"0912{345678 + i}",
+                    PhoneNumber = e164Phone,
                     EmailConfirmed = true,
                     PhoneNumberConfirmed = true
                 };
 
-                var createResult = await _userManager
-                    .CreateAsync(owner, "Owner123!");
+                var createResult = await _userManager.CreateAsync(owner, "Owner123!");
 
                 if (!createResult.Succeeded)
                 {
-                    var errors = string.Join(", ",
-                        createResult.Errors.Select(x => x.Description));
-
+                    var errors = string.Join(", ", createResult.Errors.Select(x => x.Description));
                     throw new Exception(errors);
                 }
 
-                await _userManager.AddToRoleAsync(
-                    owner,
-                    SD.Role_Owner);
+                await _userManager.AddToRoleAsync(owner, SD.Role_Owner);
             }
             else
             {
@@ -116,7 +114,7 @@ public class DemoRestaurantSeeder : IDataSeeder
 
                 Address = $"تهران، خیابان نمونه {i}",
 
-                ContactNumber = owner.PhoneNumber!,
+                ContactNumber = rawPhone,
 
                 OpenTime = new TimeSpan(8 + i % 4, 0, 0),
                 CloseTime = new TimeSpan(21, 0, 0),
@@ -216,4 +214,10 @@ public class DemoRestaurantSeeder : IDataSeeder
         Console.WriteLine(
             $"[Seed] {restaurants.Count} demo restaurants seeded.");
     }
+
+    // 🔧 Local, self-contained conversion — deliberately NOT the shared
+    // Utilities class. AuthController always normalizes login input to
+    // "+98..." before looking the user up, so owner PhoneNumber must
+    // already be stored in that form or login will never find a match.
+    private static string ToE164(string rawPhone) => "+98" + rawPhone[1..];
 }

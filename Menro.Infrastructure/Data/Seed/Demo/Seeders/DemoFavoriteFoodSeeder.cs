@@ -8,7 +8,6 @@ namespace Menro.Infrastructure.Data.Seed.Demo.Seeders;
 public class DemoFavoriteFoodSeeder : IDataSeeder
 {
     private readonly MenroDbContext _db;
-
     private readonly Random _rand = new(42);
 
     public DemoFavoriteFoodSeeder(MenroDbContext db)
@@ -20,7 +19,7 @@ public class DemoFavoriteFoodSeeder : IDataSeeder
 
     public async Task SeedAsync()
     {
-        const string demoPhone = "09121112233";
+        var demoPhone = ToE164("09121112233");
 
         var customer = await _db.Users
             .FirstOrDefaultAsync(x => x.PhoneNumber == demoPhone);
@@ -74,9 +73,14 @@ public class DemoFavoriteFoodSeeder : IDataSeeder
         }
 
         await _db.FavoriteFoods.AddRangeAsync(favorites);
-
         await _db.SaveChangesAsync();
 
         Console.WriteLine($"[Seed] {favorites.Count} favorite foods seeded.");
     }
+
+    // 🔧 Local, self-contained conversion — deliberately NOT the shared
+    // Utilities class. The demo customer is stored with a "+98..."
+    // PhoneNumber (to match what AuthController looks up at login time),
+    // so this lookup must use the same form.
+    private static string ToE164(string rawPhone) => "+98" + rawPhone[1..];
 }

@@ -11,7 +11,7 @@ public class DemoOrderSeeder : IDataSeeder
     private readonly MenroDbContext _db;
     private readonly Random _rand = new(42);
 
-    private static readonly string[] DemoCustomerPhones =
+    private static readonly string[] DemoCustomerPhonesRaw =
     {
         "09121112233",
         "09121112234",
@@ -20,8 +20,6 @@ public class DemoOrderSeeder : IDataSeeder
         "09121112237",
     };
 
-    // Weighted toward Completed so order-history testing has enough entries,
-    // but still covers every stage of the admin order-status flow.
     private static readonly OrderStatus[] StatusPool =
     {
         OrderStatus.Pending,
@@ -42,8 +40,10 @@ public class DemoOrderSeeder : IDataSeeder
 
     public async Task SeedAsync()
     {
+        var demoCustomerPhonesE164 = DemoCustomerPhonesRaw.Select(ToE164).ToList();
+
         var demoCustomers = await _db.Users
-            .Where(u => DemoCustomerPhones.Contains(u.PhoneNumber))
+            .Where(u => u.PhoneNumber != null && demoCustomerPhonesE164.Contains(u.PhoneNumber))
             .ToListAsync();
 
         if (demoCustomers.Count == 0)
@@ -77,19 +77,30 @@ public class DemoOrderSeeder : IDataSeeder
 
         int dayOffset = 0;
 
-        foreach (var customer in demoCustomers)
+        // Iterate by RESTAURANT, not by customer, so every restaurant is
+        // guaranteed a handful of orders — lets any of the seeded owners
+        // log into the admin panel and always find order data for their
+        // own restaurant, regardless of random chance.
+        foreach (var info in restaurantInfos)
         {
-            var orderCount = _rand.Next(3, 7);
+            var foodsForRestaurant = await _db.Foods
+                .Where(f => f.RestaurantId == info.Id && f.IsAvailable && !f.IsDeleted)
+                .ToListAsync();
 
-            for (int n = 0; n < orderCount; n++)
+            if (!foodsForRestaurant.Any())
+                continue;
+
+            var ordersForThisRestaurant = _rand.Next(4, 9); // 4–8 orders per restaurant
+
+            for (int n = 0; n < ordersForThisRestaurant; n++)
             {
-                var info = restaurantInfos[_rand.Next(restaurantInfos.Count)];
+                var customer = demoCustomers[_rand.Next(demoCustomers.Count)];
 
-                var foods = await _db.Foods
-                    .Where(f => f.RestaurantId == info.Id && f.IsAvailable && !f.IsDeleted)
+                var maxPick = Math.Min(5, foodsForRestaurant.Count);
+                var foods = foodsForRestaurant
                     .OrderBy(_ => Guid.NewGuid())
-                    .Take(_rand.Next(2, 5))
-                    .ToListAsync();
+                    .Take(_rand.Next(2, maxPick + 1))
+                    .ToList();
 
                 if (!foods.Any())
                     continue;
@@ -108,8 +119,6 @@ public class DemoOrderSeeder : IDataSeeder
 
                     if (variantsForFood.Count == 0)
                     {
-                        // Defensive fallback — shouldn't happen once
-                        // FoodDefaultVariantSeeder has run, but kept safe.
                         int unitPrice = food.Price;
                         totalAmount += unitPrice * quantity;
 
@@ -173,14 +182,16 @@ public class DemoOrderSeeder : IDataSeeder
                 };
 
                 _db.Orders.Add(order);
-
-                // Save per-order so RestaurantOrderNumber (unique per
-                // restaurant) is computed correctly against already-saved
-                // rows for the next iteration.
                 await _db.SaveChangesAsync();
             }
         }
 
-        Console.WriteLine("[Seed] Demo orders seeded for all demo customers.");
+        Console.WriteLine("[Seed] Demo orders seeded across all restaurants.");
     }
+
+    // 🔧 Local, self-contained conversion — deliberately NOT the shared
+    // Utilities class. Users are stored with a "+98..." PhoneNumber (to
+    // match what AuthController looks up at login time), so this seeder
+    // must convert its raw phone list the same way before querying.
+    private static string ToE164(string rawPhone) => "+98" + rawPhone[1..];
 }

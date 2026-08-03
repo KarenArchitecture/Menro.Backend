@@ -40,7 +40,7 @@ public class AdminSeeder : IDataSeeder
                 UserName = "MenroAdmin_1",
                 Email = adminEmail,
                 FullName = "مدیر",
-                PhoneNumber = "+989486813486",
+                PhoneNumber = "09486813486",
                 EmailConfirmed = true,
                 PhoneNumberConfirmed = true
             };

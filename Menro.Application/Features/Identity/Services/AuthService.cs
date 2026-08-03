@@ -11,8 +11,6 @@ using Menro.Application.Common.Interfaces;
 using Menro.Domain.Entities.Identity;
 using Menro.Application.Features.Users.Services.Interfaces;
 
-
-
 namespace Menro.Application.Features.Identity.Services
 {
     /*

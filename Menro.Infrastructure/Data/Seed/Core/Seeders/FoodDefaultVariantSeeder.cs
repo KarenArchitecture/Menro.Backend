@@ -17,8 +17,7 @@ namespace Menro.Infrastructure.Data.Seed.Core.Seeders
         public FoodDefaultVariantSeeder(MenroDbContext db) => _db = db;
 
         // Must run after DemoFoodSeeder/DemoVariantSeeder. Pick a number
-        // higher than any existing SeedOrder value used in this project.
-        public int Order => 999;
+        public int Order => SeedOrder.FoodVariantBackfill;
 
         public async Task SeedAsync()
         {
