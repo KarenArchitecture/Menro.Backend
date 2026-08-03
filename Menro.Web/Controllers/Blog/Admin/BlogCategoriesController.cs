@@ -56,6 +56,14 @@ namespace Menro.Web.Controllers.Blog.Admin
             return result is null ? NotFound() : Ok(result);
         }
 
+        // GET api/admin/blog/display-categories/{id}/affected-posts-count
+        [HttpGet("{id:guid}/affected-posts-count")]
+        public async Task<ActionResult<int>> GetAffectedPostsCount(Guid id, CancellationToken ct)
+        {
+            var count = await _service.CountAffectedPostsAsync(id, ct);
+            return Ok(count);
+        }
+
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
         {

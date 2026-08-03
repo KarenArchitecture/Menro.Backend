@@ -19,33 +19,28 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             _mediaStorage = mediaStorage;
         }
 
-        public async Task<PagedResult<BlogPostResponse>> GetAllAsync(
+        public async Task<PagedResult<BlogPostListItemResponse>> GetAllAsync(
             string? search, Guid? categoryId, Guid? tagId = null,
             BlogPostSortOrder sort = BlogPostSortOrder.Newest,
             bool publishedOnly = false, int page = 1, int pageSize = 20,
             CancellationToken ct = default)
         {
             var posts = await _unitOfWork.BlogPost.GetAllAsync(search, categoryId, tagId, ct);
-
             IEnumerable<BlogPost> query = posts;
             if (publishedOnly) query = query.Where(p => p.IsPublished);
-
             query = sort switch
             {
                 BlogPostSortOrder.MostPopular => query.OrderByDescending(p => p.LikeCount),
                 BlogPostSortOrder.MostViewed => query.OrderByDescending(p => p.ViewCount),
                 _ => query.OrderByDescending(p => p.CreatedAtUtc),
             };
-
             var materialized = query.ToList();
             var totalCount = materialized.Count;
             page = page < 1 ? 1 : page;
             pageSize = pageSize < 1 ? 20 : Math.Min(pageSize, 100);
-
             var pageItems = materialized.Skip((page - 1) * pageSize).Take(pageSize)
-                .Select(ToResponse).ToList();
-
-            return new PagedResult<BlogPostResponse>
+                .Select(ToListItemResponse).ToList();
+            return new PagedResult<BlogPostListItemResponse>
             {
                 Items = pageItems,
                 Page = page,
@@ -54,15 +49,15 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             };
         }
 
-        public async Task<BlogPostResponse?> GetByIdAsync(Guid id, CancellationToken ct = default)
+        public async Task<BlogPostDetailResponse?> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
             var post = await _unitOfWork.BlogPost.GetByIdAsync(id, ct);
-            return post is null ? null : ToResponse(post);
+            return post is null ? null : ToDetailResponse(post);
         }
 
         // ساخت پیش‌نویس: BlogPost + BlogPostContent خالی، هردو Stage میشن،
         // و با یک SaveChangesAsync مشترک با هم Commit میشن (اتمیک).
-        public async Task<BlogPostResponse> CreateAsync(CreateBlogPostRequest request, CancellationToken ct = default)
+        public async Task<BlogPostDetailResponse> CreateAsync(CreateBlogPostRequest request, CancellationToken ct = default)
         {
             var post = new BlogPost
             {
@@ -85,10 +80,10 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             await _unitOfWork.SaveChangesAsync(); // یک INSERT-transaction برای هردو ردیف
 
             var created = await _unitOfWork.BlogPost.GetByIdAsync(post.Id, ct) ?? post;
-            return ToResponse(created);
+            return ToDetailResponse(created);
         }
 
-        public async Task<BlogPostResponse?> UpdateAsync(
+        public async Task<BlogPostDetailResponse?> UpdateAsync(
             Guid id, UpdateBlogPostRequest request, CancellationToken ct = default)
         {
             var post = await _unitOfWork.BlogPost.GetByIdAsync(id, ct);
@@ -139,8 +134,9 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             await _unitOfWork.SaveChangesAsync();
 
             var updated = await _unitOfWork.BlogPost.GetByIdAsync(post.Id, ct) ?? post;
-            return ToResponse(updated);
+            return ToDetailResponse(updated);
         }
+
         public async Task<BlogPostPublishResponse?> TogglePublishAsync(Guid id, CancellationToken ct = default)
         {
             var post = await _unitOfWork.BlogPost.GetByIdAsync(id, ct);
@@ -167,12 +163,28 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return true;
         }
 
-        private BlogPostResponse ToResponse(BlogPost post) => new(
+        private BlogPostListItemResponse ToListItemResponse(BlogPost post) => new(
             post.Id,
             post.Title,
             string.IsNullOrWhiteSpace(post.CoverImageUrl)
                 ? null
                 : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl, post.Id.ToString(), MediaVariant.Thumbnail),
+            post.ReadingMinutes,
+            post.CategoryId,
+            post.Category?.Title,
+            post.IsPublished,
+            post.CreatedAtUtc,
+            post.UpdatedAtUtc,
+            post.ViewCount,
+            post.LikeCount,
+            PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
+
+        private BlogPostDetailResponse ToDetailResponse(BlogPost post) => new(
+            post.Id,
+            post.Title,
+            string.IsNullOrWhiteSpace(post.CoverImageUrl)
+                ? null
+                : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl, post.Id.ToString(), MediaVariant.Original),
             post.ReadingMinutes,
             post.CategoryId,
             post.Category?.Title,
@@ -186,7 +198,6 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.LikeCount,
             PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
 
-
         /* --- BLOG CONTENT --- */
         public async Task<BlogPostContentResponse?> GetContentAsync(Guid postId, CancellationToken ct = default)
         {
@@ -198,7 +209,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             Guid postId, UpdateBlogPostContentRequest request, CancellationToken ct = default)
         {
             var content = await _unitOfWork.BlogPostContent.GetByPostIdAsync(postId, ct);
-            if (content is null) return null; // یعنی پستی با این Id اصلاً وجود نداره (چون هر پست حتماً Content داره)
+            if (content is null) return null;
 
             content.Content = request.Content;
             await _unitOfWork.BlogPostContent.UpdateAsync(content, ct);

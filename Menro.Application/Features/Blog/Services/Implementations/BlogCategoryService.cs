@@ -2,7 +2,6 @@ using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Helpers;
 using Menro.Domain.Entities.Blog;
 using Menro.Domain.Interfaces.Blog;
-using Microsoft.IdentityModel.Logging;
 
 namespace Menro.Application.Features.Blog.Services.Implementations
 {

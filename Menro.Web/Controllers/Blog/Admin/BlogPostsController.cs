@@ -20,7 +20,7 @@ namespace Menro.Web.Controllers.Blog.Admin
         #endregion
 
         [HttpGet]
-        public async Task<ActionResult<PagedResult<BlogPostResponse>>> GetAll(
+        public async Task<ActionResult<PagedResult<BlogPostListItemResponse>>> GetAll(
             [FromQuery] string? search,
             [FromQuery] Guid? categoryId,
             [FromQuery] Guid? tagId,
@@ -34,17 +34,15 @@ namespace Menro.Web.Controllers.Blog.Admin
         }
 
         [HttpGet("{id:guid}")]
-        public async Task<ActionResult<BlogPostResponse>> GetById(Guid id, CancellationToken ct)
+        public async Task<ActionResult<BlogPostDetailResponse>> GetById(Guid id, CancellationToken ct)
         {
             var post = await _service.GetByIdAsync(id, ct);
             return post is null ? NotFound() : Ok(post);
         }
 
         // POST api/admin/blog/posts - ساخت پیش‌نویس: فقط Title، بدون فایل
-        // (کاربر روی "پست جدید" می‌زنه، بلافاصله یه رکورد خالی ساخته میشه
-        // و کاربر به صفحه‌ی ادیتور هدایت میشه)
         [HttpPost]
-        public async Task<ActionResult<BlogPostResponse>> Create(
+        public async Task<ActionResult<BlogPostDetailResponse>> Create(
             [FromBody] CreateBlogPostRequest request, CancellationToken ct)
         {
             var created = await _service.CreateAsync(request, ct);
@@ -54,7 +52,7 @@ namespace Menro.Web.Controllers.Blog.Admin
         // PUT api/admin/blog/posts/{id}
         [HttpPut("{id:guid}")]
         [Consumes("multipart/form-data")]
-        public async Task<ActionResult<BlogPostResponse>> Update(
+        public async Task<ActionResult<BlogPostDetailResponse>> Update(
             Guid id, [FromForm] UpdateBlogPostRequest request, CancellationToken ct)
         {
             var updated = await _service.UpdateAsync(id, request, ct);
@@ -76,7 +74,6 @@ namespace Menro.Web.Controllers.Blog.Admin
         }
 
         /* --- BLOG CONTENT --- */
-        // GET api/admin/blog/posts/{id}/content
         [HttpGet("{id:guid}/content")]
         public async Task<ActionResult<BlogPostContentResponse>> GetContent(Guid id, CancellationToken ct)
         {
@@ -84,7 +81,6 @@ namespace Menro.Web.Controllers.Blog.Admin
             return content is null ? NotFound() : Ok(content);
         }
 
-        // PUT api/admin/blog/posts/{id}/content - autosave، بدون فایل، JSON ساده
         [HttpPut("{id:guid}/content")]
         public async Task<ActionResult<BlogPostContentResponse>> UpdateContent(
             Guid id, [FromBody] UpdateBlogPostContentRequest request, CancellationToken ct)
@@ -92,6 +88,5 @@ namespace Menro.Web.Controllers.Blog.Admin
             var updated = await _service.UpdateContentAsync(id, request, ct);
             return updated is null ? NotFound() : Ok(updated);
         }
-
     }
 }

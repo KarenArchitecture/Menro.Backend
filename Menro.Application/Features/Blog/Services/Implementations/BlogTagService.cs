@@ -2,7 +2,7 @@ using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Helpers;
 using Menro.Domain.Entities.Blog;
 using Menro.Domain.Interfaces.Blog;
-using Microsoft.IdentityModel.Logging;
+using System.Text.RegularExpressions;
 
 namespace Menro.Application.Features.Blog.Services.Implementations
 {
@@ -49,8 +49,9 @@ namespace Menro.Application.Features.Blog.Services.Implementations
 
         public async Task<BlogTagResponse> CreateAsync(CreateBlogTagRequest request, CancellationToken ct = default)
         {
-            var name = request.Name.Trim();
-
+            var name = NormalizeTagName(request.Name.Trim());
+            if (string.IsNullOrEmpty(name))
+                throw new InvalidOperationException("نام برچسب معتبر نیست.");
             if (await _repository.ExistsByNameAsync(name, ct: ct))
                 throw new InvalidOperationException("این برچسب از قبل وجود دارد.");
 
@@ -79,10 +80,13 @@ namespace Menro.Application.Features.Blog.Services.Implementations
         public async Task<BlogTagResponse?> UpdateAsync(
             Guid id, UpdateBlogTagRequest request, CancellationToken ct = default)
         {
+
             var tag = await _repository.GetByIdAsync(id, ct);
             if (tag is null) return null;
 
-            var name = request.Name.Trim();
+            var name = NormalizeTagName(request.Name.Trim());
+            if (string.IsNullOrEmpty(name))
+                throw new InvalidOperationException("نام برچسب معتبر نیست.");
             if (await _repository.ExistsByNameAsync(name, excludingId: id, ct: ct))
                 throw new InvalidOperationException("این برچسب از قبل وجود دارد.");
 
@@ -147,6 +151,17 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             }
 
             return slug;
+        }
+
+        /// <summary>
+        /// Replaces any run of whitespace in the (already-trimmed) tag name with a
+        /// single underscore, so tags read like real hashtags (e.g. "طراحی رابط
+        /// کاربری" -> "طراحی_رابط_کاربری"). Applied on both create and update.
+        /// </summary>
+        private static string NormalizeTagName(string name)
+        {
+            var normalized = Regex.Replace(name, @"\s+", "_");
+            return normalized.Trim('_');
         }
     }
 }

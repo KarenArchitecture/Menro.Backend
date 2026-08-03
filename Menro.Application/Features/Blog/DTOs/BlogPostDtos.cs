@@ -24,8 +24,21 @@ namespace Menro.Application.Features.Blog.DTOs
         public bool IsPublished { get; set; }
     }
 
+    public record BlogPostListItemResponse(
+        Guid Id,
+        string Title,
+        string? CoverImageUrl,
+        int ReadingMinutes,
+        Guid? CategoryId,
+        string? CategoryTitle,
+        bool IsPublished,
+        DateTime CreatedAtUtc,
+        DateTime? UpdatedAtUtc,
+        int ViewCount,
+        int LikeCount,
+        string PublishedDatePersian);
 
-    public record BlogPostResponse(
+    public record BlogPostDetailResponse(
         Guid Id,
         string Title,
         string? CoverImageUrl,
@@ -39,6 +52,7 @@ namespace Menro.Application.Features.Blog.DTOs
         int ViewCount,
         int LikeCount,
         string PublishedDatePersian);
+
 
     public record BlogPostTagResponse(Guid Id, string Name);
 

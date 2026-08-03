@@ -35,7 +35,7 @@ namespace Menro.Web.Controllers.Blog.Public
         #endregion
 
         [HttpGet]
-        public async Task<ActionResult<PagedResult<BlogPostResponse>>> GetAll(
+        public async Task<ActionResult<PagedResult<BlogPostListItemResponse>>> GetAll(
             [FromQuery] string? search,
             [FromQuery] string? categorySlug,
             [FromQuery] string? tagSlug,
