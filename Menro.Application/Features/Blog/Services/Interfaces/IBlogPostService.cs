@@ -27,5 +27,11 @@ namespace Menro.Application.Features.Blog.Services
         Task<BlogPostResponse?> UpdateAsync(Guid id, UpdateBlogPostRequest request, CancellationToken ct = default);
         Task<BlogPostResponse?> TogglePublishAsync(Guid id, CancellationToken ct = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);
+
+        /* --- BLOG CONTENT --- */
+        Task<BlogPostContentResponse?> GetContentAsync(Guid postId, CancellationToken ct = default);
+        Task<BlogPostContentResponse?> UpdateContentAsync(
+                    Guid postId, UpdateBlogPostContentRequest request, CancellationToken ct = default);
+
     }
 }

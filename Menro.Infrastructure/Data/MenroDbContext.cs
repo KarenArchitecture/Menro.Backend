@@ -68,6 +68,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<BlogCategory> BlogCategories { get; set; }
         public DbSet<BlogHero> BlogHeroes { get; set; }
         public DbSet<BlogPost> BlogPosts { get; set; }
+        public DbSet<BlogPostContent> BlogPostContents { get; set; }
         public DbSet<BlogPostTag> BlogPostTags { get; set; }
         public DbSet<BlogTag> BlogTags { get; set; }
 

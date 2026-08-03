@@ -1,5 +1,4 @@
-﻿using Menro.Application.Common.Interfaces;
-using Menro.Application.Common.SD;
+﻿using Menro.Application.Common.SD;
 using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Features.Blog.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -41,17 +40,18 @@ namespace Menro.Web.Controllers.Blog.Admin
             return post is null ? NotFound() : Ok(post);
         }
 
-        // POST api/admin/blog/posts - multipart: فیلدها + عکس (اختیاری) با هم
+        // POST api/admin/blog/posts - ساخت پیش‌نویس: فقط Title، بدون فایل
+        // (کاربر روی "پست جدید" می‌زنه، بلافاصله یه رکورد خالی ساخته میشه
+        // و کاربر به صفحه‌ی ادیتور هدایت میشه)
         [HttpPost]
-        [Consumes("multipart/form-data")]
         public async Task<ActionResult<BlogPostResponse>> Create(
-            [FromForm] CreateBlogPostRequest request, CancellationToken ct)
+            [FromBody] CreateBlogPostRequest request, CancellationToken ct)
         {
             var created = await _service.CreateAsync(request, ct);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
-        // PUT api/admin/blog/posts/{id} - multipart: فیلدها + عکس (اختیاری) + RemoveImage با هم
+        // PUT api/admin/blog/posts/{id} - multipart: فیلدهای متادیتا + عکس (اختیاری) + RemoveImage با هم
         [HttpPut("{id:guid}")]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<BlogPostResponse>> Update(
@@ -74,5 +74,24 @@ namespace Menro.Web.Controllers.Blog.Admin
             var deleted = await _service.DeleteAsync(id, ct);
             return deleted ? NoContent() : NotFound();
         }
+
+        /* --- BLOG CONTENT --- */
+        // GET api/admin/blog/posts/{id}/content
+        [HttpGet("{id:guid}/content")]
+        public async Task<ActionResult<BlogPostContentResponse>> GetContent(Guid id, CancellationToken ct)
+        {
+            var content = await _service.GetContentAsync(id, ct);
+            return content is null ? NotFound() : Ok(content);
+        }
+
+        // PUT api/admin/blog/posts/{id}/content - autosave، بدون فایل، JSON ساده
+        [HttpPut("{id:guid}/content")]
+        public async Task<ActionResult<BlogPostContentResponse>> UpdateContent(
+            Guid id, [FromBody] UpdateBlogPostContentRequest request, CancellationToken ct)
+        {
+            var updated = await _service.UpdateContentAsync(id, request, ct);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+
     }
 }

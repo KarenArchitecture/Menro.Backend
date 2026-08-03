@@ -59,6 +59,12 @@ namespace Menro.Infrastructure.Repositories
             await _context.SaveChangesAsync(ct);
         }
 
+        public async Task<int> CountByCategoryIdAsync(Guid categoryId, CancellationToken ct = default)
+        {
+            var blogCounts = await _context.BlogPosts.Where(b => b.CategoryId == categoryId).CountAsync();
+            return blogCounts;
+        }
+
         public async Task DeleteAsync(BlogCategory category, CancellationToken ct = default)
         {
             _context.BlogCategories.Remove(category);

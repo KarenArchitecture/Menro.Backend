@@ -127,5 +127,10 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             category.Slug,
             category.ColorHex,
             category.SortOrder);
+
+        public async Task<int> CountAffectedPostsAsync(Guid categoryId, CancellationToken ct = default)
+        {
+            return await _repository.CountByCategoryIdAsync(categoryId);
+        }
     }
 }

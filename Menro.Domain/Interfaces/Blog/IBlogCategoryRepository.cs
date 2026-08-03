@@ -12,6 +12,7 @@ namespace Menro.Domain.Interfaces.Blog
         Task<int> GetNextSortOrderAsync(CancellationToken ct = default);
         Task AddAsync(BlogCategory category, CancellationToken ct = default);
         Task UpdateAsync(BlogCategory category, CancellationToken ct = default);
+        Task<int> CountByCategoryIdAsync(Guid categoryId, CancellationToken ct = default);
         Task DeleteAsync(BlogCategory category, CancellationToken ct = default);
         Task SwapSortOrderAsync(BlogCategory a, BlogCategory b, CancellationToken ct = default);
 
