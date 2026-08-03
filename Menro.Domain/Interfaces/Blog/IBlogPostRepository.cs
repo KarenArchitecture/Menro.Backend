@@ -11,6 +11,7 @@ namespace Menro.Domain.Interfaces.Blog
             string? search, Guid? categoryId, Guid? tagId = null, CancellationToken ct = default);
         Task<int> CountByTagIdAsync(Guid tagId, CancellationToken ct = default);
         Task AddAsync(BlogPost post, CancellationToken ct = default);
+        Task AddPostTagAsync(BlogPostTag postTag, CancellationToken ct = default);
         Task UpdateAsync(BlogPost post, CancellationToken ct = default);
         Task DeleteAsync(BlogPost post, CancellationToken ct = default);
     }

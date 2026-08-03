@@ -11,7 +11,11 @@ namespace Menro.Infrastructure.Repositories
         public BlogPostRepository(MenroDbContext context) => _context = context;
 
         public async Task<BlogPost?> GetByIdAsync(Guid id, CancellationToken ct = default)
-            => await _context.BlogPosts.FirstOrDefaultAsync(p => p.Id == id, ct);
+             => await _context.BlogPosts
+                 .Include(p => p.Category)
+                 .Include(p => p.PostTags)
+                     .ThenInclude(pt => pt.BlogTag)
+                 .FirstOrDefaultAsync(p => p.Id == id, ct);
 
         public async Task<BlogPost?> GetByIdWithContentAsync(Guid id, CancellationToken ct = default)
             => await _context.BlogPosts.Include(p => p.Content).FirstOrDefaultAsync(p => p.Id == id, ct);
@@ -35,6 +39,12 @@ namespace Menro.Infrastructure.Repositories
 
         public async Task AddAsync(BlogPost post, CancellationToken ct = default)
             => await _context.BlogPosts.AddAsync(post, ct);
+
+        public Task AddPostTagAsync(BlogPostTag postTag, CancellationToken ct = default)
+        {
+            _context.BlogPostTags.Add(postTag);
+            return Task.CompletedTask;
+        }
 
         public Task UpdateAsync(BlogPost post, CancellationToken ct = default)
         {

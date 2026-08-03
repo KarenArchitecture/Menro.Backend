@@ -115,14 +115,33 @@ namespace Menro.Application.Features.Blog.Services.Implementations
                 post.CoverImageUrl = uploadResult.FileName;
             }
 
-            await _unitOfWork.BlogPost.UpdateAsync(post, ct);
+            // --- sync tags ---
+            var requestedTagIds = (request.TagIds ?? new List<Guid>()).Distinct().ToList();
+            var existingTagIds = post.PostTags.Select(pt => pt.BlogTagId).ToHashSet();
+
+            var toRemove = post.PostTags.Where(pt => !requestedTagIds.Contains(pt.BlogTagId)).ToList();
+            foreach (var pt in toRemove)
+                post.PostTags.Remove(pt);
+
+            foreach (var tagId in requestedTagIds.Where(tid => !existingTagIds.Contains(tid)))
+            {
+                var newPostTag = new BlogPostTag
+                {
+                    Id = Guid.NewGuid(),
+                    BlogPostId = post.Id,
+                    BlogTagId = tagId,
+                };
+                post.PostTags.Add(newPostTag);
+                await _unitOfWork.BlogPost.AddPostTagAsync(newPostTag, ct);
+            }
+
+            post.UpdatedAtUtc = DateTime.UtcNow;
             await _unitOfWork.SaveChangesAsync();
 
             var updated = await _unitOfWork.BlogPost.GetByIdAsync(post.Id, ct) ?? post;
             return ToResponse(updated);
         }
-
-        public async Task<BlogPostResponse?> TogglePublishAsync(Guid id, CancellationToken ct = default)
+        public async Task<BlogPostPublishResponse?> TogglePublishAsync(Guid id, CancellationToken ct = default)
         {
             var post = await _unitOfWork.BlogPost.GetByIdAsync(id, ct);
             if (post is null) return null;
@@ -130,7 +149,8 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.IsPublished = !post.IsPublished;
             await _unitOfWork.BlogPost.UpdateAsync(post, ct);
             await _unitOfWork.SaveChangesAsync();
-            return ToResponse(post);
+
+            return new BlogPostPublishResponse(post.Id, post.IsPublished);
         }
 
         public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
@@ -156,6 +176,9 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.ReadingMinutes,
             post.CategoryId,
             post.Category?.Title,
+            post.PostTags
+                .Select(pt => new BlogPostTagResponse(pt.BlogTagId, pt.BlogTag?.Name ?? ""))
+                .ToList(),
             post.IsPublished,
             post.CreatedAtUtc,
             post.UpdatedAtUtc,

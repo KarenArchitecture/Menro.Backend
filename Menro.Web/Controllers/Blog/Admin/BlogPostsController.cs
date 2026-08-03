@@ -51,7 +51,7 @@ namespace Menro.Web.Controllers.Blog.Admin
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
-        // PUT api/admin/blog/posts/{id} - multipart: فیلدهای متادیتا + عکس (اختیاری) + RemoveImage با هم
+        // PUT api/admin/blog/posts/{id}
         [HttpPut("{id:guid}")]
         [Consumes("multipart/form-data")]
         public async Task<ActionResult<BlogPostResponse>> Update(
@@ -62,7 +62,7 @@ namespace Menro.Web.Controllers.Blog.Admin
         }
 
         [HttpPatch("{id:guid}/publish")]
-        public async Task<ActionResult<BlogPostResponse>> TogglePublish(Guid id, CancellationToken ct)
+        public async Task<ActionResult<BlogPostPublishResponse>> TogglePublish(Guid id, CancellationToken ct)
         {
             var updated = await _service.TogglePublishAsync(id, ct);
             return updated is null ? NotFound() : Ok(updated);
