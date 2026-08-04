@@ -1,6 +1,6 @@
 ﻿using Menro.Application.Features.Blog.DTOs;
 
-namespace Menro.Application.Features.Blog.Services
+namespace Menro.Application.Features.Blog.Services.Interfaces
 {
     // NOTE: reconstructed from BlogCategoryService.cs - reconcile with your
     // actual file. Only GetBySlugAsync is NEW.

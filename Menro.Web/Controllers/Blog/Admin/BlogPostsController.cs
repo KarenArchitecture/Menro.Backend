@@ -1,6 +1,6 @@
 ﻿using Menro.Application.Common.SD;
 using Menro.Application.Features.Blog.DTOs;
-using Menro.Application.Features.Blog.Services;
+using Menro.Application.Features.Blog.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,9 +13,13 @@ namespace Menro.Web.Controllers.Blog.Admin
     {
         #region DI
         private readonly IBlogPostService _service;
-        public BlogPostsController(IBlogPostService service)
+        private readonly IBlogRestaurantSearchService _restaurantSearchService;
+        public BlogPostsController(
+            IBlogPostService service,
+            IBlogRestaurantSearchService restaurantSearchService)
         {
             _service = service;
+            _restaurantSearchService = restaurantSearchService;
         }
         #endregion
 
@@ -87,6 +91,25 @@ namespace Menro.Web.Controllers.Blog.Admin
         {
             var updated = await _service.UpdateContentAsync(id, request, ct);
             return updated is null ? NotFound() : Ok(updated);
+        }
+
+        // --- restaurant search for add to blog content
+        [HttpGet("restaurant-search")]
+        public async Task<ActionResult<IReadOnlyList<BlogRestaurantSearchResult>>> SearchRestaurants(
+            [FromQuery] string? term,
+            [FromQuery] int take = 10,
+            CancellationToken ct = default)
+        {
+            var results = await _restaurantSearchService.SearchAsync(term, take, ct);
+            return Ok(results);
+        }
+
+        [HttpGet("restaurant-search/{id:int}")]
+        public async Task<ActionResult<BlogRestaurantSearchResult>> GetRestaurant(
+            int id, CancellationToken ct)
+        {
+            var result = await _restaurantSearchService.GetByIdAsync(id, ct);
+            return result is null ? NotFound() : Ok(result);
         }
     }
 }

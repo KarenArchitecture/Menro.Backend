@@ -1,5 +1,5 @@
 ﻿using Menro.Application.Features.Blog.DTOs;
-using Menro.Application.Features.Blog.Services;
+using Menro.Application.Features.Blog.Services.Interfaces;
 using Menro.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 

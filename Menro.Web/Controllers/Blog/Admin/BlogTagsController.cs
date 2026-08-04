@@ -1,6 +1,6 @@
 using Menro.Application.Common.SD;
 using Menro.Application.Features.Blog.DTOs;
-using Menro.Application.Features.Blog.Services;
+using Menro.Application.Features.Blog.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

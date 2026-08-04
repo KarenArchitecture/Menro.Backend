@@ -1,7 +1,7 @@
 ﻿using Menro.Application.Features.Blog.DTOs;
 using Menro.Domain.Enums;
 
-namespace Menro.Application.Features.Blog.Services
+namespace Menro.Application.Features.Blog.Services.Interfaces
 {
     public interface IBlogPostService
     {
