@@ -1,36 +1,32 @@
-﻿using Menro.Domain.Entities;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
+using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Menro.Infrastructure.Data.Seed.Demo.Seeders;
 
 public class DemoRestaurantAdSeeder : IDataSeeder
 {
     private readonly MenroDbContext _db;
+    private readonly IMediaStorageProvider _mediaStorage;
+    private readonly MediaStorageOptions _mediaOptions;
 
     private readonly Random _rand = new(42);
 
     private const int TargetAdBanners = 5;
 
-    private static readonly string[] CarouselAdImages =
-    {
-        "res-slider.jpg",
-        "optcropban.jpg",
-        "top-banner.png"
-    };
-
-    private static readonly string[] FullscreenAdImages =
-    {
-        "ad-banner-1.jpg",
-        "ad-banner-2.png",
-        "top-banner.png"
-    };
-
-    public DemoRestaurantAdSeeder(MenroDbContext db)
+    public DemoRestaurantAdSeeder(
+        MenroDbContext db,
+        IMediaStorageProvider mediaStorage,
+        IOptions<MediaStorageOptions> mediaOptions)
     {
         _db = db;
+        _mediaStorage = mediaStorage;
+        _mediaOptions = mediaOptions.Value;
     }
     public int Order => SeedOrder.RestaurantAd;
     public async Task SeedAsync()
@@ -61,6 +57,14 @@ public class DemoRestaurantAdSeeder : IDataSeeder
 
             return;
         }
+
+        // 🔧 Real sample bytes, saved per-entity through the actual media
+        // pipeline below — same reasoning as DemoRestaurantSeeder. Registry
+        // documents both RestaurantAdBanner and RestaurantAdCarousel as
+        // entity-scoped by restaurantId, so we use restaurant.Id (known
+        // up-front here, no need to save first).
+        var carouselBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/ads/carousel/res-slider.jpg"));
+        var bannerBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/ads/banner/ad-banner-1.jpg"));
 
         var carouselTexts = new[]
         {
@@ -101,6 +105,9 @@ public class DemoRestaurantAdSeeder : IDataSeeder
                     ? _rand.Next(7, 15)
                     : _rand.Next(500, 1500);
 
+            var carouselImgResult = await _mediaStorage.SaveBytesAsync(
+                MediaCategory.RestaurantAdCarousel, carouselBytes, ".jpg", restaurant.Id.ToString());
+
             var ad = new RestaurantAd
             {
                 RestaurantId = restaurant.Id,
@@ -110,9 +117,7 @@ public class DemoRestaurantAdSeeder : IDataSeeder
 
                 BillingType = billingType,
 
-                ImageFileName =
-                    CarouselAdImages[
-                        i % CarouselAdImages.Length],
+                ImageFileName = carouselImgResult.FileName,
 
                 TargetUrl = restaurant.Slug,
 
@@ -170,6 +175,9 @@ public class DemoRestaurantAdSeeder : IDataSeeder
                     ? _rand.Next(3000, 8000)
                     : _rand.Next(400, 1200);
 
+            var bannerImgResult = await _mediaStorage.SaveBytesAsync(
+                MediaCategory.RestaurantAdBanner, bannerBytes, ".jpg", restaurant.Id.ToString());
+
             var ad = new RestaurantAd
             {
                 RestaurantId = restaurant.Id,
@@ -179,9 +187,7 @@ public class DemoRestaurantAdSeeder : IDataSeeder
 
                 BillingType = billingType,
 
-                ImageFileName =
-                    FullscreenAdImages[
-                        i % FullscreenAdImages.Length],
+                ImageFileName = bannerImgResult.FileName,
 
                 TargetUrl = restaurant.Slug,
 

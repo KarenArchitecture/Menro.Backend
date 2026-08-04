@@ -72,8 +72,6 @@ namespace Menro.Infrastructure.Repositories
                 return cached.OrderBy(_ => Guid.NewGuid()).Take(count).ToList();
             }
 
-            var nowUtc = DateTime.UtcNow;
-
             var restaurants = await _context.Restaurants
                 .AsNoTracking()
                 .Where(r => r.IsActive && !r.IsDeleted && r.Status == RestaurantStatus.Approved)
@@ -82,6 +80,13 @@ namespace Menro.Infrastructure.Repositories
                 .Include(r => r.Ratings)
                 .Include(r => r.RestaurantCategory)
                 .Include(r => r.Discounts)
+                // 🔧 Ratings + Discounts are sibling one-to-many collections on the
+                // same root. Without this, EF joins both into ONE query, so every
+                // restaurant row gets duplicated once per (rating × discount)
+                // combination before EF de-dupes it client-side — classic
+                // Cartesian explosion. AsSplitQuery() issues Ratings and Discounts
+                // as separate SQL queries instead, so the row count stays sane.
+                .AsSplitQuery()
                 .ToListAsync();
 
             _cache.Set(cacheKey, restaurants, TimeSpan.FromMinutes(5));
