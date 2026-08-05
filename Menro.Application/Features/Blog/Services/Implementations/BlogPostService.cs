@@ -6,6 +6,7 @@ using Menro.Application.Helpers;
 using Menro.Domain.Entities.Blog;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 namespace Menro.Application.Features.Blog.Services.Implementations
 {
@@ -217,6 +218,21 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             await _unitOfWork.SaveChangesAsync();
 
             return new BlogPostContentResponse(content.BlogPostId, content.Content);
+        }
+
+        public async Task<BlogContentImageUploadResponse?> UploadContentImageAsync(
+            Guid postId, IFormFile image, CancellationToken ct = default)
+        {
+            var content = await _unitOfWork.BlogPostContent.GetByPostIdAsync(postId, ct);
+            if (content is null) return null;
+
+            var uploadResult = await _mediaStorage.SaveAsync(
+                MediaCategory.BlogContentImage, image, postId.ToString(), oldFileName: null, ct: ct);
+
+            var url = _mediaStorage.GetUrl(
+                MediaCategory.BlogContentImage, uploadResult.FileName, postId.ToString(), MediaVariant.Resized);
+
+            return new BlogContentImageUploadResponse(url);
         }
     }
 }

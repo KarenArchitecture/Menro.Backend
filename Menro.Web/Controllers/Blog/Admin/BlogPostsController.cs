@@ -77,7 +77,9 @@ namespace Menro.Web.Controllers.Blog.Admin
             return deleted ? NoContent() : NotFound();
         }
 
-        /* --- BLOG CONTENT --- */
+        /* ---------------------------------- */
+        /* ---------- BLOG CONTENT ---------- */
+        /* ---------------------------------- */
         [HttpGet("{id:guid}/content")]
         public async Task<ActionResult<BlogPostContentResponse>> GetContent(Guid id, CancellationToken ct)
         {
@@ -111,5 +113,17 @@ namespace Menro.Web.Controllers.Blog.Admin
             var result = await _restaurantSearchService.GetByIdAsync(id, ct);
             return result is null ? NotFound() : Ok(result);
         }
+
+        // --- blog content image upload endpoint
+        /* --- CONTENT IMAGES --- */
+        [HttpPost("{id:guid}/content/images")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<BlogContentImageUploadResponse>> UploadContentImage(
+            Guid id, IFormFile image, CancellationToken ct)
+        {
+            var result = await _service.UploadContentImageAsync(id, image, ct);
+            return result is null ? NotFound() : Ok(result);
+        }
+
     }
 }

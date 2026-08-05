@@ -1,5 +1,6 @@
 ﻿using Menro.Application.Features.Blog.DTOs;
 using Menro.Domain.Enums;
+using Microsoft.AspNetCore.Http;
 
 namespace Menro.Application.Features.Blog.Services.Interfaces
 {
@@ -18,6 +19,8 @@ namespace Menro.Application.Features.Blog.Services.Interfaces
         /* --- BLOG CONTENT --- */
         Task<BlogPostContentResponse?> GetContentAsync(Guid postId, CancellationToken ct = default);
         Task<BlogPostContentResponse?> UpdateContentAsync(
-                    Guid postId, UpdateBlogPostContentRequest request, CancellationToken ct = default);
+            Guid postId, UpdateBlogPostContentRequest request, CancellationToken ct = default);
+        Task<BlogContentImageUploadResponse?> UploadContentImageAsync(
+            Guid postId, IFormFile image, CancellationToken ct = default);
     }
 }
