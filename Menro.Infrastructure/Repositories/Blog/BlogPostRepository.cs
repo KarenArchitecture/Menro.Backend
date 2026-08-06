@@ -11,15 +11,26 @@ namespace Menro.Infrastructure.Repositories
         public BlogPostRepository(MenroDbContext context) => _context = context;
 
         public async Task<BlogPost?> GetByIdAsync(Guid id, CancellationToken ct = default)
-             => await _context.BlogPosts
-                 .Include(p => p.Category)
-                 .Include(p => p.PostTags)
-                     .ThenInclude(pt => pt.BlogTag)
-                 .FirstOrDefaultAsync(p => p.Id == id, ct);
+            => await _context.BlogPosts
+                .Include(p => p.Category)
+                .Include(p => p.Author)
+                .Include(p => p.PostTags)
+                    .ThenInclude(pt => pt.BlogTag)
+                .FirstOrDefaultAsync(p => p.Id == id, ct);
 
         public async Task<BlogPost?> GetByIdWithContentAsync(Guid id, CancellationToken ct = default)
-            => await _context.BlogPosts.Include(p => p.Content).FirstOrDefaultAsync(p => p.Id == id, ct);
+            => await _context.BlogPosts
+                .Include(p => p.Author)
+                .Include(p => p.Content)
+                .FirstOrDefaultAsync(p => p.Id == id, ct);
 
+        public async Task<bool> SlugExistsAsync(string slug, Guid? excludePostId = null, CancellationToken ct = default)
+        {
+            var query = _context.BlogPosts.Where(p => p.Slug == slug);
+            if (excludePostId.HasValue)
+                query = query.Where(p => p.Id != excludePostId.Value);
+            return await query.AnyAsync(ct);
+        }
         public async Task<IReadOnlyList<BlogPost>> GetAllAsync(
             string? search, Guid? categoryId, Guid? tagId = null, CancellationToken ct = default)
         {

@@ -12,6 +12,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
 {
     public class BlogPostService : IBlogPostService
     {
+        #region DI
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMediaStorageProvider _mediaStorage;
 
@@ -21,6 +22,12 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             _mediaStorage = mediaStorage;
         }
 
+        #endregion
+
+        // ------------------------------------------------------------
+        // Public-facing listing (site): full card DTO, published-only
+        // by default, resized cover image.
+        // ------------------------------------------------------------
         public async Task<PagedResult<BlogPostListItemResponse>> GetAllAsync(
             string? search, Guid? categoryId, Guid? tagId = null,
             BlogPostSortOrder sort = BlogPostSortOrder.Newest,
@@ -30,19 +37,45 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             var posts = await _unitOfWork.BlogPost.GetAllAsync(search, categoryId, tagId, ct);
             IEnumerable<BlogPost> query = posts;
             if (publishedOnly) query = query.Where(p => p.IsPublished);
-            query = sort switch
-            {
-                BlogPostSortOrder.MostPopular => query.OrderByDescending(p => p.LikeCount),
-                BlogPostSortOrder.MostViewed => query.OrderByDescending(p => p.ViewCount),
-                _ => query.OrderByDescending(p => p.CreatedAtUtc),
-            };
+            query = ApplySort(query, sort);
+
             var materialized = query.ToList();
             var totalCount = materialized.Count;
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize < 1 ? 20 : Math.Min(pageSize, 100);
+            (page, pageSize) = NormalizePaging(page, pageSize);
+
             var pageItems = materialized.Skip((page - 1) * pageSize).Take(pageSize)
                 .Select(ToListItemResponse).ToList();
+
             return new PagedResult<BlogPostListItemResponse>
+            {
+                Items = pageItems,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+            };
+        }
+
+        // ------------------------------------------------------------
+        // Admin panel listing: lightweight DTO (thumbnail, author,
+        // no body/content-related fields), sees drafts too by default.
+        // ------------------------------------------------------------
+        public async Task<PagedResult<BlogPostAdminListItemResponse>> GetAllForAdminAsync(
+            string? search, Guid? categoryId, Guid? tagId = null,
+            BlogPostSortOrder sort = BlogPostSortOrder.Newest,
+            int page = 1, int pageSize = 20,
+            CancellationToken ct = default)
+        {
+            var posts = await _unitOfWork.BlogPost.GetAllAsync(search, categoryId, tagId, ct);
+            IEnumerable<BlogPost> query = ApplySort(posts, sort);
+
+            var materialized = query.ToList();
+            var totalCount = materialized.Count;
+            (page, pageSize) = NormalizePaging(page, pageSize);
+
+            var pageItems = materialized.Skip((page - 1) * pageSize).Take(pageSize)
+                .Select(ToAdminListItemResponse).ToList();
+
+            return new PagedResult<BlogPostAdminListItemResponse>
             {
                 Items = pageItems,
                 Page = page,
@@ -59,32 +92,37 @@ namespace Menro.Application.Features.Blog.Services.Implementations
 
         // ساخت پیش‌نویس: BlogPost + BlogPostContent خالی، هردو Stage میشن،
         // و با یک SaveChangesAsync مشترک با هم Commit میشن (اتمیک).
-        public async Task<BlogPostDetailResponse> CreateAsync(CreateBlogPostRequest request, CancellationToken ct = default)
+        public async Task<BlogPostDetailResponse> CreateAsync(
+            CreateBlogPostRequest request, string authorId, CancellationToken ct = default)
         {
+            var baseSlug = SlugHelper.GenerateSlug(request.Title);
+            var slug = await ResolveUniqueSlugAsync(baseSlug, excludePostId: null, ct);
+
+            var author = await _unitOfWork.User.GetByIdAsync(authorId);
+            if (author is null)
+                throw new InvalidOperationException($"Authenticated user '{authorId}' was not found.");
+
             var post = new BlogPost
             {
                 Id = Guid.NewGuid(),
                 Title = request.Title.Trim(),
+                Slug = slug,
+                AuthorId = authorId,
+                AuthorNameSnapshot = author.FullName,
                 ReadingMinutes = 0,
                 CategoryId = null,
                 IsPublished = false,
                 CreatedAtUtc = DateTime.UtcNow
             };
 
-            var content = new BlogPostContent
-            {
-                BlogPostId = post.Id,
-                Content = string.Empty
-            };
-
+            var content = new BlogPostContent { BlogPostId = post.Id, Content = string.Empty };
             await _unitOfWork.BlogPost.AddAsync(post, ct);
             await _unitOfWork.BlogPostContent.AddAsync(content, ct);
-            await _unitOfWork.SaveChangesAsync(); // یک INSERT-transaction برای هردو ردیف
+            await _unitOfWork.SaveChangesAsync();
 
             var created = await _unitOfWork.BlogPost.GetByIdAsync(post.Id, ct) ?? post;
             return ToDetailResponse(created);
         }
-
         public async Task<BlogPostDetailResponse?> UpdateAsync(
             Guid id, UpdateBlogPostRequest request, CancellationToken ct = default)
         {
@@ -95,6 +133,11 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.ReadingMinutes = request.ReadingMinutes;
             post.CategoryId = request.CategoryId;
             post.IsPublished = request.IsPublished;
+
+            var normalized = SlugHelper.NormalizeAscii(request.Slug);
+            if (string.IsNullOrEmpty(normalized))
+                normalized = SlugHelper.GenerateSlug(post.Title);
+            post.Slug = await ResolveUniqueSlugAsync(normalized, excludePostId: post.Id, ct);
 
             var entityId = id.ToString();
 
@@ -165,41 +208,6 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return true;
         }
 
-        private BlogPostListItemResponse ToListItemResponse(BlogPost post) => new(
-            post.Id,
-            post.Title,
-            string.IsNullOrWhiteSpace(post.CoverImageUrl)
-                ? null
-                : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl, post.Id.ToString(), MediaVariant.Thumbnail),
-            post.ReadingMinutes,
-            post.CategoryId,
-            post.Category?.Title,
-            post.IsPublished,
-            post.CreatedAtUtc,
-            post.UpdatedAtUtc,
-            post.ViewCount,
-            post.LikeCount,
-            PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
-
-        private BlogPostDetailResponse ToDetailResponse(BlogPost post) => new(
-            post.Id,
-            post.Title,
-            string.IsNullOrWhiteSpace(post.CoverImageUrl)
-                ? null
-                : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl, post.Id.ToString(), MediaVariant.Original),
-            post.ReadingMinutes,
-            post.CategoryId,
-            post.Category?.Title,
-            post.PostTags
-                .Select(pt => new BlogPostTagResponse(pt.BlogTagId, pt.BlogTag?.Name ?? ""))
-                .ToList(),
-            post.IsPublished,
-            post.CreatedAtUtc,
-            post.UpdatedAtUtc,
-            post.ViewCount,
-            post.LikeCount,
-            PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
-
         /* --- BLOG CONTENT --- */
         public async Task<BlogPostContentResponse?> GetContentAsync(Guid postId, CancellationToken ct = default)
         {
@@ -234,5 +242,92 @@ namespace Menro.Application.Features.Blog.Services.Implementations
 
             return new BlogContentImageUploadResponse(url);
         }
+
+
+        /* -------   ------------- */
+        /* --- Private Helpers --- */
+        /* --------   ------------ */
+        /// <summary>Appends "-2", "-3", ... on collision - همون الگوی BlogCategoryService.GenerateUniqueSlugAsync.</summary>
+        private async Task<string> ResolveUniqueSlugAsync(string desiredSlug, Guid? excludePostId, CancellationToken ct)
+        {
+            var baseSlug = desiredSlug;
+            var slug = baseSlug;
+            var suffix = 2;
+            while (await _unitOfWork.BlogPost.SlugExistsAsync(slug, excludePostId, ct))
+            {
+                slug = $"{baseSlug}-{suffix}";
+                suffix++;
+            }
+            return slug;
+        }
+
+        private static IEnumerable<BlogPost> ApplySort(IEnumerable<BlogPost> query, BlogPostSortOrder sort) =>
+            sort switch
+            {
+                BlogPostSortOrder.MostPopular => query.OrderByDescending(p => p.LikeCount),
+                BlogPostSortOrder.MostViewed => query.OrderByDescending(p => p.ViewCount),
+                _ => query.OrderByDescending(p => p.CreatedAtUtc),
+            };
+
+        private static (int page, int pageSize) NormalizePaging(int page, int pageSize)
+        {
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize < 1 ? 20 : Math.Min(pageSize, 100);
+            return (page, pageSize);
+        }
+
+        private BlogPostListItemResponse ToListItemResponse(BlogPost post) => new(
+            post.Id,
+            post.Title,
+            post.Slug,
+            string.IsNullOrWhiteSpace(post.CoverImageUrl)
+                ? null
+                : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl, post.Id.ToString(), MediaVariant.Resized),
+            post.ReadingMinutes,
+            post.CategoryId,
+            post.Category?.Title,
+            post.IsPublished,
+            post.CreatedAtUtc,
+            post.UpdatedAtUtc,
+            post.ViewCount,
+            post.LikeCount,
+            PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
+
+        private BlogPostAdminListItemResponse ToAdminListItemResponse(BlogPost post) => new(
+            post.Id,
+            post.Title,
+            string.IsNullOrWhiteSpace(post.CoverImageUrl)
+                ? null
+                : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl, post.Id.ToString(), MediaVariant.Thumbnail),
+            post.ReadingMinutes,
+            post.CategoryId,
+            post.Category?.Title,
+            post.Author?.FullName ?? post.AuthorNameSnapshot,
+            post.IsPublished,
+            post.CreatedAtUtc,
+            PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
+
+        private BlogPostDetailResponse ToDetailResponse(BlogPost post) => new(
+            post.Id,
+            post.Title,
+            post.Slug,
+            string.IsNullOrWhiteSpace(post.CoverImageUrl)
+                ? null
+                : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl, post.Id.ToString(), MediaVariant.Original),
+            post.AuthorId,
+            AuthorName: post.Author?.FullName ?? post.AuthorNameSnapshot,
+            post.ReadingMinutes,
+            post.CategoryId,
+            post.Category?.Title,
+            post.PostTags
+                .Select(pt => new BlogPostTagResponse(pt.BlogTagId, pt.BlogTag?.Name ?? ""))
+                .ToList(),
+            post.IsPublished,
+            post.CreatedAtUtc,
+            post.UpdatedAtUtc,
+            post.ViewCount,
+            post.LikeCount,
+            PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
+
     }
 }

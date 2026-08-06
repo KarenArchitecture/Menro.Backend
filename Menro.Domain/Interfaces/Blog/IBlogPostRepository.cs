@@ -6,7 +6,7 @@ namespace Menro.Domain.Interfaces.Blog
     {
         Task<BlogPost?> GetByIdAsync(Guid id, CancellationToken ct = default);
        Task<BlogPost?> GetByIdWithContentAsync(Guid id, CancellationToken ct = default);
-
+        Task<bool> SlugExistsAsync(string slug, Guid? excludePostId = null, CancellationToken ct = default);
         Task<IReadOnlyList<BlogPost>> GetAllAsync(
             string? search, Guid? categoryId, Guid? tagId = null, CancellationToken ct = default);
         Task<int> CountByTagIdAsync(Guid tagId, CancellationToken ct = default);

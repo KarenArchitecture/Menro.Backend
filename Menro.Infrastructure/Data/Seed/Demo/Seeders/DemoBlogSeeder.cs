@@ -1,4 +1,5 @@
-﻿using Menro.Domain.Entities.Blog;
+﻿using Menro.Application.Helpers;
+using Menro.Domain.Entities.Blog;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.EntityFrameworkCore;
@@ -34,8 +35,10 @@ public class DemoBlogSeeder : IDataSeeder
         }
 
         // ------------------------------------------------------------
-        // 1) Display categories (BlogPost.CategoryId is a required FK,
-        //    so we need at least a handful of these to assign posts to)
+        // 1) Display categories (BlogPost.CategoryId is now a nullable
+        //    FK, so a handful of posts will intentionally be left
+        //    uncategorized below to cover that case in pagination/filter
+        //    testing)
         // ------------------------------------------------------------
         // NOTE: Slug must be URL-friendly and Latin-only (see BlogCategory.Slug
         // doc comment - normally generated from Title in BlogCategoryService.
@@ -71,7 +74,25 @@ public class DemoBlogSeeder : IDataSeeder
         await _db.SaveChangesAsync();
 
         // ------------------------------------------------------------
-        // 2) Bulk blog posts - large volume for pagination testing
+        // 2) Demo authors (name-only snapshots)
+        // ------------------------------------------------------------
+        // NOTE: BlogPost.AuthorId points at Menro.Domain.Entities... User,
+        // but there's no User seeder wired in here, so AuthorId is left
+        // null for all demo posts. AuthorNameSnapshot is filled from this
+        // list purely for display/testing purposes. If you have a demo
+        // user seeder (or want real AuthorId FKs), send it over and I'll
+        // wire it in properly instead of leaving AuthorId null.
+        var authorNames = new[]
+        {
+            "سارا احمدی",
+            "علی محمدی",
+            "نگار حسینی",
+            "امیر رضایی",
+            "مهسا کریمی",
+        };
+
+        // ------------------------------------------------------------
+        // 3) Bulk blog posts - large volume for pagination testing
         // ------------------------------------------------------------
         var topics = new[]
         {
@@ -104,7 +125,14 @@ public class DemoBlogSeeder : IDataSeeder
         for (int i = 1; i <= postCount; i++)
         {
             var topic = topics[_rand.Next(topics.Length)];
-            var category = categories[_rand.Next(categories.Count)];
+
+            // ~5% of posts left uncategorized to exercise the now-nullable
+            // CategoryId path (filters, "uncategorized" badges, etc.)
+            var category = _rand.Next(0, 100) < 5
+                ? null
+                : categories[_rand.Next(categories.Count)];
+
+            var authorName = authorNames[_rand.Next(authorNames.Length)];
 
             // Spread creation dates out over the last ~2 years so "Newest"
             // sort has meaningful variety instead of near-identical timestamps.
@@ -113,13 +141,22 @@ public class DemoBlogSeeder : IDataSeeder
 
             var isPublished = _rand.Next(0, 100) < 85; // ~85% published, some drafts
 
+            var title = $"{topic} - شماره {i}";
+
             posts.Add(new BlogPost
             {
                 Id = Guid.NewGuid(),
-                Title = $"{topic} - شماره {i}",
+                Title = title,
+                // Title already ends in a unique number ("- شماره {i}"), so the
+                // generated slug is inherently unique too - no collision check
+                // needed here the way BlogPostService.ResolveUniqueSlugAsync
+                // does it for real admin-created posts.
+                Slug = SlugHelper.GenerateSlug(title),
+                AuthorId = null, // no demo User seeder wired in - see note above
+                AuthorNameSnapshot = authorName,
                 CoverImageUrl = "blog.jpg",
                 ReadingMinutes = _rand.Next(2, 12),
-                CategoryId = category.Id,
+                CategoryId = category?.Id,
                 IsPublished = isPublished,
                 CreatedAtUtc = createdAt,
                 UpdatedAtUtc = _rand.Next(0, 2) == 0
@@ -127,6 +164,9 @@ public class DemoBlogSeeder : IDataSeeder
                     : null,
                 ViewCount = _rand.Next(0, 20_000),
                 LikeCount = _rand.Next(0, 3_000),
+                // Content intentionally left null - BlogPostContent shape
+                // wasn't available to this seeder. Send its definition over
+                // if demo posts need seeded body content too.
             });
         }
 

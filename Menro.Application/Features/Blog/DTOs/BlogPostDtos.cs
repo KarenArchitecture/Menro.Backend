@@ -15,6 +15,10 @@ namespace Menro.Application.Features.Blog.DTOs
         [Required(ErrorMessage = "عنوان پست الزامی است.")]
         [MaxLength(300)]
         public string Title { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "اسلاگ الزامی است.")]
+        [MaxLength(200)]
+        public string Slug { get; set; } = string.Empty;
         public IFormFile? CoverImage { get; set; }
         public bool RemoveImage { get; set; }
         [Range(1, int.MaxValue, ErrorMessage = "زمان مطالعه باید بزرگ‌تر از صفر باشد.")]
@@ -23,10 +27,22 @@ namespace Menro.Application.Features.Blog.DTOs
         public List<Guid> TagIds { get; set; } = new();
         public bool IsPublished { get; set; }
     }
+    public record BlogPostAdminListItemResponse(
+    Guid Id,
+    string Title,
+    string? ThumbnailUrl,
+    int ReadingMinutes,
+    Guid? CategoryId,
+    string? CategoryTitle,
+    string AuthorName,
+    bool IsPublished,
+    DateTime CreatedAtUtc,
+    string PublishedDatePersian);
 
     public record BlogPostListItemResponse(
         Guid Id,
         string Title,
+        string Slug,
         string? CoverImageUrl,
         int ReadingMinutes,
         Guid? CategoryId,
@@ -41,7 +57,10 @@ namespace Menro.Application.Features.Blog.DTOs
     public record BlogPostDetailResponse(
         Guid Id,
         string Title,
+        string Slug,
         string? CoverImageUrl,
+        string? AuthorId, 
+        string? AuthorName,
         int ReadingMinutes,
         Guid? CategoryId,
         string? CategoryTitle,

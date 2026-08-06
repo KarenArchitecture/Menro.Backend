@@ -1,9 +1,13 @@
-namespace Menro.Domain.Entities.Blog
+﻿namespace Menro.Domain.Entities.Blog
 {
     public class BlogPost
     {
         public Guid Id { get; set; }
         public string Title { get; set; } = string.Empty;
+        public string Slug { get; set; } = string.Empty;
+        public string? AuthorId { get; set; } = string.Empty;
+        public User? Author { get; set; }
+        public string AuthorNameSnapshot { get; set; } = string.Empty;
         public string? CoverImageUrl { get; set; }
         public int ReadingMinutes { get; set; }
         public Guid? CategoryId { get; set; }

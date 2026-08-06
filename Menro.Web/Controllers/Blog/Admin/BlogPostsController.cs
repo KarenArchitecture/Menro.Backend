@@ -1,8 +1,11 @@
-﻿using Menro.Application.Common.SD;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.SD;
 using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Features.Blog.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.DotNet.Scaffolding.Shared.Messaging;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 
 namespace Menro.Web.Controllers.Blog.Admin
 {
@@ -14,17 +17,20 @@ namespace Menro.Web.Controllers.Blog.Admin
         #region DI
         private readonly IBlogPostService _service;
         private readonly IBlogRestaurantSearchService _restaurantSearchService;
+        private readonly ICurrentUserService _currentUserService;
         public BlogPostsController(
             IBlogPostService service,
-            IBlogRestaurantSearchService restaurantSearchService)
+            IBlogRestaurantSearchService restaurantSearchService,
+            ICurrentUserService currentUserService)
         {
             _service = service;
             _restaurantSearchService = restaurantSearchService;
+            _currentUserService = currentUserService;
         }
         #endregion
 
         [HttpGet]
-        public async Task<ActionResult<PagedResult<BlogPostListItemResponse>>> GetAll(
+        public async Task<ActionResult<PagedResult<BlogPostAdminListItemResponse>>> GetAll(
             [FromQuery] string? search,
             [FromQuery] Guid? categoryId,
             [FromQuery] Guid? tagId,
@@ -32,7 +38,7 @@ namespace Menro.Web.Controllers.Blog.Admin
             [FromQuery] int pageSize = 20,
             CancellationToken ct = default)
         {
-            var result = await _service.GetAllAsync(
+            var result = await _service.GetAllForAdminAsync(
                 search, categoryId, tagId, page: page, pageSize: pageSize, ct: ct);
             return Ok(result);
         }
@@ -49,7 +55,12 @@ namespace Menro.Web.Controllers.Blog.Admin
         public async Task<ActionResult<BlogPostDetailResponse>> Create(
             [FromBody] CreateBlogPostRequest request, CancellationToken ct)
         {
-            var created = await _service.CreateAsync(request, ct);
+            var authorId = _currentUserService.GetUserId();
+            if (authorId == null)
+            {
+                return BadRequest();
+            }
+            var created = await _service.CreateAsync(request, authorId, ct);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 

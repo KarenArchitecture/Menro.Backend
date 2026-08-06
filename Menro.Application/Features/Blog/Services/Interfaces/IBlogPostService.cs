@@ -11,8 +11,13 @@ namespace Menro.Application.Features.Blog.Services.Interfaces
                 BlogPostSortOrder sort = BlogPostSortOrder.Newest,
                 bool publishedOnly = false, int page = 1, int pageSize = 20,
                 CancellationToken ct = default);
+        Task<PagedResult<BlogPostAdminListItemResponse>> GetAllForAdminAsync(
+                string? search, Guid? categoryId, Guid? tagId = null,
+                BlogPostSortOrder sort = BlogPostSortOrder.Newest,
+                int page = 1, int pageSize = 20,
+                CancellationToken ct = default);
         Task<BlogPostDetailResponse?> GetByIdAsync(Guid id, CancellationToken ct = default);
-        Task<BlogPostDetailResponse> CreateAsync(CreateBlogPostRequest request, CancellationToken ct = default);
+        Task<BlogPostDetailResponse> CreateAsync(CreateBlogPostRequest request, string authorId, CancellationToken ct = default);
         Task<BlogPostDetailResponse?> UpdateAsync(Guid id, UpdateBlogPostRequest request, CancellationToken ct = default);
         Task<BlogPostPublishResponse?> TogglePublishAsync(Guid id, CancellationToken ct = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);

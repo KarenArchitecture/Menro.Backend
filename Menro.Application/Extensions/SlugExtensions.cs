@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Menro.Application.Extensions
 {
     public static class SlugExtensions
     {
+        // written by PersianProgrammer
         /// <summary>
         /// Converts a Persian or mixed string into a SEO-friendly English slug
         /// </summary>
