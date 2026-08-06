@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Exceptions;
 using Menro.Application.Common.Media;
 using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Features.Blog.Services.Interfaces;
@@ -63,10 +64,13 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             string? search, Guid? categoryId, Guid? tagId = null,
             BlogPostSortOrder sort = BlogPostSortOrder.Newest,
             int page = 1, int pageSize = 20,
+            string? currentUserId = null, bool isElevated = false,
             CancellationToken ct = default)
         {
             var posts = await _unitOfWork.BlogPost.GetAllAsync(search, categoryId, tagId, ct);
-            IEnumerable<BlogPost> query = ApplySort(posts, sort);
+            IEnumerable<BlogPost> query = posts;
+            if (!isElevated) query = query.Where(p => p.AuthorId == currentUserId);
+            query = ApplySort(query, sort);
 
             var materialized = query.ToList();
             var totalCount = materialized.Count;
@@ -84,10 +88,13 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             };
         }
 
-        public async Task<BlogPostDetailResponse?> GetByIdAsync(Guid id, CancellationToken ct = default)
+        public async Task<BlogPostDetailResponse?> GetByIdAsync(
+            Guid id, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
             var post = await _unitOfWork.BlogPost.GetByIdAsync(id, ct);
-            return post is null ? null : ToDetailResponse(post);
+            if (post is null) return null;
+            if (!isElevated && post.AuthorId != currentUserId) return null;
+            return ToDetailResponse(post);
         }
 
         // ساخت پیش‌نویس: BlogPost + BlogPostContent خالی، هردو Stage میشن،
@@ -123,16 +130,26 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             var created = await _unitOfWork.BlogPost.GetByIdAsync(post.Id, ct) ?? post;
             return ToDetailResponse(created);
         }
+
         public async Task<BlogPostDetailResponse?> UpdateAsync(
-            Guid id, UpdateBlogPostRequest request, CancellationToken ct = default)
+            Guid id, UpdateBlogPostRequest request,
+            string? currentUserId = null, bool isElevated = false, bool canPublish = false,
+            CancellationToken ct = default)
         {
             var post = await _unitOfWork.BlogPost.GetByIdAsync(id, ct);
             if (post is null) return null;
 
+            if (!isElevated && post.AuthorId != currentUserId)
+                throw new BlogPostAccessDeniedException();
+
             post.Title = request.Title.Trim();
             post.ReadingMinutes = request.ReadingMinutes;
             post.CategoryId = request.CategoryId;
-            post.IsPublished = request.IsPublished;
+
+            // Contributor هرچی توی IsPublished بفرسته نادیده گرفته میشه - وضعیت
+            // فعلی پست دست‌نخورده می‌مونه (نه اجباراً false، نه هرچی خودش خواسته).
+            if (canPublish)
+                post.IsPublished = request.IsPublished;
 
             var normalized = SlugHelper.NormalizeAscii(request.Slug);
             if (string.IsNullOrEmpty(normalized))
@@ -140,7 +157,6 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.Slug = await ResolveUniqueSlugAsync(normalized, excludePostId: post.Id, ct);
 
             var entityId = id.ToString();
-
             if (request.RemoveImage)
             {
                 if (!string.IsNullOrWhiteSpace(post.CoverImageUrl))
@@ -158,11 +174,9 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             // --- sync tags ---
             var requestedTagIds = (request.TagIds ?? new List<Guid>()).Distinct().ToList();
             var existingTagIds = post.PostTags.Select(pt => pt.BlogTagId).ToHashSet();
-
             var toRemove = post.PostTags.Where(pt => !requestedTagIds.Contains(pt.BlogTagId)).ToList();
             foreach (var pt in toRemove)
                 post.PostTags.Remove(pt);
-
             foreach (var tagId in requestedTagIds.Where(tid => !existingTagIds.Contains(tid)))
             {
                 var newPostTag = new BlogPostTag
@@ -181,11 +195,13 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             var updated = await _unitOfWork.BlogPost.GetByIdAsync(post.Id, ct) ?? post;
             return ToDetailResponse(updated);
         }
-
-        public async Task<BlogPostPublishResponse?> TogglePublishAsync(Guid id, CancellationToken ct = default)
+        public async Task<BlogPostPublishResponse?> TogglePublishAsync(
+            Guid id, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
             var post = await _unitOfWork.BlogPost.GetByIdAsync(id, ct);
             if (post is null) return null;
+            if (!isElevated && post.AuthorId != currentUserId)
+                throw new BlogPostAccessDeniedException();
 
             post.IsPublished = !post.IsPublished;
             await _unitOfWork.BlogPost.UpdateAsync(post, ct);
@@ -194,10 +210,13 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return new BlogPostPublishResponse(post.Id, post.IsPublished);
         }
 
-        public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
+        public async Task<bool> DeleteAsync(
+            Guid id, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
             var post = await _unitOfWork.BlogPost.GetByIdAsync(id, ct);
             if (post is null) return false;
+            if (!isElevated && post.AuthorId != currentUserId)
+                throw new BlogPostAccessDeniedException();
 
             await _unitOfWork.BlogPost.DeleteAsync(post, ct);
             await _unitOfWork.SaveChangesAsync();
@@ -209,15 +228,32 @@ namespace Menro.Application.Features.Blog.Services.Implementations
         }
 
         /* --- BLOG CONTENT --- */
-        public async Task<BlogPostContentResponse?> GetContentAsync(Guid postId, CancellationToken ct = default)
+        public async Task<BlogPostContentResponse?> GetContentAsync(
+            Guid postId, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
+            if (!isElevated)
+            {
+                var owningPost = await _unitOfWork.BlogPost.GetByIdAsync(postId, ct);
+                if (owningPost is null) return null;
+                if (owningPost.AuthorId != currentUserId) return null;
+            }
+
             var content = await _unitOfWork.BlogPostContent.GetByPostIdAsync(postId, ct);
             return content is null ? null : new BlogPostContentResponse(content.BlogPostId, content.Content);
         }
 
         public async Task<BlogPostContentResponse?> UpdateContentAsync(
-            Guid postId, UpdateBlogPostContentRequest request, CancellationToken ct = default)
+            Guid postId, UpdateBlogPostContentRequest request,
+            string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
+            if (!isElevated)
+            {
+                var owningPost = await _unitOfWork.BlogPost.GetByIdAsync(postId, ct);
+                if (owningPost is null) return null;
+                if (owningPost.AuthorId != currentUserId)
+                    throw new BlogPostAccessDeniedException();
+            }
+
             var content = await _unitOfWork.BlogPostContent.GetByPostIdAsync(postId, ct);
             if (content is null) return null;
 
@@ -229,8 +265,17 @@ namespace Menro.Application.Features.Blog.Services.Implementations
         }
 
         public async Task<BlogContentImageUploadResponse?> UploadContentImageAsync(
-            Guid postId, IFormFile image, CancellationToken ct = default)
+            Guid postId, IFormFile image,
+            string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
+            if (!isElevated)
+            {
+                var owningPost = await _unitOfWork.BlogPost.GetByIdAsync(postId, ct);
+                if (owningPost is null) return null;
+                if (owningPost.AuthorId != currentUserId)
+                    throw new BlogPostAccessDeniedException();
+            }
+
             var content = await _unitOfWork.BlogPostContent.GetByPostIdAsync(postId, ct);
             if (content is null) return null;
 

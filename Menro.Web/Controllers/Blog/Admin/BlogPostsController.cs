@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Exceptions;
 using Menro.Application.Common.SD;
 using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Features.Blog.Services.Interfaces;
@@ -10,7 +11,7 @@ using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pag
 namespace Menro.Web.Controllers.Blog.Admin
 {
     [ApiController]
-    [Authorize(Roles = SD.Role_Admin)] // add author role for later on
+    [Authorize]
     [Route("api/admin/blog/posts")]
     public class BlogPostsController : ApiControllerBase
     {
@@ -29,7 +30,12 @@ namespace Menro.Web.Controllers.Blog.Admin
         }
         #endregion
 
+        private bool IsElevated() => User.IsInRole(SD.Role_Editor) || User.IsInRole(SD.Role_Admin);
+        private bool CanPublish() => User.IsInRole(SD.Role_Admin) || User.IsInRole(SD.Role_Editor) || User.IsInRole(SD.Role_Author);
+
+
         [HttpGet]
+        [Authorize(Roles = SD.Roles_ContributorUp)]
         public async Task<ActionResult<PagedResult<BlogPostAdminListItemResponse>>> GetAll(
             [FromQuery] string? search,
             [FromQuery] Guid? categoryId,
@@ -38,20 +44,24 @@ namespace Menro.Web.Controllers.Blog.Admin
             [FromQuery] int pageSize = 20,
             CancellationToken ct = default)
         {
+            var currentUserId = _currentUserService.GetUserId();
             var result = await _service.GetAllForAdminAsync(
-                search, categoryId, tagId, page: page, pageSize: pageSize, ct: ct);
+                search, categoryId, tagId, page: page, pageSize: pageSize,
+                currentUserId: currentUserId, isElevated: IsElevated(), ct: ct);
             return Ok(result);
         }
 
         [HttpGet("{id:guid}")]
+        [Authorize(Roles = SD.Roles_ContributorUp)]
         public async Task<ActionResult<BlogPostDetailResponse>> GetById(Guid id, CancellationToken ct)
         {
-            var post = await _service.GetByIdAsync(id, ct);
+            var post = await _service.GetByIdAsync(id, _currentUserService.GetUserId(), IsElevated(), ct);
             return post is null ? NotFound() : Ok(post);
         }
 
         // POST api/admin/blog/posts - ساخت پیش‌نویس: فقط Title، بدون فایل
         [HttpPost]
+        [Authorize(Roles = SD.Roles_ContributorUp)]
         public async Task<ActionResult<BlogPostDetailResponse>> Create(
             [FromBody] CreateBlogPostRequest request, CancellationToken ct)
         {
@@ -67,47 +77,85 @@ namespace Menro.Web.Controllers.Blog.Admin
         // PUT api/admin/blog/posts/{id}
         [HttpPut("{id:guid}")]
         [Consumes("multipart/form-data")]
+        [Authorize(Roles = SD.Roles_ContributorUp)]
         public async Task<ActionResult<BlogPostDetailResponse>> Update(
             Guid id, [FromForm] UpdateBlogPostRequest request, CancellationToken ct)
         {
-            var updated = await _service.UpdateAsync(id, request, ct);
-            return updated is null ? NotFound() : Ok(updated);
+            try
+            {
+                var updated = await _service.UpdateAsync(
+                    id, request, _currentUserService.GetUserId(), IsElevated(), CanPublish(), ct);
+                return updated is null ? NotFound() : Ok(updated);
+            }
+            catch (BlogPostAccessDeniedException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+            }
         }
 
         [HttpPatch("{id:guid}/publish")]
+        [Authorize(Roles = SD.Roles_AuthorUp)]
         public async Task<ActionResult<BlogPostPublishResponse>> TogglePublish(Guid id, CancellationToken ct)
         {
-            var updated = await _service.TogglePublishAsync(id, ct);
-            return updated is null ? NotFound() : Ok(updated);
+            try
+            {
+                var updated = await _service.TogglePublishAsync(
+                    id, _currentUserService.GetUserId(), IsElevated(), ct);
+                return updated is null ? NotFound() : Ok(updated);
+            }
+            catch (BlogPostAccessDeniedException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id:guid}")]
+        [Authorize(Roles = SD.Roles_AuthorUp)]
         public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
         {
-            var deleted = await _service.DeleteAsync(id, ct);
-            return deleted ? NoContent() : NotFound();
+            try
+            {
+                var deleted = await _service.DeleteAsync(
+                    id, _currentUserService.GetUserId(), IsElevated(), ct);
+                return deleted ? NoContent() : NotFound();
+            }
+            catch (BlogPostAccessDeniedException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+            }
         }
 
         /* ---------------------------------- */
         /* ---------- BLOG CONTENT ---------- */
         /* ---------------------------------- */
         [HttpGet("{id:guid}/content")]
+        [Authorize(Roles = SD.Roles_ContributorUp)]
         public async Task<ActionResult<BlogPostContentResponse>> GetContent(Guid id, CancellationToken ct)
         {
-            var content = await _service.GetContentAsync(id, ct);
+            var content = await _service.GetContentAsync(id, _currentUserService.GetUserId(), IsElevated(), ct);
             return content is null ? NotFound() : Ok(content);
         }
 
         [HttpPut("{id:guid}/content")]
+        [Authorize(Roles = SD.Roles_ContributorUp)]
         public async Task<ActionResult<BlogPostContentResponse>> UpdateContent(
             Guid id, [FromBody] UpdateBlogPostContentRequest request, CancellationToken ct)
         {
-            var updated = await _service.UpdateContentAsync(id, request, ct);
-            return updated is null ? NotFound() : Ok(updated);
+            try
+            {
+                var updated = await _service.UpdateContentAsync(
+                    id, request, _currentUserService.GetUserId(), IsElevated(), ct);
+                return updated is null ? NotFound() : Ok(updated);
+            }
+            catch (BlogPostAccessDeniedException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+            }
         }
 
         // --- restaurant search for add to blog content
         [HttpGet("restaurant-search")]
+        [Authorize(Roles = SD.Roles_ContributorUp)]
         public async Task<ActionResult<IReadOnlyList<BlogRestaurantSearchResult>>> SearchRestaurants(
             [FromQuery] string? term,
             [FromQuery] int take = 10,
@@ -118,6 +166,7 @@ namespace Menro.Web.Controllers.Blog.Admin
         }
 
         [HttpGet("restaurant-search/{id:int}")]
+        [Authorize(Roles = SD.Roles_ContributorUp)]
         public async Task<ActionResult<BlogRestaurantSearchResult>> GetRestaurant(
             int id, CancellationToken ct)
         {
@@ -129,11 +178,20 @@ namespace Menro.Web.Controllers.Blog.Admin
         /* --- CONTENT IMAGES --- */
         [HttpPost("{id:guid}/content/images")]
         [Consumes("multipart/form-data")]
+        [Authorize(Roles = SD.Roles_ContributorUp)]
         public async Task<ActionResult<BlogContentImageUploadResponse>> UploadContentImage(
             Guid id, IFormFile image, CancellationToken ct)
         {
-            var result = await _service.UploadContentImageAsync(id, image, ct);
-            return result is null ? NotFound() : Ok(result);
+            try
+            {
+                var result = await _service.UploadContentImageAsync(
+                    id, image, _currentUserService.GetUserId(), IsElevated(), ct);
+                return result is null ? NotFound() : Ok(result);
+            }
+            catch (BlogPostAccessDeniedException ex)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+            }
         }
 
     }
