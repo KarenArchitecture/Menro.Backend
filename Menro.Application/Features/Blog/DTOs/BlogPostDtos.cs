@@ -34,6 +34,7 @@ namespace Menro.Application.Features.Blog.DTOs
     int ReadingMinutes,
     Guid? CategoryId,
     string? CategoryTitle,
+    string? AuthorId,
     string AuthorName,
     bool IsPublished,
     DateTime CreatedAtUtc,

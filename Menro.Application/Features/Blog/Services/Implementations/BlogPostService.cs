@@ -64,21 +64,21 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             string? search, Guid? categoryId, Guid? tagId = null,
             BlogPostSortOrder sort = BlogPostSortOrder.Newest,
             int page = 1, int pageSize = 20,
-            string? currentUserId = null, bool isElevated = false,
+            string? currentUserId = null, bool isElevated = false, bool onlyMine = false,
             CancellationToken ct = default)
         {
             var posts = await _unitOfWork.BlogPost.GetAllAsync(search, categoryId, tagId, ct);
             IEnumerable<BlogPost> query = posts;
-            if (!isElevated) query = query.Where(p => p.AuthorId == currentUserId);
-            query = ApplySort(query, sort);
 
+            if (!isElevated || onlyMine)
+                query = query.Where(p => p.AuthorId == currentUserId);
+
+            query = ApplySort(query, sort);
             var materialized = query.ToList();
             var totalCount = materialized.Count;
             (page, pageSize) = NormalizePaging(page, pageSize);
-
             var pageItems = materialized.Skip((page - 1) * pageSize).Take(pageSize)
                 .Select(ToAdminListItemResponse).ToList();
-
             return new PagedResult<BlogPostAdminListItemResponse>
             {
                 Items = pageItems,
@@ -154,7 +154,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             var normalized = SlugHelper.NormalizeAscii(request.Slug);
             if (string.IsNullOrEmpty(normalized))
                 normalized = SlugHelper.GenerateSlug(post.Title);
-            post.Slug = await ResolveUniqueSlugAsync(normalized, excludePostId: post.Id, ct);
+            post.Slug = await EnsureUniqueSlugForUpdateAsync(normalized, post.Id, ct);
 
             var entityId = id.ToString();
             if (request.RemoveImage)
@@ -347,6 +347,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.ReadingMinutes,
             post.CategoryId,
             post.Category?.Title,
+            post.AuthorId,
             post.Author?.FullName ?? post.AuthorNameSnapshot,
             post.IsPublished,
             post.CreatedAtUtc,
@@ -373,6 +374,13 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.ViewCount,
             post.LikeCount,
             PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
+
+        private async Task<string> EnsureUniqueSlugForUpdateAsync(string desiredSlug, Guid excludePostId, CancellationToken ct)
+        {
+            if (await _unitOfWork.BlogPost.SlugExistsAsync(desiredSlug, excludePostId, ct))
+                throw new DuplicateSlugException();
+            return desiredSlug;
+        }
 
     }
 }

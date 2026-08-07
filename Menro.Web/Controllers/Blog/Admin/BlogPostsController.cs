@@ -40,6 +40,7 @@ namespace Menro.Web.Controllers.Blog.Admin
             [FromQuery] string? search,
             [FromQuery] Guid? categoryId,
             [FromQuery] Guid? tagId,
+            [FromQuery] bool onlyMine = false,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20,
             CancellationToken ct = default)
@@ -47,7 +48,7 @@ namespace Menro.Web.Controllers.Blog.Admin
             var currentUserId = _currentUserService.GetUserId();
             var result = await _service.GetAllForAdminAsync(
                 search, categoryId, tagId, page: page, pageSize: pageSize,
-                currentUserId: currentUserId, isElevated: IsElevated(), ct: ct);
+                currentUserId: currentUserId, isElevated: IsElevated(), onlyMine: onlyMine, ct: ct);
             return Ok(result);
         }
 
@@ -90,6 +91,10 @@ namespace Menro.Web.Controllers.Blog.Admin
             catch (BlogPostAccessDeniedException ex)
             {
                 return StatusCode(StatusCodes.Status403Forbidden, new { message = ex.Message });
+            }
+            catch (DuplicateSlugException ex)
+            {
+                return Conflict(new { message = ex.Message });
             }
         }
 

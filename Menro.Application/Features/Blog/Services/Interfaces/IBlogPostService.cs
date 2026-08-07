@@ -11,14 +11,15 @@ namespace Menro.Application.Features.Blog.Services.Interfaces
                 BlogPostSortOrder sort = BlogPostSortOrder.Newest,
                 bool publishedOnly = false, int page = 1, int pageSize = 20,
                 CancellationToken ct = default);
-        
+
         Task<PagedResult<BlogPostAdminListItemResponse>> GetAllForAdminAsync(
             string? search, Guid? categoryId, Guid? tagId = null,
             BlogPostSortOrder sort = BlogPostSortOrder.Newest,
             int page = 1, int pageSize = 20,
-            string? currentUserId = null, bool isElevated = false,
+            string? currentUserId = null, bool isElevated = false, bool onlyMine = false,
             CancellationToken ct = default);
-        
+
+
         Task<BlogPostDetailResponse?> GetByIdAsync(
             Guid id, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default);
 
