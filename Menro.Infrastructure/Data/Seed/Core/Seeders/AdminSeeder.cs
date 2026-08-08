@@ -1,9 +1,12 @@
-﻿using Menro.Application.Common.SD;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
+using Menro.Application.Common.SD;
 using Menro.Domain.Entities;
 using Menro.Domain.Entities.Music;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Menro.Infrastructure.Data.Seed.Core.Seeders;
 
@@ -11,13 +14,19 @@ public class AdminSeeder : IDataSeeder
 {
     private readonly UserManager<User> _userManager;
     private readonly MenroDbContext _db;
+    private readonly IMediaStorageProvider _mediaStorage;
+    private readonly MediaStorageOptions _mediaOptions;
 
     public AdminSeeder(
         UserManager<User> userManager,
-        MenroDbContext db)
+        MenroDbContext db,
+        IMediaStorageProvider mediaStorage,
+        IOptions<MediaStorageOptions> mediaOptions)
     {
         _userManager = userManager;
         _db = db;
+        _mediaStorage = mediaStorage;
+        _mediaOptions = mediaOptions.Value;
     }
 
     public int Order => SeedOrder.Admin;
@@ -101,6 +110,8 @@ public class AdminSeeder : IDataSeeder
         var adminRestaurant = await _db.Restaurants
             .FirstOrDefaultAsync(x => x.OwnerUserId == admin.Id);
 
+        var adminRestaurantIsNew = adminRestaurant == null;
+
         if (adminRestaurant == null)
         {
             adminRestaurant = new Restaurant
@@ -120,10 +131,9 @@ public class AdminSeeder : IDataSeeder
                 OwnerUserId = admin.Id,
                 RestaurantCategoryId = 1,
 
-                CarouselImageUrl = "/img/res-slider.jpg",
-                BannerImageUrl = "/img/res-card-1.png",
-                ShopBannerImageUrl = "/img/ad-banner-1.jpg",
-                LogoImageUrl = "/img/logo-orange.png",
+                // 🔧 Real filenames get assigned below once this restaurant
+                // has a real Id (was hardcoded "/img/..." paths before, which
+                // never matched the entity-scoped media folder structure).
 
                 TableCount = 10,
                 Status = Domain.Enums.RestaurantStatus.Approved,
@@ -140,6 +150,8 @@ public class AdminSeeder : IDataSeeder
         // =========================
         var ownerRestaurant = await _db.Restaurants
             .FirstOrDefaultAsync(x => x.OwnerUserId == owner.Id);
+
+        var ownerRestaurantIsNew = ownerRestaurant == null;
 
         if (ownerRestaurant == null)
         {
@@ -162,11 +174,6 @@ public class AdminSeeder : IDataSeeder
                 OwnerUserId = owner.Id,
                 RestaurantCategoryId = 2,
 
-                CarouselImageUrl = "/img/res-slider.jpg",
-                BannerImageUrl = "/img/res-card-1.png",
-                ShopBannerImageUrl = "/img/ad-banner-1.jpg",
-                LogoImageUrl = "/img/logo-orange.png",
-
                 TableCount = 8,
                 Status = Domain.Enums.RestaurantStatus.Approved,
                 IsActive = true,
@@ -177,7 +184,36 @@ public class AdminSeeder : IDataSeeder
             await _db.Restaurants.AddAsync(ownerRestaurant);
         }
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(); // assigns Ids for any newly-added restaurant above
+
+        // 🔧 Same real-media treatment as DemoRestaurantSeeder — only for
+        // restaurants we just created, so re-running this seeder doesn't
+        // keep re-writing files for restaurants that already have them.
+        if (adminRestaurantIsNew || ownerRestaurantIsNew)
+        {
+            var logoBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/restaurant/logo/logo-green.png"));
+            var bannerBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/restaurant/home/res-card-2.png"));
+            var shopBannerBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/restaurant/shop/ad-banner-2.png"));
+
+            foreach (var restaurant in new[] { (adminRestaurant, adminRestaurantIsNew), (ownerRestaurant, ownerRestaurantIsNew) })
+            {
+                var (r, isNew) = restaurant;
+                if (!isNew) continue;
+
+                var entityId = r.Id.ToString();
+
+                var logoResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantLogo, logoBytes, ".png", entityId);
+                r.LogoImageUrl = logoResult.FileName;
+
+                var bannerResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantHomeBanner, bannerBytes, ".png", entityId);
+                r.BannerImageUrl = bannerResult.FileName;
+
+                var shopBannerResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantShopBanner, shopBannerBytes, ".png", entityId);
+                r.ShopBannerImageUrl = shopBannerResult.FileName;
+            }
+
+            await _db.SaveChangesAsync();
+        }
 
         // =========================
         // 5. DEFAULT PLAYLISTS

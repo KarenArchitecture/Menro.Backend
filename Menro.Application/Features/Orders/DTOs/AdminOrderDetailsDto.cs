@@ -6,10 +6,13 @@ namespace Menro.Application.Features.Orders.DTOs
     {
         public long Id { get; set; }
         public int RestaurantOrderNumber { get; set; }
+        public string InvoiceNumber { get; set; } = "";
         public int? TableNumber { get; set; }
 
         public OrderStatus Status { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
+
+        public string PaymentMethod { get; set; } = "";
 
         public int TotalPrice { get; set; }
 

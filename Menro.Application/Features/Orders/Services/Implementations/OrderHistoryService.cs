@@ -38,6 +38,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             {
                 Id = o.Id,
                 RestaurantOrderNumber = o.RestaurantOrderNumber,
+                InvoiceNumber = o.InvoiceNumber,
                 RestaurantName = o.Restaurant?.Name ?? "",
                 RestaurantLogoUrl = string.IsNullOrWhiteSpace(o.Restaurant?.LogoImageUrl)
                     ? null
@@ -63,6 +64,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             {
                 Id = order.Id,
                 RestaurantOrderNumber = order.RestaurantOrderNumber,
+                InvoiceNumber = order.InvoiceNumber,
                 RestaurantName = order.Restaurant?.Name ?? "",
                 TableNumber = order.TableNumber,
                 CreatedAt = order.CreatedAt,
@@ -74,6 +76,8 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                     ImageUrl = BuildItemImageUrl(oi.ImageUrlSnapshot, oi.Food?.ImageUrl, oi.FoodId),
                     Quantity = oi.Quantity,
                     UnitPrice = oi.UnitPrice,
+                    Rating = oi.Food?.AverageRating ?? 0,
+                    Voters = oi.Food?.VotersCount ?? 0,
                     Addons = oi.Extras.Select(e => new PublicOrderAddonDto
                     {
                         Name = e.AddonTitleSnapshot,

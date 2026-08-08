@@ -21,6 +21,8 @@ namespace Menro.Domain.Entities
 
         public int? TableNumber { get; set; }
 
+        public string InvoiceNumber { get; set; } = string.Empty;
+
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
 

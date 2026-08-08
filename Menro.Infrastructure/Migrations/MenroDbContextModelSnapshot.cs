@@ -1076,6 +1076,10 @@ namespace Menro.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("RestaurantId")
                         .HasColumnType("int");
 
@@ -1276,6 +1280,9 @@ namespace Menro.Infrastructure.Migrations
 
                     b.Property<string>("OwnerUserId")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("int");
 
                     b.Property<string>("RejectReason")
                         .HasMaxLength(500)

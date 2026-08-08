@@ -41,6 +41,25 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             return baseTitle;
         }
 
+        // Format: {PersianYear}{PersianMonth:D2}{PersianDay:D2}{sequenceForThatRestaurantThatDay}
+        // e.g. 140505121 = 1405/05/12, order #1 for that restaurant that day.
+        private async Task<string> BuildInvoiceNumberAsync(int restaurantId, DateTime nowUtc, CancellationToken ct)
+        {
+            var iranOffset = TimeSpan.FromHours(3.5);
+            var localNow = nowUtc + iranOffset;
+            var pc = new System.Globalization.PersianCalendar();
+
+            var y = pc.GetYear(localNow);
+            var m = pc.GetMonth(localNow);
+            var d = pc.GetDayOfMonth(localNow);
+
+            var dayStartUtc = pc.ToDateTime(y, m, d, 0, 0, 0, 0) - iranOffset;
+            var dayEndUtc = dayStartUtc.AddDays(1);
+
+            var countToday = await _unitOfWork.Order.CountOrdersForRestaurantOnDateAsync(restaurantId, dayStartUtc, dayEndUtc, ct);
+            return $"{y:D4}{m:D2}{d:D2}{countToday + 1}";
+        }
+
         /* ============================================================
            Legacy path: create order directly from a client-submitted DTO.
         ============================================================ */
@@ -129,6 +148,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             }
 
             order.TotalPrice = totalPrice;
+            order.InvoiceNumber = await BuildInvoiceNumberAsync(dto.RestaurantId, DateTime.UtcNow, CancellationToken.None);
 
             await _unitOfWork.Order.AddOrderAsync(order);
             await _unitOfWork.SaveChangesAsync();
@@ -174,6 +194,12 @@ namespace Menro.Application.Features.Orders.Services.Implementations
 
             int totalPrice = 0;
 
+            // Built inside the loop, where `food`/`variant`/`selectedAddons`
+            // are locally in scope — do NOT rebuild this from order.OrderItems
+            // afterward, since oi.Food is an unloaded EF navigation and would
+            // be null at that point.
+            var resultItems = new List<CheckoutResultItemDto>();
+
             foreach (var cartItem in cart.Items)
             {
                 var food = await _unitOfWork.Food.GetFoodWithVariantsAsync(cartItem.FoodId)
@@ -217,9 +243,22 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                     ImageUrlSnapshot = food.ImageUrl,
                     Extras = extras
                 });
+
+                resultItems.Add(new CheckoutResultItemDto
+                {
+                    FoodName = food.Name,
+                    VariantName = variant.Name,
+                    HasAddons = selectedAddons.Any(),
+                    Quantity = cartItem.Quantity,
+                    UnitPrice = unitPrice
+                });
             }
 
             order.TotalPrice = totalPrice;
+            order.InvoiceNumber = await BuildInvoiceNumberAsync(cart.RestaurantId, DateTime.UtcNow, ct);
+
+            var paymentMethod = cart.Restaurant.PaymentMethod.ToString();
+            var restaurantName = cart.Restaurant.Name;
 
             await _unitOfWork.Order.AddOrderAsync(order, ct);
             await _unitOfWork.Order.SaveChangesAsync(ct);
@@ -230,7 +269,17 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             if (!string.IsNullOrWhiteSpace(userId))
                 _unitOfWork.Order.InvalidateUserRecentOrders(userId);
 
-            return new CheckoutResultDto { OrderId = order.Id, SuccessType = "checkout" };
+            return new CheckoutResultDto
+            {
+                OrderId = order.Id,
+                RestaurantOrderNumber = order.RestaurantOrderNumber,
+                InvoiceNumber = order.InvoiceNumber,
+                RestaurantName = restaurantName,
+                PaymentMethod = paymentMethod,
+                TotalPrice = order.TotalPrice,
+                TableNumber = order.TableNumber,
+                Items = resultItems
+            };
         }
     }
 }

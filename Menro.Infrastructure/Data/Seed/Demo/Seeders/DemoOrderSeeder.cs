@@ -11,6 +11,24 @@ public class DemoOrderSeeder : IDataSeeder
     private readonly MenroDbContext _db;
     private readonly Random _rand = new(42);
 
+    private static string BuildInvoiceNumber(Dictionary<(int RestaurantId, int Y, int M, int D), int> counters, int restaurantId, DateTime createdAtUtc)
+    {
+        var iranOffset = TimeSpan.FromHours(3.5);
+        var localCreated = createdAtUtc + iranOffset;
+        var pc = new System.Globalization.PersianCalendar();
+
+        var y = pc.GetYear(localCreated);
+        var m = pc.GetMonth(localCreated);
+        var d = pc.GetDayOfMonth(localCreated);
+        var key = (restaurantId, y, m, d);
+
+        counters.TryGetValue(key, out var seq);
+        seq += 1;
+        counters[key] = seq;
+
+        return $"{y:D4}{m:D2}{d:D2}{seq}";
+    }
+
     private static readonly string[] DemoCustomerPhonesRaw =
     {
         "09121112233",
@@ -74,6 +92,8 @@ public class DemoOrderSeeder : IDataSeeder
             Console.WriteLine("[Seed] No restaurants found. Skip orders seeding.");
             return;
         }
+
+        var invoiceCounters = new Dictionary<(int, int, int, int), int>();
 
         int dayOffset = 0;
 
@@ -169,6 +189,9 @@ public class DemoOrderSeeder : IDataSeeder
                     .Select(o => (int?)o.RestaurantOrderNumber)
                     .MaxAsync() ?? 0;
 
+                var createdAt = DateTime.UtcNow.AddDays(-dayOffset++).AddHours(-_rand.Next(0, 20));
+                var invoiceNumber = BuildInvoiceNumber(invoiceCounters, info.Id, createdAt);
+
                 var order = new Order
                 {
                     UserId = customer.Id,
@@ -176,7 +199,8 @@ public class DemoOrderSeeder : IDataSeeder
                     RestaurantOrderNumber = lastNumber + 1,
                     TableNumber = tableNumber,
                     Status = StatusPool[_rand.Next(StatusPool.Length)],
-                    CreatedAt = DateTime.UtcNow.AddDays(-dayOffset++).AddHours(-_rand.Next(0, 20)),
+                    InvoiceNumber = invoiceNumber,
+                    CreatedAt = createdAt,
                     TotalPrice = totalAmount,
                     OrderItems = orderItems
                 };

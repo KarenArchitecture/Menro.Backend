@@ -10,14 +10,29 @@ namespace Menro.Application.Features.Orders.DTOs
     public class CheckoutResultDto
     {
         public int OrderId { get; set; }
-        public string SuccessType { get; set; } = "checkout";
-        public string? InvoiceNumber { get; set; }
+        public int RestaurantOrderNumber { get; set; }
+        public string InvoiceNumber { get; set; } = "";
+        public string RestaurantName { get; set; } = "";
+        public string PaymentMethod { get; set; } = "";
+        public int TotalPrice { get; set; }
+        public int? TableNumber { get; set; }
+        public List<CheckoutResultItemDto> Items { get; set; } = new();
+    }
+
+    public class CheckoutResultItemDto
+    {
+        public string FoodName { get; set; } = "";
+        public string? VariantName { get; set; }
+        public bool HasAddons { get; set; }
+        public int Quantity { get; set; }
+        public int UnitPrice { get; set; }
     }
 
     public class UserOrderListItemDto
     {
         public int Id { get; set; }
         public int RestaurantOrderNumber { get; set; }
+        public string InvoiceNumber { get; set; } = "";
         public string RestaurantName { get; set; } = "";
         public string? RestaurantLogoUrl { get; set; }
         public int? TableNumber { get; set; }
@@ -38,6 +53,7 @@ namespace Menro.Application.Features.Orders.DTOs
     {
         public int Id { get; set; }
         public int RestaurantOrderNumber { get; set; }
+        public string InvoiceNumber { get; set; } = "";
         public string RestaurantName { get; set; } = "";
         public int? TableNumber { get; set; }
         public DateTime CreatedAt { get; set; }
@@ -52,6 +68,8 @@ namespace Menro.Application.Features.Orders.DTOs
         public string? ImageUrl { get; set; }
         public int Quantity { get; set; }
         public int UnitPrice { get; set; }
+        public double Rating { get; set; }
+        public int Voters { get; set; }
         public List<PublicOrderAddonDto> Addons { get; set; } = new();
     }
 

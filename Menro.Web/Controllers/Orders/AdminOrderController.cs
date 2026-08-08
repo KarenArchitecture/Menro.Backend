@@ -90,5 +90,13 @@ namespace Menro.Web.Controllers.Orders
             }
         }
 
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string query)
+        {
+            var restaurantId = await _currentUserService.GetRestaurantIdAsync();
+            var results = await _adminOrderService.SearchOrdersAsync(restaurantId, query ?? "");
+            return Ok(results);
+        }
+
     }
 }

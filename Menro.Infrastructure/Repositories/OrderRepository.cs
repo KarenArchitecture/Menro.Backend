@@ -71,6 +71,7 @@ namespace Menro.Infrastructure.Repositories
                 .Include(o => o.Restaurant)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Food)
+                        .ThenInclude(f => f.Ratings)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.FoodVariant)
                 .Include(o => o.OrderItems)
@@ -190,6 +191,23 @@ namespace Menro.Infrastructure.Repositories
             return await _context.Orders
                 .Where(o => o.RestaurantId == restaurantId && o.Id == orderId)
                 .FirstOrDefaultAsync(ct);
+        }
+
+        public async Task<int> CountOrdersForRestaurantOnDateAsync(int restaurantId, DateTime dayStartUtc, DateTime dayEndUtc, CancellationToken ct = default)
+        {
+            return await _context.Orders
+                .Where(o => o.RestaurantId == restaurantId && o.CreatedAt >= dayStartUtc && o.CreatedAt < dayEndUtc)
+                .CountAsync(ct);
+        }
+
+        public async Task<List<Order>> SearchOrdersByInvoiceAsync(int restaurantId, string query, int take, CancellationToken ct = default)
+        {
+            return await _context.Orders
+                .AsNoTracking()
+                .Where(o => o.RestaurantId == restaurantId && o.InvoiceNumber.Contains(query))
+                .OrderByDescending(o => o.CreatedAt)
+                .Take(take)
+                .ToListAsync(ct);
         }
 
         public async Task<bool> SaveChangesAsync(CancellationToken ct = default)
