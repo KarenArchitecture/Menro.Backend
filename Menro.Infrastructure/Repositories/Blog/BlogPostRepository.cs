@@ -24,6 +24,13 @@ namespace Menro.Infrastructure.Repositories
                 .Include(p => p.Content)
                 .FirstOrDefaultAsync(p => p.Id == id, ct);
 
+        public async Task<IReadOnlyList<BlogPost>> GetPublishedWithTagsAsync(CancellationToken ct = default)
+            => await _context.BlogPosts
+                .Where(p => p.IsPublished)
+                .Include(p => p.PostTags)
+                    .ThenInclude(pt => pt.BlogTag)
+                .ToListAsync(ct);
+
         public async Task<bool> SlugExistsAsync(string slug, Guid? excludePostId = null, CancellationToken ct = default)
         {
             var query = _context.BlogPosts.Where(p => p.Slug == slug);
@@ -31,6 +38,14 @@ namespace Menro.Infrastructure.Repositories
                 query = query.Where(p => p.Id != excludePostId.Value);
             return await query.AnyAsync(ct);
         }
+        public async Task<BlogPost?> GetBySlugAsync(string slug, CancellationToken ct = default)
+            => await _context.BlogPosts
+                .Include(p => p.Category)
+                .Include(p => p.Author)
+                .Include(p => p.Content)
+                .Include(p => p.PostTags)
+                    .ThenInclude(pt => pt.BlogTag)
+                .FirstOrDefaultAsync(p => p.Slug == slug, ct);
         public async Task<IReadOnlyList<BlogPost>> GetAllAsync(
             string? search, Guid? categoryId, Guid? tagId = null, CancellationToken ct = default)
         {

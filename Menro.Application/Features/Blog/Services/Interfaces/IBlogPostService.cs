@@ -22,7 +22,11 @@ namespace Menro.Application.Features.Blog.Services.Interfaces
 
         Task<BlogPostDetailResponse?> GetByIdAsync(
             Guid id, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default);
-
+        Task<IReadOnlyList<BlogPostRelatedItemResponse>> GetRelatedPostsAsync(
+            string slug, int count = 4, CancellationToken ct = default);
+        Task<IReadOnlyList<BlogPostRelatedItemResponse>> GetPopularPostsAsync(
+            string slug, int count = 5, CancellationToken ct = default);
+        Task<BlogPostPublicDetailResponse?> GetPublicBySlugAsync(string slug, CancellationToken ct = default);
         Task<BlogPostDetailResponse> CreateAsync(CreateBlogPostRequest request, string authorId, CancellationToken ct = default);
 
         Task<BlogPostDetailResponse?> UpdateAsync(

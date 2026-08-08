@@ -10,7 +10,7 @@ namespace Menro.Web.Controllers.Blog.Public
     // ("دسته: ..." / "برچسب: ...") after PublicBlogPostsController resolves
     // the same slug for filtering.
     [ApiController]
-    [Route("api/blog")]
+    [Route("api/public/blog")]
     public class PublicBlogTaxonomyController : ApiControllerBase
     {
         private readonly IBlogCategoryService _categoryService;

@@ -11,6 +11,8 @@ namespace Menro.Application.Features.Blog.DTOs
         int ArticleCount,
         bool? Suggested);
 
+    public record BlogPostPublicTagResponse(Guid Id, string Name, string Slug);
+
     public class CreateBlogTagRequest
     {
         [Required(ErrorMessage = "نام برچسب الزامی است.")]

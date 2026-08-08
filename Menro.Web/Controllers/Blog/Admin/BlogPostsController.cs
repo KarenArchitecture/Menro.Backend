@@ -5,8 +5,6 @@ using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Features.Blog.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.DotNet.Scaffolding.Shared.Messaging;
-using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 
 namespace Menro.Web.Controllers.Blog.Admin
 {
@@ -58,6 +56,14 @@ namespace Menro.Web.Controllers.Blog.Admin
         {
             var post = await _service.GetByIdAsync(id, _currentUserService.GetUserId(), IsElevated(), ct);
             return post is null ? NotFound() : Ok(post);
+        }
+        [HttpGet("{slug}")]
+        public async Task<ActionResult<BlogPostPublicDetailResponse>> GetBySlug(
+            string slug, CancellationToken ct)
+        {
+            var post = await _service.GetPublicBySlugAsync(slug, ct);
+            if (post is null) return NotFound();
+            return Ok(post);
         }
 
         // POST api/admin/blog/posts - ساخت پیش‌نویس: فقط Title، بدون فایل

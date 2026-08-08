@@ -1,3 +1,4 @@
+using Menro.Domain.Entities.Blog;
 using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
@@ -77,4 +78,30 @@ namespace Menro.Application.Features.Blog.DTOs
     public record BlogPostTagResponse(Guid Id, string Name);
 
     public record BlogPostPublishResponse(Guid Id, bool IsPublished);
+
+
+    // Blog Post Page
+    public record BlogPostPublicDetailResponse(
+        Guid Id,
+        string Title,
+        string Slug,
+        string? CoverImageUrl,
+        string Content,
+        string AuthorName,
+        Guid? CategoryId,
+        string? CategoryTitle,
+        string? CategorySlug,
+        IReadOnlyList<BlogPostPublicTagResponse> Tags,
+        int ReadingMinutes,
+        int ViewCount,
+        int LikeCount,
+        string PublishedDatePersian);
+
+    // blog post page => realted and popular posts
+    public record BlogPostRelatedItemResponse(
+    Guid Id,
+    string Slug,
+    string Title,
+    string? CoverImageUrl,
+    int ReadingMinutes);
 }

@@ -25,10 +25,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
 
         #endregion
 
-        // ------------------------------------------------------------
-        // Public-facing listing (site): full card DTO, published-only
-        // by default, resized cover image.
-        // ------------------------------------------------------------
+        // get posts for public Blog feed page
         public async Task<PagedResult<BlogPostListItemResponse>> GetAllAsync(
             string? search, Guid? categoryId, Guid? tagId = null,
             BlogPostSortOrder sort = BlogPostSortOrder.Newest,
@@ -56,10 +53,8 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             };
         }
 
-        // ------------------------------------------------------------
-        // Admin panel listing: lightweight DTO (thumbnail, author,
-        // no body/content-related fields), sees drafts too by default.
-        // ------------------------------------------------------------
+
+        // get posts list for admin page based on role and access level
         public async Task<PagedResult<BlogPostAdminListItemResponse>> GetAllForAdminAsync(
             string? search, Guid? categoryId, Guid? tagId = null,
             BlogPostSortOrder sort = BlogPostSortOrder.Newest,
@@ -88,6 +83,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             };
         }
 
+        // get post by Id
         public async Task<BlogPostDetailResponse?> GetByIdAsync(
             Guid id, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
@@ -97,8 +93,99 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return ToDetailResponse(post);
         }
 
-        // ساخت پیش‌نویس: BlogPost + BlogPostContent خالی، هردو Stage میشن،
-        // و با یک SaveChangesAsync مشترک با هم Commit میشن (اتمیک).
+        // related posts by tag in public blog post page
+        public async Task<IReadOnlyList<BlogPostRelatedItemResponse>> GetRelatedPostsAsync(
+            string slug, int count = 4, CancellationToken ct = default)
+        {
+            var current = await _unitOfWork.BlogPost.GetBySlugAsync(slug, ct);
+            if (current is null || !current.IsPublished)
+                return Array.Empty<BlogPostRelatedItemResponse>();
+
+            var candidates = (await _unitOfWork.BlogPost.GetPublishedWithTagsAsync(ct))
+                .Where(p => p.Id != current.Id)
+                .ToList();
+
+            var currentTagIds = current.PostTags.Select(pt => pt.BlogTagId).ToHashSet();
+            var result = new List<BlogPost>();
+            var usedIds = new HashSet<Guid>();
+
+            // 1) shared tags, most overlap first, then newest
+            if (currentTagIds.Count > 0)
+            {
+                var byTag = candidates
+                    .Select(p => new
+                    {
+                        Post = p,
+                        Overlap = p.PostTags.Count(pt => currentTagIds.Contains(pt.BlogTagId))
+                    })
+                    .Where(x => x.Overlap > 0)
+                    .OrderByDescending(x => x.Overlap)
+                    .ThenByDescending(x => x.Post.CreatedAtUtc)
+                    .Select(x => x.Post);
+
+                foreach (var p in byTag)
+                {
+                    if (result.Count >= count) break;
+                    if (usedIds.Add(p.Id)) result.Add(p);
+                }
+            }
+
+            // 2) fallback: same category, newest first
+            if (result.Count < count && current.CategoryId.HasValue)
+            {
+                var byCategory = candidates
+                    .Where(p => p.CategoryId == current.CategoryId && !usedIds.Contains(p.Id))
+                    .OrderByDescending(p => p.CreatedAtUtc);
+
+                foreach (var p in byCategory)
+                {
+                    if (result.Count >= count) break;
+                    if (usedIds.Add(p.Id)) result.Add(p);
+                }
+            }
+
+            // 3) fallback: newest overall
+            if (result.Count < count)
+            {
+                var newest = candidates
+                    .Where(p => !usedIds.Contains(p.Id))
+                    .OrderByDescending(p => p.CreatedAtUtc);
+
+                foreach (var p in newest)
+                {
+                    if (result.Count >= count) break;
+                    if (usedIds.Add(p.Id)) result.Add(p);
+                }
+            }
+
+            return result.Select(ToRelatedItemResponse).ToList();
+        }
+
+        // popular posts in blog post page
+        public async Task<IReadOnlyList<BlogPostRelatedItemResponse>> GetPopularPostsAsync(
+            string slug, int count = 5, CancellationToken ct = default)
+        {
+            var posts = await _unitOfWork.BlogPost.GetAllAsync(null, null, null, ct);
+
+            return posts
+                .Where(p => p.IsPublished && p.Slug != slug)
+                .OrderByDescending(p => p.ViewCount)
+                .Take(count)
+                .Select(ToRelatedItemResponse)
+                .ToList();
+        }
+
+        // for public blog post page
+        public async Task<BlogPostPublicDetailResponse?> GetPublicBySlugAsync(
+            string slug, CancellationToken ct = default)
+        {
+            var post = await _unitOfWork.BlogPost.GetBySlugAsync(slug, ct);
+            if (post is null || !post.IsPublished) return null;
+
+            return ToPublicDetailResponse(post);
+        }
+
+        // create post with empty content, un-published
         public async Task<BlogPostDetailResponse> CreateAsync(
             CreateBlogPostRequest request, string authorId, CancellationToken ct = default)
         {
@@ -131,6 +218,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return ToDetailResponse(created);
         }
 
+        // update blog post
         public async Task<BlogPostDetailResponse?> UpdateAsync(
             Guid id, UpdateBlogPostRequest request,
             string? currentUserId = null, bool isElevated = false, bool canPublish = false,
@@ -195,6 +283,8 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             var updated = await _unitOfWork.BlogPost.GetByIdAsync(post.Id, ct) ?? post;
             return ToDetailResponse(updated);
         }
+
+        // publish/draft blog post
         public async Task<BlogPostPublishResponse?> TogglePublishAsync(
             Guid id, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
@@ -210,6 +300,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return new BlogPostPublishResponse(post.Id, post.IsPublished);
         }
 
+        // delete blog post
         public async Task<bool> DeleteAsync(
             Guid id, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
@@ -228,6 +319,8 @@ namespace Menro.Application.Features.Blog.Services.Implementations
         }
 
         /* --- BLOG CONTENT --- */
+
+        // get content
         public async Task<BlogPostContentResponse?> GetContentAsync(
             Guid postId, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
@@ -242,6 +335,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return content is null ? null : new BlogPostContentResponse(content.BlogPostId, content.Content);
         }
 
+        // update content
         public async Task<BlogPostContentResponse?> UpdateContentAsync(
             Guid postId, UpdateBlogPostContentRequest request,
             string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
@@ -264,6 +358,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return new BlogPostContentResponse(content.BlogPostId, content.Content);
         }
 
+        // upload content image
         public async Task<BlogContentImageUploadResponse?> UploadContentImageAsync(
             Guid postId, IFormFile image,
             string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
@@ -321,6 +416,14 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return (page, pageSize);
         }
 
+        private async Task<string> EnsureUniqueSlugForUpdateAsync(string desiredSlug, Guid excludePostId, CancellationToken ct)
+        {
+            if (await _unitOfWork.BlogPost.SlugExistsAsync(desiredSlug, excludePostId, ct))
+                throw new DuplicateSlugException();
+            return desiredSlug;
+        }
+        /* --- MAPPERS --- */
+
         private BlogPostListItemResponse ToListItemResponse(BlogPost post) => new(
             post.Id,
             post.Title,
@@ -375,12 +478,37 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.LikeCount,
             PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
 
-        private async Task<string> EnsureUniqueSlugForUpdateAsync(string desiredSlug, Guid excludePostId, CancellationToken ct)
-        {
-            if (await _unitOfWork.BlogPost.SlugExistsAsync(desiredSlug, excludePostId, ct))
-                throw new DuplicateSlugException();
-            return desiredSlug;
-        }
+        private BlogPostPublicDetailResponse ToPublicDetailResponse(BlogPost post) => new(
+            post.Id,
+            post.Title,
+            post.Slug,
+            string.IsNullOrWhiteSpace(post.CoverImageUrl)
+                ? null
+                : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl, post.Id.ToString(), MediaVariant.Original),
+            post.Content?.Content ?? string.Empty,
+            post.Author?.FullName ?? post.AuthorNameSnapshot,
+            post.CategoryId,
+            post.Category?.Title,
+            post.Category?.Slug,
+            post.PostTags
+                .Select(pt => new BlogPostPublicTagResponse(
+                    pt.BlogTagId,
+                    pt.BlogTag?.Name ?? "",
+                    pt.BlogTag?.Slug ?? ""))
+                .ToList(),
+            post.ReadingMinutes,
+            post.ViewCount,
+            post.LikeCount,
+            PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
+
+        private BlogPostRelatedItemResponse ToRelatedItemResponse(BlogPost post) => new(
+            post.Id,
+            post.Slug,
+            post.Title,
+            string.IsNullOrWhiteSpace(post.CoverImageUrl)
+                ? null
+                : _mediaStorage.GetUrl(MediaCategory.BlogPostImage, post.CoverImageUrl, post.Id.ToString(), MediaVariant.Thumbnail),
+            post.ReadingMinutes);
 
     }
 }

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Menro.Web.Controllers.Blog.Public
 {
     [ApiController]
-    [Route("api/blog/page-bootstrap")]
+    [Route("api/public/blog/page-bootstrap")]
     public class PublicBlogPageBootstrapController : ApiControllerBase
     {
         #region DI

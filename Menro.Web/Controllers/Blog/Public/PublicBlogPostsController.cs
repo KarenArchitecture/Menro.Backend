@@ -5,17 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Blog.Public
 {
-    // Single shared endpoint for all three entry points into the blog
-    // results page (free search, category click, tag click). The caller
-    // sends whichever of these applies:
-    //   ?search=...                -> free-text search
-    //   ?categorySlug=...          -> category page
-    //   ?tagSlug=...               -> tag page
-    // These can combine (e.g. search within a category) if the frontend
-    // ever wants that, but the blog results page only needs one at a time
-    // for now.
     [ApiController]
-    [Route("api/blog/posts")]
+    [Route("api/public/blog/posts")]
     public class PublicBlogPostsController : ApiControllerBase
     {
         #region DI
@@ -65,6 +56,29 @@ namespace Menro.Web.Controllers.Blog.Public
             var result = await _postService.GetAllAsync(
                 search, categoryId, tagId, sort, publishedOnly: true, page, pageSize, ct);
 
+            return Ok(result);
+        }
+
+
+        [HttpGet("{slug}")]
+        public async Task<ActionResult<BlogPostPublicDetailResponse>> GetBySlug(string slug, CancellationToken ct)
+        {
+            var post = await _postService.GetPublicBySlugAsync(slug, ct);
+            if (post is null) return NotFound();
+            return Ok(post);
+        }
+
+        [HttpGet("{slug}/popular")]
+        public async Task<ActionResult<IReadOnlyList<BlogPostRelatedItemResponse>>> GetPopular(string slug, [FromQuery] int count = 5, CancellationToken ct = default)
+        {
+            var result = await _postService.GetPopularPostsAsync(slug, count, ct);
+            return Ok(result);
+        }
+
+        [HttpGet("{slug}/related")]
+        public async Task<ActionResult<IReadOnlyList<BlogPostRelatedItemResponse>>> GetRelated(string slug, [FromQuery] int count = 3, CancellationToken ct = default)
+        {
+            var result = await _postService.GetRelatedPostsAsync(slug, count, ct);
             return Ok(result);
         }
     }
