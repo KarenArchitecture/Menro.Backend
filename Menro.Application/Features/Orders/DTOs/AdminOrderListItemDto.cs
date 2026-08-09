@@ -7,6 +7,10 @@ namespace Menro.Application.Features.Orders.DTOs
         public long Id { get; set; }
 
         public int RestaurantOrderNumber { get; set; }
+        public string InvoiceNumber { get; set; } = "";
+
+
+        public string PaymentMethod { get; set; } = "";
 
         public string? TableLabel { get; set; }
 

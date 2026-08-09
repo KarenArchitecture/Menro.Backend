@@ -7,6 +7,7 @@ namespace Menro.Application.Features.Restaurants.Services.Interfaces
     public interface IRestaurantTableService
     {
         Task<List<RestaurantTablesDto>> GetAllByRestaurantIdAsync(int restaurantId);
+        Task<List<RestaurantTableListItemDto>> GetAllByRestaurantIdForPublicAsync(int restaurantId);
         Task<Result> AddTableAsync(CreateRestaurantTableDto dto, int restaurantId);
         Task<Result> UpdateTableAsync(UpdateRestaurantTableDto dto);
         Task<bool> DeleteTableAsync(int tableId);

@@ -1,6 +1,7 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Models;
 using Menro.Application.Common.Media;
+using Menro.Application.Common.Helpers;
 using Menro.Application.Features.Users.Services.Interfaces;
 using Menro.Application.Features.Users.DTOs;
 using Menro.Domain.Entities;
@@ -52,12 +53,14 @@ namespace Menro.Application.Features.Users.Services.Implementations
         }
         public async Task<User?> GetByPhoneNumberAsync(string phoneNumber)
         {
-            var user = await _uow.User.GetByPhoneNumberAsync(phoneNumber);
+            var normalized = PhoneNumberHelper.ToStorageFormat(phoneNumber);
+            var user = await _uow.User.GetByPhoneNumberAsync(normalized);
             return user;
         }
         public async Task<bool> UserExistsByPhoneAsync(string phoneNumber)
         {
-            return await _userManager.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
+            var normalized = PhoneNumberHelper.ToStorageFormat(phoneNumber);
+            return await _userManager.Users.AnyAsync(u => u.PhoneNumber == normalized);
         }
 
 
@@ -66,17 +69,19 @@ namespace Menro.Application.Features.Users.Services.Implementations
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return false;
 
-            user.PhoneNumber = newPhone;
-            user.UserName = newPhone; // اگر لاگین با شماره است
+            var normalized = PhoneNumberHelper.ToStorageFormat(newPhone);
+            user.PhoneNumber = normalized;
+            user.UserName = normalized; // اگر لاگین با شماره است
 
             var identityResult = await _userManager.UpdateAsync(user);
-
             return identityResult.Succeeded;
         }
 
         public async Task<(bool IsSuccess, IdentityResult? Result, User? User)> RegisterUserAsync(string fullName, string email, string phoneNumber, string? password)
         {
-            var existingUserByPhone = await _uow.User.GetByPhoneNumberAsync(phoneNumber);
+            var normalizedPhone = PhoneNumberHelper.ToStorageFormat(phoneNumber);
+
+            var existingUserByPhone = await _uow.User.GetByPhoneNumberAsync(normalizedPhone);
             if (existingUserByPhone != null)
                 return (false, null, null);
 
@@ -84,17 +89,17 @@ namespace Menro.Application.Features.Users.Services.Implementations
                 return (false, null, null);
 
             var safeEmail = string.IsNullOrWhiteSpace(email)
-                ? $"{phoneNumber}@menro.fake"
+                ? $"{normalizedPhone}@menro.fake"
                 : email;
 
             var user = new User
             {
                 FullName = fullName,
                 Email = safeEmail,
-                PhoneNumber = phoneNumber,
+                PhoneNumber = normalizedPhone,
                 UserName = safeEmail,
-                
             };
+            // ادامه‌ی متد بدون تغییر
 
             IdentityResult result;
             if (string.IsNullOrWhiteSpace(password))
@@ -213,12 +218,14 @@ namespace Menro.Application.Features.Users.Services.Implementations
             {
                 Id = user.Id,
                 FullName = user.FullName,
-                PhoneNumber = user.PhoneNumber ?? "",
+                PhoneNumber = string.IsNullOrWhiteSpace(user.PhoneNumber)
+                    ? ""
+                    : PhoneNumberHelper.ToClientFormat(user.PhoneNumber),
                 ProfileImageUrl = string.IsNullOrEmpty(user.ProfileImage)
                     ? null
                     : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage, entityId: user.Id, variant: MediaVariant.Resized),
                 HasPassword = await _userManager.HasPasswordAsync(user)
-            };
+};
         }
 
         public async Task<bool> UpdateProfileAsync(string userId, UpdateUserProfileDto dto)

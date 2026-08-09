@@ -52,6 +52,9 @@ namespace Menro.Domain.Entities
         [Display(Name = "شماره شبا")]
         [MaxLength(30)]
         public string? ShebaNumber { get; set; }
+
+        public RestaurantPaymentMethod PaymentMethod { get; set; } = RestaurantPaymentMethod.PayAtCounterBeforeServing;
+
         // FKs and relations
         // Owner
         public string? OwnerUserId { get; set; }

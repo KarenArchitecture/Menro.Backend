@@ -1,11 +1,15 @@
 ﻿using Menro.Application.Common.SD;
 using Menro.Application.Extensions;
+using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
+using Menro.Application.Common.Helpers;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Menro.Infrastructure.Data.Seed.Demo.Seeders;
 
@@ -14,17 +18,23 @@ public class DemoRestaurantSeeder : IDataSeeder
     private readonly MenroDbContext _db;
     private readonly UserManager<User> _userManager;
     private readonly IRestaurantService _restaurantService;
+    private readonly IMediaStorageProvider _mediaStorage;
+    private readonly MediaStorageOptions _mediaOptions;
 
     private readonly Random _rand = new(42);
 
     public DemoRestaurantSeeder(
         MenroDbContext db,
         UserManager<User> userManager,
-        IRestaurantService restaurantService)
+        IRestaurantService restaurantService,
+        IMediaStorageProvider mediaStorage,
+        IOptions<MediaStorageOptions> mediaOptions)
     {
         _db = db;
         _userManager = userManager;
         _restaurantService = restaurantService;
+        _mediaStorage = mediaStorage;
+        _mediaOptions = mediaOptions.Value;
     }
     public int Order => SeedOrder.Restaurant;
     public async Task SeedAsync()
@@ -38,6 +48,17 @@ public class DemoRestaurantSeeder : IDataSeeder
             return;
         }
 
+        // 🔧 Sample raw images already sitting flat under wwwroot/media from
+        // before the entity-scoped media system existed. We read them once
+        // here and re-save them through the REAL media pipeline
+        // (SaveBytesAsync) per-entity below, so every restaurant/food ends up
+        // with a properly structured {entityId}/original|resized|thumbnail
+        // set of webp files that GetUrl() can actually find — in dev AND in
+        // production, since these source files ship with wwwroot either way.
+        var logoBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/restaurant/logo/logo-green.png"));
+        var bannerBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/restaurant/home/res-card-2.png"));
+        var shopBannerBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/restaurant/shop/ad-banner-2.png"));
+        var foodBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/food/drink.png"));
 
         var globalCats = await _db.GlobalFoodCategories
             .Where(x => x.IsActive)
@@ -79,37 +100,43 @@ public class DemoRestaurantSeeder : IDataSeeder
         {
             string email = $"owner{i}@menro.com";
 
+            // 🔧 FIX: this must be LOCAL format (09...) — it used to be built
+            // as "+98912100{i:D4}" (already "+98..."), which then got run
+            // through ToE164() a second time and corrupted into
+            // "+9898912100xxxx". PhoneNumberHelper.ToStorageFormat expects/
+            // accepts local format too, but building it as local here keeps
+            // this consistent with rawPhone's own doc-comment below and with
+            // every other demo seeder (DemoCustomerSeeder, DemoOrderSeeder).
+            var rawPhone = $"0912100{i:D4}"; // e.g. 09121000001 .. 09121000012 (11 digits)
+            var storagePhone = PhoneNumberHelper.ToStorageFormat(rawPhone);
+
             var existingUser = await _userManager.Users
                 .FirstOrDefaultAsync(x => x.Email == email);
 
             User owner;
 
+
             if (existingUser == null)
             {
                 owner = new User
                 {
-                    UserName = $"0912{345678 + i}",
+                    UserName = rawPhone,
                     Email = email,
                     FullName = $"صاحب رستوران {i}",
-                    PhoneNumber = $"0912{345678 + i}",
+                    PhoneNumber = storagePhone,
                     EmailConfirmed = true,
                     PhoneNumberConfirmed = true
                 };
 
-                var createResult = await _userManager
-                    .CreateAsync(owner, "Owner123!");
+                var createResult = await _userManager.CreateAsync(owner, "Owner123!");
 
                 if (!createResult.Succeeded)
                 {
-                    var errors = string.Join(", ",
-                        createResult.Errors.Select(x => x.Description));
-
+                    var errors = string.Join(", ", createResult.Errors.Select(x => x.Description));
                     throw new Exception(errors);
                 }
 
-                await _userManager.AddToRoleAsync(
-                    owner,
-                    SD.Role_Owner);
+                await _userManager.AddToRoleAsync(owner, SD.Role_Owner);
             }
             else
             {
@@ -129,7 +156,11 @@ public class DemoRestaurantSeeder : IDataSeeder
 
                 Address = $"تهران، خیابان نمونه {i}",
 
-                ContactNumber = owner.PhoneNumber!,
+                // 🔧 stored in the same canonical +98 format as PhoneNumber —
+                // keeps every phone-like field in the DB consistent; convert
+                // to 09... only at the client boundary (via PhoneNumberHelper.ToClientFormat)
+                // whenever this is returned in an API response.
+                ContactNumber = storagePhone,
 
                 OpenTime = new TimeSpan(8 + i % 4, 0, 0),
                 CloseTime = new TimeSpan(21, 0, 0),
@@ -145,10 +176,9 @@ public class DemoRestaurantSeeder : IDataSeeder
 
                 RestaurantCategoryId = i % 8 + 1,
 
-                CarouselImageUrl = "/img/res-slider.jpg",
-                BannerImageUrl = "/img/res-card-1.png",
-                ShopBannerImageUrl = "/img/ad-banner-1.jpg",
-                LogoImageUrl = "/img/logo-orange.png",
+                // 🔧 CarouselImageUrl intentionally left unset — it doesn't map
+                // to any MediaCategory anywhere in the codebase yet. Flagged
+                // for follow-up once its actual usage is confirmed.
 
                 Status = RestaurantStatus.Approved,
 
@@ -176,7 +206,23 @@ public class DemoRestaurantSeeder : IDataSeeder
         }
 
         await _db.Restaurants.AddRangeAsync(restaurants);
+        await _db.SaveChangesAsync(); // assigns restaurant.Id — needed as entityId below
 
+        // 🔧 Now that every restaurant has a real Id, save its logo/banner/shop
+        // banner through the actual media pipeline (per-entity webp variants).
+        foreach (var restaurant in restaurants)
+        {
+            var entityId = restaurant.Id.ToString();
+
+            var logoResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantLogo, logoBytes, ".png", entityId);
+            restaurant.LogoImageUrl = logoResult.FileName;
+
+            var bannerResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantHomeBanner, bannerBytes, ".png", entityId);
+            restaurant.BannerImageUrl = bannerResult.FileName;
+
+            var shopBannerResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantShopBanner, shopBannerBytes, ".png", entityId);
+            restaurant.ShopBannerImageUrl = shopBannerResult.FileName;
+        }
         await _db.SaveChangesAsync();
 
         var foods = new List<Food>();
@@ -222,8 +268,6 @@ public class DemoRestaurantSeeder : IDataSeeder
 
                         CustomFoodCategoryId = customCat.Id,
 
-                        ImageUrl = "/img/drink.png",
-
                         IsAvailable = true,
 
                         CreatedAt =
@@ -235,7 +279,14 @@ public class DemoRestaurantSeeder : IDataSeeder
         }
 
         await _db.Foods.AddRangeAsync(foods);
+        await _db.SaveChangesAsync(); // assigns food.Id — needed as entityId below
 
+        // 🔧 Same idea for every seeded food's image.
+        foreach (var food in foods)
+        {
+            var foodImgResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantFoodImage, foodBytes, ".png", food.Id.ToString());
+            food.ImageUrl = foodImgResult.FileName;
+        }
         await _db.SaveChangesAsync();
 
         Console.WriteLine(

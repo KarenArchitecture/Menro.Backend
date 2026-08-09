@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Settings;
+using Menro.Application.Common.Helpers;
 using Menro.Domain.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,8 +11,6 @@ using Menro.Application.Common.Models;
 using Menro.Application.Common.Interfaces;
 using Menro.Domain.Entities.Identity;
 using Menro.Application.Features.Users.Services.Interfaces;
-
-
 
 namespace Menro.Application.Features.Identity.Services
 {
@@ -63,7 +62,7 @@ namespace Menro.Application.Features.Identity.Services
         // send otp
         public async Task<Result> SendOtpAsync(string phoneNumber)
         {
-            var phone = NormalizeIranMobileToE164(phoneNumber);
+            var phone = PhoneNumberHelper.ToStorageFormat(phoneNumber);
             var now = DateTime.UtcNow;
 
             // ⏱️ Rate limit: refuse to issue a new OTP if the last one sent
@@ -111,7 +110,7 @@ namespace Menro.Application.Features.Identity.Services
         {
             try
             {
-                var phone = NormalizeIranMobileToE164(phoneNumber);
+                var phone = PhoneNumberHelper.ToStorageFormat(phoneNumber);
                 var otp = await _uow.Otp.GetLatestUnexpiredAsync(phone);
                 if (otp is null || otp.Code != ComputeHash(code))
                     return false;
@@ -321,22 +320,6 @@ namespace Menro.Application.Features.Identity.Services
             }
             return true;
         }
-
-        // phonenumber normalize
-        private static string NormalizeIranMobileToE164(string phoneNumber)
-        {
-            if (string.IsNullOrWhiteSpace(phoneNumber))
-                throw new Exception("شماره موبایل الزامی است.");
-
-            var p = phoneNumber.Trim().Replace(" ", "").Replace("-", "");
-            return p.StartsWith("+98") ? p :
-                   p.StartsWith("0098") ? "+" + p[2..] :
-                   p.StartsWith("98") ? "+" + p :
-                   p.StartsWith("0") && p.Length == 11 ? "+98" + p[1..] :
-                   p.Length == 10 && p.StartsWith("9") ? "+98" + p :
-                   throw new Exception("فرمت شماره موبایل معتبر نیست.");
-        }
-
 
         /*--- Private Helpers ---*/
 

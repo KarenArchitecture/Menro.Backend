@@ -178,6 +178,8 @@ namespace Menro.Application.Features.Cart.Services.Implementations
                 ExpiresAt = cart.UpdatedAt + CartLifetime
             };
 
+            dto.PaymentMethod = cart.Restaurant?.PaymentMethod.ToString() ?? "";
+
             foreach (var item in cart.Items)
             {
                 var food = await _unitOfWork.Food.GetFoodWithVariantsAsync(item.FoodId);
@@ -230,7 +232,9 @@ namespace Menro.Application.Features.Cart.Services.Implementations
                     UnitPrice = unitPrice,
                     LineTotal = lineTotal,
                     Addons = addonDtos,
-                    AvailableAddons = availableAddonDtos
+                    AvailableAddons = availableAddonDtos,
+                    Rating = food.AverageRating,
+                    Voters = food.VotersCount,
                 });
 
                 dto.Total += lineTotal;

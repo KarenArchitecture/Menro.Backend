@@ -26,6 +26,15 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                 Label = t.Label
             }).ToList();
         }
+        public async Task<List<RestaurantTableListItemDto>> GetAllByRestaurantIdForPublicAsync(int restaurantId)
+        {
+            var tables = await _repository.GetAllByRestaurantIdAsync(restaurantId);
+
+            return tables.Select(t => new RestaurantTableListItemDto
+            {
+                TableLabel = t.Label
+            }).ToList();
+        }
 
         public async Task<Result> AddTableAsync(CreateRestaurantTableDto dto, int restaurantId)
         {

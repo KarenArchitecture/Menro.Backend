@@ -1,26 +1,31 @@
-﻿using Menro.Domain.Entities.Blog;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
+using Menro.Domain.Entities.Blog;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Menro.Infrastructure.Data.Seed.Demo.Seeders;
 
 public class DemoBlogSeeder : IDataSeeder
 {
     private readonly MenroDbContext _db;
+    private readonly IMediaStorageProvider _mediaStorage;
+    private readonly MediaStorageOptions _mediaOptions;
 
     private readonly Random _rand = new(42);
 
-    public DemoBlogSeeder(MenroDbContext db)
+    public DemoBlogSeeder(
+        MenroDbContext db,
+        IMediaStorageProvider mediaStorage,
+        IOptions<MediaStorageOptions> mediaOptions)
     {
         _db = db;
+        _mediaStorage = mediaStorage;
+        _mediaOptions = mediaOptions.Value;
     }
 
-    // NOTE: adjust this to match your actual SeedOrder enum/constants -
-    // I don't have visibility into that file. Should run after
-    // SeedOrder.Restaurant since it has no FK dependency on it, but keeping
-    // blog seeding logically grouped with/after core content seeding is
-    // usually safest. Pick any value greater than SeedOrder.Restaurant.
     public int Order => SeedOrder.Blog;
 
     public async Task SeedAsync()
@@ -37,11 +42,6 @@ public class DemoBlogSeeder : IDataSeeder
         // 1) Display categories (BlogPost.CategoryId is a required FK,
         //    so we need at least a handful of these to assign posts to)
         // ------------------------------------------------------------
-        // NOTE: Slug must be URL-friendly and Latin-only (see BlogCategory.Slug
-        // doc comment - normally generated from Title in BlogCategoryService.
-        // CreateAsync, which wasn't available here). Persian titles can't be
-        // auto-transliterated reliably, so explicit Latin slugs are supplied
-        // per category below instead.
         var categoryDefs = new (string Title, string Subtitle, string Slug, string ColorHex)[]
         {
             ("رستوران و فضای سرویس", "فضای فیزیکی، خدمات، جو", "restaurant-and-service-space", "#5A302F"),
@@ -99,6 +99,14 @@ public class DemoBlogSeeder : IDataSeeder
 
         const int postCount = 500; // bump/lower as needed for your pagination testing
 
+        // 🔧 Read the real sample bytes ONCE. Every post's cover still gets
+        // saved individually below (entity-scoped by postId means a separate
+        // physical file per post), so first run will do ~500 webp encodes —
+        // a one-time startup cost, not a per-request cost. If that ever feels
+        // too slow at seed time, say so and I'll cut postCount or share the
+        // encoded output across posts instead of re-encoding per post.
+        var blogBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/blog/posts/blog.jpg"));
+
         var posts = new List<BlogPost>();
 
         for (int i = 1; i <= postCount; i++)
@@ -113,11 +121,16 @@ public class DemoBlogSeeder : IDataSeeder
 
             var isPublished = _rand.Next(0, 100) < 85; // ~85% published, some drafts
 
+            // BlogPost.Id is client-generated (Guid), so we know it before
+            // insert and can use it as the media entityId right away.
+            var postId = Guid.NewGuid();
+            var coverResult = await _mediaStorage.SaveBytesAsync(MediaCategory.BlogPostImage, blogBytes, ".jpg", postId.ToString());
+
             posts.Add(new BlogPost
             {
-                Id = Guid.NewGuid(),
+                Id = postId,
                 Title = $"{topic} - شماره {i}",
-                CoverImageUrl = "blog.jpg",
+                CoverImageUrl = coverResult.FileName,
                 ReadingMinutes = _rand.Next(2, 12),
                 CategoryId = category.Id,
                 IsPublished = isPublished,

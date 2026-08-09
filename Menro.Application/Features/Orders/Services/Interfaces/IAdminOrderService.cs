@@ -15,6 +15,7 @@ namespace Menro.Application.Features.Orders.Services.Interfaces
         Task<List<AdminOrderListItemDto>> GetActiveOrdersAsync(int restaurantId);
         Task<List<AdminOrderListItemDto>> GetOrderHistoryAsync(int restaurantId);
         Task<AdminOrderDetailsDto?> GetOrderDetailsAsync(int restaurantId, int orderId);
+        Task<List<AdminOrderListItemDto>> SearchOrdersAsync(int restaurantId, string query);
 
         // manage order status
         Task<OrderStatus?> AdvanceStatusAsync(int restaurantId, int orderId);

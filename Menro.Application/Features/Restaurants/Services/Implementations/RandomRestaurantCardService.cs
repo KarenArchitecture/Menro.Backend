@@ -3,14 +3,12 @@ using Menro.Application.Common.Media;
 using Menro.Application.Features.Restaurants.DTOs;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Domain.Interfaces;
-
 namespace Menro.Application.Features.Restaurants.Services.Implementations
 {
     public class RandomRestaurantCardService : IRandomRestaurantCardService
     {
         private readonly IRestaurantRepository _restaurantRepository;
         private readonly IMediaStorageProvider _mediaStorage;
-
         public RandomRestaurantCardService(
             IRestaurantRepository restaurantRepository,
             IMediaStorageProvider mediaStorage)
@@ -18,18 +16,15 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
             _restaurantRepository = restaurantRepository;
             _mediaStorage = mediaStorage;
         }
-
         public async Task<List<RestaurantCardDto>> GetRandomRestaurantCardsAsync(int count = 8)
         {
             var restaurants =
                 await _restaurantRepository.GetRandomActiveApprovedWithDetailsAsync(count);
             var nowTime = DateTime.Now.TimeOfDay;
             var nowUtc = DateTime.UtcNow;
-
             return restaurants.Select(r =>
             {
                 var entityId = r.Id.ToString();
-
                 var rating = r.Ratings.Any()
                     ? Math.Round(r.Ratings.Average(x => x.Score), 1)
                     : 0;
@@ -46,7 +41,6 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                 var isOpen = r.OpenTime <= r.CloseTime
                     ? nowTime >= r.OpenTime && nowTime < r.CloseTime
                     : nowTime >= r.OpenTime || nowTime < r.CloseTime;
-
                 return new RestaurantCardDto
                 {
                     Id = r.Id,
@@ -54,7 +48,7 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                     Category = r.RestaurantCategory?.Name ?? "بدون دسته‌بندی",
                     BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl)
                         ? null
-                        : _mediaStorage.GetUrl(MediaCategory.RestaurantHomeBanner, r.BannerImageUrl, entityId, MediaVariant.Thumbnail),
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantHomeBanner, r.BannerImageUrl, entityId, MediaVariant.Resized),
                     LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl)
                         ? null
                         : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, r.LogoImageUrl, entityId, MediaVariant.Thumbnail),

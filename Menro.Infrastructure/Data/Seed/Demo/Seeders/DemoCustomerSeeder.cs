@@ -1,4 +1,5 @@
-﻿using Menro.Application.Common.SD;
+﻿using Menro.Application.Common.Helpers;
+using Menro.Application.Common.SD;
 using Menro.Domain.Entities;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Data.Seed.Contracts;
@@ -24,6 +25,14 @@ public class DemoCustomerSeeder : IDataSeeder
 
     // Index 0 (09121112233) stays fixed — DemoFavoriteFoodSeeder and other
     // seeders key specifically off this phone as "the" primary demo customer.
+    //
+    // 🔧 FIX: these are now raw/local format (09...) on purpose — they must
+    // match DemoOrderSeeder's DemoCustomerPhonesRaw list character-for-character,
+    // so both seeders normalize to the exact same +98 value. Previously this
+    // array already held "+989121112233" and was run through a local ToE164()
+    // that assumed a "0..." input — that double-prefixed it into a corrupted
+    // "+9898912100xxxx" PhoneNumber, so DemoOrderSeeder could never find these
+    // users and silently skipped seeding orders.
     private static readonly (string Phone, string Name)[] Customers =
     {
         ("09121112233", "مشتری نمونه"),
@@ -35,20 +44,20 @@ public class DemoCustomerSeeder : IDataSeeder
 
     public async Task SeedAsync()
     {
-        foreach (var (phone, name) in Customers)
+        foreach (var (rawPhone, name) in Customers)
         {
-            var customer = await _db.Users.FirstOrDefaultAsync(x => x.PhoneNumber == phone);
+            var phone = PhoneNumberHelper.ToStorageFormat(rawPhone);
 
+            var customer = await _db.Users.FirstOrDefaultAsync(x => x.PhoneNumber == phone);
             if (customer == null)
             {
                 customer = new User
                 {
-                    UserName = phone,
+                    UserName = rawPhone,
                     PhoneNumber = phone,
                     PhoneNumberConfirmed = true,
                     FullName = name
                 };
-
                 var result = await _userManager.CreateAsync(customer, Password);
                 if (!result.Succeeded)
                     throw new Exception(string.Join(", ", result.Errors.Select(x => x.Description)));

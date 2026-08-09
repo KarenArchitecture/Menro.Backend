@@ -11,6 +11,7 @@
         public List<CartItemDto> Items { get; set; } = new();
         public int Total { get; set; }
         public int Count { get; set; }
+        public string PaymentMethod { get; set; } = "";
     }
 
     public class CartItemDto
@@ -25,6 +26,8 @@
         public int Quantity { get; set; }
         public int UnitPrice { get; set; }
         public int LineTotal { get; set; }
+        public double Rating { get; set; }
+        public int Voters { get; set; }
         public List<CartItemAddonDto> Addons { get; set; } = new();
         public List<CartItemAddonDto> AvailableAddons { get; set; } = new();
     }

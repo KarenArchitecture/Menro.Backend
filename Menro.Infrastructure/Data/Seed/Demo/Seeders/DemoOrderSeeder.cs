@@ -1,4 +1,5 @@
-﻿using Menro.Domain.Entities;
+﻿using Menro.Application.Common.Helpers;
+using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Data.Seed.Contracts;
@@ -11,7 +12,29 @@ public class DemoOrderSeeder : IDataSeeder
     private readonly MenroDbContext _db;
     private readonly Random _rand = new(42);
 
-    private static readonly string[] DemoCustomerPhones =
+    private static string BuildInvoiceNumber(Dictionary<(int RestaurantId, int Y, int M, int D), int> counters, int restaurantId, DateTime createdAtUtc)
+    {
+        var iranOffset = TimeSpan.FromHours(3.5);
+        var localCreated = createdAtUtc + iranOffset;
+        var pc = new System.Globalization.PersianCalendar();
+
+        var y = pc.GetYear(localCreated);
+        var m = pc.GetMonth(localCreated);
+        var d = pc.GetDayOfMonth(localCreated);
+        var key = (restaurantId, y, m, d);
+
+        counters.TryGetValue(key, out var seq);
+        seq += 1;
+        counters[key] = seq;
+
+        return $"{y:D4}{m:D2}{d:D2}{seq}";
+    }
+
+    // 🔧 Must match DemoCustomerSeeder.Customers' phone list character-for-
+    // character (same local/raw 09... format) — both seeders normalize
+    // through the same PhoneNumberHelper.ToStorageFormat, so they need to
+    // agree on the raw input to land on the exact same +98 value.
+    private static readonly string[] DemoCustomerPhonesRaw =
     {
         "09121112233",
         "09121112234",
@@ -20,8 +43,6 @@ public class DemoOrderSeeder : IDataSeeder
         "09121112237",
     };
 
-    // Weighted toward Completed so order-history testing has enough entries,
-    // but still covers every stage of the admin order-status flow.
     private static readonly OrderStatus[] StatusPool =
     {
         OrderStatus.Pending,
@@ -42,8 +63,12 @@ public class DemoOrderSeeder : IDataSeeder
 
     public async Task SeedAsync()
     {
+        var demoCustomerPhonesE164 = DemoCustomerPhonesRaw
+            .Select(PhoneNumberHelper.ToStorageFormat)
+            .ToList();
+
         var demoCustomers = await _db.Users
-            .Where(u => DemoCustomerPhones.Contains(u.PhoneNumber))
+            .Where(u => u.PhoneNumber != null && demoCustomerPhonesE164.Contains(u.PhoneNumber))
             .ToListAsync();
 
         if (demoCustomers.Count == 0)
@@ -79,21 +104,34 @@ public class DemoOrderSeeder : IDataSeeder
             return;
         }
 
+        var invoiceCounters = new Dictionary<(int, int, int, int), int>();
+
         int dayOffset = 0;
 
-        foreach (var customer in demoCustomers)
+        // Iterate by RESTAURANT, not by customer, so every restaurant is
+        // guaranteed a handful of orders — lets any of the seeded owners
+        // log into the admin panel and always find order data for their
+        // own restaurant, regardless of random chance.
+        foreach (var info in restaurantInfos)
         {
-            var orderCount = _rand.Next(3, 7);
+            var foodsForRestaurant = await _db.Foods
+                .Where(f => f.RestaurantId == info.Id && f.IsAvailable && !f.IsDeleted)
+                .ToListAsync();
 
-            for (int n = 0; n < orderCount; n++)
+            if (!foodsForRestaurant.Any())
+                continue;
+
+            var ordersForThisRestaurant = _rand.Next(4, 9); // 4–8 orders per restaurant
+
+            for (int n = 0; n < ordersForThisRestaurant; n++)
             {
-                var info = restaurantInfos[_rand.Next(restaurantInfos.Count)];
+                var customer = demoCustomers[_rand.Next(demoCustomers.Count)];
 
-                var foods = await _db.Foods
-                    .Where(f => f.RestaurantId == info.Id && f.IsAvailable && !f.IsDeleted)
+                var maxPick = Math.Min(5, foodsForRestaurant.Count);
+                var foods = foodsForRestaurant
                     .OrderBy(_ => Guid.NewGuid())
-                    .Take(_rand.Next(2, 5))
-                    .ToListAsync();
+                    .Take(_rand.Next(2, maxPick + 1))
+                    .ToList();
 
                 if (!foods.Any())
                     continue;
@@ -112,8 +150,6 @@ public class DemoOrderSeeder : IDataSeeder
 
                     if (variantsForFood.Count == 0)
                     {
-                        // Defensive fallback — shouldn't happen once
-                        // FoodDefaultVariantSeeder has run, but kept safe.
                         int unitPrice = food.Price;
                         totalAmount += unitPrice * quantity;
 
@@ -164,6 +200,9 @@ public class DemoOrderSeeder : IDataSeeder
                     .Select(o => (int?)o.RestaurantOrderNumber)
                     .MaxAsync() ?? 0;
 
+                var createdAt = DateTime.UtcNow.AddDays(-dayOffset++).AddHours(-_rand.Next(0, 20));
+                var invoiceNumber = BuildInvoiceNumber(invoiceCounters, info.Id, createdAt);
+
                 var order = new Order
                 {
                     UserId = customer.Id,
@@ -171,20 +210,17 @@ public class DemoOrderSeeder : IDataSeeder
                     RestaurantOrderNumber = lastNumber + 1,
                     TableLabel = tableLabel,
                     Status = StatusPool[_rand.Next(StatusPool.Length)],
-                    CreatedAt = DateTime.UtcNow.AddDays(-dayOffset++).AddHours(-_rand.Next(0, 20)),
+                    InvoiceNumber = invoiceNumber,
+                    CreatedAt = createdAt,
                     TotalPrice = totalAmount,
                     OrderItems = orderItems
                 };
 
                 _db.Orders.Add(order);
-
-                // Save per-order so RestaurantOrderNumber (unique per
-                // restaurant) is computed correctly against already-saved
-                // rows for the next iteration.
                 await _db.SaveChangesAsync();
             }
         }
 
-        Console.WriteLine("[Seed] Demo orders seeded for all demo customers.");
+        Console.WriteLine("[Seed] Demo orders seeded across all restaurants.");
     }
 }

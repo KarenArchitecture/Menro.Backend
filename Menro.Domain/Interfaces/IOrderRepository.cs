@@ -45,6 +45,10 @@ namespace Menro.Domain.Interfaces
 
         Task<Order?> GetForUpdateAsync(int restaurantId, int orderId, CancellationToken ct = default);
 
+        Task<int> CountOrdersForRestaurantOnDateAsync(int restaurantId, DateTime dayStartUtc, DateTime dayEndUtc, CancellationToken ct = default);
+
+        Task<List<Order>> SearchOrdersByInvoiceAsync(int restaurantId, string query, int take, CancellationToken ct = default);
+
         Task<bool> SaveChangesAsync(CancellationToken ct = default);
 
 
@@ -57,11 +61,7 @@ namespace Menro.Domain.Interfaces
         void InvalidateUserRecentOrders(string userId);
 
         Task<(List<Food> Foods, string? NextCursor, bool HasMore)> GetUserRecentlyOrderedFoodsCursorAsync(
-            string userId,
-            int take,
-            string? cursor,
-            CancellationToken ct = default
-        );
+            string userId, int take, string? cursor, CancellationToken ct = default);
 
         Task<List<Order>> GetUserOrdersAsync(string userId, CancellationToken ct = default);
     }

@@ -218,6 +218,7 @@ namespace Menro.Infrastructure.Repositories
                 .Include(f => f.CustomFoodCategory)
                 .Include(f => f.Variants.Where(v => !v.IsDeleted))
                     .ThenInclude(v => v.Addons.Where(a => !a.IsDeleted))
+                .Include(f => f.Ratings)   // <-- add this
                 .FirstOrDefaultAsync();
         }
 
@@ -245,6 +246,7 @@ namespace Menro.Infrastructure.Repositories
                     f.IsAvailable &&
                     !f.IsDeleted)
                 .Include(f => f.Restaurant)
+                .Include(f => f.Ratings)   // <-- add this line
                 .ToListAsync();
         }
 
