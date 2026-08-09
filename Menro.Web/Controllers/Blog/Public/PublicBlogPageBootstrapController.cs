@@ -1,11 +1,11 @@
 ﻿using Menro.Application.Features.Blog.DTOs;
-using Menro.Application.Features.Blog.Services;
+using Menro.Application.Features.Blog.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Blog.Public
 {
     [ApiController]
-    [Route("api/blog/page-bootstrap")]
+    [Route("api/public/blog/page-bootstrap")]
     public class PublicBlogPageBootstrapController : ApiControllerBase
     {
         #region DI

@@ -1,6 +1,6 @@
 ﻿using Menro.Application.Features.Blog.DTOs;
 
-namespace Menro.Application.Features.Blog.Services
+namespace Menro.Application.Features.Blog.Services.Interfaces
 {
     // NOTE: reconstructed from BlogCategoryService.cs - reconcile with your
     // actual file. Only GetBySlugAsync is NEW.
@@ -14,7 +14,9 @@ namespace Menro.Application.Features.Blog.Services
 
         Task<BlogCategoryResponse> CreateAsync(CreateBlogCategoryRequest request, CancellationToken ct = default);
         Task<BlogCategoryResponse?> UpdateAsync(Guid id, UpdateBlogCategoryRequest request, CancellationToken ct = default);
+        Task<int> CountAffectedPostsAsync(Guid categoryId, CancellationToken ct = default);
         Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);
+
         Task<IReadOnlyList<BlogCategoryResponse>?> MoveAsync(Guid id, MoveDirection direction, CancellationToken ct = default);
     }
 }

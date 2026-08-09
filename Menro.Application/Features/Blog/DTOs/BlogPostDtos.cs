@@ -1,37 +1,14 @@
+using Menro.Domain.Entities.Blog;
 using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
 namespace Menro.Application.Features.Blog.DTOs
 {
-    public record BlogPostResponse(
-        Guid Id,
-        string Title,
-        string? CoverImageUrl,
-        int ReadingMinutes,
-        Guid CategoryId,
-        string CategoryTitle,
-        bool IsPublished,
-        DateTime CreatedAtUtc,
-        DateTime? UpdatedAtUtc,
-        int ViewCount,
-        int LikeCount,
-        string PublishedDatePersian);
-
     public class CreateBlogPostRequest
     {
         [Required(ErrorMessage = "عنوان پست الزامی است.")]
         [MaxLength(300)]
         public string Title { get; set; } = string.Empty;
-
-        public IFormFile? CoverImage { get; set; }
-
-        [Range(1, int.MaxValue, ErrorMessage = "زمان مطالعه باید بزرگ‌تر از صفر باشد.")]
-        public int ReadingMinutes { get; set; }
-
-        [Required(ErrorMessage = "انتخاب دسته‌بندی الزامی است.")]
-        public Guid CategoryId { get; set; }
-
-        public bool IsPublished { get; set; } = true;
     }
 
     public class UpdateBlogPostRequest
@@ -40,15 +17,91 @@ namespace Menro.Application.Features.Blog.DTOs
         [MaxLength(300)]
         public string Title { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "اسلاگ الزامی است.")]
+        [MaxLength(200)]
+        public string Slug { get; set; } = string.Empty;
         public IFormFile? CoverImage { get; set; }
         public bool RemoveImage { get; set; }
-
         [Range(1, int.MaxValue, ErrorMessage = "زمان مطالعه باید بزرگ‌تر از صفر باشد.")]
         public int ReadingMinutes { get; set; }
-
-        [Required(ErrorMessage = "انتخاب دسته‌بندی الزامی است.")]
-        public Guid CategoryId { get; set; }
-
+        public Guid? CategoryId { get; set; }
+        public List<Guid> TagIds { get; set; } = new();
         public bool IsPublished { get; set; }
     }
+    public record BlogPostAdminListItemResponse(
+    Guid Id,
+    string Title,
+    string? ThumbnailUrl,
+    int ReadingMinutes,
+    Guid? CategoryId,
+    string? CategoryTitle,
+    string? AuthorId,
+    string AuthorName,
+    bool IsPublished,
+    DateTime CreatedAtUtc,
+    string PublishedDatePersian);
+
+    public record BlogPostListItemResponse(
+        Guid Id,
+        string Title,
+        string Slug,
+        string? CoverImageUrl,
+        int ReadingMinutes,
+        Guid? CategoryId,
+        string? CategoryTitle,
+        bool IsPublished,
+        DateTime CreatedAtUtc,
+        DateTime? UpdatedAtUtc,
+        int ViewCount,
+        int LikeCount,
+        string PublishedDatePersian);
+
+    public record BlogPostDetailResponse(
+        Guid Id,
+        string Title,
+        string Slug,
+        string? CoverImageUrl,
+        string? AuthorId, 
+        string? AuthorName,
+        int ReadingMinutes,
+        Guid? CategoryId,
+        string? CategoryTitle,
+        IReadOnlyList<BlogPostTagResponse> Tags,
+        bool IsPublished,
+        DateTime CreatedAtUtc,
+        DateTime? UpdatedAtUtc,
+        int ViewCount,
+        int LikeCount,
+        string PublishedDatePersian);
+
+
+    public record BlogPostTagResponse(Guid Id, string Name);
+
+    public record BlogPostPublishResponse(Guid Id, bool IsPublished);
+
+
+    // Blog Post Page
+    public record BlogPostPublicDetailResponse(
+        Guid Id,
+        string Title,
+        string Slug,
+        string? CoverImageUrl,
+        string Content,
+        string AuthorName,
+        Guid? CategoryId,
+        string? CategoryTitle,
+        string? CategorySlug,
+        IReadOnlyList<BlogPostPublicTagResponse> Tags,
+        int ReadingMinutes,
+        int ViewCount,
+        int LikeCount,
+        string PublishedDatePersian);
+
+    // blog post page => realted and popular posts
+    public record BlogPostRelatedItemResponse(
+    Guid Id,
+    string Slug,
+    string Title,
+    string? CoverImageUrl,
+    int ReadingMinutes);
 }

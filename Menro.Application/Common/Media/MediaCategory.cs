@@ -27,6 +27,7 @@
 
         // blog images
         BlogPostImage,
+        BlogContentImage,
 
         // website public images
         LandingHeroImage,

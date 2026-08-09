@@ -32,6 +32,7 @@ namespace Menro.Domain.Interfaces
         // BLOG
         IBlogHeroRepository BlogHero { get; }
         IBlogPostRepository BlogPost { get; }
+        IBlogPostContentRepository BlogPostContent { get; }
         IBlogCategoryRepository BlogCategory { get; }
         IBlogTagRepository BlogTag { get; }
 

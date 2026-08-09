@@ -19,7 +19,11 @@ public class RoleSeeder : IDataSeeder
         {
         SD.Role_Admin,
         SD.Role_Owner,
-        SD.Role_Customer
+        SD.Role_Customer,
+        // blog related roles
+        SD.Role_Contributor,
+        SD.Role_Author,
+        SD.Role_Editor
     };
 
         foreach (var role in roles)

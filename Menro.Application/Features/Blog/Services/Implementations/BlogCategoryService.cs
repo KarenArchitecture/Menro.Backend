@@ -1,8 +1,8 @@
 using Menro.Application.Features.Blog.DTOs;
+using Menro.Application.Features.Blog.Services.Interfaces;
 using Menro.Application.Helpers;
 using Menro.Domain.Entities.Blog;
 using Menro.Domain.Interfaces.Blog;
-using Microsoft.IdentityModel.Logging;
 
 namespace Menro.Application.Features.Blog.Services.Implementations
 {
@@ -127,5 +127,10 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             category.Slug,
             category.ColorHex,
             category.SortOrder);
+
+        public async Task<int> CountAffectedPostsAsync(Guid categoryId, CancellationToken ct = default)
+        {
+            return await _repository.CountByCategoryIdAsync(categoryId);
+        }
     }
 }

@@ -112,7 +112,14 @@
                     ThumbnailWidth = 300,
                     ResizedWidth = 1200,
                 },
-
+                [MediaCategory.BlogContentImage] = new()
+                {
+                    FolderTemplate = "media/img/blog/content",
+                    AllowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" },
+                    MaxSizeBytes = 6 * 1024 * 1024,
+                    IsEntityScoped = true,
+                    ResizedWidth = 1600,
+                },
                 // global / site-wide -> flat storage
                 [MediaCategory.LandingHeroImage] = new()
                 {

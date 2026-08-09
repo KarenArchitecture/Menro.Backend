@@ -40,6 +40,7 @@ namespace Menro.Infrastructure.Repositories
         // BLOG
         private IBlogHeroRepository _blogHero;
         private IBlogPostRepository _blogPost;
+        private IBlogPostContentRepository _blogPostContent;
         private IBlogCategoryRepository _blogCategory;
         private IBlogTagRepository _blogTag;
 
@@ -74,6 +75,7 @@ namespace Menro.Infrastructure.Repositories
         // BLOG
         public IBlogHeroRepository BlogHero => _blogHero ??= new BlogHeroRepository(_context);
         public IBlogPostRepository BlogPost => _blogPost ??= new BlogPostRepository(_context);
+        public IBlogPostContentRepository BlogPostContent => _blogPostContent ??= new BlogPostContentRepository(_context);
         public IBlogCategoryRepository BlogCategory => _blogCategory ??= new BlogCategoryRepository(_context);
         public IBlogTagRepository BlogTag => _blogTag ??= new BlogTagRepository(_context);
 
