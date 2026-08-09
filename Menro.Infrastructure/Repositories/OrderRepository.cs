@@ -220,68 +220,88 @@ namespace Menro.Infrastructure.Repositories
 
         private const string RecentOrdersKeyPrefix = "UserRecentOrders_";
 
-        private string GetCacheKey(string userId, int count)
-            => $"{RecentOrdersKeyPrefix}{userId}_{count}";
+        // 🔧 Cache ONE list per user, not one per distinct "count" value. The
+        // old scheme keyed the cache as "{prefix}{userId}_{count}" and only
+        // invalidated a hardcoded set of counts (8/16/32). The Home page
+        // actually requests count=9 (PREVIEW_COUNT+1, to detect "has more"),
+        // which was never in that hardcoded set — so its cache entry never
+        // got cleared on a new order and could silently go stale for its
+        // full 3-minute TTL. Caching a single "top N" list per user and
+        // slicing to whatever count was asked for AFTER reading the cache
+        // removes this whole class of bug: invalidation is one key removal,
+        // and it doesn't matter what count any caller asks for in the future.
+        private const int MaxCachedRecentFoods = 32; // covers every caller's clamp today (Home: <=32, browse: separate cursor method, uncached)
+
+        private string GetCacheKey(string userId) => $"{RecentOrdersKeyPrefix}{userId}";
 
         public async Task<List<Food>> GetUserRecentlyOrderedFoodsAsync(string userId, int count, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(userId) || count <= 0)
                 return new List<Food>();
 
-            var cacheKey = GetCacheKey(userId, count);
+            var cacheKey = GetCacheKey(userId);
 
-            // 1) Try cache
-            if (_cache.TryGetValue(cacheKey, out List<Food>? cached) && cached != null)
-                return cached;
+            // 1) Try cache — holds up to MaxCachedRecentFoods, already ordered by recency
+            if (!_cache.TryGetValue(cacheKey, out List<Food>? cached) || cached == null)
+            {
+                // 2) Query latest food ids from order history (always fetch the
+                // max we'd ever cache, regardless of what this particular
+                // caller asked for, so the cached list can serve any count up
+                // to MaxCachedRecentFoods without a separate DB round trip)
+                var latestFoodIds = await _context.Orders
+                    .AsNoTracking()
+                    .Where(o => o.UserId == userId)
+                    .OrderByDescending(o => o.CreatedAt)
+                    .SelectMany(o => o.OrderItems.Select(oi => new { o.CreatedAt, oi.FoodId }))
+                    .GroupBy(x => x.FoodId)
+                    .Select(g => new
+                    {
+                        FoodId = g.Key,
+                        LastOrderedAt = g.Max(x => x.CreatedAt)
+                    })
+                    .OrderByDescending(x => x.LastOrderedAt)
+                    .Take(MaxCachedRecentFoods)
+                    .Select(x => x.FoodId)
+                    .ToListAsync(ct);
 
-            // 2) Query latest food ids from order history
-            var latestFoodIds = await _context.Orders
-                .AsNoTracking()
-                .Where(o => o.UserId == userId)
-                .OrderByDescending(o => o.CreatedAt)
-                .SelectMany(o => o.OrderItems.Select(oi => new { o.CreatedAt, oi.FoodId }))
-                .GroupBy(x => x.FoodId)
-                .Select(g => new
+                if (latestFoodIds.Count == 0)
                 {
-                    FoodId = g.Key,
-                    LastOrderedAt = g.Max(x => x.CreatedAt)
-                })
-                .OrderByDescending(x => x.LastOrderedAt)
-                .Take(count)
-                .Select(x => x.FoodId)
-                .ToListAsync(ct);
-
-            if (latestFoodIds.Count == 0)
-                return new List<Food>();
-
-            // 3) Load foods themselves
-            var foods = await _context.Foods
-                .AsNoTracking()
-                .Where(f => latestFoodIds.Contains(f.Id) && f.IsAvailable && !f.IsDeleted)
-                .Include(f => f.Ratings)
-                .Include(f => f.Restaurant)
-                .ToListAsync(ct);
-
-            // Preserve original order
-            var indexLookup = latestFoodIds
-                .Select((id, idx) => new { id, idx })
-                .ToDictionary(x => x.id, x => x.idx);
-
-            var result = foods
-                .OrderBy(f => indexLookup.TryGetValue(f.Id, out var pos) ? pos : int.MaxValue)
-                .ToList();
-
-            // 4) Cache result
-            _cache.Set(
-                cacheKey,
-                result,
-                new MemoryCacheEntryOptions
+                    cached = new List<Food>();
+                }
+                else
                 {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3),
-                    Priority = CacheItemPriority.Normal
-                });
+                    // 3) Load foods themselves
+                    var foods = await _context.Foods
+                        .AsNoTracking()
+                        .Where(f => latestFoodIds.Contains(f.Id) && f.IsAvailable && !f.IsDeleted)
+                        .Include(f => f.Ratings)
+                        .Include(f => f.Restaurant)
+                        .ToListAsync(ct);
 
-            return result;
+                    // Preserve original order
+                    var indexLookup = latestFoodIds
+                        .Select((id, idx) => new { id, idx })
+                        .ToDictionary(x => x.id, x => x.idx);
+
+                    cached = foods
+                        .OrderBy(f => indexLookup.TryGetValue(f.Id, out var pos) ? pos : int.MaxValue)
+                        .ToList();
+                }
+
+                // 4) Cache result
+                _cache.Set(
+                    cacheKey,
+                    cached,
+                    new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(3),
+                        Priority = CacheItemPriority.Normal
+                    });
+            }
+
+            // 5) Slice to whatever this specific caller asked for, from the
+            // (now guaranteed fresh-or-cached) full list.
+            return cached.Take(Math.Min(count, MaxCachedRecentFoods)).ToList();
         }
 
         private static string EncodeCursor(DateTime dt, int foodId)
@@ -406,10 +426,9 @@ namespace Menro.Infrastructure.Repositories
 
         public void InvalidateUserRecentOrders(string userId)
         {
-            foreach (var count in new[] { 8, 16, 32 })
-            {
-                _cache.Remove(GetCacheKey(userId, count));
-            }
+            // 🔧 Now a single key removal — no more guessing which "count"
+            // values might be cached.
+            _cache.Remove(GetCacheKey(userId));
         }
     }
 }
