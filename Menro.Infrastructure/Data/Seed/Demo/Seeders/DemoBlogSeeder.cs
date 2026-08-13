@@ -140,6 +140,7 @@ public class DemoBlogSeeder : IDataSeeder
                 : categories[_rand.Next(categories.Count)];
 
             var authorName = authorNames[_rand.Next(authorNames.Length)];
+            var slug = $"{Slugify(topic)}-{i}";
 
             // Spread creation dates out over the last ~2 years so "Newest"
             // sort has meaningful variety instead of near-identical timestamps.
@@ -153,10 +154,13 @@ public class DemoBlogSeeder : IDataSeeder
             var postId = Guid.NewGuid();
             var coverResult = await _mediaStorage.SaveBytesAsync(MediaCategory.BlogPostImage, blogBytes, ".jpg", postId.ToString());
 
+
             posts.Add(new BlogPost
             {
                 Id = postId,
                 Title = $"{topic} - شماره {i}",
+                Slug = slug,
+                AuthorNameSnapshot = authorName,
                 CoverImageUrl = coverResult.FileName,
                 ReadingMinutes = _rand.Next(2, 12),
                 CategoryId = category?.Id,
@@ -167,9 +171,6 @@ public class DemoBlogSeeder : IDataSeeder
                     : null,
                 ViewCount = _rand.Next(0, 20_000),
                 LikeCount = _rand.Next(0, 3_000),
-                // Content intentionally left null - BlogPostContent shape
-                // wasn't available to this seeder. Send its definition over
-                // if demo posts need seeded body content too.
             });
         }
 
@@ -179,4 +180,10 @@ public class DemoBlogSeeder : IDataSeeder
         Console.WriteLine(
             $"[Seed] {categories.Count} blog categories and {posts.Count} demo blog posts seeded.");
     }
+    private static string Slugify(string text)
+    {
+        // برای عناوین فارسی، ساده‌ترین راه یکتا نگه داشتنه:
+        return "post-" + Guid.NewGuid().ToString("N")[..8];
+    }
+
 }

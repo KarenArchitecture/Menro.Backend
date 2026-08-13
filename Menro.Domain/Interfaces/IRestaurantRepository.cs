@@ -14,6 +14,7 @@ namespace Menro.Domain.Interfaces
         Task<Restaurant?> GetByIdAsync(int id);
 
         Task<string> GetRestaurantName(int restaurantId);
+        Task<bool> IsAdminOfRestaurantAsync(string userId, int restaurantId);
 
         /* ============================================================
            🔹 Home Page - Featured Restaurants (Carousel)

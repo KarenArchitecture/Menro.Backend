@@ -119,39 +119,32 @@ namespace Menro.Web.Controllers.Restaurants
             return Ok(banner);
         }
 
-        // GET: /api/public/restaurant/{slug}/categories
         [HttpGet("{slug}/categories")]
         public async Task<ActionResult<List<RestaurantFoodCategoryDto>>> GetRestaurantCategoriesBySlug(
             string slug,
             CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(slug))
-                return BadRequest("Slug cannot be empty.");
+                return BadRequest(new { message = "Slug cannot be empty." });
 
             var categories = await _restaurantPageFoodCategoryService.GetRestaurantCategoriesAsync(slug, ct);
 
-            if (categories == null || categories.Count == 0)
-                return NotFound("هیچ دسته‌ای برای این رستوران یافت نشد.");
+            if (categories == null)
+                return NotFound(new { message = "رستوران یافت نشد." });
 
-            return Ok(categories);
+            return Ok(categories); // خالی هم باشه، 200 با [] برمی‌گرده
         }
 
-        // GET: /api/public/restaurant/{slug}/menu
         [HttpGet("{slug}/menu")]
         public async Task<ActionResult<List<RestaurantMenuDto>>> GetRestaurantMenuBySlug(string slug)
         {
             if (string.IsNullOrWhiteSpace(slug))
-                return BadRequest("Slug cannot be empty.");
-
-            var sw = System.Diagnostics.Stopwatch.StartNew();
+                return BadRequest(new { message = "Slug cannot be empty." });
 
             var menu = await _menuService.GetMenuBySlugAsync(slug);
 
-            sw.Stop();
-            Console.WriteLine($"[RestaurantController] GetMenuBySlugAsync for slug '{slug}' took: {sw.ElapsedMilliseconds} ms");
-
-            if (menu == null || menu.Count == 0)
-                return NotFound("منوی این رستوران یافت نشد.");
+            if (menu == null)
+                return NotFound(new { message = "رستوران یافت نشد." });
 
             return Ok(menu);
         }

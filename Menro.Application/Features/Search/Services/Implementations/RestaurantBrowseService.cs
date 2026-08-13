@@ -68,9 +68,9 @@ namespace Menro.Application.Features.Search.Services.Implementations
                     Name = r.Name,
                     Category = r.RestaurantCategory?.Name
                         ?? "بدون دسته‌بندی",
-                    BannerImageUrl = string.IsNullOrWhiteSpace(r.ShopBannerImageUrl)
+                    BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl)
                         ? null
-                        : _mediaStorage.GetUrl(MediaCategory.RestaurantShopBanner, r.ShopBannerImageUrl, entityId, MediaVariant.Resized),
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantHomeBanner, r.BannerImageUrl, entityId, MediaVariant.Resized),
                     LogoImageUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl)
                         ? null
                         : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, r.LogoImageUrl, entityId, MediaVariant.Thumbnail),

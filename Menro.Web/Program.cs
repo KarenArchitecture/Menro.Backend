@@ -217,7 +217,9 @@ builder.Services.Configure<MediaStorageOptions>(options =>
 });
 builder.Services.AddSingleton<IMediaStorageProvider, LocalDiskMediaStorageProvider>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
-builder.Services.AddScoped<IMusicNotificationService, MusicNotificationService>(); 
+
+builder.Services.AddSingleton<IMusicNotificationService, MusicNotificationService>();
+builder.Services.AddScoped<IRestaurantAdminAccessService, RestaurantAdminAccessService>();
 
 builder.Services.AddSingleton<IGlobalDateTimeService, GlobalDateTimeService>();
 
@@ -227,8 +229,24 @@ builder.Services.AddHostedService<CartCleanupHostedService>();
 
 builder.Services.AddMemoryCache();
 
-builder.Services.AddSignalR();
+var signalRBuilder = builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+});
 
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    // فقط وقتی Redis کانفیگ شده باشه فعال میشه؛
+    // در dev معمولاً نیست و SignalR روی in-memory کار می‌کنه (مشکلی نداره چون یک اینستنس هست)
+    signalRBuilder.AddStackExchangeRedis(redisConnectionString, options =>
+    {
+        options.Configuration.ChannelPrefix =
+            StackExchange.Redis.RedisChannel.Literal("menro-music-signalr");
+    });
+}
 #endregion
 
 #region Data Seeders

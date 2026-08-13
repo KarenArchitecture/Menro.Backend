@@ -7,6 +7,8 @@ using Menro.Domain.Interfaces;
 using Menro.Application.Features.Music.Services.Interfaces;
 using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Media;
+using Menro.Application.Features.Music.DTOs.Notifications;
+using Microsoft.Extensions.Logging;
 
 namespace Menro.Application.Features.Music.Services.Implementations
 {
@@ -17,6 +19,7 @@ namespace Menro.Application.Features.Music.Services.Implementations
         private readonly IMusicPlayerService _musicPlayerService;
         private readonly IMusicNotificationService _notifier;
         private readonly IMediaStorageProvider _mediaStorage;
+
         public PublicMusicService(
             IUnitOfWork uow,
             IMusicPlayerService musicPlayerService,
@@ -124,32 +127,27 @@ namespace Menro.Application.Features.Music.Services.Implementations
             var request = new TrackRequest
             {
                 Id = Guid.NewGuid(),
-
                 RestaurantId = restaurantId,
-
                 MusicTrackId = playlistTrack.MusicTrackId,
-
                 PlaylistTrackId = playlistTrackId,
-
                 UserId = userId,
-
                 RequestedAt = DateTime.UtcNow,
-
                 Status = TrackRequestStatus.Pending
             };
 
             await _uow.TrackRequest.AddAsync(request);
-
             await _uow.SaveChangesAsync();
 
             await _notifier.NotifyTrackRequested(
                 restaurantId,
-                new
+                new TrackRequestedNotification
                 {
-                    id = request.Id,
-                    playlistTrackId,
-                    userId,
-                    status = "Pending"
+                    RequestId = request.Id,
+                    PlaylistTrackId = playlistTrackId,
+                    MusicTrackId = playlistTrack.MusicTrackId,
+                    UserId = userId,
+                    Status = TrackRequestStatus.Pending.ToString(),
+                    RequestedAt = request.RequestedAt
                 });
 
             return Result.Success();

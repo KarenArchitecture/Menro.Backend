@@ -4,6 +4,7 @@ using Menro.Domain.Interfaces;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using System.Text.RegularExpressions;
 
 namespace Menro.Infrastructure.Repositories
 {
@@ -26,6 +27,8 @@ namespace Menro.Infrastructure.Repositories
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
+
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
@@ -46,6 +49,11 @@ namespace Menro.Infrastructure.Repositories
             _cache.Set(cacheKey, name, TimeSpan.FromMinutes(30));
             return name;
         }
+
+        public async Task<bool> IsAdminOfRestaurantAsync(string userId, int restaurantId)
+            => await _context.Restaurants.AnyAsync(r => r.Id == restaurantId && r.OwnerUserId == userId);
+
+
 
         public async Task<List<Restaurant>> GetActiveApprovedWithDetailsPageAsync(int take, int? cursorId)
         {

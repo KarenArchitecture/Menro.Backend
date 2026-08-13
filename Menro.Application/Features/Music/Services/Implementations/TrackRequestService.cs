@@ -1,4 +1,5 @@
 ﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Music.DTOs.Notifications;
 using Menro.Application.Features.Music.DTOs.Requests;
 using Menro.Application.Features.Music.Services.Interfaces;
 using Menro.Domain.Entities.Music;
@@ -53,11 +54,11 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
             await _notifier.NotifyTrackRejected(
                 request.UserId,
-                new
+                new TrackRejectedNotification
                 {
-                    id = request.Id,
-                    musicTrackId = request.MusicTrackId,
-                    status = "Rejected"
+                    RequestId = request.Id,
+                    Reason = null, // اگه بعداً فیلد دلیل رد کردن اضافه کردی، اینجا پاسش بده
+                    RejectedAt = DateTime.UtcNow
                 });
 
             return true;
@@ -130,12 +131,17 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
             await _notifier.NotifyTrackApproved(
                 request.UserId,
-                new
+                new TrackApprovedNotification
                 {
-                    id = request.Id,
-                    musicTrackId = request.MusicTrackId,
-                    status = "Approved"
+                    RequestId = request.Id,
+                    PlaylistTrackId = newTrack.Id,
+                    ApprovedAt = DateTime.UtcNow
                 });
+
+            // وقتی ترک approve میشه یک PlaylistTrack جدید هم اضافه شده،
+            // یعنی پلی‌لیست عملاً برای مشتری‌ها هم عوض شده — این باید هم اطلاع داده بشه
+            await _notifier.NotifyPlaylistChanged(restaurantId);
+
             return true;
         }
     }
