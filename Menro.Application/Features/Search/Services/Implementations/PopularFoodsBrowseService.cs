@@ -1,4 +1,6 @@
-﻿using Menro.Application.Features.Foods.DTOs;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Common.Media;
+using Menro.Application.Features.Foods.DTOs;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Menro.Application.Features.Search.Services.Interfaces;
@@ -9,10 +11,12 @@ namespace Menro.Application.Features.Search.Services.Implementations
     public class PopularFoodsBrowseService : IPopularFoodsBrowseService
     {
         private readonly IGlobalFoodCategoryRepository _globalCatRepo;
+        private readonly IMediaStorageProvider _mediaStorage;
 
-        public PopularFoodsBrowseService(IGlobalFoodCategoryRepository globalCatRepo)
+        public PopularFoodsBrowseService(IGlobalFoodCategoryRepository globalCatRepo, IMediaStorageProvider mediaStorage)
         {
             _globalCatRepo = globalCatRepo;
+            _mediaStorage = mediaStorage;
         }
 
         /* ============================================================
@@ -21,7 +25,6 @@ namespace Menro.Application.Features.Search.Services.Implementations
         private static HomeFoodCardDto MapToHomeFoodCardDto(Food f)
         {
             var avg = f.Ratings?.Any() == true ? f.Ratings.Average(r => r.Score) : 0.0;
-
             return new HomeFoodCardDto
             {
                 Id = f.Id,
@@ -33,6 +36,14 @@ namespace Menro.Application.Features.Search.Services.Implementations
             };
         }
 
+        private string ResolveCategoryIcon(GlobalFoodCategory category)
+        {
+            var iconFileName = category.Icon?.FileName;
+            return string.IsNullOrEmpty(iconFileName)
+                ? string.Empty
+                : _mediaStorage.GetUrl(MediaCategory.FoodCategoryIcon, iconFileName);
+        }
+
         /* ============================================================
            🥇 Main: Get random global categories with popular foods
         ============================================================ */
@@ -40,7 +51,6 @@ namespace Menro.Application.Features.Search.Services.Implementations
         {
             var result = new List<PopularFoodsDto>();
             var excludeTitles = new List<string>();
-
             var eligibleGlobals = await _globalCatRepo.GetEligibleGlobalCategoriesAsync();
             if (eligibleGlobals == null || eligibleGlobals.Count == 0)
                 return result;
@@ -59,9 +69,9 @@ namespace Menro.Application.Features.Search.Services.Implementations
 
                 result.Add(new PopularFoodsDto
                 {
-                    CategoryId = category.Id,       // ✅ IMPORTANT for frontend
+                    CategoryId = category.Id,
                     CategoryTitle = category.Name,
-                    IconId = category.IconId,
+                    SvgIcon = ResolveCategoryIcon(category),
                     Foods = foods.Select(MapToHomeFoodCardDto).ToList()
                 });
 

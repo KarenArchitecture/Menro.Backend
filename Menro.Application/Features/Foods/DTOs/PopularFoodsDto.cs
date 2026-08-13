@@ -4,7 +4,7 @@
     {
         public int CategoryId { get; set; }
         public string CategoryTitle { get; set; } = string.Empty;
-        public int? IconId { get; set; } = 0;
+        public string SvgIcon { get; set; } = string.Empty;
         public List<HomeFoodCardDto> Foods { get; set; } = new();
     }
 }
