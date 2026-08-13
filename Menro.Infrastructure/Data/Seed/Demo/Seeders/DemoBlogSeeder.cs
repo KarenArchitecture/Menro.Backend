@@ -30,12 +30,22 @@ public class DemoBlogSeeder : IDataSeeder
 
     public async Task SeedAsync()
     {
-        var alreadySeeded = await _db.Set<BlogPost>().AnyAsync();
-
-        if (alreadySeeded)
+        // ⚠️ DEV-ONLY: این seeder دیگه چک نمی‌کنه که قبلاً سید شده یا نه -
+        // هر بار InitializeAsync اجرا بشه، پست‌ها و categoryهای قبلی بلاگ
+        // پاک می‌شن و از نو ساخته می‌شن. برای دیباگ/تست خوبه، ولی روی محیطی
+        // که دیتای واقعی توش هست هرگز اجرا نکن.
+        var existingPosts = await _db.Set<BlogPost>().ToListAsync();
+        if (existingPosts.Count > 0)
         {
-            Console.WriteLine("[Seed] Demo blog posts already seeded.");
-            return;
+            _db.Set<BlogPost>().RemoveRange(existingPosts);
+            await _db.SaveChangesAsync();
+        }
+
+        var existingCategories = await _db.Set<BlogCategory>().ToListAsync();
+        if (existingCategories.Count > 0)
+        {
+            _db.Set<BlogCategory>().RemoveRange(existingCategories);
+            await _db.SaveChangesAsync();
         }
 
         // ------------------------------------------------------------
@@ -44,6 +54,8 @@ public class DemoBlogSeeder : IDataSeeder
         //    uncategorized below to cover that case in pagination/filter
         //    testing)
         // ------------------------------------------------------------
+        // NOTE: BlogCategory has no AuthorId/AuthorNameSnapshot fields
+        // (it's a display card, not authored content), so none are set here.
         var categoryDefs = new (string Title, string Subtitle, string Slug, string ColorHex)[]
         {
             ("رستوران و فضای سرویس", "فضای فیزیکی، خدمات، جو", "restaurant-and-service-space", "#5A302F"),
@@ -91,7 +103,7 @@ public class DemoBlogSeeder : IDataSeeder
         };
 
         // ------------------------------------------------------------
-        // 3) Bulk blog posts - large volume for pagination testing
+        // 3) Bulk blog posts
         // ------------------------------------------------------------
         var topics = new[]
         {
@@ -117,14 +129,8 @@ public class DemoBlogSeeder : IDataSeeder
             "چالش‌های تغذیه سالم در زندگی کارمندی",
         };
 
-        const int postCount = 500; // bump/lower as needed for your pagination testing
+        const int postCount = 10; // 👈 برای تست/دیباگ کم شد
 
-        // 🔧 Read the real sample bytes ONCE. Every post's cover still gets
-        // saved individually below (entity-scoped by postId means a separate
-        // physical file per post), so first run will do ~500 webp encodes —
-        // a one-time startup cost, not a per-request cost. If that ever feels
-        // too slow at seed time, say so and I'll cut postCount or share the
-        // encoded output across posts instead of re-encoding per post.
         var blogBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/blog/posts/blog.jpg"));
 
         var posts = new List<BlogPost>();
@@ -133,8 +139,6 @@ public class DemoBlogSeeder : IDataSeeder
         {
             var topic = topics[_rand.Next(topics.Length)];
 
-            // ~5% of posts left uncategorized to exercise the now-nullable
-            // CategoryId path (filters, "uncategorized" badges, etc.)
             var category = _rand.Next(0, 100) < 5
                 ? null
                 : categories[_rand.Next(categories.Count)];
@@ -142,24 +146,20 @@ public class DemoBlogSeeder : IDataSeeder
             var authorName = authorNames[_rand.Next(authorNames.Length)];
             var slug = $"{Slugify(topic)}-{i}";
 
-            // Spread creation dates out over the last ~2 years so "Newest"
-            // sort has meaningful variety instead of near-identical timestamps.
             var createdAt = DateTime.UtcNow.AddDays(-_rand.Next(0, 730))
                                             .AddMinutes(-_rand.Next(0, 1440));
 
-            var isPublished = _rand.Next(0, 100) < 85; // ~85% published, some drafts
+            var isPublished = _rand.Next(0, 100) < 85;
 
-            // BlogPost.Id is client-generated (Guid), so we know it before
-            // insert and can use it as the media entityId right away.
             var postId = Guid.NewGuid();
             var coverResult = await _mediaStorage.SaveBytesAsync(MediaCategory.BlogPostImage, blogBytes, ".jpg", postId.ToString());
-
 
             posts.Add(new BlogPost
             {
                 Id = postId,
                 Title = $"{topic} - شماره {i}",
                 Slug = slug,
+                AuthorId = null,
                 AuthorNameSnapshot = authorName,
                 CoverImageUrl = coverResult.FileName,
                 ReadingMinutes = _rand.Next(2, 12),
@@ -180,10 +180,9 @@ public class DemoBlogSeeder : IDataSeeder
         Console.WriteLine(
             $"[Seed] {categories.Count} blog categories and {posts.Count} demo blog posts seeded.");
     }
+
     private static string Slugify(string text)
     {
-        // برای عناوین فارسی، ساده‌ترین راه یکتا نگه داشتنه:
         return "post-" + Guid.NewGuid().ToString("N")[..8];
     }
-
 }

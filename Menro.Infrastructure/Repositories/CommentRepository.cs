@@ -65,6 +65,13 @@ namespace Menro.Infrastructure.Repositories
             await Task.CompletedTask;
         }
 
+        public async Task<Comment?> GetUserCommentForFoodAsync(int foodId, string userId)
+        {
+            return await _context.Comments
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.FoodId == foodId && c.UserId == userId);
+        }
+
         public async Task<bool> UserAlreadyCommentedAsync(int foodId, string userId)
         {
             return await _context.Comments.AnyAsync(c => c.FoodId == foodId && c.UserId == userId);

@@ -10,6 +10,7 @@ namespace Menro.Application.Features.Comments.DTOs
         public string RestaurantSlug { get; set; } = string.Empty;
         public int ApprovedCommentsCount { get; set; }
         public bool HasUserCommented { get; set; }
+        public string? UserCommentStatus { get; set; } // "Pending" | "Approved" | "Rejected" | null
         public List<CommentDto> Comments { get; set; } = new();
     }
 }

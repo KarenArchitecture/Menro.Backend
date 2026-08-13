@@ -2,6 +2,7 @@
 using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Media;
 using Menro.Application.Features.Comments.DTOs;
+using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 
@@ -28,9 +29,14 @@ namespace Menro.Application.Comments.Services.Implementations
             var comments = await _commentRepository.GetApprovedCommentsByFoodIdAsync(foodId);
             var approvedCount = await _commentRepository.GetApprovedCountByFoodIdAsync(foodId);
 
-            bool hasUserCommented = !string.IsNullOrEmpty(currentUserId) &&
-                await _commentRepository.UserAlreadyCommentedAsync(foodId, currentUserId);
+            // bool hasUserCommented = !string.IsNullOrEmpty(currentUserId) &&
+            //     await _commentRepository.UserAlreadyCommentedAsync(foodId, currentUserId);
 
+            Comment? userComment = null;
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                userComment = await _commentRepository.GetUserCommentForFoodAsync(foodId, currentUserId);
+            }
             var result = new List<CommentDto>();
 
             foreach (var c in comments)
@@ -78,7 +84,8 @@ namespace Menro.Application.Comments.Services.Implementations
                 RestaurantName = foodSummary.RestaurantName,
                 RestaurantSlug = foodSummary.RestaurantSlug,
                 ApprovedCommentsCount = approvedCount,
-                HasUserCommented = hasUserCommented,
+                HasUserCommented = userComment != null,
+                UserCommentStatus = userComment?.Status.ToString(),
                 Comments = result
             };
         }
