@@ -12,6 +12,7 @@ namespace Menro.Domain.Interfaces
         Task<CommentLike?> GetLikeAsync(int commentId, string userId, CommentLikeTarget target);
         Task AddLikeAsync(CommentLike like);
         Task RemoveLikeAsync(CommentLike like);
+        Task<Comment?> GetUserCommentForFoodAsync(int foodId, string userId);
         Task<bool> UserAlreadyCommentedAsync(int foodId, string userId);
         Task SaveChangesAsync();
 
