@@ -101,6 +101,11 @@ public class DemoRestaurantAdSeeder : IDataSeeder
                 fileName,
                 entityId: restaurant.Id.ToString());
 
+            // 🔧 مصرف تصادفی و منطقی (۱۰٪ تا ۹۰٪ ظرفیت خریداری‌شده) تا نوار
+            // پیشرفت توی پنل تبلیغات به‌جای همیشه صفر، یه وضعیت واقعی‌تر
+            // نشون بده. همیشه کمتر از PurchasedUnits نگه داشته می‌شه.
+            var consumedUnits = GetRandomConsumedUnits(purchasedUnits);
+
             var ad = new RestaurantAd
             {
                 RestaurantId = restaurant.Id,
@@ -113,7 +118,7 @@ public class DemoRestaurantAdSeeder : IDataSeeder
                 StartDate = now.AddDays(-1),
                 EndDate = billingType == AdBillingType.PerDay ? now.AddDays(purchasedUnits) : now.AddMonths(3),
                 PurchasedUnits = purchasedUnits,
-                ConsumedUnits = 0,
+                ConsumedUnits = consumedUnits,
                 Cost = billingType == AdBillingType.PerDay ? purchasedUnits * 250_000 : purchasedUnits * 2_000,
                 Status = AdStatus.Approved,
                 AdminNotes = null
@@ -142,6 +147,8 @@ public class DemoRestaurantAdSeeder : IDataSeeder
                 fileName,
                 entityId: restaurant.Id.ToString());
 
+            var consumedUnits = GetRandomConsumedUnits(purchasedUnits);
+
             var ad = new RestaurantAd
             {
                 RestaurantId = restaurant.Id,
@@ -154,7 +161,7 @@ public class DemoRestaurantAdSeeder : IDataSeeder
                 StartDate = now.AddDays(-1),
                 EndDate = now.AddMonths(3),
                 PurchasedUnits = purchasedUnits,
-                ConsumedUnits = 0,
+                ConsumedUnits = consumedUnits,
                 Cost = billingType == AdBillingType.PerView ? purchasedUnits * 500 : purchasedUnits * 2500,
                 Status = AdStatus.Approved,
                 AdminNotes = null
@@ -164,6 +171,21 @@ public class DemoRestaurantAdSeeder : IDataSeeder
 
         await _db.SaveChangesAsync();
         Console.WriteLine("[Seed] Demo restaurant ads seeded (with per-restaurant image copies).");
+    }
+
+    // Picks a random consumed amount between ~10% and ~90% of the purchased
+    // capacity, always strictly less than PurchasedUnits (and at least 1
+    // when capacity allows), so seeded ads show a realistic, non-zero,
+    // non-full progress bar.
+    private int GetRandomConsumedUnits(int purchasedUnits)
+    {
+        if (purchasedUnits <= 1) return 0;
+
+        var minConsumed = Math.Max(1, (int)(purchasedUnits * 0.1));
+        var maxConsumed = Math.Max(minConsumed, (int)(purchasedUnits * 0.9));
+
+        // Math.Min guards against maxConsumed reaching purchasedUnits itself
+        return _rand.Next(minConsumed, Math.Min(maxConsumed + 1, purchasedUnits));
     }
 
     // Copies a flat "source" image (e.g. wwwroot/media/img/ads/banner/ad-banner-1.jpg)

@@ -11,19 +11,17 @@ namespace Menro.Infrastructure.Data.Seed.Demo.Seeders;
 public class DemoBlogSeeder : IDataSeeder
 {
     private readonly MenroDbContext _db;
-    private readonly IMediaStorageProvider _mediaStorage;
-    private readonly MediaStorageOptions _mediaOptions;
+
+    // 🔧 IMediaStorageProvider / MediaStorageOptions حذف شدن — این seeder دیگه
+    // هیچ فایل فیزیکی (و سه سایز مختلفش) نمی‌سازه. CoverImageUrl هر پست null
+    // می‌مونه و فرانت با یه تصویر fallback جایگزینش می‌کنه، دقیقاً مثل الگوی
+    // DemoRestaurantSeeder برای Logo/Banner/Food.ImageUrl.
 
     private readonly Random _rand = new(42);
 
-    public DemoBlogSeeder(
-        MenroDbContext db,
-        IMediaStorageProvider mediaStorage,
-        IOptions<MediaStorageOptions> mediaOptions)
+    public DemoBlogSeeder(MenroDbContext db)
     {
         _db = db;
-        _mediaStorage = mediaStorage;
-        _mediaOptions = mediaOptions.Value;
     }
 
     public int Order => SeedOrder.Blog;
@@ -90,9 +88,7 @@ public class DemoBlogSeeder : IDataSeeder
         // NOTE: BlogPost.AuthorId points at Menro.Domain.Entities... User,
         // but there's no User seeder wired in here, so AuthorId is left
         // null for all demo posts. AuthorNameSnapshot is filled from this
-        // list purely for display/testing purposes. If you have a demo
-        // user seeder (or want real AuthorId FKs), send it over and I'll
-        // wire it in properly instead of leaving AuthorId null.
+        // list purely for display/testing purposes.
         var authorNames = new[]
         {
             "سارا احمدی",
@@ -129,9 +125,7 @@ public class DemoBlogSeeder : IDataSeeder
             "چالش‌های تغذیه سالم در زندگی کارمندی",
         };
 
-        const int postCount = 10; // 👈 برای تست/دیباگ کم شد
-
-        var blogBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/blog/posts/blog.jpg"));
+        const int postCount = 500; // بسته به نیاز تست تغییر بده
 
         var posts = new List<BlogPost>();
 
@@ -139,6 +133,8 @@ public class DemoBlogSeeder : IDataSeeder
         {
             var topic = topics[_rand.Next(topics.Length)];
 
+            // ~5% of posts left uncategorized to exercise the nullable
+            // CategoryId path (filters, "uncategorized" badges, etc.)
             var category = _rand.Next(0, 100) < 5
                 ? null
                 : categories[_rand.Next(categories.Count)];
@@ -149,19 +145,18 @@ public class DemoBlogSeeder : IDataSeeder
             var createdAt = DateTime.UtcNow.AddDays(-_rand.Next(0, 730))
                                             .AddMinutes(-_rand.Next(0, 1440));
 
-            var isPublished = _rand.Next(0, 100) < 85;
-
-            var postId = Guid.NewGuid();
-            var coverResult = await _mediaStorage.SaveBytesAsync(MediaCategory.BlogPostImage, blogBytes, ".jpg", postId.ToString());
+            var isPublished = _rand.Next(0, 100) < 85; // ~85% published, some drafts
 
             posts.Add(new BlogPost
             {
-                Id = postId,
+                Id = Guid.NewGuid(),
                 Title = $"{topic} - شماره {i}",
                 Slug = slug,
                 AuthorId = null,
                 AuthorNameSnapshot = authorName,
-                CoverImageUrl = coverResult.FileName,
+                // 🔧 CoverImageUrl عمداً null می‌مونه — هیچ فایل فیزیکی‌ای
+                // ساخته نمی‌شه. فرانت با یه تصویر fallback جایگزینش می‌کنه.
+                CoverImageUrl = null,
                 ReadingMinutes = _rand.Next(2, 12),
                 CategoryId = category?.Id,
                 IsPublished = isPublished,

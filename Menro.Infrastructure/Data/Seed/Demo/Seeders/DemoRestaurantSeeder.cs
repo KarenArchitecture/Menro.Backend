@@ -1,7 +1,5 @@
 ﻿using Menro.Application.Common.SD;
 using Menro.Application.Extensions;
-using Menro.Application.Common.Interfaces;
-using Menro.Application.Common.Media;
 using Menro.Application.Common.Helpers;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Domain.Entities;
@@ -9,7 +7,6 @@ using Menro.Domain.Enums;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace Menro.Infrastructure.Data.Seed.Demo.Seeders;
 
@@ -18,23 +15,17 @@ public class DemoRestaurantSeeder : IDataSeeder
     private readonly MenroDbContext _db;
     private readonly UserManager<User> _userManager;
     private readonly IRestaurantService _restaurantService;
-    private readonly IMediaStorageProvider _mediaStorage;
-    private readonly MediaStorageOptions _mediaOptions;
 
     private readonly Random _rand = new(42);
 
     public DemoRestaurantSeeder(
         MenroDbContext db,
         UserManager<User> userManager,
-        IRestaurantService restaurantService,
-        IMediaStorageProvider mediaStorage,
-        IOptions<MediaStorageOptions> mediaOptions)
+        IRestaurantService restaurantService)
     {
         _db = db;
         _userManager = userManager;
         _restaurantService = restaurantService;
-        _mediaStorage = mediaStorage;
-        _mediaOptions = mediaOptions.Value;
     }
     public int Order => SeedOrder.Restaurant;
     public async Task SeedAsync()
@@ -48,17 +39,11 @@ public class DemoRestaurantSeeder : IDataSeeder
             return;
         }
 
-        // 🔧 Sample raw images already sitting flat under wwwroot/media from
-        // before the entity-scoped media system existed. We read them once
-        // here and re-save them through the REAL media pipeline
-        // (SaveBytesAsync) per-entity below, so every restaurant/food ends up
-        // with a properly structured {entityId}/original|resized|thumbnail
-        // set of webp files that GetUrl() can actually find — in dev AND in
-        // production, since these source files ship with wwwroot either way.
-        var logoBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/restaurant/logo/logo-green.png"));
-        var bannerBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/restaurant/home/res-card-2.png"));
-        var shopBannerBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/restaurant/shop/ad-banner-2.png"));
-        var foodBytes = File.ReadAllBytes(Path.Combine(_mediaOptions.RootPath, "media/img/food/drink.png"));
+        // 🔧 عکس واقعی دیگه سید نمی‌شه — LogoImageUrl / BannerImageUrl /
+        // ShopBannerImageUrl / Food.ImageUrl همه null می‌مونن و فرانت با
+        // یه تصویر fallback (مثلاً از طریق resolveFileUrl(url, "/images/...png"))
+        // جایگزینش می‌کنه. این کار صدها فایل فیزیکی بی‌فایده رو حذف می‌کنه
+        // و seed رو به‌شدت سریع‌تر می‌کنه.
 
         var globalCats = await _db.GlobalFoodCategories
             .Where(x => x.IsActive)
@@ -180,6 +165,9 @@ public class DemoRestaurantSeeder : IDataSeeder
                 // to any MediaCategory anywhere in the codebase yet. Flagged
                 // for follow-up once its actual usage is confirmed.
 
+                // 🔧 LogoImageUrl / BannerImageUrl / ShopBannerImageUrl عمداً
+                // null می‌مونن (بدون سیدینگ عکس واقعی) — فرانت fallback نشون می‌ده.
+
                 Status = RestaurantStatus.Approved,
 
                 IsActive = true,
@@ -206,24 +194,7 @@ public class DemoRestaurantSeeder : IDataSeeder
         }
 
         await _db.Restaurants.AddRangeAsync(restaurants);
-        await _db.SaveChangesAsync(); // assigns restaurant.Id — needed as entityId below
-
-        // 🔧 Now that every restaurant has a real Id, save its logo/banner/shop
-        // banner through the actual media pipeline (per-entity webp variants).
-        foreach (var restaurant in restaurants)
-        {
-            var entityId = restaurant.Id.ToString();
-
-            var logoResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantLogo, logoBytes, ".png", entityId);
-            restaurant.LogoImageUrl = logoResult.FileName;
-
-            var bannerResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantHomeBanner, bannerBytes, ".png", entityId);
-            restaurant.BannerImageUrl = bannerResult.FileName;
-
-            var shopBannerResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantShopBanner, shopBannerBytes, ".png", entityId);
-            restaurant.ShopBannerImageUrl = shopBannerResult.FileName;
-        }
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(); // assigns restaurant.Id — used below for food FK
 
         var foods = new List<Food>();
         var customCategories = new List<CustomFoodCategory>();
@@ -258,18 +229,12 @@ public class DemoRestaurantSeeder : IDataSeeder
                     foods.Add(new Food
                     {
                         Name = $"{globalCat.Name} {i}",
-
                         Ingredients =
                             "مواد اولیه تازه و باکیفیت",
-
                         Price = _rand.Next(80_000, 500_000),
-
                         RestaurantId = restaurant.Id,
-
                         CustomFoodCategoryId = customCat.Id,
-
                         IsAvailable = true,
-
                         CreatedAt =
                             DateTime.UtcNow.AddDays(
                                 -_rand.Next(0, 30))
@@ -279,14 +244,6 @@ public class DemoRestaurantSeeder : IDataSeeder
         }
 
         await _db.Foods.AddRangeAsync(foods);
-        await _db.SaveChangesAsync(); // assigns food.Id — needed as entityId below
-
-        // 🔧 Same idea for every seeded food's image.
-        foreach (var food in foods)
-        {
-            var foodImgResult = await _mediaStorage.SaveBytesAsync(MediaCategory.RestaurantFoodImage, foodBytes, ".png", food.Id.ToString());
-            food.ImageUrl = foodImgResult.FileName;
-        }
         await _db.SaveChangesAsync();
 
         Console.WriteLine(
