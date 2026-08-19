@@ -72,7 +72,7 @@ namespace Menro.Domain.Entities
         // Ratings
         public ICollection<RestaurantRating> Ratings { get; set; } = new List<RestaurantRating>();
         [NotMapped]
-        public double AverageRating => Ratings.Any() ? Ratings.Average(r => r.Score) : 0;
+        public double AverageRating => Ratings.Any() ? Math.Round(Ratings.Average(r => r.Score), 1) : 0;
         [NotMapped]
         public int VotersCount => Ratings.Count;
         public ICollection<Discount> Discounts { get; set; } = new List<Discount>();
