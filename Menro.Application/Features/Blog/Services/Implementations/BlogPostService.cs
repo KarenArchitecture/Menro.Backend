@@ -177,12 +177,15 @@ namespace Menro.Application.Features.Blog.Services.Implementations
 
         // for public blog post page
         public async Task<BlogPostPublicDetailResponse?> GetPublicBySlugAsync(
-            string slug, CancellationToken ct = default)
+            string slug, string? currentUserId = null, CancellationToken ct = default)
         {
             var post = await _unitOfWork.BlogPost.GetBySlugAsync(slug, ct);
             if (post is null || !post.IsPublished) return null;
 
-            return ToPublicDetailResponse(post);
+            var isLiked = currentUserId is not null
+                && await _unitOfWork.BlogPostLike.ExistsAsync(post.Id, currentUserId, ct);
+
+            return ToPublicDetailResponse(post, isLiked);
         }
 
         // create post with empty content, un-published
@@ -318,21 +321,70 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             return true;
         }
 
+        public async Task TrackViewAsync(string slug, string visitorHash, CancellationToken ct = default)
+        {
+            await _unitOfWork.BlogPost.IncrementViewCountIfNotSeenAsync(slug, visitorHash, ct);
+        }
+
+        public async Task<BlogPostLikeResponse?> ToggleLikeAsync(
+            string slug, string userId, CancellationToken ct = default)
+        {
+            var post = await _unitOfWork.BlogPost.GetBySlugAsync(slug, ct);
+            if (post is null || !post.IsPublished) return null;
+
+            var alreadyLiked = await _unitOfWork.BlogPostLike.ExistsAsync(post.Id, userId, ct);
+
+            if (alreadyLiked)
+            {
+                await _unitOfWork.BlogPostLike.RemoveAsync(post.Id, userId, ct);
+                post.LikeCount = Math.Max(0, post.LikeCount - 1);
+            }
+            else
+            {
+                await _unitOfWork.BlogPostLike.AddAsync(new BlogPostLike
+                {
+                    Id = Guid.NewGuid(),
+                    BlogPostId = post.Id,
+                    UserId = userId,
+                    CreatedAtUtc = DateTime.UtcNow,
+                }, ct);
+                post.LikeCount++;
+            }
+
+            await _unitOfWork.BlogPost.UpdateAsync(post, ct);
+            await _unitOfWork.SaveChangesAsync();
+
+            return new BlogPostLikeResponse(!alreadyLiked, post.LikeCount);
+        }
+
         /* --- BLOG CONTENT --- */
 
         // get content
         public async Task<BlogPostContentResponse?> GetContentAsync(
             Guid postId, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default)
         {
-            if (!isElevated)
-            {
-                var owningPost = await _unitOfWork.BlogPost.GetByIdAsync(postId, ct);
-                if (owningPost is null) return null;
-                if (owningPost.AuthorId != currentUserId) return null;
-            }
+            // همیشه پست رو می‌گیریم (نه فقط توی حالت !isElevated) - چون هم برای
+            // چک مالکیت لازمه، هم برای اینکه مطمئن بشیم اصلاً پستی با این Id
+            // وجود داره یا نه (قبل از این‌که تصمیم بگیریم Content گمشده‌ش رو بسازیم).
+            var owningPost = await _unitOfWork.BlogPost.GetByIdAsync(postId, ct);
+            if (owningPost is null) return null; // خودِ پست وجود نداره
+
+            if (!isElevated && owningPost.AuthorId != currentUserId)
+                return null;
 
             var content = await _unitOfWork.BlogPostContent.GetByPostIdAsync(postId, ct);
-            return content is null ? null : new BlogPostContentResponse(content.BlogPostId, content.Content);
+            if (content is null)
+            {
+                // پست هست ولی ردیف BlogPostContent ش گم شده (مثلاً دیتای قدیمی از
+                // قبل اصلاح رابطه‌ی ۱-۱، یا هر دلیل دیگه‌ای که از سینک خارج شده).
+                // به‌جای مجبورکردن کاربر به حذف کل پست، همین‌جا Content خالی
+                // رو دوباره می‌سازیم تا ویرایش عادی ادامه پیدا کنه.
+                content = new BlogPostContent { BlogPostId = postId, Content = string.Empty };
+                await _unitOfWork.BlogPostContent.AddAsync(content, ct);
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            return new BlogPostContentResponse(content.BlogPostId, content.Content);
         }
 
         // update content
@@ -478,7 +530,7 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.LikeCount,
             PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
 
-        private BlogPostPublicDetailResponse ToPublicDetailResponse(BlogPost post) => new(
+        private BlogPostPublicDetailResponse ToPublicDetailResponse(BlogPost post, bool isLiked) => new(
             post.Id,
             post.Title,
             post.Slug,
@@ -499,7 +551,8 @@ namespace Menro.Application.Features.Blog.Services.Implementations
             post.ReadingMinutes,
             post.ViewCount,
             post.LikeCount,
-            PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc));
+            PersianDateHelper.ToPersianDisplayDate(post.CreatedAtUtc),
+            isLiked);
 
         private BlogPostRelatedItemResponse ToRelatedItemResponse(BlogPost post) => new(
             post.Id,

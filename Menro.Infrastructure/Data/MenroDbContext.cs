@@ -71,6 +71,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<BlogPostContent> BlogPostContents { get; set; }
         public DbSet<BlogPostTag> BlogPostTags { get; set; }
         public DbSet<BlogTag> BlogTags { get; set; }
+        public DbSet<BlogPostLike> BlogPostLikes { get; set; }
 
         /* ===================== BLOG ===================== */
         public DbSet<LandingGeneral> LandingGeneral { get; set; }

@@ -12,11 +12,6 @@ public class DemoBlogSeeder : IDataSeeder
 {
     private readonly MenroDbContext _db;
 
-    // 🔧 IMediaStorageProvider / MediaStorageOptions حذف شدن — این seeder دیگه
-    // هیچ فایل فیزیکی (و سه سایز مختلفش) نمی‌سازه. CoverImageUrl هر پست null
-    // می‌مونه و فرانت با یه تصویر fallback جایگزینش می‌کنه، دقیقاً مثل الگوی
-    // DemoRestaurantSeeder برای Logo/Banner/Food.ImageUrl.
-
     private readonly Random _rand = new(42);
 
     public DemoBlogSeeder(MenroDbContext db)
@@ -28,22 +23,15 @@ public class DemoBlogSeeder : IDataSeeder
 
     public async Task SeedAsync()
     {
-        // ⚠️ DEV-ONLY: این seeder دیگه چک نمی‌کنه که قبلاً سید شده یا نه -
-        // هر بار InitializeAsync اجرا بشه، پست‌ها و categoryهای قبلی بلاگ
-        // پاک می‌شن و از نو ساخته می‌شن. برای دیباگ/تست خوبه، ولی روی محیطی
-        // که دیتای واقعی توش هست هرگز اجرا نکن.
-        var existingPosts = await _db.Set<BlogPost>().ToListAsync();
-        if (existingPosts.Count > 0)
+        // Idempotent: if blog posts already exist, assume this environment
+        // was already seeded and skip entirely - re-running InitializeAsync
+        // (e.g. on every app startup) must never wipe existing posts/views/
+        // likes or manual edits made after the initial seed.
+        var alreadySeeded = await _db.Set<BlogPost>().AnyAsync();
+        if (alreadySeeded)
         {
-            _db.Set<BlogPost>().RemoveRange(existingPosts);
-            await _db.SaveChangesAsync();
-        }
-
-        var existingCategories = await _db.Set<BlogCategory>().ToListAsync();
-        if (existingCategories.Count > 0)
-        {
-            _db.Set<BlogCategory>().RemoveRange(existingCategories);
-            await _db.SaveChangesAsync();
+            Console.WriteLine("[Seed] Demo blog posts already seeded.");
+            return;
         }
 
         // ------------------------------------------------------------
@@ -125,7 +113,7 @@ public class DemoBlogSeeder : IDataSeeder
             "چالش‌های تغذیه سالم در زندگی کارمندی",
         };
 
-        const int postCount = 500; // بسته به نیاز تست تغییر بده
+        const int postCount = 25; // بسته به نیاز تست تغییر بده
 
         var posts = new List<BlogPost>();
 

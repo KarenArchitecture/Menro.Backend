@@ -3,6 +3,7 @@ using Menro.Domain.Interfaces.Blog;
 using Menro.Domain.Interfaces.Landing;
 using Menro.Domain.Interfaces.Music;
 using Menro.Infrastructure.Data;
+using Menro.Infrastructure.Repositories.Blog;
 using Menro.Infrastructure.Repositories.Landing;
 using Menro.Infrastructure.Repositories.Music;
 using Microsoft.Extensions.Caching.Memory;
@@ -43,6 +44,7 @@ namespace Menro.Infrastructure.Repositories
         private IBlogPostContentRepository _blogPostContent;
         private IBlogCategoryRepository _blogCategory;
         private IBlogTagRepository _blogTag;
+        private IBlogPostLikeRepository _blogPostLike;
 
         // LANDING
         private ILandingGeneralRepository _landingGeneral;
@@ -74,10 +76,11 @@ namespace Menro.Infrastructure.Repositories
 
         // BLOG
         public IBlogHeroRepository BlogHero => _blogHero ??= new BlogHeroRepository(_context);
-        public IBlogPostRepository BlogPost => _blogPost ??= new BlogPostRepository(_context);
+        public IBlogPostRepository BlogPost => _blogPost ??= new BlogPostRepository(_context, _cache);
         public IBlogPostContentRepository BlogPostContent => _blogPostContent ??= new BlogPostContentRepository(_context);
         public IBlogCategoryRepository BlogCategory => _blogCategory ??= new BlogCategoryRepository(_context);
         public IBlogTagRepository BlogTag => _blogTag ??= new BlogTagRepository(_context);
+        public IBlogPostLikeRepository BlogPostLike => _blogPostLike ??= new BlogPostLikeRepository(_context);
 
         // LANDING
         public ILandingGeneralRepository LandingGeneral => _landingGeneral ??= new LandingGeneralRepository(_context);

@@ -95,7 +95,8 @@ namespace Menro.Application.Features.Blog.DTOs
         int ReadingMinutes,
         int ViewCount,
         int LikeCount,
-        string PublishedDatePersian);
+        string PublishedDatePersian,
+        bool IsLikedByCurrentUser);
 
     // blog post page => realted and popular posts
     public record BlogPostRelatedItemResponse(
@@ -104,4 +105,7 @@ namespace Menro.Application.Features.Blog.DTOs
     string Title,
     string? CoverImageUrl,
     int ReadingMinutes);
+
+    public record BlogPostLikeResponse(bool Liked, int LikeCount);
+
 }

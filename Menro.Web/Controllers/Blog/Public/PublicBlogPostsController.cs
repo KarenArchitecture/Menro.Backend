@@ -1,6 +1,8 @@
-﻿using Menro.Application.Features.Blog.DTOs;
+﻿using Menro.Application.Common.Interfaces;
+using Menro.Application.Features.Blog.DTOs;
 using Menro.Application.Features.Blog.Services.Interfaces;
 using Menro.Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Menro.Web.Controllers.Blog.Public
@@ -13,17 +15,24 @@ namespace Menro.Web.Controllers.Blog.Public
         private readonly IBlogPostService _postService;
         private readonly IBlogCategoryService _categoryService;
         private readonly IBlogTagService _tagService;
+        private readonly ICurrentUserService _currentUserService;
 
         public PublicBlogPostsController(
             IBlogPostService postService,
             IBlogCategoryService categoryService,
-            IBlogTagService tagService)
+            IBlogTagService tagService,
+            ICurrentUserService currentUserService)
         {
             _postService = postService;
             _categoryService = categoryService;
             _tagService = tagService;
+            _currentUserService = currentUserService;
         }
         #endregion
+
+        private string? GetOptionalUserId() =>
+            User.Identity?.IsAuthenticated == true ? _currentUserService.GetUserId() : null;
+
 
         [HttpGet]
         public async Task<ActionResult<PagedResult<BlogPostListItemResponse>>> GetAll(
@@ -63,7 +72,7 @@ namespace Menro.Web.Controllers.Blog.Public
         [HttpGet("{slug}")]
         public async Task<ActionResult<BlogPostPublicDetailResponse>> GetBySlug(string slug, CancellationToken ct)
         {
-            var post = await _postService.GetPublicBySlugAsync(slug, ct);
+            var post = await _postService.GetPublicBySlugAsync(slug, GetOptionalUserId(), ct);
             if (post is null) return NotFound();
             return Ok(post);
         }
@@ -81,5 +90,51 @@ namespace Menro.Web.Controllers.Blog.Public
             var result = await _postService.GetRelatedPostsAsync(slug, count, ct);
             return Ok(result);
         }
+
+        // view counter with visitor cookies
+
+        [HttpPatch("{slug}/view")]
+        public async Task<IActionResult> TrackView(string slug, CancellationToken ct)
+        {
+            var visitorId = ResolveOrCreateVisitorId();
+            await _postService.TrackViewAsync(slug, visitorId, ct);
+            return Ok();
+        }
+
+        private const string VisitorCookieName = "mnr_vid";
+
+        private string ResolveOrCreateVisitorId()
+        {
+            if (Request.Cookies.TryGetValue(VisitorCookieName, out var existing) &&
+                !string.IsNullOrWhiteSpace(existing))
+            {
+                return existing;
+            }
+
+            var newId = Guid.NewGuid().ToString("N");
+
+            Response.Cookies.Append(VisitorCookieName, newId, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false, // flip to true once HTTPS is in place
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddDays(365),
+            });
+
+            return newId;
+        }
+
+        [HttpPost("{slug}/like")]
+        [Authorize] // هر نقش لاگین‌کرده‌ای - لازم نیست Contributor/Author/... باشه
+        public async Task<ActionResult<BlogPostLikeResponse>> ToggleLike(string slug, CancellationToken ct)
+        {
+            var userId = _currentUserService.GetUserId();
+            if (userId is null) return Unauthorized();
+
+            var result = await _postService.ToggleLikeAsync(slug, userId, ct);
+            return result is null ? NotFound() : Ok(result);
+        }
+
+
     }
 }

@@ -61,7 +61,8 @@ namespace Menro.Web.Controllers.Blog.Admin
         public async Task<ActionResult<BlogPostPublicDetailResponse>> GetBySlug(
             string slug, CancellationToken ct)
         {
-            var post = await _service.GetPublicBySlugAsync(slug, ct);
+            var userId = _currentUserService.GetUserId();
+            var post = await _service.GetPublicBySlugAsync(slug, userId, ct);
             if (post is null) return NotFound();
             return Ok(post);
         }
