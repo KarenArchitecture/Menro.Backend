@@ -2,14 +2,20 @@
 using Menro.Domain.Interfaces.Blog;
 using Menro.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Menro.Infrastructure.Repositories
 {
     public class BlogPostRepository : IBlogPostRepository
     {
         private readonly MenroDbContext _context;
-        public BlogPostRepository(MenroDbContext context) => _context = context;
+        private readonly IMemoryCache _cache;
 
+        public BlogPostRepository(MenroDbContext context, IMemoryCache cache)
+        {
+            _context = context;
+            _cache = cache;
+        }
         public async Task<BlogPost?> GetByIdAsync(Guid id, CancellationToken ct = default)
             => await _context.BlogPosts
                 .Include(p => p.Category)
@@ -83,6 +89,28 @@ namespace Menro.Infrastructure.Repositories
         {
             _context.BlogPosts.Remove(post);
             return Task.CompletedTask;
+        }
+
+        public async Task<bool> IncrementViewCountIfNotSeenAsync(
+        string slug, string visitorHash, CancellationToken ct = default)
+        {
+            var cacheKey = $"BlogPostView:{slug}:{visitorHash}";
+
+            // Already counted this visitor for this post within the window - no-op.
+            if (_cache.TryGetValue(cacheKey, out _))
+                return false;
+
+            // Mark as seen first: even if the DB update below turns out to be a
+            // no-op (e.g. post got unpublished/deleted between requests), we
+            // still don't want the same visitor re-triggering this repeatedly.
+            _cache.Set(cacheKey, true, TimeSpan.FromHours(24));
+
+            var rows = await _context.BlogPosts
+                .Where(p => p.Slug == slug && p.IsPublished)
+                .ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(p => p.ViewCount, p => p.ViewCount + 1), ct);
+
+            return rows > 0;
         }
     }
 }

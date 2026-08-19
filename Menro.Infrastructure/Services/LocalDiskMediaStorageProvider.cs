@@ -102,6 +102,7 @@ namespace Menro.Infrastructure.Services
             var folder = ResolveFolder(cfg, entityId, variant);
             var cleanPath = $"{folder}/{Path.GetFileName(fileName)}".Replace("\\", "/");
             return string.IsNullOrWhiteSpace(_options.BaseUrl) ? "/" + cleanPath : $"{_options.BaseUrl}/{cleanPath}";
+            //return "/" + cleanPath;
         }
 
         public string GetBaseUrl() => _options.BaseUrl;

@@ -26,7 +26,7 @@ namespace Menro.Application.Features.Blog.Services.Interfaces
             string slug, int count = 4, CancellationToken ct = default);
         Task<IReadOnlyList<BlogPostRelatedItemResponse>> GetPopularPostsAsync(
             string slug, int count = 5, CancellationToken ct = default);
-        Task<BlogPostPublicDetailResponse?> GetPublicBySlugAsync(string slug, CancellationToken ct = default);
+        Task<BlogPostPublicDetailResponse?> GetPublicBySlugAsync(string slug, string? currentUserId, CancellationToken ct = default);
         Task<BlogPostDetailResponse> CreateAsync(CreateBlogPostRequest request, string authorId, CancellationToken ct = default);
 
         Task<BlogPostDetailResponse?> UpdateAsync(
@@ -39,6 +39,9 @@ namespace Menro.Application.Features.Blog.Services.Interfaces
 
         Task<bool> DeleteAsync(
             Guid id, string? currentUserId = null, bool isElevated = false, CancellationToken ct = default);
+
+        Task TrackViewAsync(string slug, string visitorHash, CancellationToken ct = default);
+        Task<BlogPostLikeResponse?> ToggleLikeAsync(string slug, string userId, CancellationToken ct = default);
 
         /* --- BLOG CONTENT --- */
         Task<BlogPostContentResponse?> GetContentAsync(

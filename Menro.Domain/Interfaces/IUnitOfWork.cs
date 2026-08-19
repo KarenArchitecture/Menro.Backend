@@ -35,6 +35,7 @@ namespace Menro.Domain.Interfaces
         IBlogPostContentRepository BlogPostContent { get; }
         IBlogCategoryRepository BlogCategory { get; }
         IBlogTagRepository BlogTag { get; }
+        IBlogPostLikeRepository BlogPostLike { get; }
 
         // LANDING
         ILandingGeneralRepository LandingGeneral { get; }

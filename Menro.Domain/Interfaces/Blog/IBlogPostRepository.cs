@@ -16,5 +16,7 @@ namespace Menro.Domain.Interfaces.Blog
         Task AddPostTagAsync(BlogPostTag postTag, CancellationToken ct = default);
         Task UpdateAsync(BlogPost post, CancellationToken ct = default);
         Task DeleteAsync(BlogPost post, CancellationToken ct = default);
+
+        Task<bool> IncrementViewCountIfNotSeenAsync(string slug, string visitorHash, CancellationToken ct = default);
     }
 }
