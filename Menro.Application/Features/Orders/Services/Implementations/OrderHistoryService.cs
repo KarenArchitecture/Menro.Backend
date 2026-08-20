@@ -37,6 +37,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             return orders.Select(o => new UserOrderListItemDto
             {
                 Id = o.Id,
+                RestaurantId = o.RestaurantId ?? 0,
                 RestaurantOrderNumber = o.RestaurantOrderNumber,
                 InvoiceNumber = o.InvoiceNumber,
                 RestaurantName = o.Restaurant?.Name ?? "",

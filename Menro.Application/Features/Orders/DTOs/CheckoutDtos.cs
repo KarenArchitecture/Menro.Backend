@@ -31,6 +31,7 @@ namespace Menro.Application.Features.Orders.DTOs
     public class UserOrderListItemDto
     {
         public int Id { get; set; }
+        public int RestaurantId { get; set; }
         public int RestaurantOrderNumber { get; set; }
         public string InvoiceNumber { get; set; } = "";
         public string RestaurantName { get; set; } = "";
