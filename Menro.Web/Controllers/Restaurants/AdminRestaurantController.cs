@@ -47,23 +47,12 @@ namespace Menro.Web.Controllers.Restaurants
             return Ok(result);
         }
 
-        [HttpPost("approve")]
-        public async Task<IActionResult> ApproveRestaurant(ApproveRestaurantDto dto)
-        {
-            var ok = await _service.ApproveRestaurantAsync(dto.RestaurantId, dto.Approve);
-            if (!ok) return NotFound("Restaurant not found");
-
-            return Ok(new { message = "Updated successfully" });
-        }
-
         [HttpPost("status")]
         public async Task<IActionResult> UpdateStatus(UpdateRestaurantStatusDto dto)
         {
             var ok = await _service.UpdateRestaurantStatusAsync(dto.RestaurantId, dto.Status, dto.RejectReason);
-
             if (!ok)
-                return NotFound("Restaurant not found");
-
+                return BadRequest("درخواست معتبر نیست یا قبلاً بررسی شده است.");
             return Ok(new { message = "Status updated successfully" });
         }
 

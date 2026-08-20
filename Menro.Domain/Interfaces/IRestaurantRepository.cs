@@ -12,6 +12,7 @@ namespace Menro.Domain.Interfaces
            🔹 Basic Lookups
         ============================================================ */
         Task<Restaurant?> GetByIdAsync(int id);
+        Task<Restaurant?> GetByOwnerUserIdAsync(string ownerUserId);
 
         Task<string> GetRestaurantName(int restaurantId);
         Task<bool> IsAdminOfRestaurantAsync(string userId, int restaurantId);

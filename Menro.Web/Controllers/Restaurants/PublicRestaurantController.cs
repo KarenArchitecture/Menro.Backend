@@ -23,7 +23,6 @@ namespace Menro.Web.Controllers.Restaurants
         private readonly IRestaurantBrowseService _restaurantBrowseService;
 
         private readonly IRestaurantBannerService _restaurantBannerService;
-        private readonly IUserService _userService;
         private readonly IRestaurantMenuService _menuService;
         private readonly IRestaurantPageFoodCategoryService _restaurantPageFoodCategoryService;
 
@@ -32,7 +31,6 @@ namespace Menro.Web.Controllers.Restaurants
             IRandomRestaurantCardService randomRestaurantCardService,
             IRestaurantBrowseService restaurantBrowseService,
             IRestaurantBannerService restaurantBannerService,
-            IUserService userService,
             IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService,
             IRestaurantMenuService menuService)
         {
@@ -41,7 +39,6 @@ namespace Menro.Web.Controllers.Restaurants
             _restaurantBrowseService = restaurantBrowseService;
 
             _restaurantBannerService = restaurantBannerService;
-            _userService = userService;
             _menuService = menuService;
             _restaurantPageFoodCategoryService = restaurantPageFoodCategoryService;
         }
@@ -88,12 +85,21 @@ namespace Menro.Web.Controllers.Restaurants
             if (string.IsNullOrEmpty(ownerUserId))
                 return Unauthorized("کاربر شناسایی نشد.");
 
-            var success = await _restaurantService.AddRestaurantAsync(dto, ownerUserId);
+            var (success, error) = await _restaurantService.AddRestaurantAsync(dto, ownerUserId);
             if (!success)
-                return BadRequest("ثبت رستوران با خطا مواجه شد.");
-
-            await _userService.AddRoleToUserAsync(ownerUserId, SD.Role_Owner);
+                return BadRequest(error ?? "ثبت رستوران با خطا مواجه شد.");
             return Ok("رستوران با موفقیت ثبت شد.");
+        }
+
+        // GET /api/public/restaurant/my-status
+        [HttpGet("my-status")]
+        [Authorize]
+        public async Task<IActionResult> GetMyRestaurantStatus()
+        {
+            string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _restaurantService.GetOwnerRestaurantStatusAsync(userId);
+            if (result == null) return NotFound(); // کاربر هیچ رستورانی ثبت نکرده
+            return Ok(result);
         }
 
         // GET: /api/public/restaurant/categories

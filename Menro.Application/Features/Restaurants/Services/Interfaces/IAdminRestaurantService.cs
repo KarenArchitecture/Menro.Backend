@@ -9,7 +9,6 @@ namespace Menro.Application.Features.Restaurants.Services.Interfaces
         Task<List<RestaurantListForAdminDto>> GetRestaurantsListForAdminAsync(RestaurantStatus status);
         Task<RestaurantDetailsForAdminDto?> GetRestaurantDetailsForAdminAsync(int id);
         Task<PagedResult<RestaurantOverviewDto>> GetRestaurantsOverviewAsync(string? search, int? categoryId, int page, int pageSize);
-        Task<bool> ApproveRestaurantAsync(int restaurantId, bool approve);
-        Task<bool> UpdateRestaurantStatusAsync(int restaurantId, RestaurantStatus status, string? rejectReason);
+       Task<bool> UpdateRestaurantStatusAsync(int restaurantId, RestaurantStatus status, string? rejectReason);
     }
 }

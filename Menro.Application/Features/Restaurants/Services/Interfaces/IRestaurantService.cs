@@ -6,7 +6,8 @@ namespace Menro.Application.Features.Restaurants.Services.Interfaces
 {
     public interface IRestaurantService
     {
-        Task<bool> AddRestaurantAsync(RegisterRestaurantDto dto, string ownerUserId);
+        Task<(bool Success, string? Error)> AddRestaurantAsync(RegisterRestaurantDto dto, string ownerUserId);
+        Task<MyRestaurantStatusDto?> GetOwnerRestaurantStatusAsync(string ownerUserId);
         Task<List<RestaurantCategoryDto>> GetRestaurantCategoriesAsync();
         Task<string> GenerateUniqueSlugAsync(string name);
         Task<bool> IsSlugAvailableAsync(string slug, int excludeRestaurantId);

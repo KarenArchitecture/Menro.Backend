@@ -1,8 +1,10 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Media;
 using Menro.Application.Common.Models;
+using Menro.Application.Common.SD;
 using Menro.Application.Features.Restaurants.DTOs;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
+using Menro.Application.Features.Users.Services.Interfaces;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -13,15 +15,18 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
     {
         #region DI
         private readonly IUnitOfWork _uow;
+        private readonly IUserService _userService;
         private readonly IGlobalDateTimeService _globalDateTimeService;
         private readonly IMediaStorageProvider _mediaStorage;
 
         public AdminRestaurantService(
             IUnitOfWork uow,
+            IUserService userService,
             IGlobalDateTimeService globalDateTimeService,
             IMediaStorageProvider mediaStorage)
         {
             _uow = uow;
+            _userService = userService;
             _globalDateTimeService = globalDateTimeService;
             _mediaStorage = mediaStorage;
         }
@@ -35,7 +40,7 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
             {
                 Id = r.Id,
                 Name = r.Name,
-                PhoneNumber = r.OwnerUser.PhoneNumber ?? "",
+                PhoneNumber = r.ContactNumber ?? "",
                 OwnerName = r.OwnerUser.FullName ?? "",
                 Status = (int)r.Status,
                 CreatedAt = _globalDateTimeService.ToPersianDateTimeString(r.CreatedAt),
@@ -106,28 +111,39 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                 Page = page,
             };
         }
-        public async Task<bool> ApproveRestaurantAsync(int restaurantId, bool approve)
-        {
-            var restaurant = await _uow.Restaurant.GetByIdAsync(restaurantId);
-            if (restaurant == null) return false;
-            restaurant.Status = RestaurantStatus.Approved;
-            await _uow.Restaurant.SaveChangesAsync();
-            return true;
-        }
         public async Task<bool> UpdateRestaurantStatusAsync(int restaurantId, RestaurantStatus status, string? rejectReason)
         {
+            // ادمین نباید بتونه یه رستوران رو به حالت "در انتظار" برگردونه؛
+            // Pending فقط حالت اولیه‌ی سیستمیه، نه یه تصمیم ادمین
+            if (status == RestaurantStatus.Pending)
+                return false;
+
             var restaurant = await _uow.Restaurant.GetByIdAsync(restaurantId);
             if (restaurant == null) return false;
 
-            restaurant.Status = status;
+            // جلوگیری از تصمیم‌گیری تکراری روی رستورانی که قبلاً approve/reject شده
+            if (restaurant.Status != RestaurantStatus.Pending)
+                return false;
 
-            if (status == RestaurantStatus.Rejected)
-                restaurant.RejectReason = rejectReason?.Trim();
-            else
+            if (status == RestaurantStatus.Approved)
+            {
+                restaurant.Status = RestaurantStatus.Approved;
+                restaurant.IsActive = true;
                 restaurant.RejectReason = null;
+                await _userService.AddRoleToUserAsync(restaurant.OwnerUserId, SD.Role_Owner);
+            }
+            else if (status == RestaurantStatus.Rejected)
+            {
+                if (string.IsNullOrWhiteSpace(rejectReason))
+                    return false; // دلیل رد الزامیه، نمی‌شه رد کرد بدون توضیح
 
-            await _uow.Restaurant.SaveChangesAsync();
-            return true;
+                restaurant.Status = RestaurantStatus.Rejected;
+                restaurant.IsActive = false;
+                restaurant.RejectReason = rejectReason.Trim();
+            }
+
+            var result = await _uow.SaveChangesAsync(); // یکسان‌سازی با بقیه‌ی UoW
+            return result > 0;
         }
     }
 }

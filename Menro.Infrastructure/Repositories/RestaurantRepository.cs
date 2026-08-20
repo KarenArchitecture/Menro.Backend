@@ -27,7 +27,11 @@ namespace Menro.Infrastructure.Repositories
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
-
+        public async Task<Restaurant?> GetByOwnerUserIdAsync(string ownerUserId)
+        {
+            return await _context.Restaurants
+                .FirstOrDefaultAsync(r => r.OwnerUserId == ownerUserId);
+        }
 
         public async Task SaveChangesAsync()
         {
