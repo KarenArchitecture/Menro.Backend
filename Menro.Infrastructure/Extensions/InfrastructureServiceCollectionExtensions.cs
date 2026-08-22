@@ -18,7 +18,7 @@ namespace Menro.Infrastructure.Extensions
         {
             services.Configure<SmsSettings>(config.GetSection("SmsSettings"));
 
-            services.AddHttpClient<IpPanelSmsSender>((sp, http) =>
+            services.AddHttpClient<SmsIrSmsSender>((sp, http) =>
             {
                 var s = sp.GetRequiredService<IOptions<SmsSettings>>().Value;
 
@@ -39,7 +39,7 @@ namespace Menro.Infrastructure.Extensions
             });
 
             // ISmsSender -> IpPanelSmsSender (با HttpClient تنظیم‌شده بالا)
-            services.AddScoped<ISmsSender>(sp => sp.GetRequiredService<IpPanelSmsSender>());
+            services.AddScoped<ISmsSender>(sp => sp.GetRequiredService<SmsIrSmsSender>());
 
             services.AddScoped<IDbInitializer, DbInitializer>();
 

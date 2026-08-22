@@ -82,15 +82,15 @@ namespace Menro.Application.Features.Identity.Services
             }
 
             // برای تست و Development
-            var code = "12345";
+            // var code = "12345";
 
-            /* نسخه Production (ارسال واقعی SMS)
+            //نسخه Production(ارسال واقعی SMS)
             var code = RandomNumberGenerator.GetInt32(10000, 100000).ToString();
             var send = await _smsSender.SendOtpAsync(phone, $"کد تایید شما: {code}");
 
             if (!send.IsSuccess)
                 throw new Exception($"SMS failed: {send.ProviderMessage}");
-            */
+
 
             await _uow.Otp.AddAsync(new Otp
             {
