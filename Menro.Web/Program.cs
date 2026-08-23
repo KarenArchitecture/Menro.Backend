@@ -334,11 +334,7 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "http://localhost:5173",
                 "https://localhost:5173",
-                "http://89.33.129.71",
-                "https://89.33.129.71",
-                "http://menro.ir",
                 "https://menro.ir",
-                "http://www.menro.ir",
                 "https://www.menro.ir"
             )
             .AllowAnyHeader()
