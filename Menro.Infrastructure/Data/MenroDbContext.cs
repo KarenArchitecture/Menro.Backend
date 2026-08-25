@@ -198,6 +198,10 @@ namespace Menro.Infrastructure.Data
                 .WithOne(a => a.Restaurant)
                 .HasForeignKey(a => a.RestaurantId)
                 .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Restaurant>()
+                .HasIndex(x => x.OwnerUserId)
+                .IsUnique()
+                .HasFilter("[IsDeleted] = 0 AND [OwnerUserId] IS NOT NULL");
 
             modelBuilder.Entity<CartItem>()
                 .HasOne(ci => ci.Cart)

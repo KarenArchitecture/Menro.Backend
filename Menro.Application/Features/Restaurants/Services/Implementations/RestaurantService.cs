@@ -1,12 +1,14 @@
 ﻿using Menro.Application.Features.Restaurants.DTOs;
 using Menro.Domain.Interfaces;
 using Menro.Domain.Entities;
+using Menro.Domain.Enums;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Menro.Application.Extensions;
 using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Media;
 using Microsoft.AspNetCore.Http;
 using Menro.Application.Helpers;
+using Microsoft.EntityFrameworkCore;
 
 namespace Menro.Application.Features.Restaurants.Services.Implementations
 {
@@ -25,43 +27,105 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
         }
         #endregion
 
-        public async Task<bool> AddRestaurantAsync(RegisterRestaurantDto dto, string ownerUserId)
+        public async Task<(bool Success, string? Error)> AddRestaurantAsync(RegisterRestaurantDto dto, string ownerUserId)
         {
-            // بررسی صحت داده‌ها (تکراری بودن نام؟ موجود بودن دسته‌بندی؟)
             var categoryExists = await _uow.RestaurantCategory
                 .AnyAsync(c => c.Id == dto.RestaurantCategoryId);
-
             if (!categoryExists)
-                return false;
+                return (false, "دسته‌بندی انتخاب‌شده معتبر نیست.");
 
-            // adding restaurant
+            var existing = await _uow.Restaurant.GetByOwnerUserIdAsync(ownerUserId);
+
+            if (existing == null)
+                return await CreateNewRestaurantAsync(dto, ownerUserId);
+
+            if (existing.Status == RestaurantStatus.Approved)
+                return (false, "شما از قبل یک رستوران تاییدشده دارید.");
+
+            if (existing.Status == RestaurantStatus.Pending)
+                return (false, "شما یک درخواست در حال بررسی دارید.");
+
+            // فقط اینجا، یعنی existing.Status == Rejected، اجازه‌ی بازنویسی داریم
+            return await ResubmitRejectedRestaurantAsync(existing, dto);
+        }
+
+        private async Task<(bool Success, string? Error)> CreateNewRestaurantAsync(RegisterRestaurantDto dto, string ownerUserId)
+        {
             try
             {
+                var slug = await GenerateUniqueSlugAsync(dto.RestaurantName);
+
                 var restaurant = new Restaurant
                 {
                     Name = dto.RestaurantName,
+                    Slug = slug,
                     Description = dto.RestaurantDescription,
                     Address = dto.RestaurantAddress,
-                    //ContactNumber = dto.ContactNumber,
+                    ContactNumber = dto.ContactNumber,
                     OpenTime = dto.RestaurantOpenTime,
                     CloseTime = dto.RestaurantCloseTime,
                     RestaurantCategoryId = dto.RestaurantCategoryId,
                     NationalCode = dto.OwnerNationalId,
                     BankAccountNumber = dto.RestaurantAccountNumber,
                     OwnerUserId = ownerUserId,
-                    IsActive = true,
-                    IsDeleted = false, // تا زمانی که توسط ادمین تأیید نشه
+                    Status = RestaurantStatus.Pending,
+                    IsActive = false,
+                    IsDeleted = false,
                     CreatedAt = DateTime.UtcNow
                 };
-
                 await _uow.Restaurant.AddAsync(restaurant);
                 var result = await _uow.SaveChangesAsync();
-                return result > 0;
+                return (result > 0, result > 0 ? null : "ثبت رستوران با خطا مواجه شد.");
+            }
+            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("IX_Restaurants_OwnerUserId") == true)
+            {
+                return (false, "شما قبلاً یک رستوران ثبت کرده‌اید.");
             }
             catch (Exception)
             {
-                return false;
+                return (false, "ثبت رستوران با خطا مواجه شد.");
             }
+        }
+
+        private async Task<(bool Success, string? Error)> ResubmitRejectedRestaurantAsync(Restaurant existing, RegisterRestaurantDto dto)
+        {
+            // Safety guard صریح: این متد فقط حق داره رکورد Rejected رو دست بزنه.
+            // اگه به هر دلیلی (باگ فراخوانی، تغییر بعدی کد) با غیر از این صدا زده بشه،
+            // به‌جای پاک کردن بی‌صدای اطلاعات یه کسب‌وکار فعال، exception می‌ده.
+            if (existing.Status != RestaurantStatus.Rejected)
+                throw new InvalidOperationException(
+                    $"ResubmitRejectedRestaurantAsync can only be called for a Rejected restaurant. Current status: {existing.Status}");
+
+            existing.Name = dto.RestaurantName;
+            existing.Description = dto.RestaurantDescription;
+            existing.Address = dto.RestaurantAddress;
+            existing.ContactNumber = dto.ContactNumber;
+            existing.OpenTime = dto.RestaurantOpenTime;
+            existing.CloseTime = dto.RestaurantCloseTime;
+            existing.RestaurantCategoryId = dto.RestaurantCategoryId;
+            existing.NationalCode = dto.OwnerNationalId;
+            existing.BankAccountNumber = dto.RestaurantAccountNumber;
+            existing.Status = RestaurantStatus.Pending;
+            existing.IsActive = false;
+            existing.RejectReason = null;
+            existing.CreatedAt = DateTime.UtcNow;
+
+            var result = await _uow.SaveChangesAsync();
+            return (result > 0, result > 0 ? null : "ثبت رستوران با خطا مواجه شد.");
+        }
+
+        public async Task<MyRestaurantStatusDto?> GetOwnerRestaurantStatusAsync(string ownerUserId)
+        {
+            var restaurant = await _uow.Restaurant.GetByOwnerUserIdAsync(ownerUserId);
+            if (restaurant == null) return null;
+
+            return new MyRestaurantStatusDto
+            {
+                RestaurantId = restaurant.Id,
+                RestaurantName = restaurant.Name,
+                Status = (int)restaurant.Status,
+                RejectReason = restaurant.RejectReason,
+            };
         }
 
         public async Task<List<RestaurantCategoryDto>> GetRestaurantCategoriesAsync()
@@ -165,9 +229,9 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
 
         public async Task<string> GenerateUniqueSlugAsync(string name)
         {
-            string baseSlug = name.TransliterateToEnglish(); // use extension
+            string baseSlug = SlugHelper.GenerateSlug(name);
             string slug = baseSlug;
-            int counter = 1;
+            int counter = 2;
 
             while (await _uow.Restaurant.SlugExistsAsync(slug))
             {
