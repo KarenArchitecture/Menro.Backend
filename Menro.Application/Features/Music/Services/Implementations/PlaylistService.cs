@@ -64,6 +64,8 @@ namespace Menro.Application.Features.Music.Services.Implementations
         {
             var playlists = await _uow.Playlist.GetAllByRestaurantIdAsync(restaurantId);
 
+            playlists = await EnsureActivePlaylistAsync(restaurantId, playlists);
+
             return playlists.Select(x => new PlaylistItemDto
             {
                 Id = x.Id,
@@ -159,26 +161,30 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
         // activate playlist
         public async Task<bool> SetActivePlaylistAsync(Guid playlistId, int restaurantId)
-    {
-        var playlists = await _uow.Playlist.GetAllByRestaurantIdAsync(restaurantId);
+        {
+            var playlists = await _uow.Playlist.GetAllByRestaurantIdAsync(restaurantId);
 
             var selected = playlists.FirstOrDefault(x => x.Id == playlistId);
 
             if (selected == null)
                 return false;
 
-        foreach (var playlist in playlists)
-        {
-            playlist.IsActive = playlist.Id == playlistId;
-        }
+            foreach (var playlist in playlists)
+            {
+                playlist.IsActive = playlist.Id == playlistId;
+            }
 
-        var player = await _musicPlayerService.GetOrCreatePlayerAsync(restaurantId);
+            // مهم: قبل از صدا زدن GetOrCreatePlayerAsync باید IsActive در DB واقعاً persist شده باشه،
+            // چون اون متد داخلش با یک کوئری تازه دنبال active playlist در دیتابیس می‌گرده.
+            await _uow.SaveChangesAsync();
+
+            var player = await _musicPlayerService.GetOrCreatePlayerAsync(restaurantId);
 
             var firstTrack = selected.Tracks.OrderBy(x => x.SortOrder).FirstOrDefault();
 
-        player.PlaylistId = selected.Id;
-        player.CurrentPlaylistTrackId = firstTrack?.Id;
-        player.LastUpdatedAt = DateTime.UtcNow;
+            player.PlaylistId = selected.Id;
+            player.CurrentPlaylistTrackId = firstTrack?.Id;
+            player.LastUpdatedAt = DateTime.UtcNow;
 
             await _uow.MusicPlayer.UpdateAsync(player);
             await _uow.SaveChangesAsync();
@@ -187,7 +193,6 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
             return true;
         }
-
         /*---------------------*/
         /*--------TRACKS-------*/
         /*---------------------*/
@@ -319,6 +324,46 @@ namespace Menro.Application.Features.Music.Services.Implementations
             await _notification.NotifyPlaylistChanged(restaurantId);
 
             return true;
+        }
+
+
+        /* --- private helpers --- */
+        private async Task<List<Playlist>> EnsureActivePlaylistAsync(int restaurantId, List<Playlist> playlists)
+        {
+            if (playlists.Any(x => x.IsActive))
+                return playlists;
+
+            Guid targetPlaylistId;
+
+            if (playlists.Any())
+            {
+                // یک یا چند پلی‌لیست هست ولی هیچ‌کدام فعال نیست → قدیمی‌ترین را فعال کن
+                targetPlaylistId = playlists.OrderBy(x => x.CreatedAt).First().Id;
+            }
+            else
+            {
+                // هیچ پلی‌لیستی وجود ندارد → یکی با نام پیش‌فرض بساز
+                var defaultPlaylist = new Playlist
+                {
+                    Id = Guid.NewGuid(),
+                    RestaurantId = restaurantId,
+                    Name = "پلی‌لیست اصلی",
+                    IsActive = false, // SetActivePlaylistAsync آن را فعال می‌کند
+                    CreatedAt = DateTime.UtcNow,
+                };
+
+                await _uow.Playlist.AddAsync(defaultPlaylist);
+                await _uow.SaveChangesAsync();
+
+                targetPlaylistId = defaultPlaylist.Id;
+            }
+
+            // از متد موجود استفاده می‌کنیم تا هم IsActive تنظیم شود، هم
+            // MusicPlayer (پلیر فعلی رستوران) با پلی‌لیست جدید sync شود —
+            // دقیقاً همان منطقی که CreateAsync هم استفاده می‌کند
+            await SetActivePlaylistAsync(targetPlaylistId, restaurantId);
+
+            return await _uow.Playlist.GetAllByRestaurantIdAsync(restaurantId);
         }
     }
 }

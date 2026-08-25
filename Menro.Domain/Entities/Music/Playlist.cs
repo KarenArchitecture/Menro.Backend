@@ -9,6 +9,8 @@
         public string Name { get; set; }
 
         public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
 
         private readonly List<PlaylistTrack> _tracks = [];
 
