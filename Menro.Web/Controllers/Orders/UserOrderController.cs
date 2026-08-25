@@ -5,6 +5,7 @@ using Menro.Application.Features.Orders.DTOs;
 using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Application.Features.Search.Services.Interfaces;
 using Menro.Application.Features.Search.DTOs;
+using Menro.Application.Features.Order.Services.Implementations;
 
 namespace Menro.Web.Controllers.Orders
 {
@@ -18,17 +19,22 @@ namespace Menro.Web.Controllers.Orders
         private readonly IRecentOrderBrowseService _recentBrowseService;
         private readonly IOrderHistoryService _orderHistoryService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IUsualOrdersService _usualOrdersService;
+
 
         public UserOrderController(
             IUserRecentOrderCardService recentService,
             IRecentOrderBrowseService recentBrowseService,
             IOrderHistoryService orderHistoryService,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            IUsualOrdersService usualOrdersService)
         {
             _recentService = recentService;
             _recentBrowseService = recentBrowseService;
             _orderHistoryService = orderHistoryService;
             _currentUserService = currentUserService;
+            _usualOrdersService = usualOrdersService;
+            _usualOrdersService = usualOrdersService;
         }
         #endregion
 
@@ -83,6 +89,22 @@ namespace Menro.Web.Controllers.Orders
 
             var orders = await _orderHistoryService.GetUserOrdersAsync(userId);
             return Ok(orders);
+        }
+
+        //sual orders
+        [HttpGet("usual/{restaurantId:int}")]
+        [ProducesResponseType(typeof(List<UsualOrderFoodDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<List<UsualOrderFoodDto>>> GetUsualFoods(
+            int restaurantId,
+            [FromQuery] int count = 12)
+        {
+            var userId = _currentUserService.GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var items = await _usualOrdersService.GetUsualFoodsAsync(userId, restaurantId, count);
+            return Ok(items ?? new List<UsualOrderFoodDto>());
         }
     }
 }

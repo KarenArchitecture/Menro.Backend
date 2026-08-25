@@ -1,4 +1,6 @@
-﻿using Menro.Domain.Entities;
+﻿using Menro.Application.Common.Helpers;
+using Menro.Domain.Entities;
+using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Data.Seed.Contracts;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,29 +11,50 @@ public class DemoRatingSeeder : IDataSeeder
     private readonly MenroDbContext _db;
     private readonly Random _rand = new(42);
 
+    // Same demo customer accounts used for manual testing/login — these
+    // must never receive a pre-seeded RestaurantRating, or the person
+    // testing the real "rate a restaurant" flow will see a fake rating
+    // already sitting there under their own account.
+    private static readonly string[] DemoCustomerPhonesRaw =
+    {
+        "09121112233",
+        "09121112234",
+        "09121112235",
+        "09121112236",
+        "09121112237",
+    };
+
     public DemoRatingSeeder(MenroDbContext db)
     {
         _db = db;
     }
+
     public int Order => SeedOrder.Rating;
+
     public async Task SeedAsync()
     {
+        var demoCustomerPhones = DemoCustomerPhonesRaw
+            .Select(PhoneNumberHelper.ToStorageFormat)
+            .ToList();
+
         var allUsers = await _db.Users.ToListAsync();
+        var voterPool = allUsers
+            .Where(u => u.PhoneNumber == null || !demoCustomerPhones.Contains(u.PhoneNumber))
+            .ToList();
+
         var restaurants = await _db.Restaurants.ToListAsync();
         var foods = await _db.Foods.ToListAsync();
 
         /* =========================
            Restaurant Ratings
         ========================= */
-
         foreach (var restaurant in restaurants)
         {
             if (await _db.RestaurantRatings.AnyAsync(x => x.RestaurantId == restaurant.Id))
                 continue;
 
             int howMany = _rand.Next(3, 8);
-
-            var voters = allUsers
+            var voters = voterPool
                 .Where(u => u.Id != restaurant.OwnerUserId)
                 .OrderBy(_ => Guid.NewGuid())
                 .Take(howMany)
@@ -52,15 +75,13 @@ public class DemoRatingSeeder : IDataSeeder
         /* =========================
            Food Ratings
         ========================= */
-
         foreach (var food in foods)
         {
             if (await _db.FoodRatings.AnyAsync(fr => fr.FoodId == food.Id))
                 continue;
 
             int howMany = _rand.Next(2, 7);
-
-            var voters = allUsers
+            var voters = voterPool
                 .OrderBy(_ => Guid.NewGuid())
                 .Take(howMany)
                 .ToList();
@@ -78,7 +99,6 @@ public class DemoRatingSeeder : IDataSeeder
         }
 
         await _db.SaveChangesAsync();
-
-        Console.WriteLine("[Seed] Demo ratings seeded.");
+        Console.WriteLine("[Seed] Demo ratings seeded (excluding demo customer accounts as voters).");
     }
 }

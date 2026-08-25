@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Menro.Domain.Entities;
 
-namespace Menro.Infrastructure.Repositories
+namespace Menro.Domain.Interfaces
 {
-    class IRestaurantRatingRepository
+    public interface IRestaurantRatingRepository
     {
+        Task<bool> UserCanRateRestaurantAsync(string userId, int restaurantId, CancellationToken ct = default);
+        Task<RestaurantRating?> GetByUserAndRestaurantAsync(string userId, int restaurantId, CancellationToken ct = default);
+        Task AddAsync(RestaurantRating rating, CancellationToken ct = default);
+        Task<bool> SaveChangesAsync(CancellationToken ct = default);
+        Task<(double Average, int Voters)> GetAggregateAsync(int restaurantId, CancellationToken ct = default);
     }
 }

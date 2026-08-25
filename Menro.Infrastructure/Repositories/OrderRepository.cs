@@ -80,6 +80,42 @@ namespace Menro.Infrastructure.Repositories
                 .FirstOrDefaultAsync(o => o.Id == orderId, ct);
         }
 
+        public async Task<List<Food>> GetUserFrequentFoodsForRestaurantAsync(string userId, int restaurantId, int count, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || count <= 0)
+                return new List<Food>();
+
+            var ranked = await _context.OrderItems
+                .AsNoTracking()
+                .Where(oi => oi.Order.UserId == userId && oi.Order.RestaurantId == restaurantId)
+                .GroupBy(oi => oi.FoodId)
+                .Select(g => new { FoodId = g.Key, OrderCount = g.Count() })
+                .OrderByDescending(x => x.OrderCount)
+                .ThenByDescending(x => x.FoodId)
+                .Take(count)
+                .ToListAsync(ct);
+
+            if (ranked.Count == 0)
+                return new List<Food>();
+
+            var ids = ranked.Select(x => x.FoodId).ToList();
+
+            var foods = await _context.Foods
+                .AsNoTracking()
+                .Where(f => ids.Contains(f.Id) && f.IsAvailable && !f.IsDeleted)
+                .Include(f => f.Ratings)
+                .Include(f => f.Variants.Where(v => !v.IsDeleted && v.IsAvailable))
+                    .ThenInclude(v => v.Addons.Where(a => !a.IsDeleted))
+                .AsSplitQuery()
+                .ToListAsync(ct);
+
+            var rankLookup = ranked.Select((x, idx) => new { x.FoodId, idx }).ToDictionary(x => x.FoodId, x => x.idx);
+
+            return foods
+                .OrderBy(f => rankLookup.TryGetValue(f.Id, out var pos) ? pos : int.MaxValue)
+                .ToList();
+        }
+
         /* ============================================================
            💰 AdminPanel
         ============================================================ */

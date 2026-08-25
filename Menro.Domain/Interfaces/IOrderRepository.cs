@@ -20,6 +20,8 @@ namespace Menro.Domain.Interfaces
 
         Task<Order?> GetPublicOrderDetailsAsync(int orderId, CancellationToken ct = default);
 
+        Task<List<Food>> GetUserFrequentFoodsForRestaurantAsync(string userId, int restaurantId, int count, CancellationToken ct = default);
+
 
         /* ============================================================
            💰 AdminPanel
