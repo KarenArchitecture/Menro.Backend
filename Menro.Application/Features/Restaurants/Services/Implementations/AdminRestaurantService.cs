@@ -113,15 +113,12 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
         }
         public async Task<bool> UpdateRestaurantStatusAsync(int restaurantId, RestaurantStatus status, string? rejectReason)
         {
-            // ادمین نباید بتونه یه رستوران رو به حالت "در انتظار" برگردونه؛
-            // Pending فقط حالت اولیه‌ی سیستمیه، نه یه تصمیم ادمین
             if (status == RestaurantStatus.Pending)
                 return false;
 
             var restaurant = await _uow.Restaurant.GetByIdAsync(restaurantId);
             if (restaurant == null) return false;
 
-            // جلوگیری از تصمیم‌گیری تکراری روی رستورانی که قبلاً approve/reject شده
             if (restaurant.Status != RestaurantStatus.Pending)
                 return false;
 
@@ -130,20 +127,26 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                 restaurant.Status = RestaurantStatus.Approved;
                 restaurant.IsActive = true;
                 restaurant.RejectReason = null;
+
                 await _userService.AddRoleToUserAsync(restaurant.OwnerUserId, SD.Role_Owner);
             }
             else if (status == RestaurantStatus.Rejected)
             {
                 if (string.IsNullOrWhiteSpace(rejectReason))
-                    return false; // دلیل رد الزامیه، نمی‌شه رد کرد بدون توضیح
+                    return false;
 
                 restaurant.Status = RestaurantStatus.Rejected;
                 restaurant.IsActive = false;
                 restaurant.RejectReason = rejectReason.Trim();
             }
 
-            var result = await _uow.SaveChangesAsync(); // یکسان‌سازی با بقیه‌ی UoW
-            return result > 0;
+            // هر تغییر باقی‌مونده‌ای که هنوز persist نشده رو ذخیره کن.
+            // به تعداد ردیف تغییریافته تکیه نمی‌کنیم چون AddRoleToUserAsync ممکنه
+            // خودش از قبل SaveChanges رو روی همین context صدا زده باشه و صفر برگردونه،
+            // در حالی که همه‌ی تغییرات موفق persist شدن.
+            await _uow.SaveChangesAsync();
+
+            return true;
         }
     }
 }

@@ -13,13 +13,19 @@ namespace Menro.Application.Features.Music.Services.Implementations
         private readonly IPlaylistTrackRepository _playlistTrackRepository;
         private readonly IPlaylistRepository _playlistRepository;
         private readonly IMusicNotificationService _notification;
+        private readonly IPlaylistProvisioningService _playlistProvisioning;
 
-        public MusicPlayerService(IMusicPlayerRepository musicPlayerRepository, IPlaylistTrackRepository playlistTrackRepository, IPlaylistRepository playlistRepository, IMusicNotificationService notification)
+        public MusicPlayerService(IMusicPlayerRepository musicPlayerRepository, 
+            IPlaylistTrackRepository playlistTrackRepository,
+            IPlaylistRepository playlistRepository,
+            IMusicNotificationService notification,
+            IPlaylistProvisioningService playlistProvisioning)
         {
             _musicPlayerRepository = musicPlayerRepository;
             _playlistTrackRepository = playlistTrackRepository;
             _playlistRepository = playlistRepository;
             _notification = notification;
+            _playlistProvisioning = playlistProvisioning;
         }
         #endregion
 
@@ -77,8 +83,11 @@ namespace Menro.Application.Features.Music.Services.Implementations
             {
                 var playlist = await _playlistRepository.GetActiveByRestaurantIdAsync(restaurantId);
 
+                // self-heal: به‌جای throw، تضمین می‌کنیم پلی‌لیست فعال وجود داشته باشد
                 if (playlist == null)
-                    throw new Exception("No active playlist found for restaurant");
+                {
+                    playlist = await _playlistProvisioning.EnsureActivePlaylistAsync(restaurantId);
+                }
 
                 var firstTrack = await _playlistTrackRepository.GetFirstByPlaylistIdAsync(playlist.Id);
 
@@ -101,7 +110,6 @@ namespace Menro.Application.Features.Music.Services.Implementations
 
             return player;
         }
-
 
         /*-----------------*/
         /*-----HELPERS----*/
