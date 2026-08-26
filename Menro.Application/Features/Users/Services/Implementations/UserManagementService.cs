@@ -1,6 +1,7 @@
 using System.Linq;
 using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Media;
+using Menro.Application.Common.SD;
 using Menro.Application.Features.Users.DTOs;
 using Menro.Application.Features.Users.Services.Interfaces;
 using Menro.Domain.Entities;
@@ -79,6 +80,14 @@ namespace Menro.Application.Features.Users.Services.Implementations
             var rolesToAdd = roles.Except(currentRoles).ToList();
             var rolesToRemove = currentRoles.Except(roles).ToList();
 
+            // نقش Owner فقط از طریق تایید ثبت رستوران قابل اعطاست، نه به‌صورت دستی توسط ادمین
+            if (rolesToAdd.Contains(SD.Role_Owner))
+                throw new InvalidOperationException("نقش Owner فقط از طریق تایید درخواست ثبت رستوران قابل اعطا است.");
+
+            // و به همون دلیل، از این مسیر هم قابل حذف نیست (باید از طریق منطق مربوط به رستوران انجام بشه)
+            if (rolesToRemove.Contains(SD.Role_Owner))
+                throw new InvalidOperationException("نقش Owner از این مسیر قابل حذف نیست.");
+
             if (rolesToRemove.Count > 0)
             {
                 var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
@@ -90,8 +99,7 @@ namespace Menro.Application.Features.Users.Services.Implementations
             {
                 var addResult = await _userManager.AddToRolesAsync(user, rolesToAdd);
                 if (!addResult.Succeeded)
-                    throw new InvalidOperationException(
-                        string.Join(" ", addResult.Errors.Select(e => e.Description)));
+                    throw new InvalidOperationException(string.Join(" ", addResult.Errors.Select(e => e.Description)));
             }
 
             return (await _userManager.GetRolesAsync(user)).ToList();
