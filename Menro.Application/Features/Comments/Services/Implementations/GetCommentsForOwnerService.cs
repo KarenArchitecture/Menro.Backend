@@ -2,19 +2,16 @@
 using Menro.Application.Features.Comments.DTOs;
 using Menro.Domain.Enums;
 using Menro.Domain.Interfaces;
-
 namespace Menro.Application.Comments.Services.Implementations
 {
-    public class GetCommentsForAdminService : IGetCommentsForAdminService
+    public class GetCommentsForOwnerService : IGetCommentsForOwnerService
     {
         private readonly ICommentRepository _commentRepository;
-
-        public GetCommentsForAdminService(ICommentRepository commentRepository)
+        public GetCommentsForOwnerService(ICommentRepository commentRepository)
         {
             _commentRepository = commentRepository;
         }
-
-        public async Task<List<CommentAdminDto>> GetCommentsAsync(string status)
+        public async Task<List<CommentAdminDto>> GetCommentsAsync(int restaurantId, string status)
         {
             var parsedStatus = status?.ToLower() switch
             {
@@ -22,9 +19,7 @@ namespace Menro.Application.Comments.Services.Implementations
                 "rejected" => CommentStatus.Rejected,
                 _ => CommentStatus.Pending
             };
-
-            var comments = await _commentRepository.GetForAdminByStatusAsync(parsedStatus);
-
+            var comments = await _commentRepository.GetForRestaurantByStatusAsync(restaurantId, parsedStatus);
             return comments.Select(c => new CommentAdminDto
             {
                 Id = c.Id,
