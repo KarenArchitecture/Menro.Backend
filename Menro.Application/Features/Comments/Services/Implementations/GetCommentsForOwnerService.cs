@@ -29,7 +29,7 @@ namespace Menro.Application.Comments.Services.Implementations
                 UserName = c.User?.FullName ?? "کاربر مهمان",
                 Rating = c.Rating,
                 CommentText = c.Text,
-                Date = c.CreatedAt.ToString("yyyy/MM/dd"),
+                Date = c.CreatedAt.ToString("o"),
                 Reply = c.ReplyText,
                 RejectReason = c.RejectReason
             }).ToList();
