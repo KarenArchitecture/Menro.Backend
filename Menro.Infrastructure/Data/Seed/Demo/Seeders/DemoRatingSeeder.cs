@@ -11,10 +11,6 @@ public class DemoRatingSeeder : IDataSeeder
     private readonly MenroDbContext _db;
     private readonly Random _rand = new(42);
 
-    // Same demo customer accounts used for manual testing/login — these
-    // must never receive a pre-seeded RestaurantRating, or the person
-    // testing the real "rate a restaurant" flow will see a fake rating
-    // already sitting there under their own account.
     private static readonly string[] DemoCustomerPhonesRaw =
     {
         "09121112233",
@@ -38,11 +34,22 @@ public class DemoRatingSeeder : IDataSeeder
             .ToList();
 
         var allUsers = await _db.Users.ToListAsync();
+
+        // Excludes BOTH demo customer accounts (0912111xxxx) AND every
+        // seeded restaurant owner account (0912100000x / legacy 09120000001)
+        // from the random voter pool. Anyone who might realistically log
+        // in to manually test the rating flow must start unrated.
+        var restaurants = await _db.Restaurants.ToListAsync();
+        var ownerUserIds = restaurants
+            .Where(r => !string.IsNullOrWhiteSpace(r.OwnerUserId))
+            .Select(r => r.OwnerUserId!)
+            .ToHashSet();
+
         var voterPool = allUsers
+            .Where(u => !ownerUserIds.Contains(u.Id))
             .Where(u => u.PhoneNumber == null || !demoCustomerPhones.Contains(u.PhoneNumber))
             .ToList();
 
-        var restaurants = await _db.Restaurants.ToListAsync();
         var foods = await _db.Foods.ToListAsync();
 
         /* =========================
@@ -99,6 +106,6 @@ public class DemoRatingSeeder : IDataSeeder
         }
 
         await _db.SaveChangesAsync();
-        Console.WriteLine("[Seed] Demo ratings seeded (excluding demo customer accounts as voters).");
+        Console.WriteLine("[Seed] Demo ratings seeded (excluding all demo owner/customer test accounts as voters).");
     }
 }

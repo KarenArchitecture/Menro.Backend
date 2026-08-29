@@ -449,7 +449,7 @@ namespace Menro.Infrastructure.Repositories
         {
             return await _context.Orders
                 .AsNoTracking()
-                .Where(o => o.UserId == userId)
+                .Where(o => o.UserId == userId && o.Status == OrderStatus.Completed)
                 .Include(o => o.Restaurant)
                 .Include(o => o.OrderItems)
                 .OrderByDescending(o => o.CreatedAt)
