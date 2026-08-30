@@ -23,7 +23,7 @@ namespace Menro.Web.Controllers.Identity
             _currentUserService = currentUserService;
         }
 
-        // -------- helper: صدور توکن + کوکی رفرش (یک‌جا، برای هر سه عملیاتی که لاگین می‌کنن) --------
+        // -------- helper: صدور توکن + کوکی رفرش (یک‌جا، برای هر دو عملیاتی که لاگین می‌کنن) --------
         private async Task<string> IssueSessionAsync(Domain.Entities.User user)
         {
             var roles = await _userService.GetRolesAsync(user);
@@ -61,7 +61,7 @@ namespace Menro.Web.Controllers.Identity
             return Ok(new { accessToken, userId = user.Id });
         }
 
-        // ============ 2) login with otp ============
+        // ============ 2) login with otp (ثبت‌نام خودکار در صورت نیاز) ============
         [AllowAnonymous]
         [HttpPost("login/otp")]
         public async Task<IActionResult> LoginWithOtp([FromBody] LoginOtpDto dto)
@@ -72,45 +72,21 @@ namespace Menro.Web.Controllers.Identity
                 return BadRequest(new { message = "کد وارد شده معتبر نیست." });
 
             var user = await _userService.GetByPhoneNumberAsync(dto.PhoneNumber);
+            var isNewUser = false;
+
             if (user is null)
             {
-                // OTP همین الان تأیید شد؛ همون تأیید رو به یک ticket تبدیل
-                // می‌کنیم تا کاربر مجبور نشه برای register دوباره کد بگیره.
-                var registrationTicket = _authService.GenerateRegistrationTicket(dto.PhoneNumber);
-                return Ok(new { needsRegister = true, registrationTicket });
+                var (isSuccess, result, newUser) = await _userService.RegisterUserAsync(dto.PhoneNumber);
+
+                if (!isSuccess || newUser is null)
+                {
+                    var errors = result?.Errors?.Select(e => e.Description).ToList() ?? new List<string>();
+                    return BadRequest(new { message = "ثبت‌نام خودکار ناموفق بود.", errors });
+                }
+
+                user = newUser;
+                isNewUser = true;
             }
-
-            var accessToken = await IssueSessionAsync(user);
-            return Ok(new { accessToken, userId = user.Id });
-        }
-
-        // ============ 3) register ============
-        [AllowAnonymous]
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            dto.PhoneNumber = NormalizePhoneNumber(dto.PhoneNumber);
-
-            // 🔒 بدون این ticket، ثبت‌نام اصلاً شروع نمی‌شه — دیگه هیچ‌کس
-            // نمی‌تونه با یک شماره‌ی دلخواه (حتی متعلق به شخص دیگه)
-            // مستقیم به این endpoint درخواست بزنه.
-            if (!_authService.ValidateRegistrationTicket(dto.RegistrationTicket, dto.PhoneNumber, out var ticketError))
-                return BadRequest(new { message = ticketError });
-
-            var (isSuccess, result, user) = await _userService.RegisterUserAsync(
-                dto.FullName, dto.Email, dto.PhoneNumber, dto.Password);
-
-            if (!isSuccess || user == null || result == null || !result.Succeeded)
-            {
-                var errors = result?.Errors?.Select(e => e.Description).ToList() ?? new List<string>();
-                return BadRequest(new { message = "ثبت‌نام ناموفق بود.", errors });
-            }
-
-            // شماره از قبل داخل VerifyOtpAsync تأیید(confirm) شده — نیازی به
-            // فراخوانی دستی PhoneConfirmed نیست.
 
             var accessToken = await IssueSessionAsync(user);
             var roles = await _userService.GetRolesAsync(user);
@@ -118,11 +94,12 @@ namespace Menro.Web.Controllers.Identity
             return Ok(new
             {
                 accessToken,
-                user = new { user.Id, user.FullName, user.Email, user.PhoneNumber, Roles = roles }
+                isNewUser, // فرانت با این فلگ تشخیص می‌ده کاربر تازه‌ساخته‌شده رو مستقیم بفرسته صفحه‌ی پروفایل
+                user = new { user.Id, user.FullName, user.PhoneNumber, Roles = roles }
             });
         }
 
-        // ============ 4) change phone ============
+        // ============ 3) change phone ============
         [Authorize]
         [HttpPut("change-phone")]
         public async Task<IActionResult> ChangePhone([FromBody] ChangePhoneRequestDto dto)
@@ -145,7 +122,7 @@ namespace Menro.Web.Controllers.Identity
             return Ok(new { message = "شماره تلفن با موفقیت تغییر کرد." });
         }
 
-        // ============ 5) change password ============
+        // ============ 4) change password ============
         [Authorize]
         [HttpPost("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
@@ -164,7 +141,7 @@ namespace Menro.Web.Controllers.Identity
             return Ok(new { message = "رمز عبور با موفقیت تغییر کرد." });
         }
 
-        // ============ 6) forgot password — دو مرحله (verify سپس reset) ============
+        // ============ 5) forgot password — دو مرحله (verify سپس reset) ============
         [AllowAnonymous]
         [HttpPost("forgot-password/verify")]
         public async Task<IActionResult> VerifyForgotPassword([FromBody] ForgotPasswordVerifyDto dto)
@@ -205,27 +182,7 @@ namespace Menro.Web.Controllers.Identity
             return Ok(new { message = "رمز عبور با موفقیت تغییر کرد." });
         }
 
-        // ============ 7) confirm phoneNumber (standalone — مثلاً برای وقتی
-        // شماره‌ی جدید بدون رفتن به مسیر لاگین باید تأیید بشه) ============
-        // !!! no use case for now !!!
-        [AllowAnonymous]
-        [HttpPost("confirm-phone")]
-        public async Task<IActionResult> ConfirmPhone([FromBody] ConfirmPhoneDto dto)
-        {
-            dto.PhoneNumber = NormalizePhoneNumber(dto.PhoneNumber);
-
-            if (!await _authService.VerifyOtpAsync(dto.PhoneNumber, dto.Code))
-                return BadRequest(new { message = "کد وارد شده معتبر نیست." });
-
-            var existingUser = await _userService.GetByPhoneNumberAsync(dto.PhoneNumber);
-            if (existingUser is not null)
-                return Ok(new { userExists = true }); // قبلاً حساب داره → باید بره لاگین
-
-            var registrationTicket = _authService.GenerateRegistrationTicket(dto.PhoneNumber);
-            return Ok(new { registrationTicket });
-        }
-
-        // ============ 8) refresh access token ============
+        // ============ 6) refresh access token ============
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh()
         {
@@ -287,7 +244,7 @@ namespace Menro.Web.Controllers.Identity
             if (user is null) return NotFound(new { message = "کاربر یافت نشد." });
 
             var roles = await _userService.GetRolesAsync(user);
-            return Ok(new { user.Id, user.FullName, user.Email, user.PhoneNumber, Roles = roles });
+            return Ok(new { user.Id, user.FullName, user.PhoneNumber, Roles = roles });
         }
 
         private static string NormalizePhoneNumber(string phoneNumber)

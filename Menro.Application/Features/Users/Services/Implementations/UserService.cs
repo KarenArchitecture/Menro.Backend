@@ -8,6 +8,7 @@ using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 using static Menro.Application.Common.SD.SD;
 
 
@@ -17,7 +18,7 @@ namespace Menro.Application.Features.Users.Services.Implementations
 {
     /*
     * شرح وظایف:
-    ثبت نام
+    ثبت نام (فقط داخل جریان لاگین، بدون فرم/اندپوینت جدا)
     لاگین
     پیدا کردن کاربر
     ادیت کردن اطلاعات کاربری
@@ -43,14 +44,6 @@ namespace Menro.Application.Features.Users.Services.Implementations
                 throw new InvalidOperationException("User not found");
             return user;
         }
-        public async Task<User> GetByEmailAsync(string email)
-        {
-            var user = await _uow.User.GetByEmailAsync(email);
-            if (user is null)
-                throw new InvalidOperationException("User not found");
-            return user;
-
-        }
         public async Task<User?> GetByPhoneNumberAsync(string phoneNumber)
         {
             var normalized = PhoneNumberHelper.ToStorageFormat(phoneNumber);
@@ -71,13 +64,13 @@ namespace Menro.Application.Features.Users.Services.Implementations
 
             var normalized = PhoneNumberHelper.ToStorageFormat(newPhone);
             user.PhoneNumber = normalized;
-            user.UserName = normalized; // اگر لاگین با شماره است
+            user.UserName = normalized; // لاگین با شماره است
 
             var identityResult = await _userManager.UpdateAsync(user);
             return identityResult.Succeeded;
         }
 
-        public async Task<(bool IsSuccess, IdentityResult? Result, User? User)> RegisterUserAsync(string fullName, string email, string phoneNumber, string? password)
+        public async Task<(bool IsSuccess, IdentityResult? Result, User? User)> RegisterUserAsync(string phoneNumber)
         {
             var normalizedPhone = PhoneNumberHelper.ToStorageFormat(phoneNumber);
 
@@ -85,27 +78,15 @@ namespace Menro.Application.Features.Users.Services.Implementations
             if (existingUserByPhone != null)
                 return (false, null, null);
 
-            if (!string.IsNullOrWhiteSpace(email) && await _userManager.FindByEmailAsync(email) is not null)
-                return (false, null, null);
-
-            var safeEmail = string.IsNullOrWhiteSpace(email)
-                ? $"{normalizedPhone}@menro.fake"
-                : email;
-
             var user = new User
             {
-                FullName = fullName,
-                Email = safeEmail,
+                FullName = GenerateGuestFullName(),
                 PhoneNumber = normalizedPhone,
-                UserName = safeEmail,
+                UserName = normalizedPhone,
+                PhoneNumberConfirmed = true, // در این نقطه OTP از قبل تأیید شده
             };
-            // ادامه‌ی متد بدون تغییر
 
-            IdentityResult result;
-            if (string.IsNullOrWhiteSpace(password))
-                result = await _userManager.CreateAsync(user);
-            else
-                result = await _userManager.CreateAsync(user, password);
+            var result = await _userManager.CreateAsync(user);
 
             if (!result.Succeeded)
                 return (false, result, null);
@@ -113,6 +94,14 @@ namespace Menro.Application.Features.Users.Services.Implementations
             await _userManager.AddToRoleAsync(user, Role_Customer);
 
             return (true, result, user);
+        }
+
+        // نام پیش‌فرض برای کاربرانی که بدون فرم ثبت‌نام ساخته می‌شن:
+        // "کافه‌گرد #١٢٣٤" — عدد صرفاً برای تمایز نمایشی بین کاربرهاست.
+        private static string GenerateGuestFullName()
+        {
+            var tag = RandomNumberGenerator.GetInt32(1000, 10000);
+            return $"کافه‌گرد #{tag}";
         }
 
         public async Task<List<string>> GetRolesAsync(User user)
@@ -225,7 +214,7 @@ namespace Menro.Application.Features.Users.Services.Implementations
                     ? null
                     : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, user.ProfileImage, entityId: user.Id, variant: MediaVariant.Resized),
                 HasPassword = await _userManager.HasPasswordAsync(user)
-};
+            };
         }
 
         public async Task<bool> UpdateProfileAsync(string userId, UpdateUserProfileDto dto)

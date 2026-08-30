@@ -18,7 +18,7 @@ namespace Menro.Application.Features.Identity.Services
     * شرح وظایف:
     ارسال و تایید OTP
     صدور توکن JWT
-    تشخیص نیاز به ثبت نام یا ادامه ورود به سایت
+    مدیریت لاگین (ثبت‌نام خودکار در صورت نیاز، در همون لحظه‌ی لاگین، داخل UserService انجام می‌شه)
     */
     public class AuthService : IAuthService
     {
@@ -141,7 +141,7 @@ namespace Menro.Application.Features.Identity.Services
         public async Task<(string AccessToken, string RefreshToken, User User, List<string> Roles)>
             LoginAsync(User user, IEnumerable<string> roles, string ip, string? userAgent)
         {
-            var accessToken = GenerateToken(Guid.Parse(user.Id), user.FullName ?? "", user.Email ?? "", roles.ToList());
+            var accessToken = GenerateToken(Guid.Parse(user.Id), user.FullName ?? "", roles.ToList());
             var (rawRt, entity) = IssueRefreshToken(user.Id, ip, userAgent);
 
             await _uow.RefreshToken.AddAsync(entity);
@@ -246,20 +246,19 @@ namespace Menro.Application.Features.Identity.Services
             // ساخت Access Token جدید
             var user = await _userService.GetByIdAsync(stored.UserId);
             var roles = await _userService.GetRolesAsync(user);
-            var newAccess = GenerateToken(Guid.Parse(user.Id), user.FullName ?? "", user.Email ?? "", roles.ToList());
+            var newAccess = GenerateToken(Guid.Parse(user.Id), user.FullName ?? "", roles.ToList());
 
 
             return (newAccess, newRaw);
         }
 
         // generate jwt tokens (access token)
-        public string GenerateToken(Guid userId, string fullName, string email, List<string> roles)
+        public string GenerateToken(Guid userId, string fullName, List<string> roles)
         {
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Name, fullName),
-                //new Claim(JwtRegisteredClaimNames.Email, email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString())
             };
@@ -285,12 +284,6 @@ namespace Menro.Application.Features.Identity.Services
 
         public bool ValidatePasswordResetToken(string token, string expectedPhoneNumber, out string error)
             => ValidatePurposeToken(token, expectedPhoneNumber, PasswordResetPurposeValue, out error);
-
-        public string GenerateRegistrationTicket(string phoneNumber)
-            => GeneratePurposeToken(phoneNumber, RegistrationPurposeValue, RegistrationTicketLifetime);
-
-        public bool ValidateRegistrationTicket(string token, string expectedPhoneNumber, out string error)
-            => ValidatePurposeToken(token, expectedPhoneNumber, RegistrationPurposeValue, out error);
 
 
         /*--- utilities ---*/
@@ -323,12 +316,9 @@ namespace Menro.Application.Features.Identity.Services
 
         /*--- Private Helpers ---*/
 
-        private const string RegistrationPurposeValue = "phone-registration";
-        private static readonly TimeSpan RegistrationTicketLifetime = TimeSpan.FromMinutes(10);
-
-        // 🔧 یک primitive مشترک: «این شماره همین الان با OTP تأیید شده، برای
-        // این هدف مشخص». هم reset-password و هم ثبت‌نام از همین استفاده می‌کنن،
-        // به‌جای این‌که هرکدوم منطق امضا/اعتبارسنجی JWT رو دوباره بنویسن.
+        // 🔧 primitive مشترک: «این شماره همین الان با OTP تأیید شده، برای این
+        // هدف مشخص». فعلاً فقط توسط forgot-password استفاده می‌شه (ثبت‌نام
+        // دیگه به این نیاز نداره چون داخل همون لحظه‌ی لاگین انجام می‌شه).
         private string GeneratePurposeToken(string phoneNumber, string purpose, TimeSpan lifetime)
         {
             var claims = new List<Claim>
