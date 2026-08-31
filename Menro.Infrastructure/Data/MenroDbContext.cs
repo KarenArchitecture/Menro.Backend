@@ -1,8 +1,8 @@
 ﻿using Menro.Domain.Entities;
 using Menro.Domain.Entities.Blog;
 using Menro.Domain.Entities.Identity;
-using Menro.Domain.Entities.Landing;
 using Menro.Domain.Entities.Music;
+using Menro.Domain.Entities.SiteContent;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -73,10 +73,14 @@ namespace Menro.Infrastructure.Data
         public DbSet<BlogTag> BlogTags { get; set; }
         public DbSet<BlogPostLike> BlogPostLikes { get; set; }
 
-        /* ===================== BLOG ===================== */
+        /* ===================== SITE CONFIG ===================== */
+        // landing
         public DbSet<LandingGeneral> LandingGeneral { get; set; }
         public DbSet<LandingFaq> LandingFaqs { get; set; }
         public DbSet<LandingReason> LandingReasons { get; set; }
+
+        // common
+        public DbSet<MenuItem> MenuItems { get; set; }
 
         /* ===================== SAVE ===================== */
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)
