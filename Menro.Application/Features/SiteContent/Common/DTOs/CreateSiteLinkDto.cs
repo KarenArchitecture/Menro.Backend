@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Menro.Application.Features.SiteContent.DTOs
 {
-    public class CreateMenuItemDto
+    public class CreateSiteLinkDto
     {
         [Required]
         public MenuLocation Location { get; set; }

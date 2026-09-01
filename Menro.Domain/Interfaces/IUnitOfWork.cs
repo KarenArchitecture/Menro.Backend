@@ -41,7 +41,7 @@ namespace Menro.Domain.Interfaces
         ILandingGeneralRepository LandingGeneral { get; }
         ILandingFaqRepository LandingFaq { get; }
         ILandingReasonRepository LandingReason { get; }
-        IMenuItemRepository MenuItem { get; }
+        ISiteLinkRepository SiteLink { get; }
 
         Task<int> SaveChangesAsync();
     }

@@ -4,10 +4,9 @@
     {
         Header = 1,
         Footer = 2,
-        Hamburger = 3
     }
 
-    public class MenuItem
+    public class SiteLink
     {
         public Guid Id { get; set; }
         public MenuLocation Location { get; set; }

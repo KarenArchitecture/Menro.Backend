@@ -50,7 +50,7 @@ namespace Menro.Infrastructure.Repositories
         private ILandingGeneralRepository _landingGeneral;
         private ILandingFaqRepository _landingFaq;
         private ILandingReasonRepository _landingReason;
-        private IMenuItemRepository _menuItem;
+        private ISiteLinkRepository _siteLink;
 
         public IUserRepository User => _user ??= new UserRepository(_context);
         public IFoodRepository Food => _food ??= new FoodRepository(_context);
@@ -87,7 +87,7 @@ namespace Menro.Infrastructure.Repositories
         public ILandingGeneralRepository LandingGeneral => _landingGeneral ??= new LandingGeneralRepository(_context);
         public ILandingFaqRepository LandingFaq => _landingFaq ??= new LandingFaqRepository(_context);
         public ILandingReasonRepository LandingReason => _landingReason ??= new LandingReasonRepository(_context);
-        public IMenuItemRepository MenuItem => _menuItem ??= new MenuItemRepository(_context);
+        public ISiteLinkRepository SiteLink => _siteLink ??= new SiteLinkRepository(_context);
 
         public UnitOfWork(MenroDbContext context, IMemoryCache cache)
         {

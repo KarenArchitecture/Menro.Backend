@@ -5,38 +5,38 @@ using Menro.Domain.Interfaces.SiteContent;
 
 namespace Menro.Application.Features.SiteContent.Services.Implementations
 {
-    public class MenuItemService : IMenuItemService
+    public class SiteLinkService : ISiteLinkService
     {
-        private readonly IMenuItemRepository _repository;
+        private readonly ISiteLinkRepository _repository;
 
-        public MenuItemService(IMenuItemRepository repository)
+        public SiteLinkService(ISiteLinkRepository repository)
         {
             _repository = repository;
         }
 
-        public async Task<List<MenuItemDto>> GetPublicMenuAsync(MenuLocation location)
+        public async Task<List<SiteLinkDto>> GetPublicMenuAsync(MenuLocation location)
         {
             var items = await _repository.GetByLocationAsync(location, includeInactive: false);
             return items.Select(Map).ToList();
         }
 
-        public async Task<List<MenuItemDto>> GetAdminMenuAsync(MenuLocation location)
+        public async Task<List<SiteLinkDto>> GetAdminMenuAsync(MenuLocation location)
         {
             var items = await _repository.GetByLocationAsync(location, includeInactive: true);
             return items.Select(Map).ToList();
         }
 
-        public async Task<List<MenuItemDto>> GetAllAsync()
+        public async Task<List<SiteLinkDto>> GetAllAsync()
         {
             var items = await _repository.GetAllAsync();
             return items.Select(Map).ToList();
         }
 
-        public async Task<MenuItemDto> CreateAsync(CreateMenuItemDto dto)
+        public async Task<SiteLinkDto> CreateAsync(CreateSiteLinkDto dto)
         {
             var maxOrder = await _repository.GetMaxOrderAsync(dto.Location);
 
-            var entity = new MenuItem
+            var entity = new SiteLink
             {
                 Id = Guid.NewGuid(),
                 Location = dto.Location,
@@ -51,7 +51,7 @@ namespace Menro.Application.Features.SiteContent.Services.Implementations
             return Map(entity);
         }
 
-        public async Task<MenuItemDto> UpdateAsync(Guid id, UpdateMenuItemDto dto)
+        public async Task<SiteLinkDto> UpdateAsync(Guid id, UpdateSiteLinkDto dto)
         {
             var entity = await _repository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException($"MenuItem با شناسه {id} پیدا نشد.");
@@ -73,12 +73,12 @@ namespace Menro.Application.Features.SiteContent.Services.Implementations
             await _repository.RemoveAsync(entity);
         }
 
-        public async Task ReorderAsync(MenuLocation location, ReorderMenuItemDto dto)
+        public async Task ReorderAsync(MenuLocation location, ReorderSiteLinkDto dto)
         {
             var items = await _repository.GetByLocationAsync(location, includeInactive: true);
             var itemsById = items.ToDictionary(x => x.Id);
 
-            var toUpdate = new List<MenuItem>();
+            var toUpdate = new List<SiteLink>();
             for (int i = 0; i < dto.OrderedIds.Count; i++)
             {
                 if (itemsById.TryGetValue(dto.OrderedIds[i], out var entity))
@@ -91,7 +91,7 @@ namespace Menro.Application.Features.SiteContent.Services.Implementations
             await _repository.ReorderAsync(toUpdate);
         }
 
-        private static MenuItemDto Map(MenuItem entity) => new()
+        private static SiteLinkDto Map(SiteLink entity) => new()
         {
             Id = entity.Id,
             Location = entity.Location.ToString(),

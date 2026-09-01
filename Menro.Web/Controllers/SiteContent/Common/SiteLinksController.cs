@@ -6,19 +6,19 @@ using Microsoft.AspNetCore.Mvc;
 namespace Menro.Web.Controllers.SiteContent.Common
 {
     [ApiController]
-    [Route("api/site-content/menu")]
-    public class MenuController : ApiControllerBase
+    [Route("api/site-content/links")]
+    public class SiteLinksController : ApiControllerBase
     {
-        private readonly IMenuItemService _menuItemService;
+        private readonly ISiteLinkService _menuItemService;
 
-        public MenuController(IMenuItemService menuItemService)
+        public SiteLinksController(ISiteLinkService menuItemService)
         {
             _menuItemService = menuItemService;
         }
 
         /// <summary>منوی فعال یک بخش (Header/Footer/Hamburger) برای نمایش در فرانت.</summary>
         [HttpGet("{location}")]
-        public async Task<ActionResult<List<MenuItemDto>>> GetByLocation(MenuLocation location)
+        public async Task<ActionResult<List<SiteLinkDto>>> GetByLocation(MenuLocation location)
         {
             var result = await _menuItemService.GetPublicMenuAsync(location);
             return Ok(result);

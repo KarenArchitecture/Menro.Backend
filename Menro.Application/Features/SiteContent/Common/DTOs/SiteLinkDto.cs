@@ -1,6 +1,6 @@
 ﻿namespace Menro.Application.Features.SiteContent.DTOs
 {
-    public class MenuItemDto
+    public class SiteLinkDto
     {
         public Guid Id { get; set; }
         public string Location { get; set; } = string.Empty; // "Header" / "Footer" / "Hamburger"

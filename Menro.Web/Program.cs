@@ -261,6 +261,8 @@ builder.Services.AddScoped<IDataSeeder, AdminSeeder>();
 builder.Services.AddScoped<IDataSeeder, IconSeeder>();
 builder.Services.AddScoped<IDataSeeder, GlobalFoodCategorySeeder>();
 
+builder.Services.AddScoped<IDataSeeder, SiteLinkSeeder>();
+
 /* ============================================================
    DEMO SEEDERS
 ============================================================ */

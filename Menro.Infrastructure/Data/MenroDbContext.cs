@@ -80,7 +80,7 @@ namespace Menro.Infrastructure.Data
         public DbSet<LandingReason> LandingReasons { get; set; }
 
         // common
-        public DbSet<MenuItem> MenuItems { get; set; }
+        public DbSet<SiteLink> SiteLinks { get; set; }
 
         /* ===================== SAVE ===================== */
         public async Task<int> SaveAsync(CancellationToken cancellationToken = default)

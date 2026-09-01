@@ -5,6 +5,7 @@ public static class SeedOrder
     public const int Admin = 2;
     public const int Icon = 3;
     public const int GlobalFoodCategory = 4;
+    public const int SiteLink = 5;
     public const int Restaurant = 100;
     public const int Food = 120;
     public const int RestaurantAd = 150;

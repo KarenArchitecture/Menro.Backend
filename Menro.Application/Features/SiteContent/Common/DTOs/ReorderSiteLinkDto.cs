@@ -3,7 +3,7 @@
     /// <summary>
     /// خروجی درگ‌اند‌دراپ پنل ادمین: لیست کامل Id ها به ترتیب جدید برای یک Location.
     /// </summary>
-    public class ReorderMenuItemDto
+    public class ReorderSiteLinkDto
     {
         public List<Guid> OrderedIds { get; set; } = new();
     }

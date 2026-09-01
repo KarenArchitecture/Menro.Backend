@@ -2,7 +2,7 @@
 
 namespace Menro.Application.Features.SiteContent.DTOs
 {
-    public class UpdateMenuItemDto
+    public class UpdateSiteLinkDto
     {
         [Required, MaxLength(100)]
         public string Title { get; set; } = string.Empty;

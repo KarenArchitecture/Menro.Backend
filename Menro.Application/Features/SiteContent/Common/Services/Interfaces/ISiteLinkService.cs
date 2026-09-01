@@ -3,19 +3,19 @@ using Menro.Domain.Entities.SiteContent;
 
 namespace Menro.Application.Features.SiteContent.Services.Interfaces
 {
-    public interface IMenuItemService
+    public interface ISiteLinkService
     {
         /// <summary>برای فرانت عمومی سایت - فقط آیتم‌های فعال.</summary>
-        Task<List<MenuItemDto>> GetPublicMenuAsync(MenuLocation location);
+        Task<List<SiteLinkDto>> GetPublicMenuAsync(MenuLocation location);
 
         /// <summary>برای پنل ادمین - همه‌ی آیتم‌ها (فعال و غیرفعال).</summary>
-        Task<List<MenuItemDto>> GetAdminMenuAsync(MenuLocation location);
+        Task<List<SiteLinkDto>> GetAdminMenuAsync(MenuLocation location);
 
-        Task<List<MenuItemDto>> GetAllAsync();
+        Task<List<SiteLinkDto>> GetAllAsync();
 
-        Task<MenuItemDto> CreateAsync(CreateMenuItemDto dto);
-        Task<MenuItemDto> UpdateAsync(Guid id, UpdateMenuItemDto dto);
+        Task<SiteLinkDto> CreateAsync(CreateSiteLinkDto dto);
+        Task<SiteLinkDto> UpdateAsync(Guid id, UpdateSiteLinkDto dto);
         Task DeleteAsync(Guid id);
-        Task ReorderAsync(MenuLocation location, ReorderMenuItemDto dto);
+        Task ReorderAsync(MenuLocation location, ReorderSiteLinkDto dto);
     }
 }
