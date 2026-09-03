@@ -18,7 +18,7 @@ namespace Menro.Domain.Interfaces
 
         Task<Order?> GetOrderWithDetailsAsync(int orderId, CancellationToken ct = default);
 
-        Task<Order?> GetPublicOrderDetailsAsync(int orderId, CancellationToken ct = default);
+        Task<Order?> GetPublicOrderDetailsAsync(int orderId, string? requestingUserId, CancellationToken ct = default);
 
 
         /* ============================================================
