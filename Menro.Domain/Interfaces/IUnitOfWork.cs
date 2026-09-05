@@ -1,6 +1,6 @@
 ﻿using Menro.Domain.Interfaces.Blog;
-using Menro.Domain.Interfaces.Landing;
 using Menro.Domain.Interfaces.Music;
+using Menro.Domain.Interfaces.SiteContent;
 
 namespace Menro.Domain.Interfaces
 {
@@ -37,10 +37,11 @@ namespace Menro.Domain.Interfaces
         IBlogTagRepository BlogTag { get; }
         IBlogPostLikeRepository BlogPostLike { get; }
 
-        // LANDING
+        // SITE CONTENT
         ILandingGeneralRepository LandingGeneral { get; }
         ILandingFaqRepository LandingFaq { get; }
         ILandingReasonRepository LandingReason { get; }
+        ISiteLinkRepository SiteLink { get; }
 
         Task<int> SaveChangesAsync();
     }

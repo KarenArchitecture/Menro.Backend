@@ -67,11 +67,11 @@ namespace Menro.Application.Features.Blog.Services.Implementations
                         r.LogoImageUrl,
                         r.Id.ToString(),
                         MediaVariant.Thumbnail),
-                string.IsNullOrWhiteSpace(r.BannerImageUrl)
+                string.IsNullOrWhiteSpace(r.ShopBannerImageUrl)
                     ? null
                     : _mediaStorage.GetUrl(
-                        MediaCategory.RestaurantHomeBanner,
-                        r.BannerImageUrl,
+                        MediaCategory.RestaurantShopBanner,
+                        r.ShopBannerImageUrl,
                         r.Id.ToString(),
                         MediaVariant.Resized),
                 Math.Round(r.AverageRating, 1),

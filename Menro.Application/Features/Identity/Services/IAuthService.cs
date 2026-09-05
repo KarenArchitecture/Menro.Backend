@@ -10,18 +10,24 @@ namespace Menro.Application.Features.Identity.Services
         Task<bool> VerifyOtpAsync(string phoneNumber, string code);
         Task<bool> VerifyPasswordAsync(string phoneNumber, string password);
         Task<bool> PhoneConfirmed(string phoneNumber);
+
         Task<(string AccessToken, string RefreshToken, User User, List<string> Roles)>
-                    LoginAsync(User user, IEnumerable<string> roles, string ip, string? userAgent);
+            LoginAsync(User user, IEnumerable<string> roles, string ip, string? userAgent);
+
         Task<Result> ResetPasswordAsync(string phoneNumber, string newPassword);
         Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
         Task<Result> ChangePhoneAsync(string userId, string newPhone);
-        string GenerateToken(Guid userId, string fullName, string email, List<string> roles);
+
+        string GenerateToken(Guid userId, string fullName, List<string> roles);
         (string RawToken, RefreshToken Entity) IssueRefreshToken(string userId, string ip, string? userAgent);
         Task<(string NewAccessToken, string NewRefreshToken)> RefreshAccessTokenAsync(string rawRefreshToken, string ip, string? userAgent);
+
         string GeneratePasswordResetToken(string phoneNumber);
         bool ValidatePasswordResetToken(string token, string expectedPhoneNumber, out string error);
-        string GenerateRegistrationTicket(string phoneNumber);                                  // 👈 جدید
-        bool ValidateRegistrationTicket(string token, string expectedPhoneNumber, out string error); // 👈 جدید
+
+        // ثبت‌نام دیگه فرم/اندپوینت جدا نداره، پس دیگه به ticket نیاز نیست —
+        // GenerateRegistrationTicket / ValidateRegistrationTicket حذف شدن.
+
         Task<bool> LogoutAsync(string rawRefreshToken);
     }
 }

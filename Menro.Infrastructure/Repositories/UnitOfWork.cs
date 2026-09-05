@@ -1,11 +1,11 @@
 ﻿using Menro.Domain.Interfaces;
 using Menro.Domain.Interfaces.Blog;
-using Menro.Domain.Interfaces.Landing;
 using Menro.Domain.Interfaces.Music;
+using Menro.Domain.Interfaces.SiteContent;
 using Menro.Infrastructure.Data;
 using Menro.Infrastructure.Repositories.Blog;
-using Menro.Infrastructure.Repositories.Landing;
 using Menro.Infrastructure.Repositories.Music;
+using Menro.Infrastructure.Repositories.SiteContent;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Menro.Infrastructure.Repositories
@@ -46,10 +46,11 @@ namespace Menro.Infrastructure.Repositories
         private IBlogTagRepository _blogTag;
         private IBlogPostLikeRepository _blogPostLike;
 
-        // LANDING
+        // SITE CONTENT
         private ILandingGeneralRepository _landingGeneral;
         private ILandingFaqRepository _landingFaq;
         private ILandingReasonRepository _landingReason;
+        private ISiteLinkRepository _siteLink;
 
         public IUserRepository User => _user ??= new UserRepository(_context);
         public IFoodRepository Food => _food ??= new FoodRepository(_context);
@@ -82,10 +83,11 @@ namespace Menro.Infrastructure.Repositories
         public IBlogTagRepository BlogTag => _blogTag ??= new BlogTagRepository(_context);
         public IBlogPostLikeRepository BlogPostLike => _blogPostLike ??= new BlogPostLikeRepository(_context);
 
-        // LANDING
+        // SITE CONTENT
         public ILandingGeneralRepository LandingGeneral => _landingGeneral ??= new LandingGeneralRepository(_context);
         public ILandingFaqRepository LandingFaq => _landingFaq ??= new LandingFaqRepository(_context);
         public ILandingReasonRepository LandingReason => _landingReason ??= new LandingReasonRepository(_context);
+        public ISiteLinkRepository SiteLink => _siteLink ??= new SiteLinkRepository(_context);
 
         public UnitOfWork(MenroDbContext context, IMemoryCache cache)
         {
