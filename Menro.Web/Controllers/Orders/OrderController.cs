@@ -65,7 +65,8 @@ namespace Menro.Web.Controllers.Orders
         [AllowAnonymous]
         public async Task<IActionResult> GetBill(int id, CancellationToken ct)
         {
-            var bill = await _orderHistoryService.GetOrderBillAsync(id);
+            var userId = _currentUserService.GetUserId();
+            var bill = await _orderHistoryService.GetOrderBillAsync(id, userId);
             return bill == null ? NotFound() : Ok(bill);
         }
     }

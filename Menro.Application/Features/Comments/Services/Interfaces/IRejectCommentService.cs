@@ -1,9 +1,8 @@
 ﻿using Menro.Application.Features.Comments.DTOs;
-
 namespace Menro.Application.Comments.Services.Interfaces
 {
     public interface IRejectCommentService
     {
-        Task<bool> RejectAsync(RejectCommentDto dto);
+        Task<CommentActionResult> RejectAsync(int restaurantId, RejectCommentDto dto);
     }
 }

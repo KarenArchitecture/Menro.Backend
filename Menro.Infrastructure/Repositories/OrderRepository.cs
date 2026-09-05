@@ -63,9 +63,9 @@ namespace Menro.Infrastructure.Repositories
                 .FirstOrDefaultAsync(o => o.Id == orderId, ct);
         }
 
-        public async Task<Order?> GetPublicOrderDetailsAsync(int orderId, CancellationToken ct = default)
+        public async Task<Order?> GetPublicOrderDetailsAsync(int orderId, string? requestingUserId, CancellationToken ct = default)
         {
-            return await _context.Orders
+            var order = await _context.Orders
                 .AsNoTracking()
                 .Where(o => o.Id == orderId)
                 .Include(o => o.Restaurant)
@@ -78,6 +78,16 @@ namespace Menro.Infrastructure.Repositories
                     .ThenInclude(oi => oi.Extras)
                         .ThenInclude(e => e.FoodAddon)
                 .FirstOrDefaultAsync(o => o.Id == orderId, ct);
+
+            if (order == null) return null;
+
+            // Guest-placed orders (UserId == null) stay reachable by anyone with the
+            // link — that's the existing guest checkout flow. But an order that DOES
+            // belong to an account must only be returned to that same account.
+            if (order.UserId != null && order.UserId != requestingUserId)
+                return null;
+
+            return order;
         }
 
         /* ============================================================
@@ -413,7 +423,7 @@ namespace Menro.Infrastructure.Repositories
         {
             return await _context.Orders
                 .AsNoTracking()
-                .Where(o => o.UserId == userId)
+                .Where(o => o.UserId == userId && o.Status == OrderStatus.Completed)
                 .Include(o => o.Restaurant)
                 .Include(o => o.OrderItems)
                 .OrderByDescending(o => o.CreatedAt)

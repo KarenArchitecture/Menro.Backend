@@ -56,9 +56,9 @@ namespace Menro.Application.Features.Orders.Services.Implementations
             }).ToList();
         }
 
-        public async Task<PublicOrderDetailsDto?> GetOrderBillAsync(int orderId)
+        public async Task<PublicOrderDetailsDto?> GetOrderBillAsync(int orderId, string? requestingUserId)
         {
-            var order = await _orderRepository.GetPublicOrderDetailsAsync(orderId);
+            var order = await _orderRepository.GetPublicOrderDetailsAsync(orderId, requestingUserId);
             if (order == null) return null;
             return new PublicOrderDetailsDto
             {

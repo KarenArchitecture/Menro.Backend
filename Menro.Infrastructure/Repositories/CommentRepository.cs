@@ -121,6 +121,25 @@ namespace Menro.Infrastructure.Repositories
                 .ToDictionaryAsync(x => x.FoodId, x => x.Count);
         }
 
+        public async Task<List<Comment>> GetForRestaurantByStatusAsync(int restaurantId, CommentStatus status)
+        {
+            return await _context.Comments
+                .Where(c => c.Food.RestaurantId == restaurantId && c.Status == status)
+                .Include(c => c.Food)
+                .Include(c => c.User)
+                .OrderByDescending(c => c.CreatedAt)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<int?> GetRestaurantIdByCommentIdAsync(int commentId)
+        {
+            return await _context.Comments
+                .Where(c => c.Id == commentId)
+                .Select(c => (int?)c.Food.RestaurantId)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
