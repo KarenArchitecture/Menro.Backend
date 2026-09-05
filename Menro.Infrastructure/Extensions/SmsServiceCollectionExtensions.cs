@@ -14,7 +14,7 @@ namespace Menro.Infrastructure.Extensions
         {
             services.Configure<SmsSettings>(config.GetSection("SmsSettings"));
 
-            services.AddHttpClient<IpPanelSmsSender>((sp, http) =>
+            services.AddHttpClient<SmsIrSmsSender>((sp, http) =>
             {
                 var s = sp.GetRequiredService<IOptions<SmsSettings>>().Value;
 
@@ -24,7 +24,7 @@ namespace Menro.Infrastructure.Extensions
                     new MediaTypeWithQualityHeaderValue("application/json"));
             });
 
-            services.AddScoped<ISmsSender>(sp => sp.GetRequiredService<IpPanelSmsSender>());
+            services.AddScoped<ISmsSender>(sp => sp.GetRequiredService<SmsIrSmsSender>());
 
             return services;
         }

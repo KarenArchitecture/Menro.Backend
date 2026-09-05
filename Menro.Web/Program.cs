@@ -74,6 +74,15 @@ if (string.IsNullOrWhiteSpace(jwtAudience))
         "JWT audience is missing. Configure JwtSettings:Audience in appsettings.Production.json");
 }
 
+var smsApiKey =
+    builder.Configuration["SmsSettings:ApiKey"];
+
+if (string.IsNullOrWhiteSpace(smsApiKey))
+{
+    throw new InvalidOperationException(
+        "SMS API Key is missing. Set Environment Variable: SmsSettings__ApiKey");
+}
+
 #endregion
 
 #region DbContext & Identity
