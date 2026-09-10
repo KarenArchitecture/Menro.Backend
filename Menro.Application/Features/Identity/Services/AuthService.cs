@@ -11,6 +11,7 @@ using Menro.Application.Common.Models;
 using Menro.Application.Common.Interfaces;
 using Menro.Domain.Entities.Identity;
 using Menro.Application.Features.Users.Services.Interfaces;
+using Microsoft.Extensions.Hosting;
 
 namespace Menro.Application.Features.Identity.Services
 {
@@ -18,7 +19,7 @@ namespace Menro.Application.Features.Identity.Services
     * شرح وظایف:
     ارسال و تایید OTP
     صدور توکن JWT
-    مدیریت لاگین (ثبت‌نام خودکار در صورت نیاز، در همون لحظه‌ی لاگین، داخل UserService انجام می‌شه)
+    تشخیص نیاز به ثبت نام یا ادامه ورود به سایت
     */
     public class AuthService : IAuthService
     {
@@ -27,16 +28,10 @@ namespace Menro.Application.Features.Identity.Services
         private readonly IUnitOfWork _uow;
         private readonly JwtSettings _jwtSettings;
         private readonly ISmsSender _smsSender;
+        private readonly IHostEnvironment _env;
 
-        // ⏱️ Minimum time that must pass between two OTP sends to the same
-        // phone number. This is the single source of truth for the
-        // rate limit — adjust here if the desired window changes.
         private static readonly TimeSpan OtpResendCooldown = TimeSpan.FromSeconds(60);
 
-        // ⏱️ How long a password-reset token stays valid after OTP
-        // verification. Short window: it only needs to survive the time
-        // between finishing step 2 (enter OTP) and submitting step 3
-        // (new password) of the forgot-password flow.
         private static readonly TimeSpan PasswordResetTokenLifetime = TimeSpan.FromMinutes(10);
 
         private const string PasswordResetPurposeClaim = "purpose";
@@ -47,12 +42,14 @@ namespace Menro.Application.Features.Identity.Services
             JwtSettings jwtSettings,
             IUnitOfWork uow,
             ISmsSender smsSender,
-            IUserService userService)
+            IUserService userService,
+            IHostEnvironment env)
         {
             _jwtSettings = jwtSettings;
             _uow = uow;
             _smsSender = smsSender;
             _userService = userService;
+            _env = env;
         }
         #endregion
 
@@ -65,11 +62,6 @@ namespace Menro.Application.Features.Identity.Services
             var phone = PhoneNumberHelper.ToStorageFormat(phoneNumber);
             var now = DateTime.UtcNow;
 
-            // ⏱️ Rate limit: refuse to issue a new OTP if the last one sent
-            // to this phone number is still within the cooldown window.
-            // GetLatestUnexpiredAsync works for this because the OTP's own
-            // expiration (2 minutes) is longer than the cooldown, so a
-            // just-sent code is still "unexpired" when we check.
             var lastOtp = await _uow.Otp.GetLatestUnexpiredAsync(phone);
             if (lastOtp is not null)
             {
@@ -81,16 +73,20 @@ namespace Menro.Application.Features.Identity.Services
                 }
             }
 
-            // برای تست و Development
-            // var code = "12345";
+            string code;
 
-            //نسخه Production(ارسال واقعی SMS)
-            var code = RandomNumberGenerator.GetInt32(10000, 100000).ToString();
-            var send = await _smsSender.SendOtpAsync(phone, $"کد تایید شما: {code}");
+            if (_env.IsDevelopment())
+            {
+                code = "12345";
+            }
+            else
+            {
+                code = RandomNumberGenerator.GetInt32(10000, 100000).ToString();
 
-            if (!send.IsSuccess)
-                throw new Exception($"SMS failed: {send.ProviderMessage}");
-
+                var send = await _smsSender.SendOtpAsync(phone, $"کد تایید شما: {code}");
+                if (!send.IsSuccess)
+                    return Result.Failure("ارسال پیامک با خطا مواجه شد. لطفاً دوباره تلاش کنید.");
+            }
 
             await _uow.Otp.AddAsync(new Otp
             {
@@ -316,15 +312,12 @@ namespace Menro.Application.Features.Identity.Services
 
         /*--- Private Helpers ---*/
 
-        // 🔧 primitive مشترک: «این شماره همین الان با OTP تأیید شده، برای این
-        // هدف مشخص». فعلاً فقط توسط forgot-password استفاده می‌شه (ثبت‌نام
-        // دیگه به این نیاز نداره چون داخل همون لحظه‌ی لاگین انجام می‌شه).
         private string GeneratePurposeToken(string phoneNumber, string purpose, TimeSpan lifetime)
         {
             var claims = new List<Claim>
     {
-        new Claim(PasswordResetPhoneClaim, phoneNumber), // همون claim مشترک "phone"
-        new Claim(PasswordResetPurposeClaim, purpose),   // همون claim مشترک "purpose"
+        new Claim(PasswordResetPhoneClaim, phoneNumber),
+        new Claim(PasswordResetPurposeClaim, purpose),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
     };
 
