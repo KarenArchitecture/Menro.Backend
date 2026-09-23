@@ -33,12 +33,21 @@ namespace Menro.Application.Features.Orders.DTOs
         public int Id { get; set; }
         public int RestaurantOrderNumber { get; set; }
         public string InvoiceNumber { get; set; } = "";
+
+        // 🆕
+        public int RestaurantId { get; set; }
+        public string RestaurantSlug { get; set; } = "";
+
         public string RestaurantName { get; set; } = "";
         public string? RestaurantLogoUrl { get; set; }
         public string? TableLabel { get; set; }
         public DateTime CreatedAt { get; set; }
         public int TotalPrice { get; set; }
         public OrderStatus Status { get; set; }
+
+        // 🆕 رای فعلی کاربر برای این رستوران (نه این سفارش خاص)
+        public int? UserRating { get; set; }
+
         public List<UserOrderPreviewItemDto> PreviewItems { get; set; } = new();
     }
 

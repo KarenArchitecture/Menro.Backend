@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Menro.Domain.Entities
 {
@@ -13,10 +9,13 @@ namespace Menro.Domain.Entities
         public int RestaurantId { get; set; }
         public Restaurant Restaurant { get; set; } = null!;
 
-        public string UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         public User User { get; set; } = null!;
 
         public int Score { get; set; } // 1 to 5
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // 🆕 برای اینکه بدونیم کاربر رایش رو بعداً اصلاح کرده یا نه
+        public DateTime? UpdatedAt { get; set; }
     }
 }

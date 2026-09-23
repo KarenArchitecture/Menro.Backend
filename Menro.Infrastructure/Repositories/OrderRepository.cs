@@ -90,6 +90,18 @@ namespace Menro.Infrastructure.Repositories
             return order;
         }
 
+        public async Task<bool> UserHasCompletedOrderAtRestaurantAsync(string userId, int restaurantId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+                return false;
+
+            return await _context.Orders
+                .AnyAsync(o =>
+                    o.UserId == userId &&
+                    o.RestaurantId == restaurantId &&
+                    o.Status == OrderStatus.Completed, ct);
+        }
+
         /* ============================================================
            💰 AdminPanel
         ============================================================ */
