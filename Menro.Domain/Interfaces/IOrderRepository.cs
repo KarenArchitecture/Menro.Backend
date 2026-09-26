@@ -20,6 +20,8 @@ namespace Menro.Domain.Interfaces
 
         Task<Order?> GetPublicOrderDetailsAsync(int orderId, string? requestingUserId, CancellationToken ct = default);
 
+        Task<bool> UserHasCompletedOrderAtRestaurantAsync(string userId, int restaurantId, CancellationToken ct = default);
+
 
         /* ============================================================
            💰 AdminPanel

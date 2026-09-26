@@ -3,7 +3,6 @@ using Menro.Application.Common.Media;
 using Menro.Application.Features.Orders.DTOs;
 using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Domain.Interfaces;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Menro.Application.Features.Orders.Services.Implementations
 {
@@ -11,18 +10,18 @@ namespace Menro.Application.Features.Orders.Services.Implementations
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IMediaStorageProvider _mediaStorage;
+        private readonly IRestaurantRatingRepository _restaurantRatingRepository; // 🆕
 
-        public OrderHistoryService(IOrderRepository orderRepository, IMediaStorageProvider mediaStorage)
+        public OrderHistoryService(
+            IOrderRepository orderRepository,
+            IMediaStorageProvider mediaStorage,
+            IRestaurantRatingRepository restaurantRatingRepository) // 🆕
         {
             _orderRepository = orderRepository;
             _mediaStorage = mediaStorage;
+            _restaurantRatingRepository = restaurantRatingRepository;
         }
 
-        // 🔧 Needs the food's id, not just the image path — RestaurantFoodImage
-        // is a category that requires an entityId to build the resized-variant
-        // URL (same pattern as CartService/AdminOrderService). Calling GetUrl
-        // without it throws "entity id الزامی است" and blows up the whole
-        // /history endpoint with a 500.
         private string? BuildItemImageUrl(string? snapshot, string? liveImage, int foodId)
         {
             var raw = !string.IsNullOrWhiteSpace(snapshot) ? snapshot : liveImage;
@@ -34,11 +33,23 @@ namespace Menro.Application.Features.Orders.Services.Implementations
         public async Task<List<UserOrderListItemDto>> GetUserOrdersAsync(string userId)
         {
             var orders = await _orderRepository.GetUserOrdersAsync(userId);
+
+            // 🆕 یک‌بار برای همه‌ی رستوران‌های این تاریخچه، رای کاربر رو بگیر
+            var restaurantIds = orders
+                .Where(o => o.RestaurantId.HasValue)
+                .Select(o => o.RestaurantId!.Value)
+                .Distinct()
+                .ToList();
+
+            var userRatings = await _restaurantRatingRepository.GetUserRatingsForRestaurantsAsync(userId, restaurantIds);
+
             return orders.Select(o => new UserOrderListItemDto
             {
                 Id = o.Id,
                 RestaurantOrderNumber = o.RestaurantOrderNumber,
                 InvoiceNumber = o.InvoiceNumber,
+                RestaurantId = o.RestaurantId ?? 0,
+                RestaurantSlug = o.Restaurant?.Slug ?? "",
                 RestaurantName = o.Restaurant?.Name ?? "",
                 RestaurantLogoUrl = string.IsNullOrWhiteSpace(o.Restaurant?.LogoImageUrl)
                     ? null
@@ -47,6 +58,9 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                 CreatedAt = o.CreatedAt,
                 TotalPrice = o.TotalPrice,
                 Status = o.Status,
+                UserRating = o.RestaurantId.HasValue && userRatings.TryGetValue(o.RestaurantId.Value, out var score)
+                    ? score
+                    : null,
                 PreviewItems = o.OrderItems.Select(oi => new UserOrderPreviewItemDto
                 {
                     FoodId = oi.FoodId,
@@ -58,6 +72,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
 
         public async Task<PublicOrderDetailsDto?> GetOrderBillAsync(int orderId, string? requestingUserId)
         {
+            // بدون تغییر نسبت به قبل
             var order = await _orderRepository.GetPublicOrderDetailsAsync(orderId, requestingUserId);
             if (order == null) return null;
             return new PublicOrderDetailsDto
