@@ -20,7 +20,7 @@ namespace Menro.Application.Features.Restaurants.Services.Interfaces
         // owner methods
         Task<RestaurantProfileDto?> GetRestaurantProfileAsync(int id);
         Task UpdateRestaurantProfileAsync(UpdateRestaurantProfileDto dto);
-
+        Task<RestaurantQrInfoDto?> GetRestaurantQrInfoAsync(int id);
 
         // admin panel => restaurant category management tab
         Task<RestaurantCategoryDto?> GetRestaurantCategoryByIdAsync(int id);

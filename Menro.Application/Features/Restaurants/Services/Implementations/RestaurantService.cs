@@ -3,7 +3,6 @@ using Menro.Domain.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Enums;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
-using Menro.Application.Extensions;
 using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.Media;
 using Microsoft.AspNetCore.Http;
@@ -300,6 +299,22 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                 SubscriptionDaysLeft = r.Subscription != null
                     ? (r.Subscription.EndDate - DateTime.UtcNow).Days
                     : 0
+            };
+        }
+
+        // restaurant QR code (owner panel)
+        public async Task<RestaurantQrInfoDto?> GetRestaurantQrInfoAsync(int id)
+        {
+            var r = await _uow.Restaurant.GetByIdAsync(id);
+            if (r == null) return null;
+
+            return new RestaurantQrInfoDto
+            {
+                Name = r.Name,
+                Slug = r.Slug,
+                LogoUrl = string.IsNullOrWhiteSpace(r.LogoImageUrl)
+                    ? null
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, r.LogoImageUrl, r.Id.ToString(), MediaVariant.Resized)
             };
         }
 

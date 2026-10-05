@@ -1,9 +1,11 @@
 ﻿using Menro.Application.Common.Interfaces;
 using Menro.Application.Common.SD;
 using Menro.Application.Features.Restaurants.DTOs;
+using Menro.Application.Features.Restaurants.Services.Implementations;
 using Menro.Application.Features.Restaurants.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Menro.Web.Controllers.Restaurants
 {
@@ -56,6 +58,16 @@ namespace Menro.Web.Controllers.Restaurants
             var isAvailable = await _service.IsSlugAvailableAsync(slug, restaurantId);
 
             return Ok(new { available = isAvailable });
+        }
+
+        [HttpGet("qr-info")]   // GET /api/owner/restaurant/qr-info
+        public async Task<IActionResult> GetQrInfo()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var restaurantId = await _service.GetRestaurantIdByUserIdAsync(userId);
+
+            var dto = await _service.GetRestaurantQrInfoAsync(restaurantId);
+            return dto == null ? NotFound() : Ok(dto);
         }
 
         [HttpGet("context")]
