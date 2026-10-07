@@ -13,15 +13,18 @@ namespace Menro.Application.Features.Orders.Services.Implementations
         private readonly IUnitOfWork _unitOfWork;
         private readonly IFoodService _foodService;
         private readonly ICartIdentityAccessor _cartIdentityAccessor;
+        private readonly INotificationService _notifier;
 
         public OrderCreationService(
             IUnitOfWork unitOfWork,
             IFoodService foodService,
-            ICartIdentityAccessor cartIdentityAccessor)
+            ICartIdentityAccessor cartIdentityAccessor,
+            INotificationService notifier)
         {
             _unitOfWork = unitOfWork;
             _foodService = foodService;
             _cartIdentityAccessor = cartIdentityAccessor;
+            _notifier = notifier;
         }
 
         private string BuildTitleSnapshot(Food food, FoodVariant? variant, IEnumerable<FoodAddon>? addons)
@@ -58,6 +61,24 @@ namespace Menro.Application.Features.Orders.Services.Implementations
 
             var countToday = await _unitOfWork.Order.CountOrdersForRestaurantOnDateAsync(restaurantId, dayStartUtc, dayEndUtc, ct);
             return $"{y:D4}{m:D2}{d:D2}{countToday + 1}";
+        }
+
+        // اطلاع‌رسانی real-time به ادمین‌های رستوران بعد از ثبت موفق سفارش.
+        // خطاها داخل NotificationService (SafeSendAsync) خورده می‌شوند،
+        // پس ثبت سفارش هیچ‌وقت به‌خاطر نوتیف خراب نمی‌شود.
+        private Task NotifyAdminsAsync(Domain.Entities.Order order)
+        {
+            // سفارش بدون رستوران گروه ادمینی ندارد که نوتیف بگیرد
+            if (!order.RestaurantId.HasValue)
+                return Task.CompletedTask;
+
+            return _notifier.NotifyOrderCreated(
+                order.RestaurantId.Value,
+                new OrderCreatedNotification
+                {
+                    OrderId = order.Id,
+                    CreatedAt = order.CreatedAt
+                });
         }
 
         /* ============================================================
@@ -152,6 +173,8 @@ namespace Menro.Application.Features.Orders.Services.Implementations
 
             await _unitOfWork.Order.AddOrderAsync(order);
             await _unitOfWork.SaveChangesAsync();
+
+            await NotifyAdminsAsync(order);
 
             if (!string.IsNullOrWhiteSpace(userId))
                 _unitOfWork.Order.InvalidateUserRecentOrders(userId);
@@ -262,6 +285,8 @@ namespace Menro.Application.Features.Orders.Services.Implementations
 
             await _unitOfWork.Order.AddOrderAsync(order, ct);
             await _unitOfWork.Order.SaveChangesAsync(ct);
+
+            await NotifyAdminsAsync(order);
 
             await _unitOfWork.Cart.RemoveCartAsync(cart, ct);
             await _unitOfWork.Cart.SaveChangesAsync(ct);

@@ -12,13 +12,13 @@ namespace Menro.Application.Features.Music.Services.Implementations
         private readonly IMusicPlayerRepository _musicPlayerRepository;
         private readonly IPlaylistTrackRepository _playlistTrackRepository;
         private readonly IPlaylistRepository _playlistRepository;
-        private readonly IMusicNotificationService _notification;
+        private readonly INotificationService _notification;
         private readonly IPlaylistProvisioningService _playlistProvisioning;
 
         public MusicPlayerService(IMusicPlayerRepository musicPlayerRepository, 
             IPlaylistTrackRepository playlistTrackRepository,
             IPlaylistRepository playlistRepository,
-            IMusicNotificationService notification,
+            INotificationService notification,
             IPlaylistProvisioningService playlistProvisioning)
         {
             _musicPlayerRepository = musicPlayerRepository;

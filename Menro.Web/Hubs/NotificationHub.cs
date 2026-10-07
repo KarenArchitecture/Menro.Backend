@@ -5,14 +5,14 @@ using Microsoft.AspNetCore.SignalR;
 namespace Menro.Web.Hubs
 {
     [Authorize]
-    public class MusicHub : Hub
+    public class NotificationHub : Hub
     {
         private readonly IRestaurantAdminAccessService _adminAccess;
-        private readonly ILogger<MusicHub> _logger;
+        private readonly ILogger<NotificationHub> _logger;
 
-        public MusicHub(
+        public NotificationHub(
             IRestaurantAdminAccessService adminAccess,
-            ILogger<MusicHub> logger)
+            ILogger<NotificationHub> logger)
         {
             _adminAccess = adminAccess;
             _logger = logger;

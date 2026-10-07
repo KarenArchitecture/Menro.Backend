@@ -227,7 +227,7 @@ builder.Services.Configure<MediaStorageOptions>(options =>
 builder.Services.AddSingleton<IMediaStorageProvider, LocalDiskMediaStorageProvider>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
 
-builder.Services.AddSingleton<IMusicNotificationService, MusicNotificationService>();
+builder.Services.AddSingleton<INotificationService, NotificationService>();
 builder.Services.AddScoped<IRestaurantAdminAccessService, RestaurantAdminAccessService>();
 
 builder.Services.AddSingleton<IGlobalDateTimeService, GlobalDateTimeService>();
@@ -413,7 +413,7 @@ app.MapGet("/health", () =>
 .AllowAnonymous();
 
 //hubs
-app.MapHub<MusicHub>("/hubs/music")
+app.MapHub<NotificationHub>("/hubs/music")
     .RequireCors("AllowReactClient");
 
 
