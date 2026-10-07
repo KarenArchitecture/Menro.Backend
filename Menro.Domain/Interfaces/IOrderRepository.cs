@@ -66,5 +66,7 @@ namespace Menro.Domain.Interfaces
             string userId, int take, string? cursor, CancellationToken ct = default);
 
         Task<List<Order>> GetUserOrdersAsync(string userId, CancellationToken ct = default);
+
+        Task<List<Food>> GetUserFrequentFoodsAtRestaurantAsync(string userId, string restaurantSlug, CancellationToken ct = default);
     }
 }

@@ -443,6 +443,65 @@ namespace Menro.Infrastructure.Repositories
         }
 
         /* ============================================================
+           🔁 "همون همیشگی": غذاهای پرسفارش کاربر در یک رستوران مشخص
+        ============================================================ */
+        public async Task<List<Food>> GetUserFrequentFoodsAtRestaurantAsync(
+            string userId, string restaurantSlug, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(restaurantSlug))
+                return new List<Food>();
+
+            // 1) رتبه‌بندی: جمع تعداد هر غذا در سفارش‌های غیرلغوشده‌ی همین کاربر از همین رستوران
+            var ranked = await _context.Orders
+                .AsNoTracking()
+                .Where(o =>
+                    o.UserId == userId &&
+                    o.Status != OrderStatus.Cancelled &&
+                    o.Restaurant != null &&
+                    o.Restaurant.Slug == restaurantSlug)
+                .SelectMany(o => o.OrderItems.Select(oi => new { oi.FoodId, oi.Quantity, o.CreatedAt }))
+                .GroupBy(x => x.FoodId)
+                .Select(g => new
+                {
+                    FoodId = g.Key,
+                    TotalQuantity = g.Sum(x => x.Quantity),
+                    LastOrderedAt = g.Max(x => x.CreatedAt)
+                })
+                .OrderByDescending(x => x.TotalQuantity)
+                .ThenByDescending(x => x.LastOrderedAt)
+                .ToListAsync(ct);
+
+            if (ranked.Count == 0)
+                return new List<Food>();
+
+            var ids = ranked.Select(x => x.FoodId).ToList();
+
+            // 2) خود غذاها (فقط موجودها، مثل منوی رستوران)
+            var foods = await _context.Foods
+                .AsNoTracking()
+                .Where(f =>
+                    ids.Contains(f.Id) &&
+                    f.IsAvailable &&
+                    !f.IsDeleted &&
+                    f.Restaurant.IsActive &&
+                    f.Restaurant.Status == RestaurantStatus.Approved)
+                .Include(f => f.CustomFoodCategory)
+                .Include(f => f.GlobalFoodCategory)
+                .Include(f => f.Ratings)
+                .Include(f => f.Variants.Where(v => !v.IsDeleted && v.IsAvailable))
+                .Include(f => f.Restaurant)
+                .AsSplitQuery()
+                .ToListAsync(ct);
+
+            // 3) حفظ ترتیب پرسفارش‌ترین
+            var position = ranked
+                .Select((x, idx) => new { x.FoodId, idx })
+                .ToDictionary(x => x.FoodId, x => x.idx);
+
+            return foods.OrderBy(f => position[f.Id]).ToList();
+        }
+
+        /* ============================================================
            🔄 CACHE INVALIDATION
         ============================================================ */
 

@@ -3,6 +3,7 @@ using Menro.Application.Common.Media;
 using Menro.Application.Features.Orders.DTOs;
 using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Domain.Interfaces;
+using Menro.Application.Features.Foods.DTOs;
 
 namespace Menro.Application.Features.Orders.Services.Implementations
 {
@@ -67,6 +68,45 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                     ImageUrl = BuildItemImageUrl(oi.ImageUrlSnapshot, oi.Food?.ImageUrl, oi.FoodId),
                     Quantity = oi.Quantity
                 }).ToList()
+            }).ToList();
+        }
+
+        public async Task<List<FoodCardDto>> GetFrequentFoodsAtRestaurantAsync(
+            string userId, string restaurantSlug, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(restaurantSlug))
+                return new List<FoodCardDto>();
+
+            var foods = await _orderRepository.GetUserFrequentFoodsAtRestaurantAsync(userId, restaurantSlug, ct);
+
+            // همان منطق RestaurantMenuService تا کارت‌ها دقیقاً مثل منو باشند
+            return foods.Select(f =>
+            {
+                var displayPrice = f.Price;
+                if (f.Variants != null && f.Variants.Any())
+                {
+                    var defaultVariant = f.Variants.FirstOrDefault(v => v.IsDefault == true)
+                                       ?? f.Variants.FirstOrDefault(v => v.IsAvailable)
+                                       ?? f.Variants.First();
+                    displayPrice = defaultVariant.Price;
+                }
+
+                return new FoodCardDto
+                {
+                    Id = f.Id,
+                    Name = f.Name,
+                    Ingredients = f.Ingredients,
+                    Price = displayPrice,
+                    ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
+                        ? null
+                        : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl, f.Id.ToString(), MediaVariant.Thumbnail),
+                    Rating = f.AverageRating,
+                    Voters = f.VotersCount,
+                    RestaurantName = f.Restaurant?.Name ?? string.Empty,
+                    RestaurantCategory = f.CustomFoodCategory?.Name
+                                         ?? f.GlobalFoodCategory?.Name
+                                         ?? "نامشخص"
+                };
             }).ToList();
         }
 

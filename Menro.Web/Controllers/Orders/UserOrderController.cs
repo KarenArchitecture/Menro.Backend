@@ -5,6 +5,7 @@ using Menro.Application.Features.Orders.DTOs;
 using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Application.Features.Search.Services.Interfaces;
 using Menro.Application.Features.Search.DTOs;
+using Menro.Application.Features.Foods.DTOs;
 
 namespace Menro.Web.Controllers.Orders
 {
@@ -83,6 +84,20 @@ namespace Menro.Web.Controllers.Orders
 
             var orders = await _orderHistoryService.GetUserOrdersAsync(userId);
             return Ok(orders);
+        }
+
+
+        [HttpGet("restaurant/{slug}/frequent-foods")]
+        [ProducesResponseType(typeof(List<FoodCardDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<List<FoodCardDto>>> GetFrequentFoods(string slug, CancellationToken ct)
+        {
+            var userId = _currentUserService.GetUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var foods = await _orderHistoryService.GetFrequentFoodsAtRestaurantAsync(userId, slug, ct);
+            return Ok(foods);
         }
     }
 }
