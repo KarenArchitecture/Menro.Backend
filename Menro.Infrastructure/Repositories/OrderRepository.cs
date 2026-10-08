@@ -368,18 +368,37 @@ namespace Menro.Infrastructure.Repositories
             }
         }
 
+        private static string EscapeLike(string s)
+            => s.Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
+
         public async Task<(List<Food> Foods, string? NextCursor, bool HasMore)> GetUserRecentlyOrderedFoodsCursorAsync(
-            string userId, int take, string? cursor, CancellationToken ct = default)
+            string userId, int take, string? cursor, string? q, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(userId) || take <= 0)
                 return (new List<Food>(), null, false);
 
             take = Math.Clamp(take, 1, 24);
 
-            var baseQuery = _context.Orders
+            var orderedItems = _context.Orders
                 .AsNoTracking()
                 .Where(o => o.UserId == userId)
-                .SelectMany(o => o.OrderItems.Select(oi => new { oi.FoodId, o.CreatedAt }))
+                .SelectMany(o => o.OrderItems.Select(oi => new
+                {
+                    oi.FoodId,
+                    o.CreatedAt,
+                    FoodName = oi.Food.Name,
+                    RestaurantName = oi.Food.Restaurant.Name
+                }));
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var like = $"%{EscapeLike(q.Trim())}%";
+                orderedItems = orderedItems.Where(x =>
+                    EF.Functions.Like(x.FoodName, like) ||
+                    EF.Functions.Like(x.RestaurantName, like));
+            }
+
+            var baseQuery = orderedItems
                 .GroupBy(x => x.FoodId)
                 .Select(g => new
                 {
@@ -387,7 +406,6 @@ namespace Menro.Infrastructure.Repositories
                     LastOrderedAt = g.Max(x => x.CreatedAt)
                 });
 
-            // cursor filter (desc order): load items "after" the cursor
             if (TryDecodeCursor(cursor, out var cTime, out var cFoodId))
             {
                 baseQuery = baseQuery.Where(x =>

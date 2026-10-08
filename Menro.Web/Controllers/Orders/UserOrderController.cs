@@ -54,6 +54,7 @@ namespace Menro.Web.Controllers.Orders
         public async Task<ActionResult<PagedResultDto<RecentOrdersFoodCardDto>>> BrowseRecentOrders(
             [FromQuery] int take = 6,
             [FromQuery] string? cursor = null,
+            [FromQuery] string? q = null,
             CancellationToken ct = default)
         {
             var userId = _currentUserService.GetUserId();
@@ -61,7 +62,7 @@ namespace Menro.Web.Controllers.Orders
                 return Unauthorized();
 
             take = Math.Clamp(take, 1, 24);
-            var result = await _recentBrowseService.BrowseRecentOrderedFoodsAsync(userId, take, cursor, ct);
+            var result = await _recentBrowseService.BrowseRecentOrderedFoodsAsync(userId, take, cursor, q, ct);
 
             return Ok(result ?? new PagedResultDto<RecentOrdersFoodCardDto>
             {

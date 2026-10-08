@@ -57,7 +57,8 @@ namespace Menro.Application.Comments.Services.Implementations
                     UserName = c.User?.FullName ?? "کاربر مهمان",
                     UserAvatarUrl = string.IsNullOrWhiteSpace(c.User?.ProfileImage)
                         ? null
-                        : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, c.Food.ImageUrl, c.FoodId.ToString(), MediaVariant.Thumbnail),
+                        : _mediaStorage.GetUrl(MediaCategory.UserProfileImage, c.User.ProfileImage, c.UserId, MediaVariant.Thumbnail),
+                    CreatedAt = c.CreatedAt,
                     Rating = c.Rating,
                     Text = c.Text,
                     Likes = c.LikesCount,

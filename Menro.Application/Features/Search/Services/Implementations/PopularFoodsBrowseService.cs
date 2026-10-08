@@ -32,7 +32,9 @@ namespace Menro.Application.Features.Search.Services.Implementations
                 ImageUrl = f.ImageUrl ?? string.Empty,
                 Rating = Math.Round(avg, 1),
                 Voters = f.Ratings?.Count ?? 0,
-                RestaurantName = f.Restaurant?.Name ?? string.Empty
+                RestaurantId = f.RestaurantId,
+                RestaurantName = f.Restaurant?.Name ?? string.Empty,
+                RestaurantSlug = f.Restaurant?.Slug
             };
         }
 

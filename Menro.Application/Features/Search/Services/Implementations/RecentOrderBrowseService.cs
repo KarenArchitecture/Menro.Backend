@@ -38,6 +38,7 @@ namespace Menro.Application.Features.Search.Services.Implementations
             string userId,
             int take = 6,
             string? cursor = null,
+            string? q = null,
             CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(userId))
@@ -54,7 +55,7 @@ namespace Menro.Application.Features.Search.Services.Implementations
 
             // ✅ pass CancellationToken through to repository/EF Core
             var (foods, nextCursor, hasMore) =
-                await _orderRepository.GetUserRecentlyOrderedFoodsCursorAsync(userId, take, cursor, ct);
+                await _orderRepository.GetUserRecentlyOrderedFoodsCursorAsync(userId, take, cursor, q, ct);
 
             var items = (foods ?? new List<Food>())
                 .Select(Map)

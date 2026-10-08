@@ -210,32 +210,27 @@ namespace Menro.Infrastructure.Repositories
                     f.Restaurant.IsActive &&
                     f.Restaurant.Status == RestaurantStatus.Approved);
 
-            var ordersAgg = _context.OrderItems
-                .AsNoTracking()
-                .GroupBy(oi => oi.FoodId)
-                .Select(g => new { FoodId = g.Key, Orders = g.Sum(x => x.Quantity) });
-
-            var ratingsAgg = _context.Set<FoodRating>()
-                .AsNoTracking()
-                .GroupBy(r => r.FoodId)
-                .Select(g => new { FoodId = g.Key, Avg = g.Average(x => x.Score), Voters = g.Count() });
-
-            var scored = from f in baseFoods.Select(f => new { f.Id })
-                         join o in ordersAgg on f.Id equals o.FoodId into og
-                         from o in og.DefaultIfEmpty()
-                         join r in ratingsAgg on f.Id equals r.FoodId into rg
-                         from r in rg.DefaultIfEmpty()
-                         select new
-                         {
-                             Id = f.Id,
-                             Orders = o == null ? 0 : o.Orders,
-                             Avg = r == null ? 0.0 : (double)r.Avg,
-                             Voters = r == null ? 0 : r.Voters,
-                             Popularity =
-                                ((o == null ? 0 : o.Orders) * 0.6)
-                                + ((r == null ? 0.0 : (double)r.Avg) * 10 * 0.3)
-                                + (Math.Log10((r == null ? 0 : r.Voters) + 1.0) * 10 * 0.1)
-                         };
+            var scored = baseFoods
+                .Select(f => new
+                {
+                    f.Id,
+                    Orders = _context.OrderItems
+                        .Where(oi => oi.FoodId == f.Id)
+                        .Sum(oi => (int?)oi.Quantity) ?? 0,
+                    Avg = _context.FoodRatings
+                        .Where(r => r.FoodId == f.Id)
+                        .Average(r => (double?)r.Score) ?? 0.0,
+                    Voters = _context.FoodRatings
+                        .Count(r => r.FoodId == f.Id)
+                })
+                .Select(x => new
+                {
+                    x.Id,
+                    Popularity =
+                        (x.Orders * 0.6)
+                        + (x.Avg * 10 * 0.3)
+                        + (Math.Log10(x.Voters + 1.0) * 10 * 0.1)
+                });
 
             var page = await scored
                 .OrderByDescending(x => x.Popularity)
