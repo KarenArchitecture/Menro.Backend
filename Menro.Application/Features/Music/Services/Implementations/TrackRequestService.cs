@@ -12,9 +12,9 @@ namespace Menro.Application.Features.Music.Services.Implementations
     public class TrackRequestService : ITrackRequestService
     {
         private readonly IUnitOfWork _uow;
-        private readonly IMusicNotificationService _notifier;
+        private readonly INotificationService _notifier;
 
-        public TrackRequestService(IUnitOfWork uow, IMusicNotificationService notifier)
+        public TrackRequestService(IUnitOfWork uow, INotificationService notifier)
         {
             _uow = uow;
             _notifier = notifier;

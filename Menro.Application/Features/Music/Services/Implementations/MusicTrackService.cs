@@ -13,12 +13,12 @@ namespace Menro.Application.Features.Music.Services.Implementations
     internal class MusicTrackService : IMusicTrackService
     {
         private readonly IUnitOfWork _uow;
-        private readonly IMusicNotificationService _musicNotificationService;
+        private readonly INotificationService _musicNotificationService;
         private readonly IMediaStorageProvider _mediaStorage;
 
         public MusicTrackService(
             IUnitOfWork uow,
-            IMusicNotificationService musicNotificationService,
+            INotificationService musicNotificationService,
             IMediaStorageProvider mediaStorage)
         {
             _uow = uow;

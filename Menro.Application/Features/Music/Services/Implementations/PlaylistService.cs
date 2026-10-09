@@ -14,14 +14,14 @@ namespace Menro.Application.Features.Music.Services.Implementations
         #region DI
         private readonly IUnitOfWork _uow;
         private readonly IMusicPlayerService _musicPlayerService;
-        private readonly IMusicNotificationService _notification;
+        private readonly INotificationService _notification;
         private readonly IMediaStorageProvider _mediaStorage;
         private readonly IPlaylistProvisioningService _provisioning;
 
         public PlaylistService(
             IUnitOfWork uow,
             IMusicPlayerService musicPlayerService,
-            IMusicNotificationService notification,
+            INotificationService notification,
             IMediaStorageProvider mediaStorage,
             IPlaylistProvisioningService provisioning)
         {
