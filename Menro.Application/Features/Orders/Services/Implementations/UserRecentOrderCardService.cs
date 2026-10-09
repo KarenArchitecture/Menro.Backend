@@ -4,6 +4,8 @@ using Menro.Application.Features.Orders.DTOs;
 using Menro.Application.Features.Orders.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
+using Menro.Application.Features.Foods.Helpers;
+
 namespace Menro.Application.Features.Order.Services.Implementations
 {
     public class UserRecentOrderCardService : IUserRecentOrderCardService
@@ -31,6 +33,7 @@ namespace Menro.Application.Features.Order.Services.Implementations
                         : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl, f.Id.ToString(), MediaVariant.Thumbnail),
                 Rating = Math.Round(avg, 1),
                 Voters = ratings.Count,
+                Price = FoodPricing.GetDisplayPrice(f),
                 RestaurantId = f.RestaurantId,
                 RestaurantName = f.Restaurant?.Name ?? string.Empty,
                 RestaurantSlug = f.Restaurant?.Slug

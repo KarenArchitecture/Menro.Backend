@@ -298,6 +298,7 @@ namespace Menro.Infrastructure.Repositories
                         .Where(f => latestFoodIds.Contains(f.Id) && f.IsAvailable && !f.IsDeleted)
                         .Include(f => f.Ratings)
                         .Include(f => f.Restaurant)
+                        .Include(f => f.Variants)
                         .ToListAsync(ct);
 
                     // Preserve original order
@@ -437,6 +438,7 @@ namespace Menro.Infrastructure.Repositories
                 .Where(f => ids.Contains(f.Id) && f.IsAvailable && !f.IsDeleted)
                 .Include(f => f.Ratings)
                 .Include(f => f.Restaurant)
+                .Include(f => f.Variants)
                 .ToListAsync(ct);
 
             // preserve ids order

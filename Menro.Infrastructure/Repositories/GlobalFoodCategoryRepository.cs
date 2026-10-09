@@ -153,6 +153,8 @@ namespace Menro.Infrastructure.Repositories
                 .Include(f => f.Restaurant)
                 .Include(f => f.OrderItems)
                 .Include(f => f.CustomFoodCategory)
+                .Include(f => f.Variants)
+                .AsSplitQuery()
                 .Where(f =>
                     f.CustomFoodCategory != null &&
                     f.CustomFoodCategory.GlobalCategoryId == globalCategoryId &&
@@ -249,6 +251,7 @@ namespace Menro.Infrastructure.Repositories
                 .AsNoTracking()
                 .Include(f => f.Ratings)
                 .Include(f => f.Restaurant)
+                .Include(f => f.Variants)
                 .Where(f => ids.Contains(f.Id))
                 .ToListAsync(ct);
 

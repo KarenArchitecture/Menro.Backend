@@ -37,6 +37,9 @@ namespace Menro.Infrastructure.Repositories
         private static string ToArabicLetters(string s)
             => s.Replace('ی', 'ي').Replace('ک', 'ك');
 
+        private static string EscapeLikeTerm(string s)
+            => s.Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
+
         public async Task<List<SearchHit>> SearchAsync(string term, int take)
         {
             term = (term ?? "").Trim();
@@ -47,18 +50,13 @@ namespace Menro.Infrastructure.Repositories
             // take = max results PER TYPE (restaurants and foods are capped separately)
             take = Math.Clamp(take, 1, 50);
 
-            static string EscapeLike(string s)
-                => s.Replace("[", "[[]")
-                    .Replace("%", "[%]")
-                    .Replace("_", "[_]");
-
             var persian = ToPersianLetters(term);
             var arabic = ToArabicLetters(persian);
 
-            var likeAny = $"%{EscapeLike(persian)}%";
-            var likeAnyAr = $"%{EscapeLike(arabic)}%";
-            var likeStart = $"{EscapeLike(persian)}%";
-            var likeStartAr = $"{EscapeLike(arabic)}%";
+            var likeAny = $"%{EscapeLikeTerm(persian)}%";
+            var likeAnyAr = $"%{EscapeLikeTerm(arabic)}%";
+            var likeStart = $"{EscapeLikeTerm(persian)}%";
+            var likeStartAr = $"{EscapeLikeTerm(arabic)}%";
 
             var nowUtc = DateTime.UtcNow;
             var nowLocal = DateTime.Now.TimeOfDay;
@@ -181,6 +179,13 @@ namespace Menro.Infrastructure.Repositories
                     Voters = _context.FoodRatings
                         .Count(fr => fr.FoodId == x.f.Id),
 
+                    // قیمت: واریانت پیش‌فرض → اولین واریانت فعال → اولین واریانت → قیمت پایه
+                    Price =
+                        x.f.Variants.Where(v => v.IsDefault == true).OrderBy(v => v.Id).Select(v => (int?)v.Price).FirstOrDefault()
+                        ?? x.f.Variants.Where(v => v.IsAvailable).OrderBy(v => v.Id).Select(v => (int?)v.Price).FirstOrDefault()
+                        ?? x.f.Variants.OrderBy(v => v.Id).Select(v => (int?)v.Price).FirstOrDefault()
+                        ?? x.f.Price,
+
                     Rank = (EF.Functions.Like(x.f.Name, likeStart) ||
                             EF.Functions.Like(x.f.Name, likeStartAr))
                         ? 2
@@ -200,9 +205,6 @@ namespace Menro.Infrastructure.Repositories
                 .ToList();
         }
 
-        private static string EscapeLikeTerm(string s)
-            => s.Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
-
         public async Task<(List<SearchHit> Items, bool HasMore)> SearchPagedAsync(
             string term, SearchHitType type, int skip, int take, int? globalCategoryId = null)
         {
@@ -213,9 +215,13 @@ namespace Menro.Infrastructure.Repositories
             take = Math.Clamp(take, 1, 50);
             skip = Math.Max(skip, 0);
 
-            var esc = EscapeLikeTerm(term);
-            var likeAny = $"%{esc}%";
-            var likeStart = $"{esc}%";
+            var persian = ToPersianLetters(term);
+            var arabic = ToArabicLetters(persian);
+
+            var likeAny = $"%{EscapeLikeTerm(persian)}%";
+            var likeAnyAr = $"%{EscapeLikeTerm(arabic)}%";
+            var likeStart = $"{EscapeLikeTerm(persian)}%";
+            var likeStartAr = $"{EscapeLikeTerm(arabic)}%";
 
             List<SearchHit> rows;
 
@@ -231,6 +237,7 @@ namespace Menro.Infrastructure.Repositories
                         r.IsActive &&
                         r.Status == RestaurantStatus.Approved &&
                         (EF.Functions.Like(r.Name, likeAny) ||
+                         EF.Functions.Like(r.Name, likeAnyAr) ||
                          EF.Functions.Like(r.Slug, likeAny)));
 
                 if (globalCategoryId.HasValue)
@@ -274,7 +281,10 @@ namespace Menro.Infrastructure.Repositories
                             .Average() ?? 0,
                         Voters = _context.RestaurantRatings
                             .Count(rr => rr.RestaurantId == r.Id),
-                        Rank = EF.Functions.Like(r.Name, likeStart) ? 2 : 1
+                        Rank = (EF.Functions.Like(r.Name, likeStart) ||
+                                EF.Functions.Like(r.Name, likeStartAr))
+                            ? 2
+                            : 1
                     })
                     .OrderByDescending(x => x.Rank)
                     .ThenBy(x => x.Title)
@@ -307,11 +317,15 @@ namespace Menro.Infrastructure.Repositories
                         x.f.CustomFoodCategory != null &&
                         x.f.CustomFoodCategory.GlobalCategoryId == gid &&
                         (EF.Functions.Like(x.f.Name, likeAny) ||
-                         EF.Functions.Like(x.r.Name, likeAny)));
+                         EF.Functions.Like(x.f.Name, likeAnyAr) ||
+                         EF.Functions.Like(x.r.Name, likeAny) ||
+                         EF.Functions.Like(x.r.Name, likeAnyAr)));
                 }
                 else
                 {
-                    q = q.Where(x => EF.Functions.Like(x.f.Name, likeAny));
+                    q = q.Where(x =>
+                        EF.Functions.Like(x.f.Name, likeAny) ||
+                        EF.Functions.Like(x.f.Name, likeAnyAr));
                 }
 
                 rows = await q
@@ -330,7 +344,18 @@ namespace Menro.Infrastructure.Repositories
                             .Average() ?? 0,
                         Voters = _context.FoodRatings
                             .Count(fr => fr.FoodId == x.f.Id),
-                        Rank = EF.Functions.Like(x.f.Name, likeStart) ? 2 : 1
+
+                        // قیمت: واریانت پیش‌فرض → اولین واریانت فعال → اولین واریانت → قیمت پایه
+                        Price =
+                            x.f.Variants.Where(v => v.IsDefault == true).OrderBy(v => v.Id).Select(v => (int?)v.Price).FirstOrDefault()
+                            ?? x.f.Variants.Where(v => v.IsAvailable).OrderBy(v => v.Id).Select(v => (int?)v.Price).FirstOrDefault()
+                            ?? x.f.Variants.OrderBy(v => v.Id).Select(v => (int?)v.Price).FirstOrDefault()
+                            ?? x.f.Price,
+
+                        Rank = (EF.Functions.Like(x.f.Name, likeStart) ||
+                                EF.Functions.Like(x.f.Name, likeStartAr))
+                            ? 2
+                            : 1
                     })
                     .OrderByDescending(x => x.Rank)
                     .ThenBy(x => x.Title)

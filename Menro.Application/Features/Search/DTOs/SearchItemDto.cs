@@ -28,6 +28,7 @@ namespace Menro.Application.Features.Search.DTOs
         public int Discount { get; set; }
         public double Rating { get; set; }
         public int Voters { get; set; }
+        public int Price { get; set; }
         public bool IsOpen { get; set; }
     }
 }
