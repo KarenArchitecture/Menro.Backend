@@ -23,14 +23,20 @@ namespace Menro.Application.Features.Search.Services.Implementations
         /* ============================================================
            🧭 Helper: Map Food entity → HomeFoodCardDto
         ============================================================ */
-        private static HomeFoodCardDto MapToHomeFoodCardDto(Food f)
+        private HomeFoodCardDto MapToHomeFoodCardDto(Food f)  
         {
             var avg = f.Ratings?.Any() == true ? f.Ratings.Average(r => r.Score) : 0.0;
             return new HomeFoodCardDto
             {
                 Id = f.Id,
                 Name = f.Name,
-                ImageUrl = f.ImageUrl ?? string.Empty,
+                ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
+                    ? null
+                    : _mediaStorage.GetUrl(
+                        MediaCategory.RestaurantFoodImage,
+                        f.ImageUrl,
+                        f.Id.ToString(),
+                        MediaVariant.Thumbnail),
                 Rating = Math.Round(avg, 1),
                 Voters = f.Ratings?.Count ?? 0,
                 Price = FoodPricing.GetDisplayPrice(f),

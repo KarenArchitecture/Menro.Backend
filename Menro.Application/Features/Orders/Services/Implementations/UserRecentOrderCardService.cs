@@ -28,9 +28,9 @@ namespace Menro.Application.Features.Order.Services.Implementations
             {
                 Id = f.Id,
                 Name = f.Name,
-                    ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
-                        ? null
-                        : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl, f.Id.ToString(), MediaVariant.Thumbnail),
+                ImageUrl = string.IsNullOrWhiteSpace(f.ImageUrl)
+                    ? null
+                    : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, f.ImageUrl, f.Id.ToString(), MediaVariant.Thumbnail),
                 Rating = Math.Round(avg, 1),
                 Voters = ratings.Count,
                 Price = FoodPricing.GetDisplayPrice(f),
@@ -51,7 +51,8 @@ namespace Menro.Application.Features.Order.Services.Implementations
             if (foods == null || foods.Count == 0)
                 return new List<RecentOrdersFoodCardDto>();
 
-            return foods.Select(Map).ToList();
+            var result = foods.Select(Map).ToList();
+            return result;
         }
     }
 }
