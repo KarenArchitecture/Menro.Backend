@@ -1,4 +1,5 @@
-﻿using Menro.Application.Features.Orders.DTOs;
+﻿using Menro.Application.Features.Foods.DTOs;
+using Menro.Application.Features.Orders.DTOs;
 
 namespace Menro.Application.Features.Orders.Services.Interfaces
 {
@@ -6,5 +7,6 @@ namespace Menro.Application.Features.Orders.Services.Interfaces
     {
         Task<List<UserOrderListItemDto>> GetUserOrdersAsync(string userId);
         Task<PublicOrderDetailsDto?> GetOrderBillAsync(int orderId, string? requestingUserId);
+        Task<List<FoodCardDto>> GetFrequentFoodsAtRestaurantAsync(string userId, string restaurantSlug, CancellationToken ct = default);
     }
 }
