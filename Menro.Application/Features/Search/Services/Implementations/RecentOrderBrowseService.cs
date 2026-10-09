@@ -3,6 +3,7 @@ using Menro.Application.Features.Search.DTOs;
 using Menro.Application.Features.Search.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
+using Menro.Application.Features.Foods.Helpers;
 
 namespace Menro.Application.Features.Search.Services.Implementations
 {
@@ -27,7 +28,7 @@ namespace Menro.Application.Features.Search.Services.Implementations
                 ImageUrl = f.ImageUrl ?? string.Empty,
                 Rating = Math.Round(avg, 1),
                 Voters = ratings.Count,
-
+                Price = FoodPricing.GetDisplayPrice(f),
                 RestaurantId = f.RestaurantId,
                 RestaurantName = f.Restaurant?.Name ?? string.Empty,
                 RestaurantSlug = f.Restaurant?.Slug
@@ -38,6 +39,7 @@ namespace Menro.Application.Features.Search.Services.Implementations
             string userId,
             int take = 6,
             string? cursor = null,
+            string? q = null,
             CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(userId))
@@ -54,7 +56,7 @@ namespace Menro.Application.Features.Search.Services.Implementations
 
             // ✅ pass CancellationToken through to repository/EF Core
             var (foods, nextCursor, hasMore) =
-                await _orderRepository.GetUserRecentlyOrderedFoodsCursorAsync(userId, take, cursor, ct);
+                await _orderRepository.GetUserRecentlyOrderedFoodsCursorAsync(userId, take, cursor, q, ct);
 
             var items = (foods ?? new List<Food>())
                 .Select(Map)

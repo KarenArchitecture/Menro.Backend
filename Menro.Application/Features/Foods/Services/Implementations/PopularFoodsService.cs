@@ -4,6 +4,7 @@ using Menro.Application.Features.Foods.DTOs;
 using Menro.Application.Foods.Services.Interfaces;
 using Menro.Domain.Entities;
 using Menro.Domain.Interfaces;
+using Menro.Application.Features.Foods.Helpers;
 
 namespace Menro.Application.Features.Foods.Services
 {
@@ -28,9 +29,10 @@ namespace Menro.Application.Features.Foods.Services
                 ImageUrl = f.ImageUrl ?? string.Empty,
                 Rating = Math.Round(avg, 1),
                 Voters = f.Ratings?.Count ?? 0,
+                Price = FoodPricing.GetDisplayPrice(f),
                 RestaurantId = f.RestaurantId,
                 RestaurantName = f.Restaurant?.Name ?? string.Empty,
-                RestaurantSlug = f.Restaurant?.Slug
+                RestaurantSlug = f.Restaurant?.Slug,
             };
         }
 

@@ -29,6 +29,7 @@ namespace Menro.Domain.Contracts
         public int Discount { get; set; }
         public double Rating { get; set; }
         public int Voters { get; set; }
+        public int Price { get; set; }
         public bool IsOpen { get; set; }
 
         public int Rank { get; set; }
