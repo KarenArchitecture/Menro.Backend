@@ -159,6 +159,7 @@ public class DemoOrderSeeder : IDataSeeder
                             Quantity = quantity,
                             UnitPrice = unitPrice,
                             TitleSnapshot = food.Name,
+                            FoodTitleSnapshot = food.Name,
                             ImageUrlSnapshot = food.ImageUrl,
                         });
 
@@ -183,6 +184,7 @@ public class DemoOrderSeeder : IDataSeeder
                         Quantity = quantity,
                         UnitPrice = finalUnitPrice,
                         TitleSnapshot = $"{food.Name} - {chosenVariant.Name}",
+                        FoodTitleSnapshot = food.Name,
                         VariantTitleSnapshot = chosenVariant.Name,
                         ImageUrlSnapshot = food.ImageUrl,
                         Extras = selectedAddons.Select(a => new OrderItemExtra

@@ -149,6 +149,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                     Quantity = item.Quantity,
                     UnitPrice = serverUnitPrice,
                     TitleSnapshot = BuildTitleSnapshot(food, variant, selectedAddons),
+                    FoodTitleSnapshot = food.Name,
                     VariantTitleSnapshot = variant?.Name,
                     ImageUrlSnapshot = food.ImageUrl,
                     Extras = new List<OrderItemExtra>()
@@ -262,6 +263,7 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                     Quantity = cartItem.Quantity,
                     UnitPrice = unitPrice,
                     TitleSnapshot = BuildTitleSnapshot(food, variant, selectedAddons),
+                    FoodTitleSnapshot = food.Name,
                     VariantTitleSnapshot = variant.Name,
                     ImageUrlSnapshot = food.ImageUrl,
                     Extras = extras

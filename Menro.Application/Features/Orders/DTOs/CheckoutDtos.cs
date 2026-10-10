@@ -74,6 +74,8 @@ namespace Menro.Application.Features.Orders.DTOs
     public class PublicOrderItemDto
     {
         public string Name { get; set; } = "";
+        public string FoodName { get; set; } = "";
+        public string? VariantName { get; set; }
         public string? ImageUrl { get; set; }
         public int Quantity { get; set; }
         public int UnitPrice { get; set; }

@@ -21,6 +21,9 @@
         // ✅ اگر Variant انتخاب شده بود، اسمش هم ثابت بماند
         public string? VariantTitleSnapshot { get; set; }
 
+        // اسم خالص غذا (بدون نوع و مخلفات) در لحظه‌ی ثبت سفارش
+        public string? FoodTitleSnapshot { get; set; }
+
         public string? ImageUrlSnapshot { get; set; }
 
         public ICollection<OrderItemExtra> Extras { get; set; } = new List<OrderItemExtra>();

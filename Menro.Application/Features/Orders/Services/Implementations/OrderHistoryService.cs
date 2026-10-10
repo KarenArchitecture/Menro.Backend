@@ -31,6 +31,17 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                 : _mediaStorage.GetUrl(MediaCategory.RestaurantFoodImage, raw, foodId.ToString(), MediaVariant.Resized);
         }
 
+        // فقط برای سفارش‌های قدیمی که FoodTitleSnapshot ندارند.
+        private static string ExtractFoodName(string titleSnapshot, string? variantTitleSnapshot)
+        {
+            if (string.IsNullOrWhiteSpace(variantTitleSnapshot))
+                return titleSnapshot;
+
+            var marker = " - " + variantTitleSnapshot;
+            var idx = titleSnapshot.LastIndexOf(marker, StringComparison.Ordinal);
+            return idx > 0 ? titleSnapshot[..idx] : titleSnapshot;
+        }
+
         public async Task<List<UserOrderListItemDto>> GetUserOrdersAsync(string userId)
         {
             var orders = await _orderRepository.GetUserOrdersAsync(userId);
@@ -128,6 +139,9 @@ namespace Menro.Application.Features.Orders.Services.Implementations
                 Items = order.OrderItems.Select(oi => new PublicOrderItemDto
                 {
                     Name = oi.TitleSnapshot,
+                    FoodName = oi.FoodTitleSnapshot
+                               ?? ExtractFoodName(oi.TitleSnapshot, oi.VariantTitleSnapshot),
+                    VariantName = oi.VariantTitleSnapshot,
                     ImageUrl = BuildItemImageUrl(oi.ImageUrlSnapshot, oi.Food?.ImageUrl, oi.FoodId),
                     Quantity = oi.Quantity,
                     UnitPrice = oi.UnitPrice,
