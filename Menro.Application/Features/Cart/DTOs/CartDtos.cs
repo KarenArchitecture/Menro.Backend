@@ -8,6 +8,8 @@
         public string? RestaurantSlug { get; set; }
         public int TableCount { get; set; }
         public DateTime? ExpiresAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public string? RestaurantLogoUrl { get; set; }
         public List<CartItemDto> Items { get; set; } = new();
         public int Total { get; set; }
         public int Count { get; set; }

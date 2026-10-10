@@ -174,8 +174,12 @@ namespace Menro.Application.Features.Cart.Services.Implementations
                 RestaurantId = cart.RestaurantId,
                 RestaurantName = cart.Restaurant?.Name,
                 RestaurantSlug = cart.Restaurant?.Slug,
-                TableCount = cart.Restaurant?.Tables.Count ?? 0,
-                ExpiresAt = cart.UpdatedAt + CartLifetime
+                RestaurantLogoUrl = string.IsNullOrWhiteSpace(cart.Restaurant?.LogoImageUrl)
+            ? null
+            : _mediaStorage.GetUrl(MediaCategory.RestaurantLogo, cart.Restaurant.LogoImageUrl, cart.RestaurantId.ToString()),
+                    CreatedAt = cart.CreatedAt,
+                    TableCount = cart.Restaurant?.Tables.Count ?? 0,
+                    ExpiresAt = cart.UpdatedAt + CartLifetime
             };
 
             dto.PaymentMethod = cart.Restaurant?.PaymentMethod.ToString() ?? "";
