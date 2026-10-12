@@ -55,6 +55,38 @@ namespace Menro.Domain.Entities
 
         public RestaurantPaymentMethod PaymentMethod { get; set; } = RestaurantPaymentMethod.PayAtCounterBeforeServing;
 
+        // موقعیت روی نقشه
+        [Display(Name = "عرض جغرافیایی")]
+        [Range(-90, 90, ErrorMessage = "عرض جغرافیایی نامعتبر است")]
+        public double? Latitude { get; set; }
+
+        [Display(Name = "طول جغرافیایی")]
+        [Range(-180, 180, ErrorMessage = "طول جغرافیایی نامعتبر است")]
+        public double? Longitude { get; set; }
+
+        // شبکه‌های اجتماعی و پیام‌رسان‌ها
+        // نکته: فقط username/شناسه ذخیره می‌شه، نه URL کامل
+        // (URL توی سرویس ساخته می‌شه تا جلوی لینک‌های مخرب مثل javascript: گرفته بشه)
+        [Display(Name = "شناسه واتساپ")]
+        [MaxLength(50)]
+        public string? WhatsAppId { get; set; }
+
+        [Display(Name = "شناسه تلگرام")]
+        [MaxLength(50)]
+        public string? TelegramId { get; set; }
+
+        [Display(Name = "شناسه اینستاگرام")]
+        [MaxLength(50)]
+        public string? InstagramId { get; set; }
+
+        [Display(Name = "شناسه ایتا")]
+        [MaxLength(50)]
+        public string? EitaaId { get; set; }
+
+        [Display(Name = "شناسه بله")]
+        [MaxLength(50)]
+        public string? BaleId { get; set; }
+
         // FKs and relations
         // Owner
         public string? OwnerUserId { get; set; }

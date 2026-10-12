@@ -283,6 +283,15 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
                 OpenTime = r.OpenTime.ToString(@"hh\:mm"),
                 CloseTime = r.CloseTime.ToString(@"hh\:mm"),
 
+                Latitude = r.Latitude,
+                Longitude = r.Longitude,
+
+                WhatsAppId = r.WhatsAppId,
+                TelegramId = r.TelegramId,
+                InstagramId = r.InstagramId,
+                EitaaId = r.EitaaId,
+                BaleId = r.BaleId,
+
                 BannerImageUrl = string.IsNullOrWhiteSpace(r.BannerImageUrl)
                     ? null
                     : _mediaStorage.GetUrl(MediaCategory.RestaurantHomeBanner, r.BannerImageUrl, entityId, MediaVariant.Resized),
@@ -353,6 +362,17 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
             restaurant.OpenTime = TimeSpan.Parse(dto.OpenTime);
             restaurant.CloseTime = TimeSpan.Parse(dto.CloseTime);
 
+            if (dto.Latitude.HasValue != dto.Longitude.HasValue)
+                throw new InvalidOperationException("عرض و طول جغرافیایی باید با هم وارد شوند.");
+            restaurant.Latitude = dto.Latitude;
+            restaurant.Longitude = dto.Longitude;
+
+            restaurant.WhatsAppId = NormalizeId(dto.WhatsAppId);
+            restaurant.TelegramId = NormalizeId(dto.TelegramId);
+            restaurant.InstagramId = NormalizeId(dto.InstagramId);
+            restaurant.EitaaId = NormalizeId(dto.EitaaId);
+            restaurant.BaleId = NormalizeId(dto.BaleId);
+
             if (dto.HomeBanner != null)
                 restaurant.BannerImageUrl = await UploadImageAsync(MediaCategory.RestaurantHomeBanner, entityId, restaurant.BannerImageUrl, dto.HomeBanner);
             else if (dto.RemoveHomeBanner)
@@ -380,6 +400,14 @@ namespace Menro.Application.Features.Restaurants.Services.Implementations
         {
             var result = await _mediaStorage.SaveAsync(category, file, entityId, oldFileName: oldFileName);
             return result.FileName;
+        }
+
+        // trim + حذف @ ابتدایی؛ رشته‌ی خالی → null
+        private static string? NormalizeId(string? id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return null;
+            var clean = id.Trim().TrimStart('@');
+            return clean.Length == 0 ? null : clean;
         }
 
         private string? RemoveImage(MediaCategory category, string entityId, string? oldFileName)
