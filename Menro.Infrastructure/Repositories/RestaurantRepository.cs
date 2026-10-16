@@ -264,5 +264,16 @@ namespace Menro.Infrastructure.Repositories
                 .Include(r => r.Discounts)   // optional consistency
                 .FirstOrDefaultAsync(r => r.Id == restaurantId);
         }
+
+        public async Task<Restaurant?> GetPublicInfoBySlugAsync(string slug, CancellationToken ct = default)
+        {
+            return await _context.Restaurants
+                .AsNoTracking()
+                .Include(r => r.Ratings)
+                .FirstOrDefaultAsync(r => r.Slug == slug
+                                          && r.IsActive
+                                          && !r.IsDeleted
+                                          && r.Status == RestaurantStatus.Approved, ct);
+        }
     }
 }

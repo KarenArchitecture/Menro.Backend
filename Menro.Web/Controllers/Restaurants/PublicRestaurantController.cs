@@ -26,13 +26,16 @@ namespace Menro.Web.Controllers.Restaurants
         private readonly IRestaurantMenuService _menuService;
         private readonly IRestaurantPageFoodCategoryService _restaurantPageFoodCategoryService;
 
+        private readonly IRestaurantInfoService _restaurantInfoService;
+
         public PublicRestaurantController(
             IRestaurantService restaurantService,
             IRandomRestaurantCardService randomRestaurantCardService,
             IRestaurantBrowseService restaurantBrowseService,
             IRestaurantBannerService restaurantBannerService,
             IRestaurantPageFoodCategoryService restaurantPageFoodCategoryService,
-            IRestaurantMenuService menuService)
+            IRestaurantMenuService menuService,
+            IRestaurantInfoService restaurantInfoService)
         {
             _restaurantService = restaurantService;
             _randomRestaurantCardService = randomRestaurantCardService;
@@ -41,6 +44,7 @@ namespace Menro.Web.Controllers.Restaurants
             _restaurantBannerService = restaurantBannerService;
             _menuService = menuService;
             _restaurantPageFoodCategoryService = restaurantPageFoodCategoryService;
+            _restaurantInfoService = restaurantInfoService;
         }
 
         #endregion
@@ -153,6 +157,23 @@ namespace Menro.Web.Controllers.Restaurants
                 return NotFound(new { message = "رستوران یافت نشد." });
 
             return Ok(menu);
+        }
+
+        // GET: /api/public/restaurant/{slug}/info
+        [HttpGet("{slug}/info")]
+        public async Task<ActionResult<RestaurantInfoDto>> GetRestaurantInfoBySlug(
+            string slug,
+            CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(slug))
+                return BadRequest(new { message = "Slug cannot be empty." });
+
+            var info = await _restaurantInfoService.GetInfoBySlugAsync(slug, ct);
+
+            if (info == null)
+                return NotFound(new { message = "رستوران یافت نشد." });
+
+            return Ok(info);
         }
         #endregion
     }

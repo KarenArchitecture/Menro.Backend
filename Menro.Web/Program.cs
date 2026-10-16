@@ -30,6 +30,7 @@ using Microsoft.AspNetCore.SignalR;
 using Menro.Application.Common.Implementations;
 using Microsoft.AspNetCore.HttpOverrides;
 using Menro.Application.Common.Media;
+using Menro.Application.Features.Restaurants.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -224,6 +225,9 @@ builder.Services.Configure<MediaStorageOptions>(options =>
     options.RootPath = builder.Environment.WebRootPath;
     options.BaseUrl = builder.Configuration["AppSettings:BaseUrl"]?.TrimEnd('/') ?? "";
 });
+builder.Services.Configure<SocialLinksOptions>(
+    builder.Configuration.GetSection(SocialLinksOptions.SectionName));
+
 builder.Services.AddSingleton<IMediaStorageProvider, LocalDiskMediaStorageProvider>();
 builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
 

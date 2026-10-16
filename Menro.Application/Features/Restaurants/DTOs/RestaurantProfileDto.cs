@@ -18,6 +18,18 @@
         public string OpenTime { get; set; } = "";   // "12:00"
         public string CloseTime { get; set; } = "";
 
+        // Location
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+
+        // Social / messenger IDs (خام، نه URL)
+        public string? WhatsAppId { get; set; }
+        public string? TelegramId { get; set; }
+        public string? InstagramId { get; set; }
+        public string? EitaaId { get; set; }
+        public string? BaleId { get; set; }
+
+        // Images
         public string? BannerImageUrl { get; set; }
         public string? ShopBannerImageUrl { get; set; }
         public string? LogoImageUrl { get; set; }

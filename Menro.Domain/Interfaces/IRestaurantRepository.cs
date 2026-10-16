@@ -74,5 +74,9 @@ namespace Menro.Domain.Interfaces
 
         // restaurant profile
         Task<Restaurant?> GetRestaurantProfileAsync(int restaurantId);
+
+        // restaurant info page
+
+        Task<Restaurant?> GetPublicInfoBySlugAsync(string slug, CancellationToken ct = default);
     }
 }
