@@ -103,6 +103,10 @@ namespace Menro.Domain.Entities
         public ICollection<RestaurantAd> Advertisements { get; set; } = new List<RestaurantAd>();
         // Ratings
         public ICollection<RestaurantRating> Ratings { get; set; } = new List<RestaurantRating>();
+
+        // Restaurant Theme
+        [MaxLength(50)]
+        public string? ThemeId { get; set; }
         [NotMapped]
         public double AverageRating => Ratings.Any() ? Ratings.Average(r => r.Score) : 0;
         [NotMapped]

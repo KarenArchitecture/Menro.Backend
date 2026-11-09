@@ -8,6 +8,7 @@
         public double AverageRating { get; set; }
         public int VotersCount { get; set; }
         public int TableCount { get; set; }
+        public string? ThemeId { get; set; }
     }
 }
 
